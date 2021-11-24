@@ -85,7 +85,7 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;for;f90"
 # Begin Source File
 
-SOURCE=.\gas2masm.c
+SOURCE=.\gas2masm.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
