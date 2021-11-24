@@ -156,55 +156,55 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90"
 # Begin Source File
 
-SOURCE=.\cd_win.c
+SOURCE=.\cd_win.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\chase.c
+SOURCE=.\chase.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\cl_demo.c
+SOURCE=.\cl_demo.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\cl_input.c
+SOURCE=.\cl_input.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\cl_main.c
+SOURCE=.\cl_main.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\cl_parse.c
+SOURCE=.\cl_parse.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\cl_tent.c
+SOURCE=.\cl_tent.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\cmd.c
+SOURCE=.\cmd.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\common.c
+SOURCE=.\common.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\conproc.c
+SOURCE=.\conproc.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\console.c
+SOURCE=.\console.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\crc.c
+SOURCE=.\crc.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\cvar.c
+SOURCE=.\cvar.cpp
 # End Source File
 # Begin Source File
 
@@ -298,7 +298,7 @@ InputName=d_draw16
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_edge.c
+SOURCE=.\d_edge.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -317,7 +317,7 @@ SOURCE=.\d_edge.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_fill.c
+SOURCE=.\d_fill.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -336,7 +336,7 @@ SOURCE=.\d_fill.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_init.c
+SOURCE=.\d_init.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -355,7 +355,7 @@ SOURCE=.\d_init.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_modech.c
+SOURCE=.\d_modech.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -374,7 +374,7 @@ SOURCE=.\d_modech.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_part.c
+SOURCE=.\d_part.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -483,7 +483,7 @@ InputName=d_polysa
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_polyse.c
+SOURCE=.\d_polyse.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -502,7 +502,7 @@ SOURCE=.\d_polyse.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_scan.c
+SOURCE=.\d_scan.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -566,7 +566,7 @@ InputName=d_scana
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_sky.c
+SOURCE=.\d_sky.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -630,7 +630,7 @@ InputName=d_spr8
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_sprite.c
+SOURCE=.\d_sprite.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -649,7 +649,7 @@ SOURCE=.\d_sprite.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_surf.c
+SOURCE=.\d_surf.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -668,7 +668,7 @@ SOURCE=.\d_surf.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_vars.c
+SOURCE=.\d_vars.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -732,7 +732,7 @@ InputName=d_varsa
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_zpoint.c
+SOURCE=.\d_zpoint.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -751,7 +751,7 @@ SOURCE=.\d_zpoint.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\draw.c
+SOURCE=.\draw.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -770,7 +770,7 @@ SOURCE=.\draw.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_draw.c
+SOURCE=.\gl_draw.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -789,7 +789,7 @@ SOURCE=.\gl_draw.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_mesh.c
+SOURCE=.\gl_mesh.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -808,7 +808,7 @@ SOURCE=.\gl_mesh.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_model.c
+SOURCE=.\gl_model.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -827,7 +827,7 @@ SOURCE=.\gl_model.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_refrag.c
+SOURCE=.\gl_refrag.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -846,7 +846,7 @@ SOURCE=.\gl_refrag.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_rlight.c
+SOURCE=.\gl_rlight.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -865,7 +865,7 @@ SOURCE=.\gl_rlight.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_rmain.c
+SOURCE=.\gl_rmain.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -884,7 +884,7 @@ SOURCE=.\gl_rmain.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_rmisc.c
+SOURCE=.\gl_rmisc.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -903,7 +903,7 @@ SOURCE=.\gl_rmisc.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_rsurf.c
+SOURCE=.\gl_rsurf.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -922,7 +922,7 @@ SOURCE=.\gl_rsurf.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_screen.c
+SOURCE=.\gl_screen.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -941,7 +941,7 @@ SOURCE=.\gl_screen.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_test.c
+SOURCE=.\gl_test.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -960,7 +960,7 @@ SOURCE=.\gl_test.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_vidnt.c
+SOURCE=.\gl_vidnt.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -979,7 +979,7 @@ SOURCE=.\gl_vidnt.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gl_warp.c
+SOURCE=.\gl_warp.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -998,19 +998,19 @@ SOURCE=.\gl_warp.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\host.c
+SOURCE=.\host.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\host_cmd.c
+SOURCE=.\host_cmd.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\in_win.c
+SOURCE=.\in_win.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\keys.c
+SOURCE=.\keys.cpp
 # End Source File
 # Begin Source File
 
@@ -1081,15 +1081,15 @@ InputName=math
 # End Source File
 # Begin Source File
 
-SOURCE=.\mathlib.c
+SOURCE=.\mathlib.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\menu.c
+SOURCE=.\menu.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\model.c
+SOURCE=.\model.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1108,47 +1108,47 @@ SOURCE=.\model.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\net_dgrm.c
+SOURCE=.\net_dgrm.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\net_loop.c
+SOURCE=.\net_loop.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\net_main.c
+SOURCE=.\net_main.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\net_vcr.c
+SOURCE=.\net_vcr.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\net_win.c
+SOURCE=.\net_win.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\net_wins.c
+SOURCE=.\net_wins.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\net_wipx.c
+SOURCE=.\net_wipx.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\pr_cmds.c
+SOURCE=.\pr_cmds.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\pr_edict.c
+SOURCE=.\pr_edict.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\pr_exec.c
+SOURCE=.\pr_exec.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_aclip.c
+SOURCE=.\r_aclip.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1212,7 +1212,7 @@ InputName=r_aclipa
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_alias.c
+SOURCE=.\r_alias.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1276,7 +1276,7 @@ InputName=r_aliasa
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_bsp.c
+SOURCE=.\r_bsp.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1295,7 +1295,7 @@ SOURCE=.\r_bsp.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_draw.c
+SOURCE=.\r_draw.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1359,7 +1359,7 @@ InputName=r_drawa
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_edge.c
+SOURCE=.\r_edge.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1423,7 +1423,7 @@ InputName=r_edgea
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_efrag.c
+SOURCE=.\r_efrag.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1442,7 +1442,7 @@ SOURCE=.\r_efrag.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_light.c
+SOURCE=.\r_light.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1461,7 +1461,7 @@ SOURCE=.\r_light.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_main.c
+SOURCE=.\r_main.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1480,7 +1480,7 @@ SOURCE=.\r_main.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_misc.c
+SOURCE=.\r_misc.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1499,11 +1499,11 @@ SOURCE=.\r_misc.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_part.c
+SOURCE=.\r_part.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_sky.c
+SOURCE=.\r_sky.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1522,7 +1522,7 @@ SOURCE=.\r_sky.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_sprite.c
+SOURCE=.\r_sprite.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1541,7 +1541,7 @@ SOURCE=.\r_sprite.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_surf.c
+SOURCE=.\r_surf.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1560,7 +1560,7 @@ SOURCE=.\r_surf.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_vars.c
+SOURCE=.\r_vars.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1624,11 +1624,11 @@ InputName=r_varsa
 # End Source File
 # Begin Source File
 
-SOURCE=.\sbar.c
+SOURCE=.\sbar.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\screen.c
+SOURCE=.\screen.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1647,15 +1647,15 @@ SOURCE=.\screen.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\snd_dma.c
+SOURCE=.\snd_dma.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\snd_mem.c
+SOURCE=.\snd_mem.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\snd_mix.c
+SOURCE=.\snd_mix.cpp
 # End Source File
 # Begin Source File
 
@@ -1726,7 +1726,7 @@ InputName=snd_mixa
 # End Source File
 # Begin Source File
 
-SOURCE=.\snd_win.c
+SOURCE=.\snd_win.cpp
 # End Source File
 # Begin Source File
 
@@ -1820,23 +1820,23 @@ InputName=surf8
 # End Source File
 # Begin Source File
 
-SOURCE=.\sv_main.c
+SOURCE=.\sv_main.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sv_move.c
+SOURCE=.\sv_move.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sv_phys.c
+SOURCE=.\sv_phys.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sv_user.c
+SOURCE=.\sv_user.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sys_win.c
+SOURCE=.\sys_win.cpp
 # End Source File
 # Begin Source File
 
@@ -1907,7 +1907,7 @@ InputName=sys_wina
 # End Source File
 # Begin Source File
 
-SOURCE=.\vid_win.c
+SOURCE=.\vid_win.cpp
 
 !IF  "$(CFG)" == "winquake - Win32 Release"
 
@@ -1926,11 +1926,11 @@ SOURCE=.\vid_win.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\view.c
+SOURCE=.\view.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\wad.c
+SOURCE=.\wad.cpp
 # End Source File
 # Begin Source File
 
@@ -1938,7 +1938,7 @@ SOURCE=.\winquake.rc
 # End Source File
 # Begin Source File
 
-SOURCE=.\world.c
+SOURCE=.\world.cpp
 # End Source File
 # Begin Source File
 
@@ -2009,7 +2009,7 @@ InputName=worlda
 # End Source File
 # Begin Source File
 
-SOURCE=.\zone.c
+SOURCE=.\zone.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
