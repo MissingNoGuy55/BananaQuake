@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 
 float           surfscale;
-qboolean        r_cache_thrash;         // set if surface cache is thrashing
+bool        r_cache_thrash;         // set if surface cache is thrashing
 
 int                                     sc_size;
 surfcache_t                     *sc_rover, *sc_base;
@@ -129,8 +129,8 @@ D_SCAlloc
 */
 surfcache_t     *D_SCAlloc (int width, int size)
 {
-	surfcache_t             *new;
-	qboolean                wrapped_this_time;
+	surfcache_t             *s_new;
+	bool                wrapped_this_time;
 
 	if ((width < 0) || (width > 256))
 		Sys_Error ("D_SCAlloc: bad cache width %d\n", width);
@@ -156,11 +156,11 @@ surfcache_t     *D_SCAlloc (int width, int size)
 	}
 		
 // colect and free surfcache_t blocks until the rover block is large enough
-	new = sc_rover;
+	s_new = sc_rover;
 	if (sc_rover->owner)
 		*sc_rover->owner = NULL;
 	
-	while (new->size < size)
+	while (s_new->size < size)
 	{
 	// free another
 		sc_rover = sc_rover->next;
@@ -169,30 +169,30 @@ surfcache_t     *D_SCAlloc (int width, int size)
 		if (sc_rover->owner)
 			*sc_rover->owner = NULL;
 			
-		new->size += sc_rover->size;
-		new->next = sc_rover->next;
+		s_new->size += sc_rover->size;
+		s_new->next = sc_rover->next;
 	}
 
 // create a fragment out of any leftovers
-	if (new->size - size > 256)
+	if (s_new->size - size > 256)
 	{
-		sc_rover = (surfcache_t *)( (byte *)new + size);
-		sc_rover->size = new->size - size;
-		sc_rover->next = new->next;
+		sc_rover = (surfcache_t *)( (byte *)s_new + size);
+		sc_rover->size = s_new->size - size;
+		sc_rover->next = s_new->next;
 		sc_rover->width = 0;
 		sc_rover->owner = NULL;
-		new->next = sc_rover;
-		new->size = size;
+		s_new->next = sc_rover;
+		s_new->size = size;
 	}
 	else
-		sc_rover = new->next;
+		sc_rover = s_new->next;
 	
-	new->width = width;
+	s_new->width = width;
 // DEBUG
 	if (width > 0)
-		new->height = (size - sizeof(*new) + sizeof(new->data)) / width;
+		s_new->height = (size - sizeof(*s_new) + sizeof(s_new->data)) / width;
 
-	new->owner = NULL;              // should be set properly after return
+	s_new->owner = NULL;              // should be set properly after return
 
 	if (d_roverwrapped)
 	{
@@ -205,7 +205,7 @@ surfcache_t     *D_SCAlloc (int width, int size)
 	}
 
 D_CheckCacheGuard ();   // DEBUG
-	return new;
+	return s_new;
 }
 
 

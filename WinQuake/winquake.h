@@ -38,7 +38,7 @@ extern	int			global_nCmdShow;
 #ifndef SERVERONLY
 
 extern LPDIRECTDRAW		lpDD;
-extern qboolean			DDActive;
+extern bool			DDActive;
 extern LPDIRECTDRAWSURFACE	lpPrimary;
 extern LPDIRECTDRAWSURFACE	lpFrontBuffer;
 extern LPDIRECTDRAWSURFACE	lpBackBuffer;
@@ -59,9 +59,9 @@ typedef enum {MS_WINDOWED, MS_FULLSCREEN, MS_FULLDIB, MS_UNINIT} modestate_t;
 extern modestate_t	modestate;
 
 extern HWND			mainwindow;
-extern qboolean		ActiveApp, Minimized;
+extern bool		ActiveApp, Minimized;
 
-extern qboolean	WinNT;
+extern bool	WinNT;
 
 int VID_ForceUnlockedAndReturnState (void);
 void VID_ForceLockState (int lk);
@@ -74,14 +74,14 @@ void IN_RestoreOriginalMouseState (void);
 void IN_SetQuakeMouseState (void);
 void IN_MouseEvent (int mstate);
 
-extern qboolean	winsock_lib_initialized;
+extern bool	winsock_lib_initialized;
 
 extern cvar_t		_windowed_mouse;
 
 extern int		window_center_x, window_center_y;
 extern RECT		window_rect;
 
-extern qboolean	mouseinitialized;
+extern bool	mouseinitialized;
 extern HWND		hwnd_dialog;
 
 extern HANDLE	hinput, houtput;
@@ -94,7 +94,7 @@ void S_UnblockSound (void);
 
 void VID_SetDefaultMode (void);
 
-int (PASCAL FAR *pWSAStartup)(WORD wVersionRequired, LPWSADATA lpWSAData);
+int(CALLBACK* LPFNDLLFUNC1)(WORD wVersionRequired, LPWSADATA lpWSAData);
 int (PASCAL FAR *pWSACleanup)(void);
 int (PASCAL FAR *pWSAGetLastError)(void);
 SOCKET (PASCAL FAR *psocket)(int af, int type, int protocol);

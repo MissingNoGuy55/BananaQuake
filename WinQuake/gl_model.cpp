@@ -30,7 +30,7 @@ char	loadname[32];	// for hunk tags
 void Mod_LoadSpriteModel (model_t *mod, void *buffer);
 void Mod_LoadBrushModel (model_t *mod, void *buffer);
 void Mod_LoadAliasModel (model_t *mod, void *buffer);
-model_t *Mod_LoadModel (model_t *mod, qboolean crash);
+model_t *Mod_LoadModel (model_t *mod, bool crash);
 
 byte	mod_novis[MAX_MAP_LEAFS/8];
 
@@ -234,7 +234,7 @@ Mod_LoadModel
 Loads a model into the cache
 ==================
 */
-model_t *Mod_LoadModel (model_t *mod, qboolean crash)
+model_t *Mod_LoadModel (model_t *mod, bool crash)
 {
 	void	*d;
 	unsigned *buf;
@@ -310,7 +310,7 @@ Mod_ForName
 Loads in a model for the given name
 ==================
 */
-model_t *Mod_ForName (char *name, qboolean crash)
+model_t *Mod_ForName (char *name, bool crash)
 {
 	model_t	*mod;
 	
@@ -355,7 +355,7 @@ void Mod_LoadTextures (lump_t *l)
 	m->nummiptex = LittleLong (m->nummiptex);
 	
 	loadmodel->numtextures = m->nummiptex;
-	loadmodel->textures = Hunk_AllocName (m->nummiptex * sizeof(*loadmodel->textures) , loadname);
+	loadmodel->textures = static_cast<texture_t**>(Hunk_AllocName (m->nummiptex * sizeof(*loadmodel->textures) , loadname));
 
 	for (i=0 ; i<m->nummiptex ; i++)
 	{
@@ -371,7 +371,7 @@ void Mod_LoadTextures (lump_t *l)
 		if ( (mt->width & 15) || (mt->height & 15) )
 			Sys_Error ("Texture %s is not 16 aligned", mt->name);
 		pixels = mt->width*mt->height/64*85;
-		tx = Hunk_AllocName (sizeof(texture_t) +pixels, loadname );
+		tx = static_cast<texture_t*>(Hunk_AllocName (sizeof(texture_t) +pixels, loadname ));
 		loadmodel->textures[i] = tx;
 
 		memcpy (tx->name, mt->name, sizeof(tx->name));
@@ -499,7 +499,7 @@ void Mod_LoadLighting (lump_t *l)
 		loadmodel->lightdata = NULL;
 		return;
 	}
-	loadmodel->lightdata = Hunk_AllocName ( l->filelen, loadname);	
+	loadmodel->lightdata = static_cast<byte*>(Hunk_AllocName ( l->filelen, loadname));
 	memcpy (loadmodel->lightdata, mod_base + l->fileofs, l->filelen);
 }
 
@@ -516,7 +516,7 @@ void Mod_LoadVisibility (lump_t *l)
 		loadmodel->visdata = NULL;
 		return;
 	}
-	loadmodel->visdata = Hunk_AllocName ( l->filelen, loadname);	
+	loadmodel->visdata = static_cast<byte*>(Hunk_AllocName ( l->filelen, loadname));	
 	memcpy (loadmodel->visdata, mod_base + l->fileofs, l->filelen);
 }
 
@@ -533,7 +533,7 @@ void Mod_LoadEntities (lump_t *l)
 		loadmodel->entities = NULL;
 		return;
 	}
-	loadmodel->entities = Hunk_AllocName ( l->filelen, loadname);	
+	loadmodel->entities = static_cast<char*>(Hunk_AllocName ( l->filelen, loadname));
 	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
 }
 
@@ -1514,7 +1514,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	size = 	sizeof (aliashdr_t) 
 			+ (LittleLong (pinmodel->numframes) - 1) *
 			sizeof (pheader->frames[0]);
-	pheader = Hunk_AllocName (size, loadname);
+	pheader = static_cast<aliashdr_t*>(Hunk_AllocName (size, loadname));
 	
 	mod->flags = LittleLong (pinmodel->flags);
 

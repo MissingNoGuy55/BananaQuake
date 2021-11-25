@@ -292,7 +292,7 @@ void BuildGammaTable (float g)
 V_CheckGamma
 =================
 */
-qboolean V_CheckGamma (void)
+bool V_CheckGamma (void)
 {
 	static float oldgammavalue;
 	
@@ -527,28 +527,28 @@ V_UpdatePalette
 void V_UpdatePalette (void)
 {
 	int		i, j;
-	qboolean	new;
+	bool	bnew;
 	byte	*basepal, *newpal;
 	byte	pal[768];
 	float	r,g,b,a;
 	int		ir, ig, ib;
-	qboolean force;
+	bool force;
 
 	V_CalcPowerupCshift ();
 	
-	new = false;
+	bnew = false;
 	
 	for (i=0 ; i<NUM_CSHIFTS ; i++)
 	{
 		if (cl.cshifts[i].percent != cl.prev_cshifts[i].percent)
 		{
-			new = true;
+			bnew = true;
 			cl.prev_cshifts[i].percent = cl.cshifts[i].percent;
 		}
 		for (j=0 ; j<3 ; j++)
 			if (cl.cshifts[i].destcolor[j] != cl.prev_cshifts[i].destcolor[j])
 			{
-				new = true;
+				bnew = true;
 				cl.prev_cshifts[i].destcolor[j] = cl.cshifts[i].destcolor[j];
 			}
 	}
@@ -564,7 +564,7 @@ void V_UpdatePalette (void)
 		cl.cshifts[CSHIFT_BONUS].percent = 0;
 
 	force = V_CheckGamma ();
-	if (!new && !force)
+	if (!bnew && !force)
 		return;
 
 	V_CalcBlend ();
@@ -614,27 +614,27 @@ void V_UpdatePalette (void)
 void V_UpdatePalette (void)
 {
 	int		i, j;
-	qboolean	new;
+	bool	b_new;
 	byte	*basepal, *newpal;
 	byte	pal[768];
 	int		r,g,b;
-	qboolean force;
+	bool force;
 
 	V_CalcPowerupCshift ();
 	
-	new = false;
+	b_new = false;
 	
 	for (i=0 ; i<NUM_CSHIFTS ; i++)
 	{
 		if (cl.cshifts[i].percent != cl.prev_cshifts[i].percent)
 		{
-			new = true;
+			b_new = true;
 			cl.prev_cshifts[i].percent = cl.cshifts[i].percent;
 		}
 		for (j=0 ; j<3 ; j++)
 			if (cl.cshifts[i].destcolor[j] != cl.prev_cshifts[i].destcolor[j])
 			{
-				new = true;
+				b_new = true;
 				cl.prev_cshifts[i].destcolor[j] = cl.cshifts[i].destcolor[j];
 			}
 	}
@@ -650,7 +650,7 @@ void V_UpdatePalette (void)
 		cl.cshifts[CSHIFT_BONUS].percent = 0;
 
 	force = V_CheckGamma ();
-	if (!new && !force)
+	if (!b_new && !force)
 		return;
 			
 	basepal = host_basepal;

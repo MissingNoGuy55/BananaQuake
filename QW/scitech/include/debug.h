@@ -241,12 +241,15 @@ typedef unsigned short  ushort;
 typedef unsigned int    uint;
 typedef unsigned long   ulong;
 typedef int             ibool;		/* Integer boolean type			*/
-#ifndef	__cplusplus
-#define	bool			ibool		/* Standard C					*/
-#else
-#ifndef	__HAS_BOOL__
-#define	bool			ibool		/* Older C++ compilers			*/
-#endif
+// Missi: this will cause problems
+
+
+// #ifndef	__cplusplus
+// #define	bool			ibool		/* Standard C					*/
+// #else
+// #ifndef	__HAS_BOOL__
+// #define	bool			ibool		/* Older C++ compilers			*/
+// #endif
 #endif	/* __cplusplus */
 #endif  /* __GENDEFS */
 

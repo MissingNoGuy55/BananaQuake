@@ -32,7 +32,7 @@ static int net_acceptsocket = -1;		// socket for fielding new connections
 static int net_controlsocket;
 static struct qsockaddr broadcastaddr;
 
-extern qboolean winsock_initialized;
+extern bool winsock_initialized;
 extern WSADATA		winsockdata;
 
 #define IPXSOCKETS 18
@@ -61,7 +61,7 @@ int WIPX_Init (void)
 	{
 		wVersionRequested = MAKEWORD(1, 1); 
 
-		r = pWSAStartup (MAKEWORD(1, 1), &winsockdata);
+		r = pWSAStartup(MAKEWORD(1, 1), &winsockdata);
 
 		if (r)
 		{
@@ -134,7 +134,7 @@ void WIPX_Shutdown (void)
 
 //=============================================================================
 
-void WIPX_Listen (qboolean state)
+void WIPX_Listen (bool state)
 {
 	// enable listening
 	if (state)
@@ -181,7 +181,7 @@ int WIPX_OpenSocket (int port)
 	memset(address.sa_netnum, 0, 4);
 	memset(address.sa_nodenum, 0, 6);;
 	address.sa_socket = htons((unsigned short)port);
-	if( bind (newsocket, (void *)&address, sizeof(address)) == 0)
+	if( bind (newsocket, static_cast<const sockaddr*>(static_cast<void*>(&address)), sizeof(address)) == 0)
 	{
 		ipxsocket[handle] = newsocket;
 		sequence[handle] = 0;
@@ -240,12 +240,12 @@ int WIPX_Read (int handle, byte *buf, int len, struct qsockaddr *addr)
 	int socket = ipxsocket[handle];
 	int ret;
 
-	ret = precvfrom (socket, packetBuffer, len+4, 0, (struct sockaddr *)addr, &addrlen);
+	ret = precvfrom (socket, (char*)packetBuffer, len+4, 0, (struct sockaddr *)addr, &addrlen);
 	if (ret == -1)
 	{
-		int errno = pWSAGetLastError();
+		int errnum = pWSAGetLastError();
 
-		if (errno == WSAEWOULDBLOCK || errno == WSAECONNREFUSED)
+		if (errnum == WSAEWOULDBLOCK || errnum == WSAECONNREFUSED)
 			return 0;
 
 	}
@@ -280,7 +280,7 @@ int WIPX_Write (int handle, byte *buf, int len, struct qsockaddr *addr)
 	memcpy(&packetBuffer[4], buf, len);
 	len += 4;
 
-	ret = psendto (socket, packetBuffer, len, 0, (struct sockaddr *)addr, sizeof(struct qsockaddr));
+	ret = psendto (socket, reinterpret_cast<char*>(packetBuffer), len, 0, (struct sockaddr *)addr, sizeof(struct qsockaddr));
 	if (ret == -1)
 		if (pWSAGetLastError() == WSAEWOULDBLOCK)
 			return 0;
@@ -357,7 +357,7 @@ int WIPX_GetSocketAddr (int handle, struct qsockaddr *addr)
 	Q_memset(addr, 0, sizeof(struct qsockaddr));
 	if(pgetsockname(socket, (struct sockaddr *)addr, &addrlen) != 0)
 	{
-		int errno = pWSAGetLastError();
+		int errnum = pWSAGetLastError();
 	}
 
 	return 0;

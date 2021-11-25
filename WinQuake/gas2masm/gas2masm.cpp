@@ -29,16 +29,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_TOKEN_LENGTH	1024
 #define LF					0x0A
 
-typedef enum {NOT_WHITESPACE, WHITESPACE, TOKEN_AVAILABLE, LINE_DONE, FILE_DONE, PARSED_OKAY} tokenstat;
-typedef enum {NOSEG, DATASEG, TEXTSEG} segtype;
+enum class tokenstat {NOT_WHITESPACE, WHITESPACE, TOKEN_AVAILABLE, LINE_DONE, FILE_DONE, PARSED_OKAY};
+enum class segtype {NOSEG, DATASEG, TEXTSEG};
 
 int		tokennum;
-int		inline, outline;
+int		int_inline, int_outline;
 
 char	*token;
 char	tokens[MAX_TOKENS][MAX_TOKEN_LENGTH+1];
 
-segtype	currentseg = NOSEG;
+segtype	currentseg = segtype::NOSEG;
 
 typedef struct {
 	char	*text;
@@ -316,29 +316,29 @@ void emitanoperand (int tnum, char *type, int notdata)
 
 void datasegstart (void)
 {
-	if (currentseg == DATASEG)
+	if (currentseg == segtype::DATASEG)
 		return;
 
-	if (currentseg == TEXTSEG)
+	if (currentseg == segtype::TEXTSEG)
 		printf ("_TEXT ENDS\n");
 
 	printf ("_DATA SEGMENT");
 
-	currentseg = DATASEG;
+	currentseg = segtype::DATASEG;
 }
 
 
 void textsegstart (void)
 {
-	if (currentseg == TEXTSEG)
+	if (currentseg == segtype::TEXTSEG)
 		return;
 
-	if (currentseg == DATASEG)
+	if (currentseg == segtype::DATASEG)
 		printf ("_DATA ENDS\n");
 
 	printf ("_TEXT SEGMENT");
 
-	currentseg = TEXTSEG;
+	currentseg = segtype::TEXTSEG;
 }
 
 
@@ -758,7 +758,7 @@ int	numparse = sizeof (parsedata) / sizeof (parsedata[0]);
 
 void errorexit (void)
 {
-	fprintf (stderr, "In line: %d, out line: %d\n", inline, outline);
+	fprintf (stderr, "In line: %d, out line: %d\n", int_inline, int_outline);
 	exit (1);
 }
 
@@ -766,20 +766,20 @@ void errorexit (void)
 tokenstat whitespace (char c)
 {
 	if (c == '\n')
-		return LINE_DONE;
+		return tokenstat::LINE_DONE;
 
 	if ((c <= ' ') ||
 		(c > 127) ||
 		(c == ','))
 	{
-		return WHITESPACE;
+		return tokenstat::WHITESPACE;
 	}
 
-	return NOT_WHITESPACE;
+	return tokenstat::NOT_WHITESPACE;
 }
 
 
-int gettoken (void)
+tokenstat gettoken (void)
 {
 	char		c;
 	int			count, parencount;
@@ -788,11 +788,11 @@ int gettoken (void)
 	do
 	{
 		if ((c = getchar ()) == EOF)
-			return FILE_DONE;
+			return tokenstat::FILE_DONE;
 
-		if ((stat = whitespace (c)) == LINE_DONE)
-			return LINE_DONE;
-	} while (stat == WHITESPACE);
+		if ((stat = whitespace (c)) == tokenstat::LINE_DONE)
+			return tokenstat::LINE_DONE;
+	} while (stat == tokenstat::WHITESPACE);
 
 	token[0] = c;
 	count = 1;
@@ -826,10 +826,10 @@ int gettoken (void)
 		if ((c = getchar ()) == EOF)
 		{
 			token[count] = 0;
-			return TOKEN_AVAILABLE;
+			return tokenstat::TOKEN_AVAILABLE;
 		}
 
-		if (whitespace (c) == LINE_DONE)
+		if (whitespace (c) == tokenstat::LINE_DONE)
 		{
 			if (ungetc (c, stdin) == EOF)
 			{
@@ -838,13 +838,13 @@ int gettoken (void)
 			}
 
 			token[count] = 0;
-			return TOKEN_AVAILABLE;
+			return tokenstat::TOKEN_AVAILABLE;
 		}
 
-		if (whitespace (c) == WHITESPACE)
+		if (whitespace (c) == tokenstat::WHITESPACE)
 		{
 			token[count] = 0;
-			return TOKEN_AVAILABLE;
+			return tokenstat::TOKEN_AVAILABLE;
 		}
 
 		if (count >= MAX_TOKEN_LENGTH)
@@ -911,14 +911,14 @@ tokenstat parseline (void)
 	for ( ;; )
 	{
 		token = tokens[tokennum];
-		stat = gettoken ();
+		stat = gettoken();
 
 		switch (stat)
 		{
-		case FILE_DONE:
-			return FILE_DONE;
+		case tokenstat::FILE_DONE:
+			return tokenstat::FILE_DONE;
 
-		case LINE_DONE:
+		case tokenstat::LINE_DONE:
 			if (!firsttoken && tokennum)
 			{
 				mnemfound = 0;
@@ -963,28 +963,28 @@ tokenstat parseline (void)
 
 			if (!firsttoken)
 			{
-				if ((currentseg == DATASEG) && labelfound && !tokennum)
+				if ((currentseg == segtype::DATASEG) && labelfound && !tokennum)
 					printf (":\n");
 				else
 					printf ("\n");
 
-				outline++;
+				int_outline++;
 			}
-			return PARSED_OKAY;
+			return tokenstat::PARSED_OKAY;
 
-		case TOKEN_AVAILABLE:
+		case tokenstat::TOKEN_AVAILABLE:
 			if (firsttoken)
 			{
 				if (token[strlen(token) - 1] == ':')
 				{
 					labelfound = 1;
 
-					if (currentseg == DATASEG)
+					if (currentseg == segtype::DATASEG)
 					{
 						token[strlen(token) - 1] = 0;
 						printf ("%s", token);
 					}
-					else if (currentseg == TEXTSEG)
+					else if (currentseg == segtype::TEXTSEG)
 					{
 						printf ("%s", token);
 					}
@@ -1025,26 +1025,26 @@ void main (int argc, char **argv)
 
 	printf (" .386P\n"
             " .model FLAT\n");
-	inline = 1;
-	outline = 3;
+	int_inline = 1;
+	int_outline = 3;
 
 	for ( ;; )
 	{
 		stat = parseline ();
-		inline++;
+		int_inline++;
 
 		switch (stat)
 		{
-		case FILE_DONE:
-			if (currentseg == TEXTSEG)
+		case tokenstat::FILE_DONE:
+			if (currentseg == segtype::TEXTSEG)
 				printf ("_TEXT ENDS\n");
-			else if (currentseg == DATASEG)
+			else if (currentseg == segtype::DATASEG)
 				printf ("_DATA ENDS\n");
 
 			printf (" END\n");
 			exit (0);
 		
-		case PARSED_OKAY:
+		case tokenstat::PARSED_OKAY:
 			break;
 
 		default:

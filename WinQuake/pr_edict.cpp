@@ -36,7 +36,7 @@ unsigned short		pr_crc;
 int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,sizeof(void *)/4};
 
 ddef_t *ED_FieldAtOfs (int ofs);
-qboolean	ED_ParseEpair (void *base, ddef_t *key, char *s);
+bool	ED_ParseEpair (void *base, ddef_t *key, char *s);
 
 cvar_t	nomonsters = {"nomonsters", "0"};
 cvar_t	gamecfg = {"gamecfg", "0"};
@@ -392,7 +392,7 @@ char *PR_GlobalString (int ofs)
 		sprintf (line,"%i(???)", ofs);
 	else
 	{
-		s = PR_ValueString (def->type, val);
+		s = PR_ValueString (static_cast<etype_t>(def->type), (eval_t *)val); // Missi: fix this later, it's GROSS!
 		sprintf (line,"%i(%s)%s", ofs, pr_strings + def->s_name, s);
 	}
 	
@@ -471,7 +471,7 @@ void ED_Print (edict_t *ed)
 		while (l++ < 15)
 			Con_Printf (" ");
 
-		Con_Printf ("%s\n", PR_ValueString(d->type, (eval_t *)v));		
+		Con_Printf ("%s\n", PR_ValueString(static_cast<etype_t>(d->type), (eval_t *)v));
 	}
 }
 
@@ -516,7 +516,7 @@ void ED_Write (FILE *f, edict_t *ed)
 			continue;
 	
 		fprintf (f,"\"%s\" ",name);
-		fprintf (f,"\"%s\"\n", PR_UglyValueString(d->type, (eval_t *)v));		
+		fprintf (f,"\"%s\"\n", PR_UglyValueString(static_cast<etype_t>(d->type), (eval_t *)v));		
 	}
 
 	fprintf (f, "}\n");
@@ -636,7 +636,7 @@ void ED_WriteGlobals (FILE *f)
 
 		name = pr_strings + def->s_name;		
 		fprintf (f,"\"%s\" ", name);
-		fprintf (f,"\"%s\"\n", PR_UglyValueString(type, (eval_t *)&pr_globals[def->ofs]));		
+		fprintf (f,"\"%s\"\n", PR_UglyValueString(static_cast<etype_t>(type), (eval_t *)&pr_globals[def->ofs]));		
 	}
 	fprintf (f,"}\n");
 }
@@ -692,12 +692,12 @@ ED_NewString
 */
 char *ED_NewString (char *string)
 {
-	char	*new, *new_p;
+	char	*cnew, *cnew_p;
 	int		i,l;
 	
 	l = strlen(string) + 1;
-	new = Hunk_Alloc (l);
-	new_p = new;
+	cnew = static_cast<char*>(Hunk_Alloc (l));
+	cnew_p = cnew;
 
 	for (i=0 ; i< l ; i++)
 	{
@@ -705,15 +705,15 @@ char *ED_NewString (char *string)
 		{
 			i++;
 			if (string[i] == 'n')
-				*new_p++ = '\n';
+				*cnew_p++ = '\n';
 			else
-				*new_p++ = '\\';
+				*cnew_p++ = '\\';
 		}
 		else
-			*new_p++ = string[i];
+			*cnew_p++ = string[i];
 	}
 	
-	return new;
+	return cnew;
 }
 
 
@@ -725,7 +725,7 @@ Can parse either fields or globals
 returns false if error
 =============
 */
-qboolean	ED_ParseEpair (void *base, ddef_t *key, char *s)
+bool	ED_ParseEpair (void *base, ddef_t *key, char *s)
 {
 	int		i;
 	char	string[128];
@@ -802,8 +802,8 @@ Used for initial level load and for savegames.
 char *ED_ParseEdict (char *data, edict_t *ent)
 {
 	ddef_t		*key;
-	qboolean	anglehack;
-	qboolean	init;
+	bool	anglehack;
+	bool	init;
 	char		keyname[256];
 	int			n;
 

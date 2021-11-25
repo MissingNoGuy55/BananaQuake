@@ -26,10 +26,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "dosisms.h"
 
 #define DINPUT_BUFFERSIZE           16
-#define iDirectInputCreate(a,b,c,d)	pDirectInputCreate(a,b,c,d)
+#define iDirectInput8Create(a,b,c,d)	pDirectInput8Create(a,b,c,d)
 
-HRESULT (WINAPI *pDirectInputCreate)(HINSTANCE hinst, DWORD dwVersion,
+typedef HRESULT (CALLBACK *PDIRECTINPUT8CREATE)(HINSTANCE hinst, DWORD dwVersion,
 	LPDIRECTINPUT * lplpDirectInput, LPUNKNOWN punkOuter);
+
+PDIRECTINPUT8CREATE pDirectInput8Create;
 
 // mouse variables
 cvar_t	m_filter = {"m_filter","0"};
@@ -39,15 +41,15 @@ int			mouse_oldbuttonstate;
 POINT		current_pos;
 int			mouse_x, mouse_y, old_mouse_x, old_mouse_y, mx_accum, my_accum;
 
-static qboolean	restore_spi;
+static bool	restore_spi;
 static int		originalmouseparms[3], newmouseparms[3] = {0, 0, 1};
 
 unsigned int uiWheelMessage;
-qboolean	mouseactive;
-qboolean		mouseinitialized;
-static qboolean	mouseparmsvalid, mouseactivatetoggle;
-static qboolean	mouseshowtoggle = 1;
-static qboolean	dinput_acquired;
+bool	mouseactive;
+bool		mouseinitialized;
+static bool	mouseparmsvalid, mouseactivatetoggle;
+static bool	mouseshowtoggle = 1;
+static bool	dinput_acquired;
 
 static unsigned int		mstate_di;
 
@@ -102,7 +104,7 @@ cvar_t	joy_yawsensitivity = {"joyyawsensitivity", "-1.0"};
 cvar_t	joy_wwhack1 = {"joywwhack1", "0.0"};
 cvar_t	joy_wwhack2 = {"joywwhack2", "0.0"};
 
-qboolean	joy_avail, joy_advancedinit, joy_haspov;
+bool	joy_avail, joy_advancedinit, joy_haspov;
 DWORD		joy_oldbuttonstate, joy_oldpovstate;
 
 int			joy_id;
@@ -116,7 +118,7 @@ static JOYINFOEX	ji;
 
 static HINSTANCE hInstDI;
 
-static qboolean	dinput;
+static bool	dinput;
 
 typedef struct MYDATA {
 	LONG  lX;                   // X axis goes here
@@ -329,7 +331,7 @@ void IN_RestoreOriginalMouseState (void)
 IN_InitDInput
 ===========
 */
-qboolean IN_InitDInput (void)
+bool IN_InitDInput (void)
 {
     HRESULT		hr;
 	DIPROPDWORD	dipdw = {
@@ -353,11 +355,11 @@ qboolean IN_InitDInput (void)
 		}
 	}
 
-	if (!pDirectInputCreate)
+	if (!pDirectInput8Create)
 	{
-		pDirectInputCreate = (void *)GetProcAddress(hInstDI,"DirectInputCreateA");
+		pDirectInput8Create = (PDIRECTINPUT8CREATE)GetProcAddress(hInstDI,"DirectInputCreateA");
 
-		if (!pDirectInputCreate)
+		if (!pDirectInput8Create)
 		{
 			Con_SafePrintf ("Couldn't get DI proc addr\n");
 			return false;
@@ -365,7 +367,7 @@ qboolean IN_InitDInput (void)
 	}
 
 // register with DirectInput and get an IDirectInput to play with.
-	hr = iDirectInputCreate(global_hInstance, DIRECTINPUT_VERSION, &g_pdi, NULL);
+	hr = iDirectInput8Create(global_hInstance, DIRECTINPUT_VERSION, &g_pdi, NULL);
 
 	if (FAILED(hr))
 	{
@@ -373,7 +375,7 @@ qboolean IN_InitDInput (void)
 	}
 
 // obtain an interface to the system mouse device.
-	hr = IDirectInput_CreateDevice(g_pdi, &GUID_SysMouse, &g_pMouse, NULL);
+	hr = IDirectInput_CreateDevice(g_pdi, GUID_SysMouse, &g_pMouse, NULL);
 
 	if (FAILED(hr))
 	{
@@ -1030,7 +1032,7 @@ void IN_Commands (void)
 IN_ReadJoystick
 =============== 
 */  
-qboolean IN_ReadJoystick (void)
+bool IN_ReadJoystick (void)
 {
 
 	memset (&ji, 0, sizeof(ji));
@@ -1113,7 +1115,7 @@ void IN_JoyMove (usercmd_t *cmd)
 				// y=ax^b; where a = 300 and b = 1.3
 				// also x values are in increments of 800 (so this is factored out)
 				// then bounds check result to level out excessively high spin rates
-				fTemp = 300.0 * pow(abs(fAxisValue) / 800.0, 1.3);
+				fTemp = 300.0 * pow(abs((long)fAxisValue) / 800.0, 1.3);	// Missi: idk
 				if (fTemp > 14000.0)
 					fTemp = 14000.0;
 				// restore direction information

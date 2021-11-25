@@ -23,10 +23,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #endif
 
+
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
 
-enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_net, m_options, m_video, m_keys, m_help, m_quit, m_serialconfig, m_modemconfig, m_lanconfig, m_gameoptions, m_search, m_slist} m_state;
+int m_state;
+
+enum m_states { m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_net, m_options, m_video, m_keys, m_help, m_quit, m_serialconfig, m_modemconfig, m_lanconfig, m_gameoptions, m_search, m_slist };
 
 void M_Menu_Main_f (void);
 	void M_Menu_SinglePlayer_f (void);
@@ -85,12 +88,12 @@ void M_GameOptions_Key (int key);
 void M_Search_Key (int key);
 void M_ServerList_Key (int key);
 
-qboolean	m_entersound;		// play after drawing a frame, so caching
+bool	m_entersound;		// play after drawing a frame, so caching
 								// won't disrupt the sound
-qboolean	m_recursiveDraw;
+bool	m_recursiveDraw;
 
 int			m_return_state;
-qboolean	m_return_onerror;
+bool	m_return_onerror;
 char		m_return_reason [32];
 
 #define StartingGame	(m_multiplayer_cursor == 1)
@@ -1578,7 +1581,7 @@ void M_Help_Key (int key)
 
 int		msgNumber;
 int		m_quit_prevstate;
-qboolean	wasInMenus;
+bool	wasInMenus;
 
 #ifndef	_WIN32
 char *quitMessage [] = 
@@ -1711,6 +1714,7 @@ void M_Quit_Draw (void)
 	M_Print (64, 100, quitMessage[msgNumber*4+2]);
 	M_Print (64, 108, quitMessage[msgNumber*4+3]);
 #endif
+	
 }
 
 //=============================================================================
@@ -1735,7 +1739,8 @@ void M_Menu_SerialConfig_f (void)
 	int		n;
 	int		port;
 	int		baudrate;
-	qboolean	useModem;
+	bool	useModem;
+
 
 	key_dest = key_menu;
 	m_state = m_serialconfig;
@@ -2526,7 +2531,7 @@ episode_t	rogueepisodes[] =
 int	startepisode;
 int	startlevel;
 int maxplayers;
-qboolean m_serverInfoMessage = false;
+bool m_serverInfoMessage = false;
 double m_serverInfoMessageTime;
 
 void M_Menu_GameOptions_f (void)
@@ -2836,7 +2841,7 @@ void M_GameOptions_Key (int key)
 //=============================================================================
 /* SEARCH MENU */
 
-qboolean	searchComplete = false;
+bool	searchComplete = false;
 double		searchCompleteTime;
 
 void M_Menu_Search_f (void)
@@ -2897,7 +2902,7 @@ void M_Search_Key (int key)
 /* SLIST MENU */
 
 int		slist_cursor;
-qboolean slist_sorted;
+bool slist_sorted;
 
 void M_Menu_ServerList_f (void)
 {

@@ -35,7 +35,7 @@ Memory is cleared / released when a server or client begins, not when they end.
 
 quakeparms_t host_parms;
 
-qboolean	host_initialized;		// true if into command execution
+bool	host_initialized;		// true if into command execution
 
 double		host_frametime;
 double		host_time;
@@ -122,7 +122,7 @@ void Host_Error (char *error, ...)
 {
 	va_list		argptr;
 	char		string[1024];
-	static	qboolean inerror = false;
+	static	bool inerror = false;
 	
 	if (inerror)
 		Sys_Error ("Host_Error: recursively entered");
@@ -192,7 +192,7 @@ void	Host_FindMaxClients (void)
 	svs.maxclientslimit = svs.maxclients;
 	if (svs.maxclientslimit < 4)
 		svs.maxclientslimit = 4;
-	svs.clients = Hunk_AllocName (svs.maxclientslimit*sizeof(client_t), "clients");
+	svs.clients = static_cast<client_s*>(Hunk_AllocName (svs.maxclientslimit*sizeof(client_t), "clients"));
 
 	if (svs.maxclients > 1)
 		Cvar_SetValue ("deathmatch", 1.0);
@@ -340,7 +340,7 @@ Called when the player is getting totally kicked off the host
 if (crash = true), don't bother sending signofs
 =====================
 */
-void SV_DropClient (qboolean crash)
+void SV_DropClient (bool crash)
 {
 	int		saveSelf;
 	int		i;
@@ -402,7 +402,7 @@ Host_ShutdownServer
 This only happens at the end of a game, not between levels
 ==================
 */
-void Host_ShutdownServer(qboolean crash)
+void Host_ShutdownServer(bool crash)
 {
 	int		i;
 	int		count;
@@ -446,7 +446,7 @@ void Host_ShutdownServer(qboolean crash)
 	while (count);
 
 // make sure all the clients know we're disconnecting
-	buf.data = message;
+	buf.data = (byte*)message;
 	buf.maxsize = 4;
 	buf.cursize = 0;
 	MSG_WriteByte(&buf, svc_disconnect);
@@ -498,7 +498,7 @@ Host_FilterTime
 Returns false if the time is too short to run a frame
 ===================
 */
-qboolean Host_FilterTime (float time)
+bool Host_FilterTime (float time)
 {
 	realtime += time;
 
@@ -788,12 +788,12 @@ void Host_InitVCR (quakeparms_t *parms)
 			Sys_Error("Invalid signature in vcr file\n");
 
 		Sys_FileRead (vcrFile, &com_argc, sizeof(int));
-		com_argv = malloc(com_argc * sizeof(char *));
+		com_argv = static_cast<char**>(malloc(com_argc * sizeof(char *)));
 		com_argv[0] = parms->argv[0];
 		for (i = 0; i < com_argc; i++)
 		{
 			Sys_FileRead (vcrFile, &len, sizeof(int));
-			p = malloc(len);
+			p = static_cast<char*>(malloc(len));
 			Sys_FileRead (vcrFile, p, len);
 			com_argv[i+1] = p;
 		}
@@ -868,7 +868,7 @@ void Host_Init (quakeparms_t *parms)
 	NET_Init ();
 	SV_Init ();
 
-	Con_Printf ("Exe: "__TIME__" "__DATE__"\n");
+	Con_Printf ("Exe: %s %s\n", __TIME__, __DATE__);	// Missi: not sure if i even did this right
 	Con_Printf ("%4.1f megabyte heap\n",parms->memsize/ (1024*1024.0));
 	
 	R_InitTextures ();		// needed even for dedicated servers
@@ -931,7 +931,7 @@ to run quit through here before the final handoff to the sys code.
 */
 void Host_Shutdown(void)
 {
-	static qboolean isdown = false;
+	static bool isdown = false;
 	
 	if (isdown)
 	{

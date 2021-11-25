@@ -146,7 +146,7 @@ void Host_Notarget_f (void)
 		SV_ClientPrintf ("notarget ON\n");
 }
 
-qboolean noclip_anglehack;
+bool noclip_anglehack;
 
 void Host_Noclip_f (void)
 {
@@ -641,7 +641,7 @@ void Host_Loadgame_f (void)
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = Hunk_Alloc (strlen(str)+1);
+		sv.lightstyles[i] = static_cast<char*>(Hunk_Alloc (strlen(str)+1));
 		strcpy (sv.lightstyles[i], str);
 	}
 
@@ -949,7 +949,7 @@ void Host_Name_f (void)
 void Host_Version_f (void)
 {
 	Con_Printf ("Version %4.2f\n", VERSION);
-	Con_Printf ("Exe: "__TIME__" "__DATE__"\n");
+	Con_Printf ("Exe: %s %s\n", __TIME__, __DATE__);
 }
 
 #ifdef IDGODS
@@ -1005,14 +1005,14 @@ void Host_Please_f (void)
 #endif
 
 
-void Host_Say(qboolean teamonly)
+void Host_Say(bool teamonly)
 {
 	client_t *client;
 	client_t *save;
 	int		j;
 	char	*p;
-	unsigned char	text[64];
-	qboolean	fromServer = false;
+	char	text[64];
+	bool	fromServer = false;
 
 	if (cmd_source == src_command)
 	{
@@ -1427,7 +1427,7 @@ void Host_Kick_f (void)
 	char		*message = NULL;
 	client_t	*save;
 	int			i;
-	qboolean	byNumber = false;
+	bool	byNumber = false;
 
 	if (cmd_source == src_command)
 	{

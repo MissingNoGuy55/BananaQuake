@@ -33,26 +33,40 @@ static struct qsockaddr broadcastaddr;
 
 static unsigned long myAddr;
 
-qboolean	winsock_lib_initialized;
+bool	winsock_lib_initialized;
 
-int (PASCAL FAR *pWSAStartup)(WORD wVersionRequired, LPWSADATA lpWSAData);
-int (PASCAL FAR *pWSACleanup)(void);
-int (PASCAL FAR *pWSAGetLastError)(void);
-SOCKET (PASCAL FAR *psocket)(int af, int type, int protocol);
-int (PASCAL FAR *pioctlsocket)(SOCKET s, long cmd, u_long FAR *argp);
-int (PASCAL FAR *psetsockopt)(SOCKET s, int level, int optname,
+typedef int (CALLBACK *PWSASTARTUP)(WORD wVersionRequired, LPWSADATA lpWSAData);
+typedef int (CALLBACK *PWSACLEANUP)(void);
+typedef int (CALLBACK *PWSAGETLASTERROR)(void);
+typedef SOCKET (CALLBACK *PSOCKET)(int af, int type, int protocol);
+typedef int (CALLBACK *PIOCTLSOCKET)(SOCKET s, long cmd, u_long FAR *argp);
+typedef int (CALLBACK *PSETSOCKOPT)(SOCKET s, int level, int optname,
 							  const char FAR * optval, int optlen);
-int (PASCAL FAR *precvfrom)(SOCKET s, char FAR * buf, int len, int flags,
+typedef int (CALLBACK *PRECVFROM)(SOCKET s, char FAR * buf, int len, int flags,
 							struct sockaddr FAR *from, int FAR * fromlen);
-int (PASCAL FAR *psendto)(SOCKET s, const char FAR * buf, int len, int flags,
+typedef int (CALLBACK *PSENDTO)(SOCKET s, const char FAR * buf, int len, int flags,
 						  const struct sockaddr FAR *to, int tolen);
-int (PASCAL FAR *pclosesocket)(SOCKET s);
-int (PASCAL FAR *pgethostname)(char FAR * name, int namelen);
-struct hostent FAR * (PASCAL FAR *pgethostbyname)(const char FAR * name);
-struct hostent FAR * (PASCAL FAR *pgethostbyaddr)(const char FAR * addr,
+typedef int (CALLBACK *PCLOSESOCKET)(SOCKET s);
+typedef int (CALLBACK *PGETHOSTNAME)(char FAR * name, int namelen);
+typedef struct hostent FAR * (PASCAL FAR *PGETHOSTBYNAME)(const char FAR * name);
+typedef struct hostent FAR * (PASCAL FAR *PGETHOSTBYADDR)(const char FAR * addr,
 												  int len, int type);
-int (PASCAL FAR *pgetsockname)(SOCKET s, struct sockaddr FAR *name,
+typedef int (CALLBACK *PGETSOCKNAME)(SOCKET s, struct sockaddr FAR *name,
 							   int FAR * namelen);
+
+PWSASTARTUP pWSAStartup;
+PWSACLEANUP pWSACleanup;
+PWSAGETLASTERROR pWSAGetLastError;
+PSOCKET psocket;
+PIOCTLSOCKET pioctlsocket;
+PSETSOCKOPT psetsockopt;
+PRECVFROM precvfrom;
+PSENDTO psendto;
+PCLOSESOCKET pclosesocket;
+PGETHOSTNAME pgethostname;
+PGETHOSTBYNAME pgethostbyname;
+PGETHOSTBYADDR pgethostbyaddr;
+PGETSOCKNAME pgetsockname;
 
 #include "net_wins.h"
 
@@ -136,19 +150,21 @@ int WINS_Init (void)
 
 	winsock_lib_initialized = true;
 
-    pWSAStartup = (void *)GetProcAddress(hInst, "WSAStartup");
-    pWSACleanup = (void *)GetProcAddress(hInst, "WSACleanup");
-    pWSAGetLastError = (void *)GetProcAddress(hInst, "WSAGetLastError");
-    psocket = (void *)GetProcAddress(hInst, "socket");
-    pioctlsocket = (void *)GetProcAddress(hInst, "ioctlsocket");
-    psetsockopt = (void *)GetProcAddress(hInst, "setsockopt");
-    precvfrom = (void *)GetProcAddress(hInst, "recvfrom");
-    psendto = (void *)GetProcAddress(hInst, "sendto");
-    pclosesocket = (void *)GetProcAddress(hInst, "closesocket");
-    pgethostname = (void *)GetProcAddress(hInst, "gethostname");
-    pgethostbyname = (void *)GetProcAddress(hInst, "gethostbyname");
-    pgethostbyaddr = (void *)GetProcAddress(hInst, "gethostbyaddr");
-    pgetsockname = (void *)GetProcAddress(hInst, "getsockname");
+	typedef void (WINAPI* PGNSI)(LPSYSTEM_INFO);
+
+    pWSAStartup = (PWSASTARTUP)GetProcAddress(hInst, "WSAStartup");
+    pWSACleanup = (PWSACLEANUP)GetProcAddress(hInst, "WSACleanup");
+    pWSAGetLastError = (PWSAGETLASTERROR)GetProcAddress(hInst, "WSAGetLastError");
+    psocket = (PSOCKET)GetProcAddress(hInst, "socket");
+    pioctlsocket = (PIOCTLSOCKET)GetProcAddress(hInst, "ioctlsocket");
+    psetsockopt = (PSETSOCKOPT)GetProcAddress(hInst, "setsockopt");
+    precvfrom = (PRECVFROM)GetProcAddress(hInst, "recvfrom");
+    psendto = (PSENDTO)GetProcAddress(hInst, "sendto");
+    pclosesocket = (PCLOSESOCKET)GetProcAddress(hInst, "closesocket");
+    pgethostname = (PGETHOSTNAME)GetProcAddress(hInst, "gethostname");
+    pgethostbyname = (PGETHOSTBYNAME)GetProcAddress(hInst, "gethostbyname");
+    pgethostbyaddr = (PGETHOSTBYADDR)GetProcAddress(hInst, "gethostbyaddr");
+    pgetsockname = (PGETSOCKNAME)GetProcAddress(hInst, "getsockname");
 
     if (!pWSAStartup || !pWSACleanup || !pWSAGetLastError ||
 		!psocket || !pioctlsocket || !psetsockopt ||
@@ -256,7 +272,7 @@ void WINS_Shutdown (void)
 
 //=============================================================================
 
-void WINS_Listen (qboolean state)
+void WINS_Listen (bool state)
 {
 	// enable listening
 	if (state)
@@ -293,7 +309,7 @@ int WINS_OpenSocket (int port)
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = myAddr;
 	address.sin_port = htons((unsigned short)port);
-	if( bind (newsocket, (void *)&address, sizeof(address)) == 0)
+	if( bind (newsocket, (const sockaddr *)&address, sizeof(address)) == 0)
 		return newsocket;
 
 	Sys_Error ("Unable to bind to %s", WINS_AddrToString((struct qsockaddr *)&address));
@@ -394,7 +410,7 @@ int WINS_CheckNewConnections (void)
 
 //=============================================================================
 
-int WINS_Read (int socket, byte *buf, int len, struct qsockaddr *addr)
+int WINS_Read (int socket, char *buf, int len, struct qsockaddr *addr)
 {
 	int addrlen = sizeof (struct qsockaddr);
 	int ret;
@@ -402,9 +418,9 @@ int WINS_Read (int socket, byte *buf, int len, struct qsockaddr *addr)
 	ret = precvfrom (socket, buf, len, 0, (struct sockaddr *)addr, &addrlen);
 	if (ret == -1)
 	{
-		int errno = pWSAGetLastError();
+		int errnum = pWSAGetLastError();
 
-		if (errno == WSAEWOULDBLOCK || errno == WSAECONNREFUSED)
+		if (errnum == WSAEWOULDBLOCK || errnum == WSAECONNREFUSED)
 			return 0;
 
 	}
@@ -449,7 +465,7 @@ int WINS_Broadcast (int socket, byte *buf, int len)
 
 //=============================================================================
 
-int WINS_Write (int socket, byte *buf, int len, struct qsockaddr *addr)
+int WINS_Write (int socket, char *buf, int len, struct qsockaddr *addr)
 {
 	int ret;
 

@@ -20,6 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_surf.c: surface-related refresh code
 
 #include "quakedef.h"
+#include "gl_warp.h"
+#include "gl_rmain.h"
+#include "gl_rsurf.h"
 
 int			skytexturenum;
 
@@ -45,7 +48,7 @@ typedef struct glRect_s {
 } glRect_t;
 
 glpoly_t	*lightmap_polys[MAX_LIGHTMAPS];
-qboolean	lightmap_modified[MAX_LIGHTMAPS];
+bool	lightmap_modified[MAX_LIGHTMAPS];
 glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
 
 int			allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
@@ -279,7 +282,7 @@ void DrawGLWaterPolyLightmap (glpoly_t *p);
 lpMTexFUNC qglMTexCoord2fSGIS = NULL;
 lpSelTexFUNC qglSelectTextureSGIS = NULL;
 
-qboolean mtexenabled = false;
+bool mtexenabled = false;
 
 void GL_SelectTexture (GLenum target);
 
@@ -1081,7 +1084,7 @@ void R_DrawBrushModel (entity_t *e)
 	float		dot;
 	mplane_t	*pplane;
 	model_t		*clmodel;
-	qboolean	rotated;
+	bool	rotated;
 
 	currententity = e;
 	currenttexture = -1;
@@ -1458,7 +1461,7 @@ void BuildSurfaceDisplayList (msurface_t *fa)
 	medge_t		*pedges, *r_pedge;
 	mplane_t	*pplane;
 	int			vertpage, newverts, newpage, lastvert;
-	qboolean	visible;
+	bool	visible;
 	float		*vec;
 	float		s, t;
 	glpoly_t	*poly;
@@ -1471,7 +1474,7 @@ void BuildSurfaceDisplayList (msurface_t *fa)
 	//
 	// draw texture
 	//
-	poly = Hunk_Alloc (sizeof(glpoly_t) + (lnumverts-4) * VERTEXSIZE*sizeof(float));
+	poly = static_cast<glpoly_t*>(Hunk_Alloc (sizeof(glpoly_t) + (lnumverts-4) * VERTEXSIZE*sizeof(float)));
 	poly->next = fa->polys;
 	poly->flags = fa->flags;
 	fa->polys = poly;
@@ -1528,14 +1531,14 @@ void BuildSurfaceDisplayList (msurface_t *fa)
 		for (i = 0 ; i < lnumverts ; ++i)
 		{
 			vec3_t v1, v2;
-			float *prev, *this, *next;
+			float *prev, *fthis, *next;
 			float f;
 
 			prev = poly->verts[(i + lnumverts - 1) % lnumverts];
-			this = poly->verts[i];
+			fthis = poly->verts[i];
 			next = poly->verts[(i + 1) % lnumverts];
 
-			VectorSubtract( this, prev, v1 );
+			VectorSubtract( fthis, prev, v1 );
 			VectorNormalize( v1 );
 			VectorSubtract( next, prev, v2 );
 			VectorNormalize( v2 );
@@ -1599,7 +1602,7 @@ void GL_BuildLightmaps (void)
 {
 	int		i, j;
 	model_t	*m;
-	extern qboolean isPermedia;
+	extern bool isPermedia;
 
 	memset (allocated, 0, sizeof(allocated));
 

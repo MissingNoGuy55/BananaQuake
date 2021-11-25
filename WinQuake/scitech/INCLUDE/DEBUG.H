@@ -241,13 +241,13 @@ typedef unsigned short  ushort;
 typedef unsigned int    uint;
 typedef unsigned long   ulong;
 typedef int             ibool;		/* Integer boolean type			*/
-#ifndef	__cplusplus
-#define	bool			ibool		/* Standard C					*/
-#else
-#ifndef	__HAS_BOOL__
-#define	bool			ibool		/* Older C++ compilers			*/
-#endif
-#endif	/* __cplusplus */
+//#ifndef	__cplusplus
+//#define	bool			ibool		/* Standard C					*/
+//#else
+//#ifndef	__HAS_BOOL__
+//#define	bool			ibool		/* Older C++ compilers			*/
+//#endif
+//#endif	/* __cplusplus */
 #endif  /* __GENDEFS */
 
 /* Includes Windows headers, as they define TRUE and FALSE */

@@ -1930,7 +1930,7 @@ void	MGLAPI MGL_setACCELDriver(void *driver);
 #ifdef	__cplusplus
 }						/* End of "C" linkage for C++	*/
 
-#include "mglrect.hpp"	/* Include C++ point/rectangle classes			*/
+// #include "mglrect.h"	/* Include C++ point/rectangle classes			*/
 
 #endif	/* __cplusplus */
 
