@@ -94,6 +94,25 @@ void S_UnblockSound (void);
 
 void VID_SetDefaultMode (void);
 
+typedef int (CALLBACK* PWSASTARTUP)(WORD wVersionRequired, LPWSADATA lpWSAData);
+typedef int (CALLBACK* PWSACLEANUP)(void);
+typedef int (CALLBACK* PWSAGETLASTERROR)(void);
+typedef SOCKET(CALLBACK* PSOCKET)(int af, int type, int protocol);
+typedef int (CALLBACK* PIOCTLSOCKET)(SOCKET s, long cmd, u_long FAR* argp);
+typedef int (CALLBACK* PSETSOCKOPT)(SOCKET s, int level, int optname,
+	const char FAR* optval, int optlen);
+typedef int (CALLBACK* PRECVFROM)(SOCKET s, char FAR* buf, int len, int flags,
+	struct sockaddr FAR* from, int FAR* fromlen);
+typedef int (CALLBACK* PSENDTO)(SOCKET s, const char FAR* buf, int len, int flags,
+	const struct sockaddr FAR* to, int tolen);
+typedef int (CALLBACK* PCLOSESOCKET)(SOCKET s);
+typedef int (CALLBACK* PGETHOSTNAME)(char FAR* name, int namelen);
+typedef struct hostent FAR* (PASCAL FAR* PGETHOSTBYNAME)(const char FAR* name);
+typedef struct hostent FAR* (PASCAL FAR* PGETHOSTBYADDR)(const char FAR* addr,
+	int len, int type);
+typedef int (CALLBACK* PGETSOCKNAME)(SOCKET s, struct sockaddr FAR* name,
+	int FAR* namelen);
+
 PWSASTARTUP pWSAStartup;
 PWSACLEANUP pWSACleanup;
 PWSAGETLASTERROR pWSAGetLastError;
