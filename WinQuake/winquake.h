@@ -94,6 +94,22 @@ void S_UnblockSound (void);
 
 void VID_SetDefaultMode (void);
 
+PWSASTARTUP pWSAStartup;
+PWSACLEANUP pWSACleanup;
+PWSAGETLASTERROR pWSAGetLastError;
+PSOCKET psocket;
+PIOCTLSOCKET pioctlsocket;
+PSETSOCKOPT psetsockopt;
+PRECVFROM precvfrom;
+PSENDTO psendto;
+PCLOSESOCKET pclosesocket;
+PGETHOSTNAME pgethostname;
+PGETHOSTBYNAME pgethostbyname;
+PGETHOSTBYADDR pgethostbyaddr;
+PGETSOCKNAME pgetsockname;
+
+/*
+
 int(CALLBACK* LPFNDLLFUNC1)(WORD wVersionRequired, LPWSADATA lpWSAData);
 int (PASCAL FAR *pWSACleanup)(void);
 int (PASCAL FAR *pWSAGetLastError)(void);
@@ -112,3 +128,5 @@ struct hostent FAR * (PASCAL FAR *pgethostbyaddr)(const char FAR * addr,
 												  int len, int type);
 int (PASCAL FAR *pgetsockname)(SOCKET s, struct sockaddr FAR *name,
 							   int FAR * namelen);
+
+*/

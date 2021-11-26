@@ -54,20 +54,6 @@ typedef struct hostent FAR * (PASCAL FAR *PGETHOSTBYADDR)(const char FAR * addr,
 typedef int (CALLBACK *PGETSOCKNAME)(SOCKET s, struct sockaddr FAR *name,
 							   int FAR * namelen);
 
-PWSASTARTUP pWSAStartup;
-PWSACLEANUP pWSACleanup;
-PWSAGETLASTERROR pWSAGetLastError;
-PSOCKET psocket;
-PIOCTLSOCKET pioctlsocket;
-PSETSOCKOPT psetsockopt;
-PRECVFROM precvfrom;
-PSENDTO psendto;
-PCLOSESOCKET pclosesocket;
-PGETHOSTNAME pgethostname;
-PGETHOSTBYNAME pgethostbyname;
-PGETHOSTBYADDR pgethostbyaddr;
-PGETSOCKNAME pgetsockname;
-
 #include "net_wins.h"
 
 int winsock_initialized = 0;
