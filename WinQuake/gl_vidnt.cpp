@@ -507,7 +507,7 @@ void CheckTextureExtensions (void)
 
 	texture_ext = FALSE;
 	/* check for texture extension */
-	tmp = (unsigned char *)glGetString(GL_EXTENSIONS);
+	tmp = (char *)glGetString(GL_EXTENSIONS);
 	while (*tmp)
 	{
 		if (strncmp((const char*)tmp, TEXTURE_EXT_STRING, strlen(TEXTURE_EXT_STRING)) == 0)
@@ -522,7 +522,7 @@ void CheckTextureExtensions (void)
 		if (hInstGL == NULL)
 			Sys_Error ("Couldn't load opengl32.dll\n");
 
-		bindTexFunc = (void *)GetProcAddress(hInstGL,"glBindTexture");
+		bindTexFunc = (BINDTEXFUNCPTR)GetProcAddress(hInstGL,"glBindTexture");
 
 		if (!bindTexFunc)
 			Sys_Error ("No texture objects!");
@@ -543,7 +543,7 @@ void CheckArrayExtensions (void)
 	char		*tmp;
 
 	/* check for texture extension */
-	tmp = (unsigned char *)glGetString(GL_EXTENSIONS);
+	tmp = (char *)glGetString(GL_EXTENSIONS);
 	while (*tmp)
 	{
 		if (strncmp((const char*)tmp, "GL_EXT_vertex_array", strlen("GL_EXT_vertex_array")) == 0)

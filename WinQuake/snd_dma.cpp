@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // snd_dma.c -- main control for any streaming sound output device
 
 #include "quakedef.h"
+#include "in_win.h"
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -207,14 +208,14 @@ void S_Init (void)
 
 	SND_InitScaletable ();
 
-	known_sfx = Hunk_AllocName (MAX_SFX*sizeof(sfx_t), "sfx_t");
+	known_sfx = static_cast<sfx_t*>(Hunk_AllocName (MAX_SFX*sizeof(sfx_t), "sfx_t"));
 	num_sfx = 0;
 
 // create a piece of DMA memory
 
 	if (fakedma)
 	{
-		shm = (void *) Hunk_AllocName(sizeof(*shm), "shm");
+		shm = static_cast<volatile dma_t*>(Hunk_AllocName(sizeof(*shm), "shm"));
 		shm->splitbuffer = 0;
 		shm->samplebits = 16;
 		shm->speed = 22050;
@@ -224,7 +225,7 @@ void S_Init (void)
 		shm->soundalive = true;
 		shm->gamealive = true;
 		shm->submission_chunk = 1;
-		shm->buffer = Hunk_AllocName(1<<16, "shmbuf");
+		shm->buffer = static_cast<unsigned char*>(Hunk_AllocName(1<<16, "shmbuf"));
 	}
 
 	Con_Printf ("Sound sampling rate: %i\n", shm->speed);
@@ -579,10 +580,11 @@ void S_ClearBuffer (void)
 		DWORD	*pData;
 		int		reps;
 		HRESULT	hresult;
+		LPVOID* pVoid;
 
 		reps = 0;
 
-		while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, &pData, &dwSize, NULL, NULL, 0)) != DS_OK)
+		while ((hresult = pDSBuf->Lock(0, gSndBufSize, pVoid, &dwSize, NULL, NULL, 0)) != DS_OK)
 		{
 			if (hresult != DSERR_BUFFERLOST)
 			{
@@ -599,9 +601,9 @@ void S_ClearBuffer (void)
 			}
 		}
 
-		Q_memset(pData, clear, shm->samples * shm->samplebits/8);
+		Q_memset(pVoid, clear, shm->samples * shm->samplebits/8);
 
-		pDSBuf->lpVtbl->Unlock(pDSBuf, pData, dwSize, NULL, 0);
+		pDSBuf->Unlock(pVoid, dwSize, NULL, 0);
 	
 	}
 	else
@@ -884,14 +886,14 @@ void S_Update_(void)
 
 		if (pDSBuf)
 		{
-			if (pDSBuf->lpVtbl->GetStatus (pDSBuf, &dwStatus) != DD_OK)
+			if (pDSBuf->GetStatus (&dwStatus) != DD_OK)
 				Con_Printf ("Couldn't get sound buffer status\n");
 			
 			if (dwStatus & DSBSTATUS_BUFFERLOST)
-				pDSBuf->lpVtbl->Restore (pDSBuf);
+				pDSBuf->Restore ();
 			
 			if (!(dwStatus & DSBSTATUS_PLAYING))
-				pDSBuf->lpVtbl->Play(pDSBuf, 0, 0, DSBPLAY_LOOPING);
+				pDSBuf->Play(0, 0, DSBPLAY_LOOPING);
 		}
 	}
 #endif
@@ -967,7 +969,7 @@ void S_SoundList(void)
 	total = 0;
 	for (sfx=known_sfx, i=0 ; i<num_sfx ; i++, sfx++)
 	{
-		sc = Cache_Check (&sfx->cache);
+		sc = static_cast<sfxcache_t*>(Cache_Check (&sfx->cache));
 		if (!sc)
 			continue;
 		size = sc->length*sc->width*(sc->stereo+1);

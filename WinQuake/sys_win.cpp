@@ -559,8 +559,10 @@ char *Sys_ConsoleInput (void)
 	static int		len;
 	INPUT_RECORD	recs[1024];
 	int		count;
-	int		i, dummy;
-	int		ch, numread, numevents;
+	int		i;
+	LPDWORD dummy;
+	int		ch; 
+	LPDWORD numread, numevents;
 
 	if (!isDedicated)
 		return NULL;
@@ -568,16 +570,16 @@ char *Sys_ConsoleInput (void)
 
 	for ( ;; )
 	{
-		if (!GetNumberOfConsoleInputEvents (hinput, &numevents))
+		if (!GetNumberOfConsoleInputEvents (hinput, numevents))
 			Sys_Error ("Error getting # of console events");
 
 		if (numevents <= 0)
 			break;
 
-		if (!ReadConsoleInput(hinput, recs, 1, &numread))
+		if (!ReadConsoleInput(hinput, recs, 1, numread))
 			Sys_Error ("Error reading console input");
 
-		if (numread != 1)
+		if (numread)
 			Sys_Error ("Couldn't read console input");
 
 		if (recs[0].EventType == KEY_EVENT)
@@ -589,7 +591,7 @@ char *Sys_ConsoleInput (void)
 				switch (ch)
 				{
 					case '\r':
-						WriteFile(houtput, "\r\n", 2, &dummy, NULL);	
+						WriteFile(houtput, "\r\n", 2, dummy, NULL);	
 
 						if (len)
 						{
@@ -608,7 +610,7 @@ char *Sys_ConsoleInput (void)
 						break;
 
 					case '\b':
-						WriteFile(houtput, "\b \b", 3, &dummy, NULL);	
+						WriteFile(houtput, "\b \b", 3, dummy, NULL);	
 						if (len)
 						{
 							len--;
@@ -618,7 +620,7 @@ char *Sys_ConsoleInput (void)
 					default:
 						if (ch >= ' ')
 						{
-							WriteFile(houtput, &ch, 1, &dummy, NULL);	
+							WriteFile(houtput, &ch, 1, dummy, NULL);	
 							text[len] = ch;
 							len = (len + 1) & 0xff;
 						}

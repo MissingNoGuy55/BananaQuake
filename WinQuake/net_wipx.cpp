@@ -100,7 +100,7 @@ int WIPX_Init (void)
 	if ((net_controlsocket = WIPX_OpenSocket (0)) == -1)
 	{
 		Con_Printf("WIPX_Init: Unable to open control socket\n");
-		if (--winsock_initialized == 0)
+		if (winsock_initialized == 0)
 			pWSACleanup ();
 		return -1;
 	}
@@ -128,7 +128,7 @@ void WIPX_Shutdown (void)
 {
 	WIPX_Listen (false);
 	WIPX_CloseSocket (net_controlsocket);
-	if (--winsock_initialized == 0)
+	if (winsock_initialized == 0)
 		pWSACleanup ();
 }
 
