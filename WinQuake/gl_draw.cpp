@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_vidnt.h"
+#include "gl_draw.h"
 
 #define GL_COLOR_INDEX8_EXT     0x80E5
 
@@ -187,7 +188,7 @@ qpic_t *Draw_PicFromWad (char *name)
 	qpic_t	*p;
 	glpic_t	*gl;
 
-	p = W_GetLumpName (name);
+	p = static_cast<qpic_t*>(W_GetLumpName (name));
 	gl = (glpic_t *)p->data;
 
 	// load little ones into the scrap
@@ -394,7 +395,7 @@ void Draw_Init (void)
 	// by hand, because we need to write the version
 	// string into the background before turning
 	// it into a texture
-	draw_chars = W_GetLumpName ("conchars");
+	draw_chars = static_cast<byte*>(W_GetLumpName ("conchars"));
 	for (i=0 ; i<256*64 ; i++)
 		if (draw_chars[i] == 0)
 			draw_chars[i] = 255;	// proper transparent color

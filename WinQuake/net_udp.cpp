@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifdef NeXT
-#include <libc.h>
+#include <libcmt.h>
 #endif
 
 extern int gethostname (char *, int);

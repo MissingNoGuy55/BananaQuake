@@ -56,6 +56,8 @@ typedef struct
 
 // plane_t structure
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
+// Missi: haha! i don't use ASM!
+/*
 typedef struct mplane_s
 {
 	vec3_t	normal;
@@ -64,7 +66,7 @@ typedef struct mplane_s
 	byte	signbits;		// signx + signy<<1 + signz<<1
 	byte	pad[2];
 } mplane_t;
-
+*/
 typedef struct texture_s
 {
 	char		name[16];

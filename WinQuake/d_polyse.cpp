@@ -313,7 +313,7 @@ void D_PolysetRecursiveTriangle (int *lp1, int *lp2, int *lp3)
 {
 	int		*temp;
 	int		d;
-	int		new[6];
+	int		inew[6];
 	int		z;
 	short	*zbuf;
 
@@ -356,11 +356,11 @@ split2:
 
 split:
 // split this edge
-	new[0] = (lp1[0] + lp2[0]) >> 1;
-	new[1] = (lp1[1] + lp2[1]) >> 1;
-	new[2] = (lp1[2] + lp2[2]) >> 1;
-	new[3] = (lp1[3] + lp2[3]) >> 1;
-	new[5] = (lp1[5] + lp2[5]) >> 1;
+	inew[0] = (lp1[0] + lp2[0]) >> 1;
+	inew[1] = (lp1[1] + lp2[1]) >> 1;
+	inew[2] = (lp1[2] + lp2[2]) >> 1;
+	inew[3] = (lp1[3] + lp2[3]) >> 1;
+	inew[5] = (lp1[5] + lp2[5]) >> 1;
 
 // draw the point if splitting a leading edge
 	if (lp2[1] > lp1[1])
@@ -369,21 +369,21 @@ split:
 		goto nodraw;
 
 
-	z = new[5]>>16;
-	zbuf = zspantable[new[1]] + new[0];
+	z = inew[5]>>16;
+	zbuf = zspantable[inew[1]] + inew[0];
 	if (z >= *zbuf)
 	{
 		int		pix;
 		
 		*zbuf = z;
-		pix = d_pcolormap[skintable[new[3]>>16][new[2]>>16]];
-		d_viewbuffer[d_scantable[new[1]] + new[0]] = pix;
+		pix = d_pcolormap[skintable[inew[3]>>16][inew[2]>>16]];
+		d_viewbuffer[d_scantable[inew[1]] + inew[0]] = pix;
 	}
 
 nodraw:
 // recursively continue
-	D_PolysetRecursiveTriangle (lp3, lp1, new);
-	D_PolysetRecursiveTriangle (lp3, new, lp2);
+	D_PolysetRecursiveTriangle (lp3, lp1, inew);
+	D_PolysetRecursiveTriangle (lp3, inew, lp2);
 }
 
 #endif	// !id386
@@ -638,7 +638,7 @@ void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage)
 
 		if (lcount)
 		{
-			lpdest = pspanpackage->pdest;
+			lpdest = static_cast<byte*>(pspanpackage->pdest);
 			lptex = pspanpackage->ptex;
 			lpz = pspanpackage->pz;
 			lsfrac = pspanpackage->sfrac;

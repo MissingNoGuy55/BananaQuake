@@ -1153,7 +1153,7 @@ void COM_Init (char *basedir)
 	Cmd_AddCommand ("path", COM_Path_f);
 
 	COM_InitFilesystem ();
-	COM_CheckRegistered ();
+	//COM_CheckRegistered ();
 }
 
 

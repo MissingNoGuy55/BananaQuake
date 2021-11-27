@@ -31,7 +31,14 @@ typedef	int	fixed16_t;
 #define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
 #endif
 
-struct mplane_s;
+typedef struct mplane_s
+{
+	vec3_t	normal;
+	float	dist;
+	byte	type;			// for texture axis selection and fast side tests
+	byte	signbits;		// signx + signy<<1 + signz<<1
+	byte	pad[2];
+} mplane_t;
 
 extern vec3_t vec3_origin;
 extern	int nanmask;
@@ -67,7 +74,7 @@ fixed16_t Invert24To16(fixed16_t val);
 int GreatestCommonDivisor (int i1, int i2);
 
 void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
-int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct mplane_s *plane);
+int BoxOnPlaneSide(vec3_t emins, vec3_t emaxs, mplane_t* p);
 float	anglemod(float a);
 
 void RotatePointAroundVector(vec3_t dst, const vec3_t dir, const vec3_t point, float degrees);

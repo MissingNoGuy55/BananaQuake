@@ -910,12 +910,12 @@ void *Cache_Alloc (cache_user_t *c, int size, char *name)
 Memory_Init
 ========================
 */
-void Memory_Init (byte *buf, int size)
+void Memory_Init (void *buf, int size)
 {
 	int p;
 	int zonesize = DYNAMIC_SIZE;
 
-	hunk_base = buf;
+	hunk_base = static_cast<byte*>(buf);
 	hunk_size = size;
 	hunk_low_used = 0;
 	hunk_high_used = 0;

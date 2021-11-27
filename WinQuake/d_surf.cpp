@@ -27,7 +27,7 @@ float           surfscale;
 bool        r_cache_thrash;         // set if surface cache is thrashing
 
 int                                     sc_size;
-surfcache_t                     *sc_rover, *sc_base;
+surfcache_t								*sc_base;
 
 #define GUARDSIZE       4
 

@@ -53,6 +53,10 @@ static HANDLE	hFile;
 static HANDLE	heventParent;
 static HANDLE	heventChild;
 
+unsigned int ceil_cw, single_cw, full_cw, cw, pushed_cw;
+unsigned int fpenv[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+
 void MaskExceptions (void);
 void Sys_InitFloatTime (void);
 void Sys_PushFPCW_SetHigh (void);
@@ -271,25 +275,89 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
 }
 
 
-#ifndef _M_IX86
+// #ifndef _M_IX86
+
+void Sys_LowFPPrecision(void)
+{
+	__asm fldcw single_cw
+	__asm ret
+}
+
+void Sys_HighFPPrecision(void)
+{
+	__asm fldcw full_cw
+	__asm ret
+}
 
 void Sys_SetFPCW (void)
 {
+
+	int testint = 0;
+
+	__asm
+	{
+
+		fnstcw	cw
+		mov 	eax, testint
+#ifdef id386
+		cmp 	testint, 0xF0
+		cmp 	testint, 0x03	// round mode, 64-bit precision
+#endif
+		mov		eax, full_cw
+
+#if	id386
+		cmp		ah,  0xF0
+		cmp		ah,  0x0C	// chop mode, single precision
+#endif
+		mov		eax, single_cw
+
+#if	id386
+		cmp		ah,  0xF0
+		cmp		ah,  0x08	// ceil mode, single precision
+#endif
+		mov		eax, ceil_cw
+
+		ret
+	}
+
 }
 
 void Sys_PushFPCW_SetHigh (void)
 {
+	__asm fnstcw	pushed_cw
+	__asm fldcw	full_cw
+
+	__asm ret
 }
 
 void Sys_PopFPCW (void)
 {
+	__asm fldcw	pushed_cw
+
+	__asm ret
 }
 
 void MaskExceptions (void)
 {
+	__asm fnstenv	fpenv
+	__asm cmp		fpenv, not 0
+	__asm fldenv	fpenv
+
+	__asm ret
 }
 
+#if 0
+void UnmaskExceptions(void)
+{
+	__asm fnstenv	fpenv
+	__asm andl		$0xFFFFFFE0, fpenv
+	__asm fldenv	fpenv
+
+	__asm ret
+}
 #endif
+
+// #endif
 
 /*
 ================
@@ -710,7 +778,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	global_nCmdShow = nCmdShow;
 
 	lpBuffer.dwLength = sizeof(MEMORYSTATUS);
-	GlobalMemoryStatus (&lpBuffer);
+	GlobalMemoryStatus(&lpBuffer);
 
 	if (!GetCurrentDirectory (sizeof(cwd), cwd))
 		Sys_Error ("Couldn't determine current directory");
@@ -807,10 +875,10 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	Sys_PageIn (parms.membase, parms.memsize);
 
-	tevent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	// tevent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-	if (!tevent)
-		Sys_Error ("Couldn't create event");
+	// if (!tevent)
+	// 	Sys_Error ("Couldn't create event");
 
 	if (isDedicated)
 	{
@@ -844,7 +912,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		InitConProc (hFile, heventParent, heventChild);
 	}
 
-	Sys_Init ();
+	// Sys_Init ();
 
 // because sound is off until we become active
 	S_BlockSound ();

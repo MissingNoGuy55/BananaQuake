@@ -21,7 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_warp.h"
+#include "gl_refrag.h"
 #include "gl_rmain.h"
+#include "gl_rlight.h"
 #include "gl_rsurf.h"
 
 int			skytexturenum;

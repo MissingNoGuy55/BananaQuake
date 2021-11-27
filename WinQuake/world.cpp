@@ -42,7 +42,7 @@ typedef struct
 } moveclip_t;
 
 
-int SV_HullPointContents (hull_t *hull, int num, vec3_t p);
+// int SV_HullPointContents (hull_t *hull, int num, vec3_t p);
 
 /*
 ===============================================================================
@@ -480,7 +480,7 @@ POINT TESTING IN HULLS
 ===============================================================================
 */
 
-#if	!id386
+// #if	!id386
 
 /*
 ==================
@@ -515,7 +515,7 @@ int SV_HullPointContents (hull_t *hull, int num, vec3_t p)
 	return num;
 }
 
-#endif	// !id386
+// #endif	// !id386
 
 
 /*

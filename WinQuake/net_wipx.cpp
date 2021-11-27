@@ -32,7 +32,7 @@ static int net_acceptsocket = -1;		// socket for fielding new connections
 static int net_controlsocket;
 static struct qsockaddr broadcastaddr;
 
-extern bool winsock_initialized;
+bool winsock_initialized;
 extern WSADATA		winsockdata;
 
 #define IPXSOCKETS 18

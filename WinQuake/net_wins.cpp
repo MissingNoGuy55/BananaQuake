@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "winquake.h"
+#include "net_wins.h"
 
 extern cvar_t hostname;
 
@@ -377,12 +378,12 @@ int WINS_CheckNewConnections (void)
 
 //=============================================================================
 
-int WINS_Read (int socket, char *buf, int len, struct qsockaddr *addr)
+int WINS_Read (int socket, byte *buf, int len, struct qsockaddr *addr)
 {
 	int addrlen = sizeof (struct qsockaddr);
 	int ret;
 
-	ret = precvfrom (socket, buf, len, 0, (struct sockaddr *)addr, &addrlen);
+	ret = precvfrom (socket, reinterpret_cast<char*>(buf), len, 0, (struct sockaddr *)addr, &addrlen);
 	if (ret == -1)
 	{
 		int errnum = pWSAGetLastError();
@@ -432,11 +433,11 @@ int WINS_Broadcast (int socket, byte *buf, int len)
 
 //=============================================================================
 
-int WINS_Write (int socket, char *buf, int len, struct qsockaddr *addr)
+int WINS_Write (int socket, byte *buf, int len, struct qsockaddr *addr)
 {
 	int ret;
 
-	ret = psendto (socket, buf, len, 0, (struct sockaddr *)addr, sizeof(struct qsockaddr));
+	ret = psendto (socket, reinterpret_cast<const char*>(buf), len, 0, (struct sockaddr *)addr, sizeof(struct qsockaddr));
 	if (ret == -1)
 		if (pWSAGetLastError() == WSAEWOULDBLOCK)
 			return 0;

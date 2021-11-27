@@ -177,7 +177,7 @@ void BOPS_Error (void)
 }
 
 
-#if	!id386
+// #if	!id386
 
 /*
 ==================
@@ -186,7 +186,7 @@ BoxOnPlaneSide
 Returns 1, 2, or 1 + 2
 ==================
 */
-int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, mplane_t *p)
+int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, mplane_t* p)
 {
 	float	dist1, dist2;
 	int		sides;
@@ -286,7 +286,7 @@ if (sides == 0)
 	return sides;
 }
 
-#endif
+// #endif
 
 
 void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)

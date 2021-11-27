@@ -283,7 +283,7 @@ char *PR_ValueString (etype_t type, eval_t *val)
 	ddef_t		*def;
 	dfunction_t	*f;
 	
-	type &= ~DEF_SAVEGLOBAL;
+	type = static_cast<etype_t>(type & ~DEF_SAVEGLOBAL);
 
 	switch (type)
 	{
@@ -335,7 +335,7 @@ char *PR_UglyValueString (etype_t type, eval_t *val)
 	ddef_t		*def;
 	dfunction_t	*f;
 	
-	type &= ~DEF_SAVEGLOBAL;
+	type = static_cast<etype_t>(type & ~DEF_SAVEGLOBAL);
 
 	switch (type)
 	{

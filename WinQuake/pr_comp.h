@@ -23,15 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef int	func_t;
 typedef int	string_t;
 
-enum etype_t
+enum etype_t : int
 {
 	ev_void, ev_string, ev_float, ev_vector, ev_entity, ev_field, ev_function, ev_pointer
 };
-
-etype_t& operator &=(etype_t& a, int b)
-{
-	return static_cast<etype_t>(a &= b);
-}
 
 #define	OFS_NULL		0
 #define	OFS_RETURN		1

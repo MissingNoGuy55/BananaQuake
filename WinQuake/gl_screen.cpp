@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // screen.c -- master for refresh, status bar, console, chat, notify, etc
 
 #include "quakedef.h"
+#include "gl_draw.h"
 
 /*
 
@@ -615,7 +616,7 @@ void SCR_ScreenShot_f (void)
  	}
 
 
-	buffer = malloc(glwidth*glheight*3 + 18);
+	buffer = static_cast<byte*>(malloc(glwidth*glheight*3 + 18));
 	memset (buffer, 0, 18);
 	buffer[2] = 2;		// uncompressed type
 	buffer[12] = glwidth&255;

@@ -113,19 +113,19 @@ typedef struct hostent FAR* (PASCAL FAR* PGETHOSTBYADDR)(const char FAR* addr,
 typedef int (CALLBACK* PGETSOCKNAME)(SOCKET s, struct sockaddr FAR* name,
 	int FAR* namelen);
 
-PWSASTARTUP pWSAStartup;
-PWSACLEANUP pWSACleanup;
-PWSAGETLASTERROR pWSAGetLastError;
-PSOCKET psocket;
-PIOCTLSOCKET pioctlsocket;
-PSETSOCKOPT psetsockopt;
-PRECVFROM precvfrom;
-PSENDTO psendto;
-PCLOSESOCKET pclosesocket;
-PGETHOSTNAME pgethostname;
-PGETHOSTBYNAME pgethostbyname;
-PGETHOSTBYADDR pgethostbyaddr;
-PGETSOCKNAME pgetsockname;
+static PWSASTARTUP pWSAStartup;
+static PWSACLEANUP pWSACleanup;
+static PWSAGETLASTERROR pWSAGetLastError;
+static PSOCKET psocket;
+static PIOCTLSOCKET pioctlsocket;
+static PSETSOCKOPT psetsockopt;
+static PRECVFROM precvfrom;
+static PSENDTO psendto;
+static PCLOSESOCKET pclosesocket;
+static PGETHOSTNAME pgethostname;
+static PGETHOSTBYNAME pgethostbyname;
+static PGETHOSTBYADDR pgethostbyaddr;
+static PGETSOCKNAME pgetsockname;
 
 /*
 

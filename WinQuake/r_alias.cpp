@@ -731,12 +731,6 @@ void R_AliasDrawModel (alight_t *plighting)
 	{
 		D_PolysetUpdateTables ();		// FIXME: precalc...
 	}
-	else
-	{
-#if	id386
-		D_Aff8Patch (currententity->colormap);
-#endif
-	}
 
 	acolormap = currententity->colormap;
 

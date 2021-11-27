@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "quakedef.h"
 #include "winquake.h"
+#include "snd_win.h"
+#include <mmeapi.h>
 
 #define iDirectSoundCreate(a,b,c)	pDirectSoundCreate(a,b,c)
 
@@ -34,14 +36,14 @@ PDIRECTSOUNDCREATE pDirectSoundCreate;
 
 typedef enum {SIS_SUCCESS, SIS_FAILURE, SIS_NOTAVAIL} sndinitstat;
 
-static bool	wavonly;
-static bool	dsound_init;
-static bool	wav_init;
-static bool	snd_firsttime = true, snd_isdirect, snd_iswave;
-static bool	primary_format_set;
+bool	wavonly;
+bool	dsound_init;
+bool	wav_init;
+bool	snd_firsttime = true, snd_isdirect, snd_iswave;
+bool	primary_format_set;
 
-static int	sample16;
-static int	snd_sent, snd_completed;
+int	sample16;
+int	snd_sent, snd_completed;
 
 
 /* 

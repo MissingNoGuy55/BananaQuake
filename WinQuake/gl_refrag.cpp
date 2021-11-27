@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_efrag.c
 
 #include "quakedef.h"
+#include "gl_refrag.h"
 
 mnode_t	*r_pefragtopnode;
 
@@ -135,7 +136,7 @@ void R_SplitEntityOnNode (mnode_t *node)
 // NODE_MIXED
 
 	splitplane = node->plane;
-	sides = BOX_ON_PLANE_SIDE(r_emins, r_emaxs, splitplane);
+	sides = BoxOnPlaneSide(r_emins, r_emaxs, splitplane);
 	
 	if (sides == 3)
 	{
