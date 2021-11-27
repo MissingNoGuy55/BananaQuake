@@ -57,7 +57,7 @@ int WIPX_Init (void)
 	if (!winsock_lib_initialized)
 		return -1;
 
-	if (winsock_initialized == 0)
+	if (!winsock_initialized)
 	{
 		wVersionRequested = MAKEWORD(1, 1); 
 
@@ -69,7 +69,7 @@ int WIPX_Init (void)
 			return -1;
 		}
 	}
-	winsock_initialized++;
+	winsock_initialized = true;
 
 	for (i = 0; i < IPXSOCKETS; i++)
 		ipxsocket[i] = 0;

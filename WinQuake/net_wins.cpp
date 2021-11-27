@@ -41,6 +41,20 @@ bool	winsock_lib_initialized;
 int winsock_initialized = 0;
 WSADATA		winsockdata;
 
+PWSASTARTUP pWSAStartup;
+PWSACLEANUP pWSACleanup;
+PWSAGETLASTERROR pWSAGetLastError;
+PSOCKET psocket;
+PIOCTLSOCKET pioctlsocket;
+PSETSOCKOPT psetsockopt;
+PRECVFROM precvfrom;
+PSENDTO psendto;
+PCLOSESOCKET pclosesocket;
+PGETHOSTNAME pgethostname;
+PGETHOSTBYNAME pgethostbyname;
+PGETHOSTBYADDR pgethostbyaddr;
+PGETSOCKNAME pgetsockname;
+
 //=============================================================================
 
 static double	blocktime;

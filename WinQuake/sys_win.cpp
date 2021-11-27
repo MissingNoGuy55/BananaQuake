@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "resource.h"
 #include "conproc.h"
 #include <direct.h>	// Missi: for _mkdir
+#include <time.h>
 
 #define MINIMUM_WIN_MEMORY		0x0880000
 #define MAXIMUM_WIN_MEMORY		0x1000000
@@ -541,8 +542,12 @@ double Sys_FloatTime (void)
 	LARGE_INTEGER		PerformanceCount;
 	unsigned int		temp, t2;
 	double				time;
+	SYSTEMTIME st, lt;
 
-	Sys_PushFPCW_SetHigh ();
+	GetSystemTime(&st);
+
+
+	// Sys_PushFPCW_SetHigh ();
 
 	QueryPerformanceCounter (&PerformanceCount);
 
@@ -589,9 +594,9 @@ double Sys_FloatTime (void)
 		}
 	}
 
-	Sys_PopFPCW ();
+	// Sys_PopFPCW ();
 
-    return curtime;
+    return st.wMilliseconds;
 }
 
 
