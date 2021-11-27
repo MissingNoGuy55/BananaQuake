@@ -34,20 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define SURFCACHE_SIZE_AT_320X200	600*1024
 
-typedef struct surfcache_s
-{
-	struct surfcache_s* next;
-	struct surfcache_s** owner;		// NULL is an empty chunk of memory
-	int					lightadj[MAXLIGHTMAPS]; // checked for strobe flush
-	int					dlight;
-	int					size;		// including header
-	unsigned			width;
-	unsigned			height;		// DEBUG only needed for debug
-	float				mipscale;
-	struct texture_s* texture;	// checked for animating textures
-	byte				data[4];	// width*height elements
-} surfcache_t;
-
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct sspan_s
 {
@@ -70,14 +56,14 @@ fixed16_t	sadjust, tadjust;
 fixed16_t	bbextents, bbextentt;
 
 
-void D_DrawSpans8(espan_t* pspans);
-void D_DrawSpans16(espan_t* pspans);
-void D_DrawZSpans(espan_t* pspans);
-void Turbulent8(espan_t* pspan);
+//void D_DrawSpans8(espan_t* pspans);
+//void D_DrawSpans16(espan_t* pspans);
+//void D_DrawZSpans(espan_t* pspans);
+//void Turbulent8(espan_t* pspan);
 void D_SpriteDrawSpans(sspan_t* pspan);
 
-void D_DrawSkyScans8(espan_t* pspan);
-void D_DrawSkyScans16(espan_t* pspan);
+//void D_DrawSkyScans8(espan_t* pspan);
+//void D_DrawSkyScans16(espan_t* pspan);
 
 void R_ShowSubDiv(void);
 // void (*prealspandrawer)(void);
@@ -89,7 +75,7 @@ short* d_pzbuffer;
 unsigned int d_zrowbytes, d_zwidth;
 
 int* d_pscantable;
-int	d_scantable[MAXHEIGHT];
+//int	d_scantable[MAXHEIGHT];
 
 //int	d_vrectx, d_vrecty, d_vrectright_particle, d_vrectbottom_particle;
 
@@ -97,10 +83,10 @@ int	d_scantable[MAXHEIGHT];
 
 pixel_t* d_viewbuffer;
 
-short* zspantable[MAXHEIGHT];
+//short* zspantable[MAXHEIGHT];
 
 int		d_minmip;
 float	d_scalemip[3];
 
-void (*d_drawspans) (espan_t* pspan);
+//void (*d_drawspans) (espan_t* pspan);
 

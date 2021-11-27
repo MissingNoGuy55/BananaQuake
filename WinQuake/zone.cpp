@@ -423,7 +423,7 @@ void *Hunk_AllocName (int size, char *name)
 	h->sentinal = HUNK_SENTINAL;
 	Q_strncpy (h->name, name, 8);
 	
-	return (void *)(h+1);
+	return (byte *)(h+1);
 }
 
 /*
