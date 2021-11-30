@@ -870,7 +870,7 @@ void Host_Init (quakeparms_t *parms)
 	NET_Init ();
 	SV_Init ();
 
-	Con_Printf ("Exe: %s %s\n", __TIME__, __DATE__);	// Missi: not sure if i even did this right
+	Con_Printf("Exe: %s %s\n", __TIME__, __DATE__);
 	Con_Printf ("%4.1f megabyte heap\n",parms->memsize/ (1024*1024.0));
 	
 	R_InitTextures ();		// needed even for dedicated servers

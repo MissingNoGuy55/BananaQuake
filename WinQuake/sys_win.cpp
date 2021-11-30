@@ -318,33 +318,35 @@ void Sys_SetFPCW (void)
 #endif
 		mov		eax, ceil_cw
 
-		ret
 	}
 
 }
 
 void Sys_PushFPCW_SetHigh (void)
 {
-	__asm fnstcw	pushed_cw
-	__asm fldcw	full_cw
-
-	__asm ret
+	__asm
+	{
+		fnstcw	pushed_cw
+		fldcw	full_cw
+	}
 }
 
 void Sys_PopFPCW (void)
 {
-	__asm fldcw	pushed_cw
-
-	__asm ret
+	__asm
+	{
+		fnstcw	pushed_cw
+	}
 }
 
 void MaskExceptions (void)
 {
-	__asm fnstenv	fpenv
-	__asm cmp		fpenv, not 0
-	__asm fldenv	fpenv
-
-	__asm ret
+	__asm
+	{
+		fnstenv	fpenv
+		cmp		fpenv, not 0
+		fldenv	fpenv
+	}
 }
 
 #if 0
@@ -547,7 +549,7 @@ double Sys_FloatTime (void)
 	GetSystemTime(&st);
 
 
-	// Sys_PushFPCW_SetHigh ();
+	//Sys_PushFPCW_SetHigh ();
 
 	QueryPerformanceCounter (&PerformanceCount);
 
@@ -594,9 +596,9 @@ double Sys_FloatTime (void)
 		}
 	}
 
-	// Sys_PopFPCW ();
+	//Sys_PopFPCW ();
 
-    return st.wMilliseconds;
+    return curtime;
 }
 
 
