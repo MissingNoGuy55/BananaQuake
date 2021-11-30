@@ -403,7 +403,7 @@ void Draw_Init (void)
 	// now turn them into textures
 	char_texture = GL_LoadTexture ("charset", 128, 128, draw_chars, false, true);
 
-	start = Hunk_LowMark();
+	start = g_MemCache->Hunk_LowMark();
 
 	cb = (qpic_t *)COM_LoadTempFile ("gfx/conback.lmp");	
 	if (!cb)
@@ -469,7 +469,7 @@ void Draw_Init (void)
 	conback->height = vid.height;
 
 	// free loaded console
-	Hunk_FreeToLowMark(start);
+	g_MemCache->Hunk_FreeToLowMark(start);
 
 	// save a texture slot for translated picture
 	translate_texture = texture_extension_number++;

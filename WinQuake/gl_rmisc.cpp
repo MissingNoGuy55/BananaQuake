@@ -37,7 +37,7 @@ void	R_InitTextures (void)
 	byte	*dest;
 
 // create a simple checkerboard texture for the default
-	r_notexture_mip = static_cast<texture_t*>(Hunk_AllocName (sizeof(texture_t) + 16*16+8*8+4*4+2*2, "notexture"));
+	r_notexture_mip = static_cast<texture_t*>(g_MemCache->Hunk_AllocName (sizeof(texture_t) + 16*16+8*8+4*4+2*2, "notexture"));
 	
 	r_notexture_mip->width = r_notexture_mip->height = 16;
 	r_notexture_mip->offsets[0] = sizeof(texture_t);

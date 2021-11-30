@@ -192,7 +192,7 @@ void	Host_FindMaxClients (void)
 	svs.maxclientslimit = svs.maxclients;
 	if (svs.maxclientslimit < 4)
 		svs.maxclientslimit = 4;
-	svs.clients = static_cast<client_s*>(Hunk_AllocName (svs.maxclientslimit*sizeof(client_t), "clients"));
+	svs.clients = static_cast<client_s*>(g_MemCache->Hunk_AllocName (svs.maxclientslimit*sizeof(client_t), "clients"));
 
 	if (svs.maxclients > 1)
 		Cvar_SetValue ("deathmatch", 1.0);
@@ -480,7 +480,7 @@ void Host_ClearMemory (void)
 	D_FlushCaches ();
 	Mod_ClearAll ();
 	if (host_hunklevel)
-		Hunk_FreeToLowMark (host_hunklevel);
+		g_MemCache->Hunk_FreeToLowMark (host_hunklevel);
 
 	cls.signon = 0;
 	memset (&sv, 0, sizeof(sv));
@@ -851,6 +851,8 @@ void Host_Init (quakeparms_t *parms)
 	com_argc = parms->argc;
 	com_argv = parms->argv;
 
+	g_MemCache = new CMemCache;
+
 	Memory_Init (parms->membase, parms->memsize);
 	Cbuf_Init ();
 	Cmd_Init ();	
@@ -912,8 +914,8 @@ void Host_Init (quakeparms_t *parms)
 
 	Cbuf_InsertText ("exec quake.rc\n");
 
-	Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
-	host_hunklevel = Hunk_LowMark ();
+	g_MemCache->Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
+	host_hunklevel = g_MemCache->Hunk_LowMark ();
 
 	host_initialized = true;
 	

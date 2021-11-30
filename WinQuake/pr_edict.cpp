@@ -696,7 +696,7 @@ char *ED_NewString (char *string)
 	int		i,l;
 	
 	l = strlen(string) + 1;
-	cnew = static_cast<char*>(Hunk_Alloc (l));
+	cnew = static_cast<char*>(g_MemCache->Hunk_Alloc (l));
 	cnew_p = cnew;
 
 	for (i=0 ; i< l ; i++)

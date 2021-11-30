@@ -20,27 +20,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Z_zone.c
 
 #include "quakedef.h"
+#include "zone.h"
 
 #define	DYNAMIC_SIZE	0xc000
 
 #define	ZONEID	0x1d4a11
 #define MINFRAGMENT	64
-
-typedef struct memblock_s
-{
-	int		size;           // including the header and possibly tiny fragments
-	int     tag;            // a tag of 0 is a free block
-	int     id;        		// should be ZONEID
-	struct memblock_s       *next, *prev;
-	int		pad;			// pad to 64 bit boundary
-} memblock_t;
-
-typedef struct
-{
-	int		size;		// total bytes malloced, including header
-	memblock_t	blocklist;		// start / end cap for linked list
-	memblock_t	*rover;
-} memzone_t;
 
 void Cache_FreeLow (int new_low_hunk);
 void Cache_FreeHigh (int new_high_hunk);
@@ -139,7 +124,7 @@ void Z_Free (void *ptr)
 Z_Malloc
 ========================
 */
-void *Z_Malloc (int size)
+void* Z_Malloc (int size)
 {
 	void	*buf;
 	
@@ -152,7 +137,7 @@ Z_CheckHeap ();	// DEBUG
 	return buf;
 }
 
-void *Z_TagMalloc (int size, int tag)
+void* Z_TagMalloc (int size, int tag)
 {
 	int		extra;
 	memblock_t	*start, *rover, *m_new, *base;
@@ -290,7 +275,7 @@ Hunk_Check
 Run consistancy and sentinal trahing checks
 ==============
 */
-void Hunk_Check (void)
+void CMemCache::Hunk_Check (void)
 {
 	hunk_t	*h;
 	
@@ -312,7 +297,7 @@ If "all" is specified, every single allocation is printed.
 Otherwise, allocations with the same name will be totaled up before printing.
 ==============
 */
-void Hunk_Print (bool all)
+void CMemCache::Hunk_Print (bool all)
 {
 	hunk_t	*h, *next, *endlow, *starthigh, *endhigh;
 	int		count, sum;
@@ -396,7 +381,7 @@ void Hunk_Print (bool all)
 Hunk_AllocName
 ===================
 */
-void *Hunk_AllocName (int size, char *name)
+void* CMemCache::Hunk_AllocName (int size, char *name)
 {
 	hunk_t	*h;
 	
@@ -431,17 +416,17 @@ void *Hunk_AllocName (int size, char *name)
 Hunk_Alloc
 ===================
 */
-void *Hunk_Alloc (int size)
+void* CMemCache::Hunk_Alloc (int size)
 {
 	return Hunk_AllocName (size, "unknown");
 }
 
-int	Hunk_LowMark (void)
+int	CMemCache::Hunk_LowMark (void)
 {
 	return hunk_low_used;
 }
 
-void Hunk_FreeToLowMark (int mark)
+void CMemCache::Hunk_FreeToLowMark (int mark)
 {
 	if (mark < 0 || mark > hunk_low_used)
 		Sys_Error ("Hunk_FreeToLowMark: bad mark %i", mark);
@@ -449,7 +434,7 @@ void Hunk_FreeToLowMark (int mark)
 	hunk_low_used = mark;
 }
 
-int	Hunk_HighMark (void)
+int	CMemCache::Hunk_HighMark (void)
 {
 	if (hunk_tempactive)
 	{
@@ -460,7 +445,7 @@ int	Hunk_HighMark (void)
 	return hunk_high_used;
 }
 
-void Hunk_FreeToHighMark (int mark)
+void CMemCache::Hunk_FreeToHighMark (int mark)
 {
 	if (hunk_tempactive)
 	{
@@ -479,7 +464,7 @@ void Hunk_FreeToHighMark (int mark)
 Hunk_HighAllocName
 ===================
 */
-void *Hunk_HighAllocName (int size, char *name)
+void* CMemCache::Hunk_HighAllocName (int size, char *name)
 {
 	hunk_t	*h;
 
@@ -525,7 +510,7 @@ Hunk_TempAlloc
 Return space from the top of the hunk
 =================
 */
-void *Hunk_TempAlloc (int size)
+void* CMemCache::Hunk_TempAlloc (int size)
 {
 	void	*buf;
 
@@ -554,25 +539,12 @@ CACHE MEMORY
 ===============================================================================
 */
 
-typedef struct cache_system_s
-{
-	int						size;		// including this header
-	cache_user_t			*user;
-	char					name[16];
-	struct cache_system_s	*prev, *next;
-	struct cache_system_s	*lru_prev, *lru_next;	// for LRU flushing	
-} cache_system_t;
-
-cache_system_t *Cache_TryAlloc (int size, bool nobottom);
-
-cache_system_t	cache_head;
-
 /*
 ===========
 Cache_Move
 ===========
 */
-void Cache_Move ( cache_system_t *c)
+void CMemCache::Cache_Move ( cache_system_t *c)
 {
 	cache_system_t		*c_new;
 
@@ -603,7 +575,7 @@ Cache_FreeLow
 Throw things out until the hunk can be expanded to the given point
 ============
 */
-void Cache_FreeLow (int new_low_hunk)
+void CMemCache::Cache_FreeLow (int new_low_hunk)
 {
 	cache_system_t	*c;
 	
@@ -625,7 +597,7 @@ Cache_FreeHigh
 Throw things out until the hunk can be expanded to the given point
 ============
 */
-void Cache_FreeHigh (int new_high_hunk)
+void CMemCache::Cache_FreeHigh (int new_high_hunk)
 {
 	cache_system_t	*c, *prev;
 	
@@ -647,7 +619,7 @@ void Cache_FreeHigh (int new_high_hunk)
 	}
 }
 
-void Cache_UnlinkLRU (cache_system_t *cs)
+void CMemCache::Cache_UnlinkLRU (cache_system_t *cs)
 {
 	if (!cs->lru_next || !cs->lru_prev)
 		Sys_Error ("Cache_UnlinkLRU: NULL link");
@@ -658,7 +630,7 @@ void Cache_UnlinkLRU (cache_system_t *cs)
 	cs->lru_prev = cs->lru_next = NULL;
 }
 
-void Cache_MakeLRU (cache_system_t *cs)
+void CMemCache::Cache_MakeLRU (cache_system_t *cs)
 {
 	if (cs->lru_next || cs->lru_prev)
 		Sys_Error ("Cache_MakeLRU: active link");
@@ -677,7 +649,7 @@ Looks for a free block of memory between the high and low hunk marks
 Size should already include the header and padding
 ============
 */
-cache_system_t *Cache_TryAlloc (int size, bool nobottom)
+cache_system_t* CMemCache::Cache_TryAlloc (int size, bool nobottom)
 {
 	cache_system_t	*cs, *c_new;
 	
@@ -756,10 +728,10 @@ Cache_Flush
 Throw everything out, so new data will be demand cached
 ============
 */
-void Cache_Flush (void)
+void CMemCache::Cache_Flush (void)
 {
 	while (cache_head.next != &cache_head)
-		Cache_Free ( cache_head.next->user );	// reclaim the space
+		g_MemCache->Cache_Free ( cache_head.next->user );	// reclaim the space
 }
 
 
@@ -769,7 +741,7 @@ Cache_Print
 
 ============
 */
-void Cache_Print (void)
+void CMemCache::Cache_Print (void)
 {
 	cache_system_t	*cd;
 
@@ -785,7 +757,7 @@ Cache_Report
 
 ============
 */
-void Cache_Report (void)
+void CMemCache::Cache_Report (void)
 {
 	Con_DPrintf ("%4.1f megabyte data cache\n", (hunk_size - hunk_high_used - hunk_low_used) / (float)(1024*1024) );
 }
@@ -796,7 +768,7 @@ Cache_Compact
 
 ============
 */
-void Cache_Compact (void)
+void CMemCache::Cache_Compact (void)
 {
 }
 
@@ -806,12 +778,12 @@ Cache_Init
 
 ============
 */
-void Cache_Init (void)
+void CMemCache::Cache_Init (void)
 {
 	cache_head.next = cache_head.prev = &cache_head;
 	cache_head.lru_next = cache_head.lru_prev = &cache_head;
 
-	Cmd_AddCommand ("flush", Cache_Flush);
+	Cmd_AddCommand ("flush", CMemCache::Cache_Flush);
 }
 
 /*
@@ -821,7 +793,7 @@ Cache_Free
 Frees the memory and removes it from the LRU list
 ==============
 */
-void Cache_Free (cache_user_t *c)
+void CMemCache::Cache_Free (cache_user_t *c)
 {
 	cache_system_t	*cs;
 
@@ -846,7 +818,7 @@ void Cache_Free (cache_user_t *c)
 Cache_Check
 ==============
 */
-void *Cache_Check (cache_user_t *c)
+void* CMemCache::Cache_Check (cache_user_t *c)
 {
 	cache_system_t	*cs;
 
@@ -868,7 +840,7 @@ void *Cache_Check (cache_user_t *c)
 Cache_Alloc
 ==============
 */
-void *Cache_Alloc (cache_user_t *c, int size, char *name)
+void* CMemCache::Cache_Alloc (cache_user_t *c, int size, char *name)
 {
 	cache_system_t	*cs;
 
@@ -920,7 +892,7 @@ void Memory_Init (void *buf, int size)
 	hunk_low_used = 0;
 	hunk_high_used = 0;
 	
-	Cache_Init ();
+	g_MemCache->Cache_Init ();
 	p = COM_CheckParm ("-zone");
 	if (p)
 	{
@@ -929,7 +901,7 @@ void Memory_Init (void *buf, int size)
 		else
 			Sys_Error ("Memory_Init: you must specify a size in KB after -zone");
 	}
-	mainzone = static_cast<memzone_t*>(Hunk_AllocName (zonesize, "zone" ));
+	mainzone = static_cast<memzone_t*>(g_MemCache->Hunk_AllocName (zonesize, "zone" ));
 	Z_ClearZone (mainzone, zonesize);
 }
 

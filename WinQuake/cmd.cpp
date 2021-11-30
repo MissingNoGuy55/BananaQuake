@@ -291,7 +291,7 @@ void Cmd_Exec_f (void)
 		return;
 	}
 
-	mark = Hunk_LowMark ();
+	mark = g_MemCache->Hunk_LowMark ();
 	f = (char *)COM_LoadHunkFile (Cmd_Argv(1));
 	if (!f)
 	{
@@ -301,7 +301,7 @@ void Cmd_Exec_f (void)
 	Con_Printf ("execing %s\n",Cmd_Argv(1));
 	
 	Cbuf_InsertText (f);
-	Hunk_FreeToLowMark (mark);
+	g_MemCache->Hunk_FreeToLowMark (mark);
 }
 
 
@@ -553,7 +553,7 @@ void	Cmd_AddCommand (char *cmd_name, xcommand_t function)
 		}
 	}
 
-	cmd = static_cast<cmd_function_t*>(Hunk_Alloc (sizeof(cmd_function_t)));
+	cmd = static_cast<cmd_function_t*>(g_MemCache->Hunk_Alloc (sizeof(cmd_function_t)));
 	cmd->name = cmd_name;
 	cmd->function = function;
 	cmd->next = cmd_functions;

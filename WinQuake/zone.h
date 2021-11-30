@@ -83,6 +83,9 @@ Zone block
 
 */
 
+#ifndef ZONE_H
+#define ZONE_H
+
 void Memory_Init (void *buf, int size);
 
 void Z_Free (void *ptr);
@@ -93,39 +96,85 @@ void Z_DumpHeap (void);
 void Z_CheckHeap (void);
 int Z_FreeMemory (void);
 
-void *Hunk_Alloc (int size);		// returns 0 filled memory
-void *Hunk_AllocName (int size, char *name);
+typedef struct memblock_s
+{
+	int		size;           // including the header and possibly tiny fragments
+	int     tag;            // a tag of 0 is a free block
+	int     id;        		// should be ZONEID
+	struct memblock_s* next, * prev;
+	int		pad;			// pad to 64 bit boundary
+} memblock_t;
 
-void *Hunk_HighAllocName (int size, char *name);
-
-int	Hunk_LowMark (void);
-void Hunk_FreeToLowMark (int mark);
-
-int	Hunk_HighMark (void);
-void Hunk_FreeToHighMark (int mark);
-
-void *Hunk_TempAlloc (int size);
-
-void Hunk_Check (void);
+typedef struct
+{
+	int		size;		// total bytes malloced, including header
+	memblock_t	blocklist;		// start / end cap for linked list
+	memblock_t* rover;
+} memzone_t;
 
 typedef struct cache_user_s
 {
-	void	*data;
+	void* data;
 } cache_user_t;
 
-void Cache_Flush (void);
+typedef struct cache_system_s
+{
+	int						size;		// including this header
+	cache_user_t* user;
+	char					name[16];
+	struct cache_system_s* prev, * next;
+	struct cache_system_s* lru_prev, * lru_next;	// for LRU flushing	
+} cache_system_t;
 
-void *Cache_Check (cache_user_t *c);
-// returns the cached data, and moves to the head of the LRU list
-// if present, otherwise returns NULL
+static cache_system_t	cache_head;
 
-void Cache_Free (cache_user_t *c);
+class CMemCache
+{
+public:
+	void* Hunk_Alloc(int size);
+	void Hunk_Print(bool all);
+	// returns 0 filled memory
+	void* Hunk_AllocName(int size, char* name);
 
-void *Cache_Alloc (cache_user_t *c, int size, char *name);
-// Returns NULL if all purgable data was tossed and there still
-// wasn't enough room.
+	void* Hunk_HighAllocName(int size, char* name);
 
-void Cache_Report (void);
+	int	Hunk_LowMark(void);
+	void Hunk_FreeToLowMark(int mark);
 
+	int	Hunk_HighMark(void);
+	void Hunk_FreeToHighMark(int mark);
 
+	void* Hunk_TempAlloc(int size);
 
+	void Cache_Move(cache_system_t* c);
+
+	void Hunk_Check(void);
+
+	void Cache_FreeHigh(int new_high_hunk);
+	void Cache_FreeLow(int new_low_hunk);
+
+	void Cache_MakeLRU(cache_system_t* cs);
+	void Cache_UnlinkLRU(cache_system_t* cs);
+
+	static void Cache_Flush(void);
+	void Cache_Print(void);
+
+	void* Cache_Check(cache_user_t* c);
+	// returns the cached data, and moves to the head of the LRU list
+	// if present, otherwise returns NULL
+
+	void Cache_Init(void);
+
+	void Cache_Free(cache_user_t* c);
+
+	void* Cache_Alloc(cache_user_t* c, int size, char* name);
+	// Returns NULL if all purgable data was tossed and there still
+	// wasn't enough room.
+
+	cache_system_t* Cache_TryAlloc(int size, bool nobottom);
+
+	void Cache_Report(void);
+	void Cache_Compact(void);
+};
+
+#endif
