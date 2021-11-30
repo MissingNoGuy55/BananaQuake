@@ -128,6 +128,8 @@ typedef struct cache_system_s
 
 static cache_system_t	cache_head;
 
+extern class CMemCache* g_MemCache;
+
 class CMemCache
 {
 public:

@@ -48,6 +48,8 @@ all big things are allocated on the hunk.
 
 memzone_t	*mainzone;
 
+CMemCache* g_MemCache;
+
 void Z_ClearZone (memzone_t *zone, int size);
 
 
