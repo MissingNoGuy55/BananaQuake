@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "quakedef.h"
 #include "winquake.h"
-#include "snd_win.h"
 #include <mmeapi.h>
 
 #define iDirectSoundCreate(a,b,c)	pDirectSoundCreate(a,b,c)
@@ -45,41 +44,97 @@ bool	primary_format_set;
 int	sample16;
 int	snd_sent, snd_completed;
 
+CSoundSystemWin* g_SoundSystem;
+LPDIRECTSOUNDBUFFER g_SoundBuffer;
 
-/* 
- * Global variables. Must be visible to window-procedure function 
- *  so it can unlock and free the data block after it has been played. 
- */ 
+/*
+class CSoundSystemWin : public CSoundInternal
+{
+public:
 
-HANDLE		hData;
-LPVOID		lpData, lpData2;
+	//typedef void (*snd_callback)(CSoundSystemWin);
+	//typedef void (*snd_callback)(CSoundSystemWin);
 
-HGLOBAL		hWaveHdr;
-LPWAVEHDR	lpWaveHdr;
+	CSoundSystemWin() { S_Init(); }
 
-HWAVEOUT    hWaveOut; 
+	void S_Init(void);
+	void S_Startup(void);
+	void S_Shutdown(void);
+	void S_StartSound(int entnum, int entchannel, sfx_t* sfx, vec3_t origin, float fvol, float attenuation);
+	void S_StaticSound(sfx_t* sfx, vec3_t origin, float vol, float attenuation);
+	void S_UpdateAmbientSounds(void);
+	void S_StopSound(int entnum, int entchannel);
+	void S_StopAllSounds(bool clear);
+	void S_StopAllSoundsC(void);
+	void S_ClearBuffer(void);
+	void S_Update(vec3_t origin, vec3_t v_forward, vec3_t v_right, vec3_t v_up);
+	void GetSoundtime(void);
+	void S_ExtraUpdate(void);
 
-WAVEOUTCAPS	wavecaps;
+	void S_Update_(void);
 
-DWORD	gSndBufSize;
+	sfx_t* S_PrecacheSound(char* sample);
+	sfx_t* S_FindName(char* name);
+	void S_TouchSound(char* sample);
+	void S_ClearPrecache(void);
+	void S_BeginPrecaching(void);
+	void S_EndPrecaching(void);
+	void S_PaintChannels(int endtime);
+	void S_InitPaintChannels(void);
 
-MMTIME		mmstarttime;
+	// picks a channel based on priorities, empty slots, number of channels
+	channel_t* SND_PickChannel(int entnum, int entchannel);
 
-LPDIRECTSOUND pDS;
-LPDIRECTSOUNDBUFFER pDSBuf, pDSPBuf;
+	// spatializes a channel
+	void SND_Spatialize(channel_t* ch);
 
-HINSTANCE hInstDS;
+	// initializes cycling through a DMA buffer and returns information on it
+	bool SNDDMA_Init(void);
 
-bool SNDDMA_InitDirect (void);
-bool SNDDMA_InitWav (void);
+	// gets the current DMA position
+	int SNDDMA_GetDMAPos(void);
 
+	// shutdown the DMA xfer.
+	void SNDDMA_Shutdown(void);
+
+	void S_Play(void);
+
+	void S_PlayVol(void);
+
+	void S_SoundList(void);
+
+	void S_LocalSound(char* s);
+	sfxcache_t* S_LoadSound(sfx_t* s);
+
+	wavinfo_t GetWavinfo(char* name, byte* wav, int wavlength);
+
+	void SND_InitScaletable(void);
+	void SNDDMA_Submit(void);
+
+	void S_AmbientOff(void);
+	void S_AmbientOn(void);
+
+	void S_SoundInfo_f(void);
+
+	bool SNDDMA_InitDirect(void);
+	bool SNDDMA_InitWav(void);
+
+	void S_BlockSound(void);
+	void S_UnblockSound(void);
+
+	void FreeSound(void);
+
+	// void GetCaps(void) { this->GetCaps(); };
+
+};
+*/
 
 /*
 ==================
 S_BlockSound
 ==================
 */
-void S_BlockSound (void)
+void CSoundSystemWin::S_BlockSound (void)
 {
 
 // DirectSound takes care of blocking itself
@@ -100,7 +155,7 @@ void S_BlockSound (void)
 S_UnblockSound
 ==================
 */
-void S_UnblockSound (void)
+void CSoundSystemWin::S_UnblockSound (void)
 {
 
 // DirectSound takes care of blocking itself
@@ -116,7 +171,7 @@ void S_UnblockSound (void)
 FreeSound
 ==================
 */
-void FreeSound (void)
+void CSoundSystemWin::FreeSound (void)
 {
 	int		i;
 
@@ -184,7 +239,7 @@ SNDDMA_InitDirect
 Direct-Sound support
 ==================
 */
-bool SNDDMA_InitDirect (void)
+bool CSoundSystemWin::SNDDMA_InitDirect (void)
 {
 	DSBUFFERDESC	dsbuf;
 	DSBCAPS			dsbcaps;
@@ -287,11 +342,11 @@ bool SNDDMA_InitDirect (void)
 
 	if (!COM_CheckParm ("-snoforceformat"))
 	{
-		if (DS_OK == pDS->CreateSoundBuffer(&dsbuf, &pDSPBuf, NULL))
+		if (DS_OK == pDS->CreateSoundBuffer(&dsbuf, &g_SoundSystem->pDSPBuf, NULL))
 		{
 			pformat = format;
 
-			if (DS_OK != pDSPBuf->SetFormat (&pformat))
+			if (DS_OK != g_SoundSystem->pDSPBuf->SetFormat (&pformat))
 			{
 				if (snd_firsttime)
 					Con_SafePrintf ("Set primary sound buffer format: no\n");
@@ -355,6 +410,7 @@ bool SNDDMA_InitDirect (void)
 		}
 
 		pDSBuf = pDSPBuf;
+		g_SoundBuffer = pDSBuf;	// Missi: has to be set here
 		Con_SafePrintf ("Using primary sound buffer\n");
 	}
 
@@ -396,7 +452,7 @@ bool SNDDMA_InitDirect (void)
 	pDSBuf->Unlock(lpData, dwSize, NULL, 0);
 
 	/* we don't want anyone to access the buffer directly w/o locking it first. */
-	lpData = NULL; 
+	//lpData = NULL; 
 
 	pDSBuf->Stop();
 	pDSBuf->GetCurrentPosition(&mmstarttime.u.sample, &dwWrite);
@@ -423,7 +479,7 @@ SNDDM_InitWav
 Crappy windows multimedia base
 ==================
 */
-bool SNDDMA_InitWav (void)
+bool CSoundSystemWin::SNDDMA_InitWav (void)
 {
 	WAVEFORMATEX  format; 
 	int				i;
@@ -558,7 +614,7 @@ Returns false if nothing is found.
 ==================
 */
 
-bool SNDDMA_Init(void)
+bool CSoundSystemWin::SNDDMA_Init(void)
 {
 	sndinitstat	stat;
 
@@ -566,6 +622,8 @@ bool SNDDMA_Init(void)
 		wavonly = true;
 
 	dsound_init = wav_init = 0;
+
+	pDS = NULL;
 
 	stat = SIS_FAILURE;	// assume DirectSound won't initialize
 
@@ -636,7 +694,7 @@ inside the recirculating dma buffer, so the mixing code will know
 how many sample are required to fill it up.
 ===============
 */
-int SNDDMA_GetDMAPos(void)
+int CSoundSystemWin::SNDDMA_GetDMAPos(void)
 {
 	MMTIME	mmtime;
 	int		s;
@@ -668,7 +726,7 @@ SNDDMA_Submit
 Send sound to device if buffer isn't really the dma buffer
 ===============
 */
-void SNDDMA_Submit(void)
+void CSoundSystemWin::SNDDMA_Submit(void)
 {
 	LPWAVEHDR	h;
 	int			wResult;
@@ -726,7 +784,7 @@ SNDDMA_Shutdown
 Reset the sound device for exiting
 ===============
 */
-void SNDDMA_Shutdown(void)
+void CSoundSystemWin::SNDDMA_Shutdown(void)
 {
 	FreeSound ();
 }

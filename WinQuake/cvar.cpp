@@ -115,9 +115,9 @@ void Cvar_Set (char *var_name, char *value)
 
 	changed = Q_strcmp(var->string, value);
 	
-	Z_Free (var->string);	// free the old value string
+	g_MemCache->Z_Free (var->string);	// free the old value string
 	
-	var->string = static_cast<char*>(Z_Malloc (Q_strlen(value)+1));
+	var->string = static_cast<char*>(g_MemCache->Z_Malloc (Q_strlen(value)+1));
 	Q_strcpy (var->string, value);
 	var->value = Q_atof (var->string);
 	if (var->server && changed)
@@ -168,7 +168,7 @@ void Cvar_RegisterVariable (cvar_t *variable)
 		
 // copy the value off, because future sets will Z_Free it
 	oldstr = variable->string;
-	variable->string = static_cast<char*>(Z_Malloc (Q_strlen(variable->string)+1));	
+	variable->string = static_cast<char*>(g_MemCache->Z_Malloc (Q_strlen(variable->string)+1));
 	Q_strcpy (variable->string, oldstr);
 	variable->value = Q_atof (variable->string);
 	

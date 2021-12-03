@@ -117,7 +117,7 @@ void Cbuf_InsertText (char *text)
 	templen = cmd_text.cursize;
 	if (templen)
 	{
-		temp = static_cast<char*>(Z_Malloc (templen));
+		temp = static_cast<char*>(g_MemCache->Z_Malloc (templen));
 		Q_memcpy (temp, cmd_text.data, templen);
 		SZ_Clear (&cmd_text);
 	}
@@ -131,7 +131,7 @@ void Cbuf_InsertText (char *text)
 	if (templen)
 	{
 		SZ_Write (&cmd_text, temp, templen);
-		Z_Free (temp);
+		g_MemCache->Z_Free (temp);
 	}
 }
 
@@ -233,7 +233,7 @@ void Cmd_StuffCmds_f (void)
 	if (!s)
 		return;
 		
-	text = static_cast<char*>(Z_Malloc (s+1));
+	text = static_cast<char*>(g_MemCache->Z_Malloc (s+1));
 	text[0] = 0;
 	for (i=1 ; i<com_argc ; i++)
 	{
@@ -245,7 +245,7 @@ void Cmd_StuffCmds_f (void)
 	}
 	
 // pull out the commands
-	build = static_cast<char*>(Z_Malloc (s+1));
+	build = static_cast<char*>(g_MemCache->Z_Malloc (s+1));
 	build[0] = 0;
 	
 	for (i=0 ; i<s-1 ; i++)
@@ -270,8 +270,8 @@ void Cmd_StuffCmds_f (void)
 	if (build[0])
 		Cbuf_InsertText (build);
 	
-	Z_Free (text);
-	Z_Free (build);
+	g_MemCache->Z_Free (text);
+	g_MemCache->Z_Free (build);
 }
 
 
@@ -333,7 +333,7 @@ char *CopyString (char *in)
 {
 	char	*out;
 	
-	out = static_cast<char*>(Z_Malloc (strlen(in)+1));
+	out = static_cast<char*>(g_MemCache->Z_Malloc (strlen(in)+1));
 	strcpy (out, in);
 	return out;
 }
@@ -365,14 +365,14 @@ void Cmd_Alias_f (void)
 	{
 		if (!strcmp(s, a->name))
 		{
-			Z_Free (a->value);
+			g_MemCache->Z_Free (a->value);
 			break;
 		}
 	}
 
 	if (!a)
 	{
-		a = static_cast<cmdalias_t*>(Z_Malloc (sizeof(cmdalias_t)));
+		a = static_cast<cmdalias_t*>(g_MemCache->Z_Malloc (sizeof(cmdalias_t)));
 		a->next = cmd_alias;
 		cmd_alias = a;
 	}
@@ -484,7 +484,7 @@ void Cmd_TokenizeString (char *text)
 	
 // clear the args from the last string
 	for (i=0 ; i<cmd_argc ; i++)
-		Z_Free (cmd_argv[i]);
+		g_MemCache->Z_Free (cmd_argv[i]);
 		
 	cmd_argc = 0;
 	cmd_args = NULL;
@@ -515,7 +515,7 @@ void Cmd_TokenizeString (char *text)
 
 		if (cmd_argc < MAX_ARGS)
 		{
-			cmd_argv[cmd_argc] = static_cast<char*>(Z_Malloc (Q_strlen(com_token)+1));
+			cmd_argv[cmd_argc] = static_cast<char*>(g_MemCache->Z_Malloc (Q_strlen(com_token)+1));
 			Q_strcpy (cmd_argv[cmd_argc], com_token);
 			cmd_argc++;
 		}

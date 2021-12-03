@@ -1552,7 +1552,7 @@ byte *COM_LoadFile (char *path, int usehunk)
 	else if (usehunk == 2)
 		buf = static_cast<byte*>(g_MemCache->Hunk_TempAlloc (len+1));
 	else if (usehunk == 0)
-		buf = static_cast<byte*>(Z_Malloc (len+1));
+		buf = static_cast<byte*>(g_MemCache->Z_Malloc (len+1));
 	else if (usehunk == 3)
 		buf = static_cast<byte*>(g_MemCache->Cache_Alloc (loadcache, len+1, base));
 	else if (usehunk == 4)

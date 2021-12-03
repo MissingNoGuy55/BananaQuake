@@ -26,48 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #endif
 
-void S_Play(void);
-void S_PlayVol(void);
-void S_SoundList(void);
-void S_Update_();
-void S_StopAllSounds(bool clear);
-void S_StopAllSoundsC(void);
-
 // =======================================================================
 // Internal sound data & structures
 // =======================================================================
-
-channel_t   channels[MAX_CHANNELS];
-int			total_channels;
-
-int				snd_blocked = 0;
-static bool	snd_ambient = 1;
-bool		snd_initialized = false;
-
-// pointer should go away
-volatile dma_t  *shm = 0;
-volatile dma_t sn;
-
-vec3_t		listener_origin;
-vec3_t		listener_forward;
-vec3_t		listener_right;
-vec3_t		listener_up;
-vec_t		sound_nominal_clip_dist=1000.0;
-
-int			soundtime;		// sample PAIRS
-int   		paintedtime; 	// sample PAIRS
-
-
-#define	MAX_SFX		512
-sfx_t		*known_sfx;		// hunk allocated [MAX_SFX]
-int			num_sfx;
-
-sfx_t		*ambient_sfx[NUM_AMBIENTS];
-
-int 		desired_speed = 11025;
-int 		desired_bits = 16;
-
-int sound_started=0;
 
 cvar_t bgmvolume = {"bgmvolume", "1", true};
 cvar_t volume = {"volume", "0.7", true};
@@ -98,19 +59,19 @@ bool fakedma = false;
 int fakedma_updates = 15;
 
 
-void S_AmbientOff (void)
+void CSoundSystemWin::S_AmbientOff (void)
 {
-	snd_ambient = false;
+	g_SoundSystem->snd_ambient = false;
 }
 
 
-void S_AmbientOn (void)
+void CSoundSystemWin::S_AmbientOn (void)
 {
 	snd_ambient = true;
 }
 
 
-void S_SoundInfo_f(void)
+void CSoundSystemWin::S_SoundInfo_f(void)
 {
 	if (!sound_started || !shm)
 	{
@@ -135,7 +96,7 @@ S_Startup
 ================
 */
 
-void S_Startup (void)
+void CSoundSystemWin::S_Startup (void)
 {
 	int		rc;
 
@@ -159,13 +120,25 @@ void S_Startup (void)
 	sound_started = 1;
 }
 
+CSoundSystemWin::CSoundSystemWin()
+{
+	pDS = NULL;
+	pDSBuf = NULL;
+	pDSPBuf = NULL;
+	hInstDS = NULL;
+	g_SoundSystem = NULL;
+	gSndBufSize = 0;
+	shm = NULL;
+	total_channels = 0;
+	paintedtime = 0;
+}
 
 /*
 ================
 S_Init
 ================
 */
-void S_Init (void)
+void CSoundSystemWin::S_Init (void)
 {
 
 	Con_Printf("\nSound Initialization\n");
@@ -176,12 +149,13 @@ void S_Init (void)
 	if (COM_CheckParm("-simsound"))
 		fakedma = true;
 
+	/*
 	Cmd_AddCommand("play", S_Play);
 	Cmd_AddCommand("playvol", S_PlayVol);
 	Cmd_AddCommand("stopsound", S_StopAllSoundsC);
-	Cmd_AddCommand("soundlist", S_SoundList);
-	Cmd_AddCommand("soundinfo", S_SoundInfo_f);
-
+	Cmd_AddCommand("soundlist", S_SoundList());
+	Cmd_AddCommand("soundinfo", S_SoundInfo_f());
+	*/	// Missi: enable this later
 	Cvar_RegisterVariable(&nosound);
 	Cvar_RegisterVariable(&volume);
 	Cvar_RegisterVariable(&precache);
@@ -246,7 +220,7 @@ void S_Init (void)
 // Shutdown sound engine
 // =======================================================================
 
-void S_Shutdown(void)
+void CSoundSystemWin::S_Shutdown(void)
 {
 
 	if (!sound_started)
@@ -275,7 +249,7 @@ S_FindName
 
 ==================
 */
-sfx_t *S_FindName (char *name)
+sfx_t* CSoundSystemWin::S_FindName (char *name)
 {
 	int		i;
 	sfx_t	*sfx;
@@ -311,7 +285,7 @@ S_TouchSound
 
 ==================
 */
-void S_TouchSound (char *name)
+void CSoundSystemWin::S_TouchSound (char *name)
 {
 	sfx_t	*sfx;
 	
@@ -324,11 +298,11 @@ void S_TouchSound (char *name)
 
 /*
 ==================
-S_PrecacheSound
+g_SoundSystem->S_PrecacheSound
 
 ==================
 */
-sfx_t *S_PrecacheSound (char *name)
+sfx_t* CSoundSystemWin::S_PrecacheSound (char *name)
 {
 	sfx_t	*sfx;
 
@@ -352,7 +326,7 @@ sfx_t *S_PrecacheSound (char *name)
 SND_PickChannel
 =================
 */
-channel_t *SND_PickChannel(int entnum, int entchannel)
+channel_t* CSoundSystemWin::SND_PickChannel(int entnum, int entchannel)
 {
     int ch_idx;
     int first_to_die;
@@ -396,7 +370,7 @@ channel_t *SND_PickChannel(int entnum, int entchannel)
 SND_Spatialize
 =================
 */
-void SND_Spatialize(channel_t *ch)
+void CSoundSystemWin::SND_Spatialize(channel_t *ch)
 {
     vec_t dot;
     vec_t ldist, rdist, dist;
@@ -449,7 +423,7 @@ void SND_Spatialize(channel_t *ch)
 // Start a sound effect
 // =======================================================================
 
-void S_StartSound(int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float fvol, float attenuation)
+void CSoundSystemWin::S_StartSound(int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float fvol, float attenuation)
 {
 	channel_t *target_chan, *check;
 	sfxcache_t	*sc;
@@ -517,7 +491,7 @@ void S_StartSound(int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float f
 	}
 }
 
-void S_StopSound(int entnum, int entchannel)
+void CSoundSystemWin::S_StopSound(int entnum, int entchannel)
 {
 	int i;
 
@@ -533,7 +507,7 @@ void S_StopSound(int entnum, int entchannel)
 	}
 }
 
-void S_StopAllSounds(bool clear)
+void CSoundInternal::S_StopAllSounds(bool clear)
 {
 	int		i;
 
@@ -549,15 +523,15 @@ void S_StopAllSounds(bool clear)
 	Q_memset(channels, 0, MAX_CHANNELS * sizeof(channel_t));
 
 	if (clear)
-		S_ClearBuffer ();
+		g_SoundSystem->S_ClearBuffer ();
 }
 
-void S_StopAllSoundsC (void)
+void CSoundInternal::S_StopAllSoundsC (void)
 {
 	S_StopAllSounds (true);
 }
 
-void S_ClearBuffer (void)
+void CSoundSystemWin::S_ClearBuffer (void)
 {
 	int		clear;
 		
@@ -580,11 +554,11 @@ void S_ClearBuffer (void)
 		DWORD	*pData;
 		int		reps;
 		HRESULT	hresult;
-		LPVOID* pVoid = 0;
+		LPVOID pVoid;
 
 		reps = 0;
 
-		while ((hresult = pDSBuf->Lock(0, gSndBufSize, pVoid, &dwSize, NULL, NULL, 0)) != DS_OK)
+		while ((hresult = pDSBuf->Lock(0, gSndBufSize, &pVoid, &dwSize, NULL, NULL, 0)) != DS_OK)
 		{
 			if (hresult != DSERR_BUFFERLOST)
 			{
@@ -619,7 +593,7 @@ void S_ClearBuffer (void)
 S_StaticSound
 =================
 */
-void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
+void CSoundSystemWin::S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
 {
 	channel_t	*ss;
 	sfxcache_t		*sc;
@@ -663,7 +637,7 @@ void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
 S_UpdateAmbientSounds
 ===================
 */
-void S_UpdateAmbientSounds (void)
+void CSoundSystemWin::S_UpdateAmbientSounds (void)
 {
 	mleaf_t		*l;
 	float		vol;
@@ -720,7 +694,7 @@ S_Update
 Called once each time through the main loop
 ============
 */
-void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
+void CSoundSystemWin::S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 {
 	int			i, j;
 	int			total;
@@ -809,7 +783,7 @@ void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 	S_Update_();
 }
 
-void GetSoundtime(void)
+void CSoundSystemWin::GetSoundtime(void)
 {
 	int		samplepos;
 	static	int		buffers;
@@ -843,7 +817,7 @@ void GetSoundtime(void)
 #endif
 }
 
-void S_ExtraUpdate (void)
+void CSoundSystemWin::S_ExtraUpdate (void)
 {
 
 #ifdef _WIN32
@@ -855,7 +829,7 @@ void S_ExtraUpdate (void)
 	S_Update_();
 }
 
-void S_Update_(void)
+void CSoundInternal::S_Update_(void)
 {
 	unsigned        endtime;
 	int				samps;
@@ -864,7 +838,7 @@ void S_Update_(void)
 		return;
 
 // Updates DMA time
-	GetSoundtime();
+	g_SoundSystem->GetSoundtime();
 
 // check to make sure that we haven't overshot
 	if (paintedtime < soundtime)
@@ -874,8 +848,10 @@ void S_Update_(void)
 	}
 
 // mix ahead of current position
-	endtime = soundtime + _snd_mixahead.value * shm->speed;
-	samps = shm->samples >> (shm->channels-1);
+
+		endtime = soundtime + _snd_mixahead.value * g_SoundSystem->shm->speed;
+		samps = g_SoundSystem->shm->samples >> (g_SoundSystem->shm->channels - 1);
+
 	if (endtime - soundtime > samps)
 		endtime = soundtime + samps;
 
@@ -898,9 +874,10 @@ void S_Update_(void)
 	}
 #endif
 
-	S_PaintChannels (endtime);
+	g_SoundSystem->S_PaintChannels (endtime);
 
-	SNDDMA_Submit ();
+	g_SoundSystem->SNDDMA_Submit ();
+
 }
 
 /*
@@ -911,7 +888,7 @@ console functions
 ===============================================================================
 */
 
-void S_Play(void)
+void CSoundSystemWin::S_Play(void)
 {
 	static int hash=345;
 	int 	i;
@@ -928,13 +905,22 @@ void S_Play(void)
 		}
 		else
 			Q_strcpy(name, Cmd_Argv(i));
-		sfx = S_PrecacheSound(name);
-		S_StartSound(hash++, 0, sfx, listener_origin, 1.0, 1.0);
+		sfx = g_SoundSystem->S_PrecacheSound(name);
+		g_SoundSystem->S_StartSound(hash++, 0, sfx, listener_origin, 1.0, 1.0);
 		i++;
 	}
 }
 
-void S_PlayVol(void)
+CSoundInternal::CSoundInternal()
+{
+	pDS = NULL;
+	pDSBuf = NULL;
+	pDSPBuf = NULL;
+	hData = NULL;
+	lpData = lpData2 = NULL;
+}
+
+void CSoundInternal::S_PlayVol(void)
 {
 	static int hash=543;
 	int i;
@@ -952,14 +938,14 @@ void S_PlayVol(void)
 		}
 		else
 			Q_strcpy(name, Cmd_Argv(i));
-		sfx = S_PrecacheSound(name);
+		sfx = g_SoundSystem->S_PrecacheSound(name);
 		vol = Q_atof(Cmd_Argv(i+1));
-		S_StartSound(hash++, 0, sfx, listener_origin, vol, 1.0);
+		g_SoundSystem->S_StartSound(hash++, 0, sfx, listener_origin, vol, 1.0);
 		i+=2;
 	}
 }
 
-void S_SoundList(void)
+void CSoundInternal::S_SoundList(void)
 {
 	int		i;
 	sfx_t	*sfx;
@@ -984,7 +970,7 @@ void S_SoundList(void)
 }
 
 
-void S_LocalSound (char *sound)
+void CSoundSystemWin::S_LocalSound (char *sound)
 {
 	sfx_t	*sfx;
 
@@ -993,27 +979,27 @@ void S_LocalSound (char *sound)
 	if (!sound_started)
 		return;
 		
-	sfx = S_PrecacheSound (sound);
+	sfx = g_SoundSystem->S_PrecacheSound (sound);
 	if (!sfx)
 	{
-		Con_Printf ("S_LocalSound: can't cache %s\n", sound);
+		Con_Printf ("g_SoundSystem->S_LocalSound: can't cache %s\n", sound);
 		return;
 	}
-	S_StartSound (cl.viewentity, -1, sfx, vec3_origin, 1, 1);
+	g_SoundSystem->S_StartSound (cl.viewentity, -1, sfx, vec3_origin, 1, 1);
 }
 
 
-void S_ClearPrecache (void)
+void CSoundSystemWin::S_ClearPrecache (void)
 {
 }
 
 
-void S_BeginPrecaching (void)
+void CSoundSystemWin::S_BeginPrecaching (void)
 {
 }
 
 
-void S_EndPrecaching (void)
+void CSoundSystemWin::S_EndPrecaching (void)
 {
 }
 

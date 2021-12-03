@@ -30,7 +30,7 @@ byte *S_Alloc (int size);
 ResampleSfx
 ================
 */
-void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
+void CSoundSystemWin::ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 {
 	int		outcount;
 	int		srcsample;
@@ -94,7 +94,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 S_LoadSound
 ==============
 */
-sfxcache_t *S_LoadSound (sfx_t *s)
+sfxcache_t * CSoundSystemWin::S_LoadSound (sfx_t *s)
 {
     char	namebuffer[256];
 	byte	*data;
@@ -108,6 +108,8 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Check (&s->cache));
 	if (sc)
 		return sc;
+	else
+		return NULL;
 
 //Con_Printf ("S_LoadSound: %x\n", (int)stackbuf);
 // load it in
@@ -124,7 +126,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 		return NULL;
 	}
 
-	info = GetWavinfo (s->name, data, com_filesize);
+	info = g_SoundSystem->GetWavinfo (s->name, data, com_filesize);
 	if (info.channels != 1)
 	{
 		Con_Printf ("%s is a stereo sample\n",s->name);
@@ -245,7 +247,7 @@ void DumpChunks(void)
 GetWavinfo
 ============
 */
-wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength)
+wavinfo_t CSoundSystemWin::GetWavinfo (char *name, byte *wav, int wavlength)
 {
 	wavinfo_t	info;
 	int     i;

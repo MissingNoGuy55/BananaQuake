@@ -43,8 +43,9 @@ extern LPDIRECTDRAWSURFACE	lpPrimary;
 extern LPDIRECTDRAWSURFACE	lpFrontBuffer;
 extern LPDIRECTDRAWSURFACE	lpBackBuffer;
 extern LPDIRECTDRAWPALETTE	lpDDPal;
-extern LPDIRECTSOUND pDS;
-extern LPDIRECTSOUNDBUFFER pDSBuf;
+extern LPDIRECTSOUND* pDS;
+extern LPDIRECTSOUNDBUFFER pDSBuf, pDSPBuf;
+
 
 extern DWORD gSndBufSize;
 //#define SNDBUFSIZE 65536
@@ -88,9 +89,6 @@ extern HANDLE	hinput, houtput;
 
 void IN_UpdateClipCursor (void);
 void CenterWindow(HWND hWndCenter, int width, int height, BOOL lefttopjustify);
-
-void S_BlockSound (void);
-void S_UnblockSound (void);
 
 void VID_SetDefaultMode (void);
 

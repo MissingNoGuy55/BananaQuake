@@ -33,10 +33,18 @@ int		snd_scaletable[32][256];
 int 	*snd_p, snd_linear_count, snd_vol;
 short	*snd_out;
 
+// Global crap
+
+channel_t   channels[MAX_CHANNELS];
+DWORD		gSndBufSize;
+volatile dma_t* shm;
+int total_channels;
+int paintedtime;
+
 // void Snd_WriteLinearBlastStereo16 (void);
 
 // #if	!id386
-void Snd_WriteLinearBlastStereo16 (void)
+void CSoundSystemWin::Snd_WriteLinearBlastStereo16 (void)
 {
 	int		i;
 	int		val;
@@ -45,12 +53,21 @@ void Snd_WriteLinearBlastStereo16 (void)
 	{
 		val = (snd_p[i]*snd_vol)>>8;
 		if (val > 0x7fff)
+		{
 			snd_out[i] = 0x7fff;
+		}
 		else if (val < (short)0x8000)
+		{
 			snd_out[i] = (short)0x8000;
+		}
+		else if (val == 0)
+		{
+			break;
+		}
 		else
+		{
 			snd_out[i] = val;
-
+		}
 		val = (snd_p[i+1]*snd_vol)>>8;
 		if (val > 0x7fff)
 			snd_out[i+1] = 0x7fff;
@@ -62,7 +79,7 @@ void Snd_WriteLinearBlastStereo16 (void)
 }
 // endif
 
-void S_TransferStereo16 (int endtime)
+void CSoundSystemWin::S_TransferStereo16 (int endtime)
 {
 	int		lpos;
 	int		lpaintedtime;
@@ -85,30 +102,37 @@ void S_TransferStereo16 (int endtime)
 	{
 		reps = 0;
 
-		while ((hresult = pDSBuf->Lock(0, gSndBufSize, &lpbuf, &dwSize, 
-									   &lpbuf2, &dwSize2, 0)) != DS_OK)
+		if (lpbuf)
 		{
-			if (hresult != DSERR_BUFFERLOST)
-			{
-				Con_Printf ("S_TransferStereo16: DS::Lock Sound Buffer Failed\n");
-				S_Shutdown ();
-				S_Startup ();
-				return;
-			}
+			hresult = pDSBuf->Lock(0, gSndBufSize, &lpbuf, &dwSize, &lpbuf2, &dwSize2, 0);
 
-			if (++reps > 10000)
+			while (hresult != DS_OK)
 			{
-				Con_Printf ("S_TransferStereo16: DS: couldn't restore buffer\n");
-				S_Shutdown ();
-				S_Startup ();
-				return;
+				if (hresult != DSERR_BUFFERLOST)
+				{
+					Con_Printf("S_TransferStereo16: DS::Lock Sound Buffer Failed\n");
+					S_Shutdown();
+					S_Startup();
+					return;
+				}
+
+				if (++reps > 10000)
+				{
+					Con_Printf("S_TransferStereo16: DS: couldn't restore buffer\n");
+					S_Shutdown();
+					S_Startup();
+					return;
+				}
 			}
 		}
 	}
 	else
 #endif
 	{
-		pbuf = (DWORD *)shm->buffer;
+		if (shm)
+		{
+			pbuf = (DWORD*)shm->buffer;
+		}
 	}
 
 	while (lpaintedtime < endtime)
@@ -137,7 +161,7 @@ void S_TransferStereo16 (int endtime)
 #endif
 }
 
-void S_TransferPaintBuffer(int endtime)
+void CSoundSystemWin::S_TransferPaintBuffer(int endtime)
 {
 	int 	out_idx;
 	int 	count;
@@ -163,7 +187,7 @@ void S_TransferPaintBuffer(int endtime)
 	
 	p = (int *) paintbuffer;
 	count = (endtime - paintedtime) * shm->channels;
-	out_mask = shm->samples - 1; 
+	out_mask = shm->samples - 1;
 	out_idx = paintedtime * shm->channels & out_mask;
 	step = 3 - shm->channels;
 	snd_vol = volume.value*256;
@@ -173,7 +197,7 @@ void S_TransferPaintBuffer(int endtime)
 	{
 		reps = 0;
 
-		while ((hresult = pDSBuf->Lock(0, gSndBufSize, &lpbuf, &dwSize,
+		while ((hresult = pDSBuf->Lock(0, gSndBufSize, &lpData, &dwSize,
 									   &lpbuf2,&dwSize2, 0)) != DS_OK)
 		{
 			if (hresult != DSERR_BUFFERLOST)
@@ -257,10 +281,7 @@ CHANNEL MIXING
 ===============================================================================
 */
 
-void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int endtime);
-void SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int endtime);
-
-void S_PaintChannels(int endtime)
+void CSoundSystemWin::S_PaintChannels(int endtime)
 {
 	int 	i;
 	int 	end;
@@ -333,7 +354,7 @@ void S_PaintChannels(int endtime)
 	}
 }
 
-void SND_InitScaletable (void)
+void CSoundSystemWin::SND_InitScaletable (void)
 {
 	int		i, j;
 	
@@ -345,7 +366,7 @@ void SND_InitScaletable (void)
 
 // #if	!id386
 
-void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
+void CSoundSystemWin::SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 {
 	int 	data;
 	int		*lscale, *rscale;
@@ -363,9 +384,12 @@ void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 
 	for (i=0 ; i<count ; i++)
 	{
-		data = sfx[i];
-		paintbuffer[i].left += lscale[data];
-		paintbuffer[i].right += rscale[data];
+		if (sfx)
+		{
+			data = sfx[i];
+			paintbuffer[i].left += lscale[data];
+			paintbuffer[i].right += rscale[data];
+		}
 	}
 	
 	ch->pos += count;
@@ -374,7 +398,7 @@ void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 // #endif	// !id386
 
 
-void SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count)
+void CSoundSystemWin::SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count)
 {
 	int data;
 	int left, right;
@@ -388,11 +412,14 @@ void SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count)
 
 	for (i=0 ; i<count ; i++)
 	{
-		data = sfx[i];
-		left = (data * leftvol) >> 8;
-		right = (data * rightvol) >> 8;
-		paintbuffer[i].left += left;
-		paintbuffer[i].right += right;
+		if (sfx)
+		{
+			data = sfx[i];
+			left = (data * leftvol) >> 8;
+			right = (data * rightvol) >> 8;
+			paintbuffer[i].left += left;
+			paintbuffer[i].right += right;
+		}
 	}
 
 	ch->pos += count;

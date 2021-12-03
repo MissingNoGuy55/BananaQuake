@@ -86,16 +86,6 @@ Zone block
 #ifndef ZONE_H
 #define ZONE_H
 
-void Memory_Init (void *buf, int size);
-
-void Z_Free (void *ptr);
-void *Z_Malloc (int size);			// returns 0 filled memory
-void *Z_TagMalloc (int size, int tag);
-
-void Z_DumpHeap (void);
-void Z_CheckHeap (void);
-int Z_FreeMemory (void);
-
 typedef struct memblock_s
 {
 	int		size;           // including the header and possibly tiny fragments
@@ -126,13 +116,31 @@ typedef struct cache_system_s
 	struct cache_system_s* lru_prev, * lru_next;	// for LRU flushing	
 } cache_system_t;
 
+// CMemCache* g_MemCache;
+
 static cache_system_t	cache_head;
 
-extern class CMemCache* g_MemCache;
+typedef void (*flush_cache_callback)(void);
 
 class CMemCache
 {
 public:
+
+	memzone_t* mainzone;
+
+	void Memory_Init(void* buf, int size);
+
+	void Z_Free(void* ptr);
+	void* Z_Malloc(int size);			// returns 0 filled memory
+	void* Z_TagMalloc(int size, int tag);
+
+	void Z_DumpHeap(void);
+	void Z_CheckHeap(void);
+	int Z_FreeMemory(void);
+
+	void Z_ClearZone(memzone_t* zone, int size);
+	void Z_Print(memzone_t* zone);
+
 	void* Hunk_Alloc(int size);
 	void Hunk_Print(bool all);
 	// returns 0 filled memory
@@ -159,6 +167,7 @@ public:
 	void Cache_UnlinkLRU(cache_system_t* cs);
 
 	static void Cache_Flush(void);
+	static flush_cache_callback Cache_Flush_Callback();
 	void Cache_Print(void);
 
 	void* Cache_Check(cache_user_t* c);
@@ -178,5 +187,9 @@ public:
 	void Cache_Report(void);
 	void Cache_Compact(void);
 };
+
+class CSoundSystemWin;
+
+extern CMemCache* g_MemCache;
 
 #endif

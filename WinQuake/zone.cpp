@@ -50,15 +50,12 @@ memzone_t	*mainzone;
 
 CMemCache* g_MemCache;
 
-void Z_ClearZone (memzone_t *zone, int size);
-
-
 /*
 ========================
 Z_ClearZone
 ========================
 */
-void Z_ClearZone (memzone_t *zone, int size)
+void CMemCache::Z_ClearZone (memzone_t *zone, int size)
 {
 	memblock_t	*block;
 	
@@ -83,7 +80,7 @@ void Z_ClearZone (memzone_t *zone, int size)
 Z_Free
 ========================
 */
-void Z_Free (void *ptr)
+void CMemCache::Z_Free (void *ptr)
 {
 	memblock_t	*block, *other;
 	
@@ -126,7 +123,7 @@ void Z_Free (void *ptr)
 Z_Malloc
 ========================
 */
-void* Z_Malloc (int size)
+void* CMemCache::Z_Malloc (int size)
 {
 	void	*buf;
 	
@@ -139,7 +136,7 @@ Z_CheckHeap ();	// DEBUG
 	return buf;
 }
 
-void* Z_TagMalloc (int size, int tag)
+void* CMemCache::Z_TagMalloc (int size, int tag)
 {
 	int		extra;
 	memblock_t	*start, *rover, *m_new, *base;
@@ -203,7 +200,7 @@ void* Z_TagMalloc (int size, int tag)
 Z_Print
 ========================
 */
-void Z_Print (memzone_t *zone)
+void CMemCache::Z_Print (memzone_t *zone)
 {
 	memblock_t	*block;
 	
@@ -231,9 +228,10 @@ void Z_Print (memzone_t *zone)
 Z_CheckHeap
 ========================
 */
-void Z_CheckHeap (void)
+void CMemCache::Z_CheckHeap(void)
 {
 	memblock_t	*block;
+	memzone_t* test = mainzone;
 	
 	for (block = mainzone->blocklist.next ; ; block = block->next)
 	{
@@ -753,6 +751,12 @@ void CMemCache::Cache_Print (void)
 	}
 }
 
+flush_cache_callback CMemCache::Cache_Flush_Callback()
+{
+	Cache_Flush();
+	return 0;
+}
+
 /*
 ============
 Cache_Report
@@ -785,7 +789,7 @@ void CMemCache::Cache_Init (void)
 	cache_head.next = cache_head.prev = &cache_head;
 	cache_head.lru_next = cache_head.lru_prev = &cache_head;
 
-	Cmd_AddCommand ("flush", CMemCache::Cache_Flush);
+	Cmd_AddCommand ("flush", Cache_Flush_Callback());
 }
 
 /*
@@ -884,7 +888,7 @@ void* CMemCache::Cache_Alloc (cache_user_t *c, int size, char *name)
 Memory_Init
 ========================
 */
-void Memory_Init (void *buf, int size)
+void CMemCache::Memory_Init (void *buf, int size)
 {
 	int p;
 	int zonesize = DYNAMIC_SIZE;

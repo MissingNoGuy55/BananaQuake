@@ -402,13 +402,13 @@ void Key_SetBinding (int keynum, char *binding)
 // free old bindings
 	if (keybindings[keynum])
 	{
-		Z_Free (keybindings[keynum]);
+		g_MemCache->Z_Free (keybindings[keynum]);
 		keybindings[keynum] = NULL;
 	}
 			
 // allocate memory for new binding
 	l = Q_strlen (binding);	
-	cnew = static_cast<char*>(Z_Malloc (l+1));
+	cnew = static_cast<char*>(g_MemCache->Z_Malloc (l+1));
 	Q_strcpy (cnew, binding);
 	cnew[l] = 0;
 	keybindings[keynum] = cnew;	

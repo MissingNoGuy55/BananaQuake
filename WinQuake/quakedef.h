@@ -44,6 +44,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
+#include <dsound.h>
+#include "SDL.h"
 
 #if defined(_WIN32) && !defined(WINDED)
 
@@ -281,8 +283,6 @@ typedef struct
 
 //=============================================================================
 
-
-
 extern bool noclip_anglehack;
 
 
@@ -329,8 +329,6 @@ extern int			minimum_memory;
 // chase
 //
 extern	cvar_t	chase_active;
-
-static CMemCache* g_MemCache;
 
 void Chase_Init (void);
 void Chase_Reset (void);

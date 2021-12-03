@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // host.c -- coordinates spawning and killing of local servers
 
 #include "quakedef.h"
-#include "r_local.h"
 
 /*
 
@@ -705,11 +704,11 @@ void _Host_Frame (float time)
 // update audio
 	if (cls.signon == SIGNONS)
 	{
-		S_Update (r_origin, vpn, vright, vup);
+		g_SoundSystem->S_Update (r_origin, vpn, vright, vup);
 		CL_DecayLights ();
 	}
 	else
-		S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+		g_SoundSystem->S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
 	
 	CDAudio_Update();
 
@@ -853,7 +852,7 @@ void Host_Init (quakeparms_t *parms)
 
 	g_MemCache = new CMemCache;
 
-	Memory_Init (parms->membase, parms->memsize);
+	g_MemCache->Memory_Init (parms->membase, parms->memsize);
 	Cbuf_Init ();
 	Cmd_Init ();	
 	V_Init ();
@@ -900,7 +899,9 @@ void Host_Init (quakeparms_t *parms)
 
 #ifdef	GLQUAKE
 	// FIXME: doesn't use the new one-window approach yet
-		S_Init ();
+		//S_Init ();
+		g_SoundSystem = new CSoundSystemWin;
+		g_SoundSystem->S_Init();
 #endif
 
 #endif	// _WIN32
@@ -949,7 +950,7 @@ void Host_Shutdown(void)
 
 	CDAudio_Shutdown ();
 	NET_Shutdown ();
-	S_Shutdown();
+	g_SoundSystem->S_Shutdown();
 	IN_Shutdown ();
 
 	if (cls.state != ca_dedicated)

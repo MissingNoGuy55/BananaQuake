@@ -63,7 +63,7 @@ int	StripLength (int starttri, int startv)
 	mtriangle_t	*last, *check;
 	int			k;
 
-	used[starttri] = 2;
+	used[starttri] = true;
 
 	last = &triangles[starttri];
 
@@ -106,7 +106,7 @@ nexttri:
 			striptris[stripcount] = j;
 			stripcount++;
 
-			used[j] = 2;
+			used[j] = true;
 			goto nexttri;
 		}
 	}
@@ -114,8 +114,8 @@ done:
 
 	// clear the temp used flags
 	for (j=starttri+1 ; j<pheader->numtris ; j++)
-		if (used[j] == 2)
-			used[j] = 0;
+		if (used[j] == true)
+			used[j] = false;
 
 	return stripcount;
 }
@@ -132,7 +132,7 @@ int	FanLength (int starttri, int startv)
 	mtriangle_t	*last, *check;
 	int		k;
 
-	used[starttri] = 2;
+	used[starttri] = true;
 
 	last = &triangles[starttri];
 
@@ -173,7 +173,7 @@ nexttri:
 			striptris[stripcount] = j;
 			stripcount++;
 
-			used[j] = 2;
+			used[j] = true;
 			goto nexttri;
 		}
 	}
@@ -181,8 +181,8 @@ done:
 
 	// clear the temp used flags
 	for (j=starttri+1 ; j<pheader->numtris ; j++)
-		if (used[j] == 2)
-			used[j] = 0;
+		if (used[j] == true)
+			used[j] = false;
 
 	return stripcount;
 }

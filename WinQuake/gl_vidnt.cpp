@@ -965,12 +965,12 @@ void AppActivate(BOOL fActive, BOOL minimize)
 // enable/disable sound on focus gain/loss
 	if (!ActiveApp && sound_active)
 	{
-		S_BlockSound ();
+		g_SoundSystem->S_BlockSound ();
 		sound_active = false;
 	}
 	else if (ActiveApp && !sound_active)
 	{
-		S_UnblockSound ();
+		g_SoundSystem->S_UnblockSound ();
 		sound_active = true;
 	}
 
@@ -1940,7 +1940,7 @@ void VID_MenuKey (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-		S_LocalSound ("misc/menu1.wav");
+		g_SoundSystem->S_LocalSound ("misc/menu1.wav");
 		M_Menu_Options_f ();
 		break;
 
