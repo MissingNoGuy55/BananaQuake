@@ -26,7 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef SERVERONLY
 #include <ddraw.h>
-#include <dsound.h>
+//#include <dsound.h>
+#include <SDL_audio.h>
+#include <SDL_mixer.h>
 #ifndef GLQUAKE
 #include <mgraph.h>
 #endif
