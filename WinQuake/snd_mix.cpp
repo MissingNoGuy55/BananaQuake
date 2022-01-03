@@ -83,64 +83,18 @@ void CSoundSystemWin::S_TransferStereo16 (int endtime)
 {
 	int		lpos;
 	int		lpaintedtime;
-	DWORD	*pbuf;
-	LPVOID	lpbuf, lpbuf2;
-#ifdef _WIN32
-	int		reps;
-	DWORD	dwSize,dwSize2;
-	DWORD	*pbuf2;
-	HRESULT	hresult;
-#endif
 	
 	snd_vol = volume.value*256;
 
 	snd_p = (int *) paintbuffer;
 	lpaintedtime = paintedtime;
 
-#ifdef _WIN32
-	if (pDSBuf)
-	{
-		reps = 0;
-
-		if (lpbuf)
-		{
-			hresult = pDSBuf->Lock(0, gSndBufSize, &lpbuf, &dwSize, &lpbuf2, &dwSize2, 0);
-
-			while (hresult != DS_OK)
-			{
-				if (hresult != DSERR_BUFFERLOST)
-				{
-					Con_Printf("S_TransferStereo16: DS::Lock Sound Buffer Failed\n");
-					S_Shutdown();
-					S_Startup();
-					return;
-				}
-
-				if (++reps > 10000)
-				{
-					Con_Printf("S_TransferStereo16: DS: couldn't restore buffer\n");
-					S_Shutdown();
-					S_Startup();
-					return;
-				}
-			}
-		}
-	}
-	else
-#endif
-	{
-		if (shm)
-		{
-			pbuf = (DWORD*)shm->buffer;
-		}
-	}
-
 	while (lpaintedtime < endtime)
 	{
 	// handle recirculating buffer issues
 		lpos = lpaintedtime & ((shm->samples>>1)-1);
 
-		snd_out = (short *) pbuf + (lpos<<1);
+		snd_out = (short *) shm->buffer + (lpos<<1);
 
 		snd_linear_count = (shm->samples>>1) - lpos;
 		if (lpaintedtime + snd_linear_count > endtime)
@@ -154,11 +108,6 @@ void CSoundSystemWin::S_TransferStereo16 (int endtime)
 		snd_p += snd_linear_count;
 		lpaintedtime += (snd_linear_count>>1);
 	}
-
-#ifdef _WIN32
-	if (pDSBuf)
-		pDSBuf->Unlock(pbuf, dwSize, NULL, 0);
-#endif
 }
 
 void CSoundSystemWin::S_TransferPaintBuffer(int endtime)

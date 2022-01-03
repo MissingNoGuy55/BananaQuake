@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // gl_vidnt.c -- NT GL vid component
 
 #include "quakedef.h"
-#include "cd_win.h"
 #include "winquake.h"
 #include "resource.h"
 #include <commctrl.h>
