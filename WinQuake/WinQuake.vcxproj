@@ -146,7 +146,7 @@
       <Optimization>Disabled</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalIncludeDirectories>$(ProjectDir)sdl2\include;$(ProjectDir)dxsdk\sdk\inc;$(ProjectDir)sdl2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)sdl2\include;$(ProjectDir)dxsdk\sdk\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\debug_gl\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
@@ -177,7 +177,7 @@
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <OutputFile>.\debug_gl\glquake.exe</OutputFile>
-      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;dxguid.lib;comctl32.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;dxguid.lib;comctl32.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
@@ -466,6 +466,7 @@
     <ClCompile Include="sv_phys.cpp" />
     <ClCompile Include="sv_user.cpp" />
     <ClCompile Include="sys_win.cpp" />
+    <ClCompile Include="utils.cpp" />
     <ClCompile Include="vid_win.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
@@ -492,7 +493,6 @@
     <ClInclude Include="block8.h" />
     <ClInclude Include="bspfile.h" />
     <ClInclude Include="cdaudio.h" />
-    <ClInclude Include="cd_win.h" />
     <ClInclude Include="client.h" />
     <ClInclude Include="cmd.h" />
     <ClInclude Include="common.h" />
@@ -502,6 +502,7 @@
     <ClInclude Include="cvar.h" />
     <ClInclude Include="dosisms.h" />
     <ClInclude Include="draw.h" />
+    <ClInclude Include="d_edge.h" />
     <ClInclude Include="d_iface.h" />
     <ClInclude Include="d_local.h" />
     <ClInclude Include="glquake.h" />
@@ -553,6 +554,7 @@
     <ClInclude Include="sound.h" />
     <ClInclude Include="spritegn.h" />
     <ClInclude Include="sys.h" />
+    <ClInclude Include="utils.h" />
     <ClInclude Include="vgamodes.h" />
     <ClInclude Include="vid.h" />
     <ClInclude Include="vid_dos.h" />
@@ -567,31 +569,6 @@
   <ItemGroup>
     <Image Include="qe3.ico" />
     <Image Include="quake.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="dosasm.s" />
-    <None Include="d_copy.s" />
-    <None Include="d_draw.s" />
-    <None Include="d_draw16.s" />
-    <None Include="d_parta.s" />
-    <None Include="d_polysa.s" />
-    <None Include="d_scana.s" />
-    <None Include="d_spr8.s" />
-    <ClInclude Include="d_varsa.s">
-      <FileType>Document</FileType>
-    </ClInclude>
-    <None Include="math.s" />
-    <None Include="r_aclipa.s" />
-    <None Include="r_aliasa.s" />
-    <None Include="r_drawa.s" />
-    <None Include="r_edgea.s" />
-    <None Include="r_varsa.s" />
-    <None Include="snd_mixa.s" />
-    <None Include="surf16.s" />
-    <None Include="surf8.s" />
-    <None Include="sys_dosa.s" />
-    <None Include="sys_wina.s" />
-    <None Include="worlda.s" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
