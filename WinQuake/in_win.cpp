@@ -120,6 +120,11 @@ static HINSTANCE hInstDI;
 
 static bool	dinput;
 
+const GUID GUID_XAxis;
+const GUID GUID_YAxis;
+const GUID GUID_ZAxis;
+const GUID GUID_SysMouse;
+
 typedef struct MYDATA {
 	LONG  lX;                   // X axis goes here
 	LONG  lY;                   // Y axis goes here
@@ -248,7 +253,7 @@ void IN_ActivateMouse (void)
 				restore_spi = SystemParametersInfo (SPI_SETMOUSE, 0, newmouseparms, 0);
 
 			SetCursorPos (window_center_x, window_center_y);
-			SetCapture (mainwindow);
+			SetCapture ((HWND)mainwindow);
 			ClipCursor (&window_rect);
 		}
 
@@ -393,7 +398,7 @@ bool IN_InitDInput (void)
 	}
 
 // set the cooperativity level.
-	hr = IDirectInputDevice_SetCooperativeLevel(g_pMouse, mainwindow,
+	hr = IDirectInputDevice_SetCooperativeLevel(g_pMouse, (HWND)mainwindow,
 			DISCL_EXCLUSIVE | DISCL_FOREGROUND);
 
 	if (FAILED(hr))
