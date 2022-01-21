@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_rsurf.h"
 #include "gl_vidnt.h"
 #include "r_part.h"
-
+#include "utils.h"
 
 /*
 ==================
@@ -35,10 +35,12 @@ void	R_InitTextures (void)
 {
 	int		x,y, m;
 	byte	*dest;
+	CCacheSystem* c;
 
 // create a simple checkerboard texture for the default
 	r_notexture_mip = static_cast<texture_t*>(g_MemCache->Hunk_AllocName (sizeof(texture_t) + 16*16+8*8+4*4+2*2, "notexture"));
-	
+	Q_strcpy(r_notexture_mip->name, "notexture");
+
 	r_notexture_mip->width = r_notexture_mip->height = 16;
 	r_notexture_mip->offsets[0] = sizeof(texture_t);
 	r_notexture_mip->offsets[1] = r_notexture_mip->offsets[0] + 16*16;

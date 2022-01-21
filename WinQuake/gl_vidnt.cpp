@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include "resource.h"
 #include <commctrl.h>
+#include <GL/glew.h>
 
 #define MAX_MODE_LIST	30
 #define VID_ROW_SIZE	3
@@ -127,13 +128,13 @@ void ClearAllStates (void);
 void VID_UpdateWindowStatus (void);
 void GL_Init (void);
 
-PROC glArrayElementEXT;
-PROC glColorPointerEXT;
-PROC glTexCoordPointerEXT;
-PROC glVertexPointerEXT;
+PROC QglArrayElementEXT;
+PROC QglColorPointerEXT;
+PROC QglTexCoordPointerEXT;
+PROC QglVertexPointerEXT;
 
 typedef void (APIENTRY *lp3DFXFUNC) (int, int, int, int, int, const void*);
-lp3DFXFUNC glColorTableEXT;
+lp3DFXFUNC QglColorTableEXT;
 bool is8bit = false;
 bool isPermedia = false;
 bool gl_mtexable = false;
@@ -549,10 +550,10 @@ void CheckArrayExtensions (void)
 		if (strncmp((const char*)tmp, "GL_EXT_vertex_array", strlen("GL_EXT_vertex_array")) == 0)
 		{
 			if (
-((glArrayElementEXT = wglGetProcAddress("glArrayElementEXT")) == NULL) ||
-((glColorPointerEXT = wglGetProcAddress("glColorPointerEXT")) == NULL) ||
-((glTexCoordPointerEXT = wglGetProcAddress("glTexCoordPointerEXT")) == NULL) ||
-((glVertexPointerEXT = wglGetProcAddress("glVertexPointerEXT")) == NULL) )
+((QglArrayElementEXT = wglGetProcAddress("glArrayElementEXT")) == NULL) ||
+((QglColorPointerEXT = wglGetProcAddress("glColorPointerEXT")) == NULL) ||
+((QglTexCoordPointerEXT = wglGetProcAddress("glTexCoordPointerEXT")) == NULL) ||
+((QglVertexPointerEXT = wglGetProcAddress("glVertexPointerEXT")) == NULL) )
 			{
 				Sys_Error ("GetProcAddress for vertex extension failed");
 				return;
@@ -1516,8 +1517,8 @@ void VID_Init8bitPalette()
 	char thePalette[256*3];
 	char *oldPalette, *newPalette;
 
-	glColorTableEXT = (lp3DFXFUNC)wglGetProcAddress("glColorTableEXT");
-    if (!glColorTableEXT || strstr(gl_extensions, "GL_EXT_shared_texture_palette") ||
+	QglColorTableEXT = (lp3DFXFUNC)wglGetProcAddress("glColorTableEXT");
+    if (!QglColorTableEXT || strstr(gl_extensions, "GL_EXT_shared_texture_palette") ||
 		COM_CheckParm("-no8bit"))
 		return;
 
@@ -1531,7 +1532,7 @@ void VID_Init8bitPalette()
 		*newPalette++ = *oldPalette++;
 		oldPalette++;
 	}
-	glColorTableEXT(GL_SHARED_TEXTURE_PALETTE_EXT, GL_RGB, 256, GL_RGB, GL_UNSIGNED_BYTE,
+	QglColorTableEXT(GL_SHARED_TEXTURE_PALETTE_EXT, GL_RGB, 256, GL_RGB, GL_UNSIGNED_BYTE,
 		(void *) thePalette);
 	is8bit = TRUE;
 }

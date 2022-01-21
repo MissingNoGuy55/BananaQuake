@@ -23,16 +23,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma warning(disable : 4136)     // X86
 #pragma warning(disable : 4051)     // ALPHA
   
+#include <GL/glew.h>
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+//#include <GL/gl.h>
+//#include <GL/glu.h>
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
-
 
 #ifdef _WIN32
 // Function prototypes for the Texture Object Extension routines
@@ -73,10 +74,10 @@ extern glvert_t glv;
 extern	int glx, gly, glwidth, glheight;
 
 #ifdef _WIN32
-extern	PROC glArrayElementEXT;
-extern	PROC glColorPointerEXT;
-extern	PROC glTexturePointerEXT;
-extern	PROC glVertexPointerEXT;
+extern	PROC QglArrayElementEXT;
+extern	PROC QglColorPointerEXT;
+extern	PROC QglTexturePointerEXT;
+extern	PROC QglVertexPointerEXT;
 #endif
 
 // r_local.h -- private refresh defs

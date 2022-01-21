@@ -59,18 +59,22 @@ int		gl_filter_max = GL_LINEAR;
 
 int		texels;
 
-typedef struct
+class CGLTexture
 {
-	int		texnum;
+public:
+	CGLTexture();
+
+	int		texnum = 0;
 	char	identifier[64];
-	int		width, height;
-	bool	mipmap;
-} gltexture_t;
+	int		width = 0, height = 0;
+	bool	mipmap = false;
+};
 
 #define	MAX_GLTEXTURES	1024
-gltexture_t	gltextures[MAX_GLTEXTURES];
+CGLTexture	gltextures[MAX_GLTEXTURES];
 int			numgltextures;
 
+CQVector<CGLTexture> gltexturevector(NULL, 1024, 1);
 
 void GL_Bind (int texnum)
 {
@@ -85,7 +89,6 @@ void GL_Bind (int texnum)
 	glBindTexture(GL_TEXTURE_2D, texnum);
 #endif
 }
-
 
 /*
 =============================================================================
@@ -147,6 +150,7 @@ int Scrap_AllocBlock (int w, int h, int *x, int *y)
 	}
 
 	Sys_Error ("Scrap_AllocBlock: full");
+	return -1;
 }
 
 int	scrap_uploads;
@@ -322,7 +326,7 @@ Draw_TextureMode_f
 void Draw_TextureMode_f (void)
 {
 	int		i;
-	gltexture_t	*glt;
+	CGLTexture	*glt;
 
 	if (Cmd_Argc() == 1)
 	{
@@ -351,7 +355,7 @@ void Draw_TextureMode_f (void)
 	gl_filter_max = modes[i].maximize;
 
 	// change all the existing mipmap texture objects
-	for (i=0, glt=gltextures ; i<numgltextures ; i++, glt++)
+	for (i=0, glt=&gltexturevector[i]; i<numgltextures ; i++, glt++)
 	{
 		if (glt->mipmap)
 		{
@@ -865,12 +869,12 @@ GL_FindTexture
 int GL_FindTexture (char *identifier)
 {
 	int		i;
-	gltexture_t	*glt;
+	CGLTexture	*glt;
 
-	for (i=0, glt=gltextures ; i<numgltextures ; i++, glt++)
+	for (i=0, glt=&gltexturevector[i] ; i<numgltextures ; i++, glt++)
 	{
 		if (!strcmp (identifier, glt->identifier))
-			return gltextures[i].texnum;
+			return gltexturevector[i].texnum;
 	}
 
 	return -1;
@@ -1237,23 +1241,23 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mi
 {
 	bool	noalpha;
 	int			i, p, s;
-	gltexture_t	*glt;
+	CGLTexture	*glt;
 
 	// see if the texture is allready present
 	if (identifier[0])
 	{
-		for (i=0, glt=gltextures ; i<numgltextures ; i++, glt++)
+		for (i=0, glt=&gltexturevector[i]; i<numgltextures ; i++, glt++)
 		{
 			if (!strcmp (identifier, glt->identifier))
 			{
 				if (width != glt->width || height != glt->height)
 					Sys_Error ("GL_LoadTexture: cache mismatch");
-				return gltextures[i].texnum;
+				return gltexturevector[i].texnum;
 			}
 		}
 	}
 	else {
-		glt = &gltextures[numgltextures];
+		glt = &gltexturevector[numgltextures];
 		numgltextures++;
 	}
 
@@ -1263,10 +1267,31 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mi
 	glt->height = height;
 	glt->mipmap = mipmap;
 
+	Con_Printf("Loaded %s\n", glt->identifier);
+
 	GL_Bind(texture_extension_number );
 
 	GL_Upload8 (data, width, height, mipmap, alpha);
 
+	gltextures[texture_extension_number-1] = *glt;
+
+	gltexturevector[texture_extension_number-1] = *glt;
+
+#ifdef _DEBUG
+
+	auto test = &gltexturevector[texture_extension_number-1];
+	auto test2 = &gltexturevector[0];
+	CGLTexture testarr[1 << 8];
+
+	for (int i = 0; i < 256; i++)
+	{
+		testarr[i].texnum = test[i].texnum;
+		testarr[i].width = test[i].width;
+		testarr[i].height = test[i].height;
+		Q_strncpy(testarr[i].identifier, test[i].identifier, strlen(test->identifier));
+	}
+
+#endif
 	texture_extension_number++;
 
 	return texture_extension_number-1;
@@ -1296,4 +1321,15 @@ void GL_SelectTexture (GLenum target)
 	cnttextures[oldtarget-TEXTURE0_SGIS] = currenttexture;
 	currenttexture = cnttextures[target-TEXTURE0_SGIS];
 	oldtarget = target;
+}
+
+CGLTexture::CGLTexture()
+{
+	texnum = 0;
+	for (int i = 0; i < 64; i++)
+		identifier[i] = 0x00;
+
+	width = 0;
+	height = 0;
+	mipmap = false;
 }

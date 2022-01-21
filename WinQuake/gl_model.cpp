@@ -1187,7 +1187,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	Mod_MakeHull0 ();
 	
 	mod->numframes = 2;		// regular and alternate animation
-	
+
 //
 // set up the submodels (FIXME: this is confusing)
 //
