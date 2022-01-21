@@ -45,6 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdlib.h>
 #include <setjmp.h>
 #include <dsound.h>
+#include "utils.h"
 #include "SDL.h"
 
 #if defined(_WIN32) && !defined(WINDED)
@@ -329,6 +330,9 @@ extern int			minimum_memory;
 // chase
 //
 extern	cvar_t	chase_active;
+extern	cvar_t	zone_debug;	// Missi: for calling Z_Print
+
+double Sys_DoubleTime();
 
 void Chase_Init (void);
 void Chase_Reset (void);
