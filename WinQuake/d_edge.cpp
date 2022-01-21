@@ -20,9 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // d_edge.c
 
 #include "quakedef.h"
+#include "d_edge.h"
 #include "d_local.h"
 
-class CEdge
+typedef struct
 {
 	static int	miplevel;
 
@@ -31,12 +32,8 @@ class CEdge
 	int			ubasestep, errorterm, erroradjustup, erroradjustdown;
 	int			vstartscan;
 
-	void	D_DrawPoly();
-	void	D_DrawSurfaces();
-	void	D_DrawSolidSurface(surf_t* surf, int color);
-	void	D_CalcGradients(msurface_t* pface);
+}edge_t;
 
-};
 // FIXME: should go away
 extern void			R_RotateBmodel (void);
 extern void			R_TransformFrustum (void);
@@ -49,7 +46,7 @@ D_DrawPoly
 
 ==============
 */
-void CEdge::D_DrawPoly (void)
+void D_DrawPoly (void)
 {
 // this driver takes spans, not polygons
 }
@@ -88,7 +85,7 @@ D_DrawSolidSurface
 
 // FIXME: clean this up
 
-void CEdge::D_DrawSolidSurface (surf_t* surf, int color)
+void D_DrawSolidSurface (surf_t* surf, int color)
 {
 	espan_t	*span;
 	byte	*pdest;
@@ -128,7 +125,7 @@ void CEdge::D_DrawSolidSurface (surf_t* surf, int color)
 D_CalcGradients
 ==============
 */
-void CEdge::D_CalcGradients (msurface_t *pface)
+void D_CalcGradients (msurface_t *pface)
 {
 	mplane_t	*pplane;
 	float		mipscale;
@@ -179,7 +176,7 @@ void CEdge::D_CalcGradients (msurface_t *pface)
 D_DrawSurfaces
 ==============
 */
-void CEdge::D_DrawSurfaces (void)
+void D_DrawSurfaces (void)
 {
 	surf_t			*s;
 	msurface_t		*pface;
