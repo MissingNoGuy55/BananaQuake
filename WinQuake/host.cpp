@@ -839,6 +839,8 @@ void Host_Init (quakeparms_t *parms)
 	else
 		minimum_memory = MINIMUM_MEMORY_LEVELPAK;
 
+	SDL_setenv("SDL_AudioDriver", "directsound", 1);
+
 	if (COM_CheckParm ("-minmemory"))
 		parms->memsize = minimum_memory;
 
@@ -885,6 +887,11 @@ void Host_Init (quakeparms_t *parms)
 
 #ifndef _WIN32 // on non win32, mouse comes before video for security reasons
 		IN_Init ();
+#endif
+
+#ifndef GLQUAKE
+		g_SoundSystem = new CSoundSystemWin;
+		g_SoundSystem->S_Init();
 #endif
 		VID_Init (host_basepal);
 

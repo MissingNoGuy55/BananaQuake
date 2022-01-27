@@ -406,7 +406,7 @@ void* CMemCache::Hunk_AllocName (int size, char *name)
 	
 	h->size = size;
 	h->sentinal = HUNK_SENTINAL;
-	Q_strncpy (h->name, name, 8);
+	q_strlcpy (h->name, name, 24);
 	
 	return (byte *)(h+1);
 }

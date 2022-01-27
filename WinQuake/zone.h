@@ -192,4 +192,55 @@ class CSoundSystemWin;
 
 extern CMemCache* g_MemCache;
 
+template<class T, class I>
+inline CMemBlock<T, I>::CMemBlock(int startSize, int growSize)
+{
+	size = 0;
+	tag = 1;
+	next = prev = NULL;
+	pad = 0;
+	id = 0;
+	m_pMemory = 0;
+	if (startSize > 0)
+	{
+		m_pMemory = (T*)malloc(startSize * sizeof(T));
+	}
+}
+
+template<class T, class I>
+inline CMemBlock<T, I>::CMemBlock(T* memory, int numelements)
+{
+	m_pMemory = memory;
+}
+
+template<class T, class I>
+inline T* CMemBlock<T, I>::Base()
+{
+	return m_pMemory;
+}
+
+template<class T, class I>
+inline const T* CMemBlock<T, I>::Base() const
+{
+	return m_pMemory;
+}
+
+template<class T, class I>
+inline T& CMemBlock<T, I>::operator[](I i)
+{
+	return m_pMemory[(Uint32)i];
+}
+
+template<class T, class I>
+inline const T& CMemBlock<T, I>::operator[](I i) const
+{
+	return m_pMemory[(Uint32)i];
+}
+
+template<class T, class I>
+inline T& CMemBlock<T, I>::operator=(int i) const
+{
+	return m_pMemory[i];
+}
+
 #endif

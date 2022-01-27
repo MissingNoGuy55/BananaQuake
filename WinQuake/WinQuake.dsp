@@ -73,7 +73,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /c
-# ADD CPP /nologo /G5 /ML /GX /ZI /Od /I ".\scitech\include" /I ".\dxsdk\sdk\inc" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FR /YX /FD /c
+# ADD CPP /nologo /G5 /ML /GX /ZI /Od /I ".\scitech\include" /I ".\dxsdk\sdk\inc" /I ".\sdl2\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -2073,7 +2073,35 @@ SOURCE=.\draw.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\gl_mesh.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\gl_model.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\gl_refrag.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\gl_rlight.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\gl_rmain.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\gl_rsurf.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\gl_vidnt.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\gl_warp.h
 # End Source File
 # Begin Source File
 
@@ -2086,6 +2114,10 @@ SOURCE=.\glquake.h
 # Begin Source File
 
 SOURCE=.\input.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\in_win.h
 # End Source File
 # Begin Source File
 
@@ -2158,6 +2190,10 @@ SOURCE=.\quakedef.h
 # Begin Source File
 
 SOURCE=.\r_local.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_part.h
 # End Source File
 # Begin Source File
 
