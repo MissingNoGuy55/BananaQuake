@@ -65,7 +65,7 @@ void *Mod_Extradata (model_t *mod)
 {
 	void	*r;
 	
-	r = Cache_Check (&mod->cache);
+	r = g_MemCache->Cache_Check (&mod->cache);
 	if (r)
 		return r;
 
@@ -212,8 +212,8 @@ model_t *Mod_FindName (char *name)
 			{
 				mod = avail;
 				if (mod->type == mod_alias)
-					if (Cache_Check (&mod->cache))
-						Cache_Free (&mod->cache);
+					if (g_MemCache->Cache_Check (&mod->cache))
+						g_MemCache->Cache_Free (&mod->cache);
 			}
 			else
 				Sys_Error ("mod_numknown == MAX_MOD_KNOWN");
@@ -242,7 +242,7 @@ void Mod_TouchModel (char *name)
 	if (mod->needload == NL_PRESENT)
 	{
 		if (mod->type == mod_alias)
-			Cache_Check (&mod->cache);
+			g_MemCache->Cache_Check (&mod->cache);
 	}
 }
 
@@ -260,7 +260,7 @@ model_t *Mod_LoadModel (model_t *mod, bool crash)
 
 	if (mod->type == mod_alias)
 	{
-		if (Cache_Check (&mod->cache))
+		if (g_MemCache->Cache_Check (&mod->cache))
 		{
 			mod->needload = NL_PRESENT;
 			return mod;
@@ -371,7 +371,7 @@ void Mod_LoadTextures (lump_t *l)
 	m->nummiptex = LittleLong (m->nummiptex);
 	
 	loadmodel->numtextures = m->nummiptex;
-	loadmodel->textures = static_cast<texture_t**>(Hunk_AllocName (m->nummiptex * sizeof(*loadmodel->textures) , loadname));
+	loadmodel->textures = static_cast<texture_t**>(g_MemCache->Hunk_AllocName (m->nummiptex * sizeof(*loadmodel->textures) , loadname));
 
 	for (i=0 ; i<m->nummiptex ; i++)
 	{
@@ -387,7 +387,7 @@ void Mod_LoadTextures (lump_t *l)
 		if ( (mt->width & 15) || (mt->height & 15) )
 			Sys_Error ("Texture %s is not 16 aligned", mt->name);
 		pixels = mt->width*mt->height/64*85;
-		tx = static_cast<texture_t*>(Hunk_AllocName (sizeof(texture_t) +pixels, loadname ));
+		tx = static_cast<texture_t*>(g_MemCache->Hunk_AllocName (sizeof(texture_t) +pixels, loadname ));
 		loadmodel->textures[i] = tx;
 
 		memcpy (tx->name, mt->name, sizeof(tx->name));
@@ -508,7 +508,7 @@ void Mod_LoadLighting (lump_t *l)
 		loadmodel->lightdata = NULL;
 		return;
 	}
-	loadmodel->lightdata = static_cast<byte*>(Hunk_AllocName ( l->filelen, loadname));	
+	loadmodel->lightdata = static_cast<byte*>(g_MemCache->Hunk_AllocName ( l->filelen, loadname));
 	memcpy (loadmodel->lightdata, mod_base + l->fileofs, l->filelen);
 }
 
@@ -525,7 +525,7 @@ void Mod_LoadVisibility (lump_t *l)
 		loadmodel->visdata = NULL;
 		return;
 	}
-	loadmodel->visdata = static_cast<byte*>(Hunk_AllocName (l->filelen, loadname));
+	loadmodel->visdata = static_cast<byte*>(g_MemCache->Hunk_AllocName (l->filelen, loadname));
 	memcpy (loadmodel->visdata, mod_base + l->fileofs, l->filelen);
 }
 
@@ -542,7 +542,7 @@ void Mod_LoadEntities (lump_t *l)
 		loadmodel->entities = NULL;
 		return;
 	}
-	loadmodel->entities = static_cast<char*>(Hunk_AllocName (l->filelen, loadname));	
+	loadmodel->entities = static_cast<char*>(g_MemCache->Hunk_AllocName (l->filelen, loadname));
 	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
 }
 
@@ -562,7 +562,7 @@ void Mod_LoadVertexes (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = static_cast<mvertex_t*>(Hunk_AllocName (count*sizeof(*out), loadname));	
+	out = static_cast<mvertex_t*>(g_MemCache->Hunk_AllocName (count*sizeof(*out), loadname));
 
 	loadmodel->vertexes = out;
 	loadmodel->numvertexes = count;
@@ -590,7 +590,7 @@ void Mod_LoadSubmodels (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = static_cast<dmodel_t*>(Hunk_AllocName ( count*sizeof(*out), loadname));
+	out = static_cast<dmodel_t*>(g_MemCache->Hunk_AllocName ( count*sizeof(*out), loadname));
 
 	loadmodel->submodels = out;
 	loadmodel->numsubmodels = count;
@@ -626,7 +626,7 @@ void Mod_LoadEdges (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = static_cast<medge_t*>(Hunk_AllocName ( (count + 1) * sizeof(*out), loadname));
+	out = static_cast<medge_t*>(g_MemCache->Hunk_AllocName ( (count + 1) * sizeof(*out), loadname));
 
 	loadmodel->edges = out;
 	loadmodel->numedges = count;
@@ -655,7 +655,7 @@ void Mod_LoadTexinfo (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = reinterpret_cast<mtexinfo_t*>(Hunk_AllocName ( count*sizeof(*out), loadname));
+	out = reinterpret_cast<mtexinfo_t*>(g_MemCache->Hunk_AllocName ( count*sizeof(*out), loadname));
 
 	loadmodel->texinfo = out;
 	loadmodel->numtexinfo = count;
@@ -774,7 +774,7 @@ void Mod_LoadFaces (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = static_cast<msurface_t*>(Hunk_AllocName ( count*sizeof(*out), loadname));	
+	out = static_cast<msurface_t*>(g_MemCache->Hunk_AllocName ( count*sizeof(*out), loadname));
 
 	loadmodel->surfaces = out;
 	loadmodel->numsurfaces = count;
@@ -857,7 +857,7 @@ void Mod_LoadNodes (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = static_cast<mnode_t*>(Hunk_AllocName ( count*sizeof(*out), loadname));	
+	out = static_cast<mnode_t*>(g_MemCache->Hunk_AllocName ( count*sizeof(*out), loadname));
 
 	loadmodel->nodes = out;
 	loadmodel->numnodes = count;
@@ -904,7 +904,7 @@ void Mod_LoadLeafs (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = static_cast<mleaf_t*>(Hunk_AllocName ( count*sizeof(*out), loadname));
+	out = static_cast<mleaf_t*>(g_MemCache->Hunk_AllocName ( count*sizeof(*out), loadname));
 
 	loadmodel->leafs = out;
 	loadmodel->numleafs = count;
@@ -951,7 +951,7 @@ void Mod_LoadClipnodes (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = static_cast<dclipnode_t*>(Hunk_AllocName ( count*sizeof(*out), loadname));
+	out = static_cast<dclipnode_t*>(g_MemCache->Hunk_AllocName ( count*sizeof(*out), loadname));
 
 	loadmodel->clipnodes = out;
 	loadmodel->numclipnodes = count;
@@ -1006,7 +1006,7 @@ void Mod_MakeHull0 (void)
 	
 	in = loadmodel->nodes;
 	count = loadmodel->numnodes;
-	out = static_cast<dclipnode_t*>(Hunk_AllocName ( count*sizeof(*out), loadname));	
+	out = static_cast<dclipnode_t*>(g_MemCache->Hunk_AllocName ( count*sizeof(*out), loadname));
 
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -1042,7 +1042,7 @@ void Mod_LoadMarksurfaces (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = static_cast<msurface_t**>(Hunk_AllocName ( count*sizeof(*out), loadname));	
+	out = static_cast<msurface_t**>(g_MemCache->Hunk_AllocName ( count*sizeof(*out), loadname));	
 
 	loadmodel->marksurfaces = out;
 	loadmodel->nummarksurfaces = count;
@@ -1070,7 +1070,7 @@ void Mod_LoadSurfedges (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = static_cast<int*>(Hunk_AllocName ( count*sizeof(*out), loadname));	
+	out = static_cast<int*>(g_MemCache->Hunk_AllocName ( count*sizeof(*out), loadname));	
 
 	loadmodel->surfedges = out;
 	loadmodel->numsurfedges = count;
@@ -1096,7 +1096,7 @@ void Mod_LoadPlanes (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = static_cast<mplane_t*>(Hunk_AllocName ( count*2*sizeof(*out), loadname));	
+	out = static_cast<mplane_t*>(g_MemCache->Hunk_AllocName ( count*2*sizeof(*out), loadname));	
 	
 	loadmodel->planes = out;
 	loadmodel->numplanes = count;
@@ -1252,7 +1252,7 @@ void * Mod_LoadAliasFrame (void * pin, int *pframeindex, int numv,
 	}
 
 	pinframe = (trivertx_t *)(pdaliasframe + 1);
-	pframe = static_cast<trivertx_t*>(Hunk_AllocName (numv * sizeof(*pframe), loadname));
+	pframe = static_cast<trivertx_t*>(g_MemCache->Hunk_AllocName (numv * sizeof(*pframe), loadname));
 
 	*pframeindex = (byte *)pframe - (byte *)pheader;
 
@@ -1294,7 +1294,7 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 
 	numframes = LittleLong (pingroup->numframes);
 
-	paliasgroup = static_cast<maliasgroup_t*>(Hunk_AllocName (sizeof (maliasgroup_t) +
+	paliasgroup = static_cast<maliasgroup_t*>(g_MemCache->Hunk_AllocName (sizeof (maliasgroup_t) +
 			(numframes - 1) * sizeof (paliasgroup->frames[0]), loadname));
 
 	paliasgroup->numframes = numframes;
@@ -1310,7 +1310,7 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 
 	pin_intervals = (daliasinterval_t *)(pingroup + 1);
 
-	poutintervals = static_cast<float*>(Hunk_AllocName (numframes * sizeof (float), loadname));
+	poutintervals = static_cast<float*>(g_MemCache->Hunk_AllocName (numframes * sizeof (float), loadname));
 
 	paliasgroup->intervals = (byte *)poutintervals - (byte *)pheader;
 
@@ -1352,7 +1352,7 @@ void * Mod_LoadAliasSkin (void * pin, int *pskinindex, int skinsize,
 	byte	*pskin, *pinskin;
 	unsigned short	*pusskin;
 
-	pskin = static_cast<byte*>(Hunk_AllocName (skinsize * r_pixbytes, loadname));
+	pskin = static_cast<byte*>(g_MemCache->Hunk_AllocName (skinsize * r_pixbytes, loadname));
 	pinskin = (byte *)pin;
 	*pskinindex = (byte *)pskin - (byte *)pheader;
 
@@ -1398,7 +1398,7 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize,
 
 	numskins = LittleLong (pinskingroup->numskins);
 
-	paliasskingroup = static_cast<maliasskingroup_t*>(Hunk_AllocName (sizeof (maliasskingroup_t) +
+	paliasskingroup = static_cast<maliasskingroup_t*>(g_MemCache->Hunk_AllocName (sizeof (maliasskingroup_t) +
 			(numskins - 1) * sizeof (paliasskingroup->skindescs[0]),
 			loadname));
 
@@ -1408,7 +1408,7 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize,
 
 	pinskinintervals = (daliasskininterval_t *)(pinskingroup + 1);
 
-	poutskinintervals = static_cast<float*>(Hunk_AllocName (numskins * sizeof (float),loadname));
+	poutskinintervals = static_cast<float*>(g_MemCache->Hunk_AllocName (numskins * sizeof (float),loadname));
 
 	paliasskingroup->intervals = (byte *)poutskinintervals - (byte *)pheader;
 
@@ -1455,7 +1455,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	int					skinsize;
 	int					start, end, total;
 	
-	start = Hunk_LowMark ();
+	start = g_MemCache->Hunk_LowMark ();
 
 	pinmodel = (mdl_t *)buffer;
 
@@ -1474,7 +1474,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 			LittleLong (pinmodel->numverts) * sizeof (stvert_t) +
 			LittleLong (pinmodel->numtris) * sizeof (mtriangle_t);
 
-	pheader = static_cast<aliashdr_t*>(Hunk_AllocName (size, loadname));
+	pheader = static_cast<aliashdr_t*>(g_MemCache->Hunk_AllocName (size, loadname));
 	pmodel = (mdl_t *) ((byte *)&pheader[1] +
 			(LittleLong (pinmodel->numframes) - 1) *
 			 sizeof (pheader->frames[0]));
@@ -1537,7 +1537,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 
 	pskintype = (daliasskintype_t *)&pinmodel[1];
 
-	pskindesc = static_cast<maliasskindesc_t*>(Hunk_AllocName (numskins * sizeof (maliasskindesc_t),
+	pskindesc = static_cast<maliasskindesc_t*>(g_MemCache->Hunk_AllocName (numskins * sizeof (maliasskindesc_t),
 								loadname));
 
 	pheader->skindesc = (byte *)pskindesc - (byte *)pheader;
@@ -1648,15 +1648,15 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 //
 // move the complete, relocatable alias model to the cache
 //	
-	end = Hunk_LowMark ();
+	end = g_MemCache->Hunk_LowMark ();
 	total = end - start;
 	
-	Cache_Alloc (&mod->cache, total, loadname);
+	g_MemCache->Cache_Alloc (&mod->cache, total, loadname);
 	if (!mod->cache.data)
 		return;
 	memcpy (mod->cache.data, pheader, total);
 
-	Hunk_FreeToLowMark (start);
+	g_MemCache->Hunk_FreeToLowMark (start);
 }
 
 //=============================================================================
@@ -1680,7 +1680,7 @@ void * Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe)
 	height = LittleLong (pinframe->height);
 	size = width * height;
 
-	pspriteframe = static_cast<mspriteframe_t*>(Hunk_AllocName (sizeof (mspriteframe_t) + size*r_pixbytes,
+	pspriteframe = static_cast<mspriteframe_t*>(g_MemCache->Hunk_AllocName (sizeof (mspriteframe_t) + size*r_pixbytes,
 								   loadname));
 
 	Q_memset (pspriteframe, 0, sizeof (mspriteframe_t) + size);
@@ -1736,7 +1736,7 @@ void * Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe)
 
 	numframes = LittleLong (pingroup->numframes);
 
-	pspritegroup = static_cast<mspritegroup_t*>(Hunk_AllocName (sizeof (mspritegroup_t) +
+	pspritegroup = static_cast<mspritegroup_t*>(g_MemCache->Hunk_AllocName (sizeof (mspritegroup_t) +
 				(numframes - 1) * sizeof (pspritegroup->frames[0]), loadname));
 
 	pspritegroup->numframes = numframes;
@@ -1745,7 +1745,7 @@ void * Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe)
 
 	pin_intervals = (dspriteinterval_t *)(pingroup + 1);
 
-	poutintervals = static_cast<float*>(Hunk_AllocName (numframes * sizeof (float), loadname));
+	poutintervals = static_cast<float*>(g_MemCache->Hunk_AllocName (numframes * sizeof (float), loadname));
 
 	pspritegroup->intervals = poutintervals;
 
@@ -1796,7 +1796,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 
 	size = sizeof (msprite_t) +	(numframes - 1) * sizeof (psprite->frames);
 
-	psprite = static_cast<msprite_t*>(Hunk_AllocName (size, loadname));
+	psprite = static_cast<msprite_t*>(g_MemCache->Hunk_AllocName (size, loadname));
 
 	mod->cache.data = psprite;
 
