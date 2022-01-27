@@ -27,6 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	ZONEID	0x1d4a11
 #define MINFRAGMENT	64
 
+cvar_t	zone_debug = { "zone_debug", "0" };
+
 void Cache_FreeLow (int new_low_hunk);
 void Cache_FreeHigh (int new_high_hunk);
 
@@ -46,8 +48,6 @@ all big things are allocated on the hunk.
 ==============================================================================
 */
 
-memzone_t	*mainzone;
-
 CMemCache* g_MemCache;
 
 /*
@@ -55,14 +55,14 @@ CMemCache* g_MemCache;
 Z_ClearZone
 ========================
 */
-void CMemCache::Z_ClearZone (memzone_t *zone, int size)
+void CMemZone::Z_ClearZone (CMemZone *zone, int size)
 {
-	memblock_t	*block;
+	CMemBlock<byte>	*block;
 	
 // set the entire zone to one free block
 
 	zone->blocklist.next = zone->blocklist.prev = block =
-		(memblock_t *)( (byte *)zone + sizeof(memzone_t) );
+		(CMemBlock<byte> *)( (byte *)zone + sizeof(CMemZone) );
 	zone->blocklist.tag = 1;	// in use block
 	zone->blocklist.id = 0;
 	zone->blocklist.size = 0;
@@ -71,7 +71,7 @@ void CMemCache::Z_ClearZone (memzone_t *zone, int size)
 	block->prev = block->next = &zone->blocklist;
 	block->tag = 0;			// free block
 	block->id = ZONEID;
-	block->size = size - sizeof(memzone_t);
+	block->size = size - sizeof(CMemZone);
 }
 
 
@@ -80,14 +80,14 @@ void CMemCache::Z_ClearZone (memzone_t *zone, int size)
 Z_Free
 ========================
 */
-void CMemCache::Z_Free (void *ptr)
+void CMemZone::Z_Free (void *ptr)
 {
-	memblock_t	*block, *other;
+	CMemBlock<byte>	*block, *other;
 	
 	if (!ptr)
 		Sys_Error ("Z_Free: NULL pointer");
 
-	block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
+	block = (CMemBlock<byte> *) ( (byte *)ptr - sizeof(CMemBlock<byte>));
 	if (block->id != ZONEID)
 		Sys_Error ("Z_Free: freed a pointer without ZONEID");
 	if (block->tag == 0)
@@ -101,8 +101,8 @@ void CMemCache::Z_Free (void *ptr)
 		other->size += block->size;
 		other->next = block->next;
 		other->next->prev = other;
-		if (block == mainzone->rover)
-			mainzone->rover = other;
+		if (block == rover)
+			rover = other;
 		block = other;
 	}
 	
@@ -112,8 +112,8 @@ void CMemCache::Z_Free (void *ptr)
 		block->size += other->size;
 		block->next = other->next;
 		block->next->prev = block;
-		if (other == mainzone->rover)
-			mainzone->rover = block;
+		if (other == rover)
+			rover = block;
 	}
 }
 
@@ -123,23 +123,29 @@ void CMemCache::Z_Free (void *ptr)
 Z_Malloc
 ========================
 */
-void* CMemCache::Z_Malloc (int size)
+void* CMemZone::Z_Malloc (int size)
 {
 	void	*buf;
 	
-Z_CheckHeap ();	// DEBUG
+	Z_CheckHeap ();	// DEBUG
 	buf = Z_TagMalloc (size, 1);
 	if (!buf)
 		Sys_Error ("Z_Malloc: failed on allocation of %i bytes",size);
 	Q_memset (buf, 0, size);
 
+	if (zone_debug.value > 0)
+	{
+		Z_Print(this);
+	}
+
 	return buf;
 }
 
-void* CMemCache::Z_TagMalloc (int size, int tag)
+void* CMemZone::Z_TagMalloc (int size, int tag)
 {
 	int		extra;
-	memblock_t	*start, *rover, *m_new, *base;
+	CMemBlock<byte> *start, *rover, *m_new, *base;
+	start = rover = m_new = base = new CMemBlock<byte>(size);
 
 	if (!tag)
 		Sys_Error ("Z_TagMalloc: tried to use a 0 tag");
@@ -148,21 +154,21 @@ void* CMemCache::Z_TagMalloc (int size, int tag)
 // scan through the block list looking for the first free block
 // of sufficient size
 //
-	size += sizeof(memblock_t);	// account for size of block header
+	size += sizeof(CMemBlock<byte>);	// account for size of block header
 	size += 4;					// space for memory trash tester
 	size = (size + 7) & ~7;		// align to 8-byte boundary
 	
-	base = rover = mainzone->rover;
+	base = g_MemCache->mainzone->rover; // = mainzone->rover;
 	start = base->prev;
 	
 	do
 	{
-		if (rover == start)	// scaned all the way around the list
+		if (this->rover == start)	// scaned all the way around the list
 			return NULL;
-		if (rover->tag)
+		if (this->rover->tag)
 			base = rover = rover->next;
 		else
-			rover = rover->next;
+			rover = this->rover->next;
 	} while (base->tag || base->size < size);
 	
 //
@@ -171,7 +177,7 @@ void* CMemCache::Z_TagMalloc (int size, int tag)
 	extra = base->size - size;
 	if (extra >  MINFRAGMENT)
 	{	// there will be a free fragment after the allocated block
-		m_new = (memblock_t *) ((byte *)base + size );
+		m_new = (CMemBlock<byte> *) ((byte *)base + size );
 		m_new->size = extra;
 		m_new->tag = 0;			// free block
 		m_new->prev = base;
@@ -184,14 +190,14 @@ void* CMemCache::Z_TagMalloc (int size, int tag)
 	
 	base->tag = tag;				// no longer a free block
 	
-	mainzone->rover = base->next;	// next allocation will start looking here
+	this->rover = base->next;	// next allocation will start looking here
 	
 	base->id = ZONEID;
 
 // marker for memory trash testing
 	*(int *)((byte *)base + base->size - 4) = ZONEID;
 
-	return (void *) ((byte *)base + sizeof(memblock_t));
+	return (void *) ((byte *)base + sizeof(CMemBlock<byte>));
 }
 
 
@@ -200,11 +206,11 @@ void* CMemCache::Z_TagMalloc (int size, int tag)
 Z_Print
 ========================
 */
-void CMemCache::Z_Print (memzone_t *zone)
+void CMemZone::Z_Print (CMemZone *zone)
 {
-	memblock_t	*block;
+	CMemBlock<byte>	*block;
 	
-	Con_Printf ("zone size: %i  location: %p\n",mainzone->size,mainzone);
+	Con_Printf ("zone size: %i  location: %p\n",size,this);
 	
 	for (block = zone->blocklist.next ; ; block = block->next)
 	{
@@ -228,14 +234,13 @@ void CMemCache::Z_Print (memzone_t *zone)
 Z_CheckHeap
 ========================
 */
-void CMemCache::Z_CheckHeap(void)
+void CMemZone::Z_CheckHeap(void)
 {
-	memblock_t	*block;
-	memzone_t* test = mainzone;
+	CMemBlock<byte>	*block;
 	
-	for (block = mainzone->blocklist.next ; ; block = block->next)
+	for (block = blocklist.next ; ; block = block->next)
 	{
-		if (block->next == &mainzone->blocklist)
+		if (block->next == &blocklist)
 			break;			// all blocks have been hit	
 		if ( (byte *)block + block->size != (byte *)block->next)
 			Sys_Error ("Z_CheckHeap: block size does not touch the next block\n");
@@ -254,7 +259,7 @@ typedef struct
 {
 	int		sentinal;
 	int		size;		// including sizeof(hunk_t), -1 = not allocated
-	char	name[8];
+	char	name[24];
 } hunk_t;
 
 byte	*hunk_base;
@@ -408,7 +413,7 @@ void* CMemCache::Hunk_AllocName (int size, char *name)
 	h->sentinal = HUNK_SENTINAL;
 	q_strlcpy (h->name, name, 24);
 	
-	return (byte *)(h+1);
+	return (void *)(h+1);
 }
 
 /*
@@ -544,9 +549,9 @@ CACHE MEMORY
 Cache_Move
 ===========
 */
-void CMemCache::Cache_Move ( cache_system_t *c)
+void CMemCache::Cache_Move ( CCacheSystem *c)
 {
-	cache_system_t		*c_new;
+	CCacheSystem		*c_new;
 
 // we are clearing up space at the bottom, so only allocate it late
 	c_new = Cache_TryAlloc (c->size, true);
@@ -554,7 +559,7 @@ void CMemCache::Cache_Move ( cache_system_t *c)
 	{
 //		Con_Printf ("cache_move ok\n");
 
-		Q_memcpy (c_new +1, c+1, c->size - sizeof(cache_system_t) );
+		Q_memcpy (c_new +1, c+1, c->size - sizeof(CCacheSystem) );
 		c_new->user = c->user;
 		Q_memcpy (c_new->name, c->name, sizeof(c_new->name));
 		Cache_Free (c->user);
@@ -577,7 +582,7 @@ Throw things out until the hunk can be expanded to the given point
 */
 void CMemCache::Cache_FreeLow (int new_low_hunk)
 {
-	cache_system_t	*c;
+	CCacheSystem	*c;
 	
 	while (1)
 	{
@@ -599,7 +604,7 @@ Throw things out until the hunk can be expanded to the given point
 */
 void CMemCache::Cache_FreeHigh (int new_high_hunk)
 {
-	cache_system_t	*c, *prev;
+	CCacheSystem	*c, *prev;
 	
 	prev = NULL;
 	while (1)
@@ -619,7 +624,7 @@ void CMemCache::Cache_FreeHigh (int new_high_hunk)
 	}
 }
 
-void CMemCache::Cache_UnlinkLRU (cache_system_t *cs)
+void CMemCache::Cache_UnlinkLRU (CCacheSystem *cs)
 {
 	if (!cs->lru_next || !cs->lru_prev)
 		Sys_Error ("Cache_UnlinkLRU: NULL link");
@@ -630,7 +635,7 @@ void CMemCache::Cache_UnlinkLRU (cache_system_t *cs)
 	cs->lru_prev = cs->lru_next = NULL;
 }
 
-void CMemCache::Cache_MakeLRU (cache_system_t *cs)
+void CMemCache::Cache_MakeLRU (CCacheSystem *cs)
 {
 	if (cs->lru_next || cs->lru_prev)
 		Sys_Error ("Cache_MakeLRU: active link");
@@ -649,9 +654,9 @@ Looks for a free block of memory between the high and low hunk marks
 Size should already include the header and padding
 ============
 */
-cache_system_t* CMemCache::Cache_TryAlloc (int size, bool nobottom)
+CCacheSystem* CMemCache::Cache_TryAlloc (int size, bool nobottom)
 {
-	cache_system_t	*cs, *c_new;
+	CCacheSystem	*cs, *c_new;
 	
 // is the cache completely empty?
 
@@ -660,7 +665,7 @@ cache_system_t* CMemCache::Cache_TryAlloc (int size, bool nobottom)
 		if (hunk_size - hunk_high_used - hunk_low_used < size)
 			Sys_Error ("Cache_TryAlloc: %i is greater then free hunk", size);
 
-		c_new = (cache_system_t *) (hunk_base + hunk_low_used);
+		c_new = (CCacheSystem *) (hunk_base + hunk_low_used);
 		memset (c_new, 0, sizeof(*c_new));
 		c_new->size = size;
 
@@ -668,12 +673,13 @@ cache_system_t* CMemCache::Cache_TryAlloc (int size, bool nobottom)
 		c_new->prev = c_new->next = &cache_head;
 		
 		Cache_MakeLRU (c_new);
+		m_CacheSystem = c_new;
 		return c_new;
 	}
 	
 // search from the bottom up for space
 
-	c_new = (cache_system_t *) (hunk_base + hunk_low_used);
+	c_new = (CCacheSystem *) (hunk_base + hunk_low_used);
 	cs = cache_head.next;
 	
 	do
@@ -692,12 +698,13 @@ cache_system_t* CMemCache::Cache_TryAlloc (int size, bool nobottom)
 				
 				Cache_MakeLRU (c_new);
 	
+				m_CacheSystem = c_new;
 				return c_new;
 			}
 		}
 
 	// continue looking		
-		c_new = (cache_system_t *)((byte *)cs + cs->size);
+		c_new = (CCacheSystem *)((byte *)cs + cs->size);
 		cs = cs->next;
 
 	} while (cs != &cache_head);
@@ -715,6 +722,7 @@ cache_system_t* CMemCache::Cache_TryAlloc (int size, bool nobottom)
 		
 		Cache_MakeLRU (c_new);
 
+		m_CacheSystem = c_new;
 		return c_new;
 	}
 	
@@ -743,7 +751,7 @@ Cache_Print
 */
 void CMemCache::Cache_Print (void)
 {
-	cache_system_t	*cd;
+	CCacheSystem	*cd;
 
 	for (cd = cache_head.next ; cd != &cache_head ; cd = cd->next)
 	{
@@ -801,12 +809,12 @@ Frees the memory and removes it from the LRU list
 */
 void CMemCache::Cache_Free (cache_user_t *c)
 {
-	cache_system_t	*cs;
+	CCacheSystem	*cs;
 
 	if (!c->data)
 		Sys_Error ("Cache_Free: not allocated");
 
-	cs = ((cache_system_t *)c->data) - 1;
+	cs = ((CCacheSystem *)c->data) - 1;
 
 	cs->prev->next = cs->next;
 	cs->next->prev = cs->prev;
@@ -826,12 +834,12 @@ Cache_Check
 */
 void* CMemCache::Cache_Check (cache_user_t *c)
 {
-	cache_system_t	*cs;
+	CCacheSystem	*cs;
 
 	if (!c->data)
 		return NULL;
 
-	cs = ((cache_system_t *)c->data) - 1;
+	cs = ((CCacheSystem *)c->data) - 1;
 
 // move to head of LRU
 	Cache_UnlinkLRU (cs);
@@ -848,7 +856,7 @@ Cache_Alloc
 */
 void* CMemCache::Cache_Alloc (cache_user_t *c, int size, char *name)
 {
-	cache_system_t	*cs;
+	CCacheSystem	*cs;
 
 	if (c->data)
 		Sys_Error ("Cache_Alloc: allready allocated");
@@ -856,7 +864,7 @@ void* CMemCache::Cache_Alloc (cache_user_t *c, int size, char *name)
 	if (size <= 0)
 		Sys_Error ("Cache_Alloc: size %i", size);
 
-	size = (size + sizeof(cache_system_t) + 15) & ~15;
+	size = (size + sizeof(CCacheSystem) + 15) & ~15;
 
 // find memory for it	
 	while (1)
@@ -882,7 +890,6 @@ void* CMemCache::Cache_Alloc (cache_user_t *c, int size, char *name)
 
 //============================================================================
 
-
 /*
 ========================
 Memory_Init
@@ -897,7 +904,7 @@ void CMemCache::Memory_Init (void *buf, int size)
 	hunk_size = size;
 	hunk_low_used = 0;
 	hunk_high_used = 0;
-	
+
 	g_MemCache->Cache_Init ();
 	p = COM_CheckParm ("-zone");
 	if (p)
@@ -907,7 +914,6 @@ void CMemCache::Memory_Init (void *buf, int size)
 		else
 			Sys_Error ("Memory_Init: you must specify a size in KB after -zone");
 	}
-	mainzone = static_cast<memzone_t*>(g_MemCache->Hunk_AllocName (zonesize, "zone" ));
-	Z_ClearZone (mainzone, zonesize);
+	mainzone = static_cast<CMemZone*>(g_MemCache->Hunk_AllocName (zonesize, "zone" ));
+	mainzone->Z_ClearZone (mainzone, zonesize);
 }
-
