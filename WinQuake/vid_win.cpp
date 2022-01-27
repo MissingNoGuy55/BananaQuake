@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 bool	dibonly;
 
-extern int		i_Minimized;
+int		i_Minimized;
 
 HWND		mainwindow;
 
@@ -282,13 +282,13 @@ bool VID_AllocBuffers (int width, int height)
 	if (d_pzbuffer)
 	{
 		D_FlushCaches ();
-		Hunk_FreeToHighMark (VID_highhunkmark);
+		g_MemCache->Hunk_FreeToHighMark (VID_highhunkmark);
 		d_pzbuffer = NULL;
 	}
 
-	VID_highhunkmark = Hunk_HighMark ();
+	VID_highhunkmark = g_MemCache->Hunk_HighMark ();
 
-	d_pzbuffer = static_cast<short*>(Hunk_HighAllocName (tbuffersize, "video"));
+	d_pzbuffer = static_cast<short*>(g_MemCache->Hunk_HighAllocName (tbuffersize, "video"));
 
 	vid_surfcache = (byte *)d_pzbuffer +
 			width * height * sizeof (*d_pzbuffer);
@@ -316,8 +316,8 @@ int VID_Suspend (MGLDC *dc,m_int flags)
 			return MGL_NO_DEACTIVATE;
 		}
 
-		S_BlockSound ();
-		S_ClearBuffer ();
+		g_SoundSystem->S_BlockSound ();
+		g_SoundSystem->S_ClearBuffer ();
 
 		IN_RestoreOriginalMouseState ();
 		CDAudio_Pause ();
@@ -335,7 +335,7 @@ int VID_Suspend (MGLDC *dc,m_int flags)
 	// fix the leftover Alt from any Alt-Tab or the like that switched us away
 		ClearAllStates ();
 		CDAudio_Resume ();
-		S_UnblockSound ();
+		g_SoundSystem->S_UnblockSound();
 
 		in_mode_set = false;
 
@@ -1600,7 +1600,7 @@ int VID_SetMode (int modenum, unsigned char *palette)
 	in_mode_set = true;
 
 	CDAudio_Pause ();
-	S_ClearBuffer ();
+	g_SoundSystem->S_ClearBuffer ();
 
 	if (vid_modenum == NO_MODE)
 		original_mode = windowed_default;
@@ -2160,7 +2160,7 @@ void	VID_Init (unsigned char *palette)
 	hide_window = true;
 	VID_SetMode (MODE_WINDOWED, palette);
 	hide_window = false;
-	S_Init ();
+	g_SoundSystem->S_Init ();
 
 	vid_initialized = true;
 
@@ -2703,14 +2703,14 @@ void AppActivate(BOOL fActive, BOOL minimize)
 // enable/disable sound on focus gain/loss
 	if (!ActiveApp && sound_active)
 	{
-		S_BlockSound ();
-		S_ClearBuffer ();
+		g_SoundSystem->S_BlockSound ();
+		g_SoundSystem->S_ClearBuffer ();
 		sound_active = false;
 	}
 	else if (ActiveApp && !sound_active)
 	{
-		S_UnblockSound ();
-		S_ClearBuffer ();
+		g_SoundSystem->S_UnblockSound();
+		g_SoundSystem->S_ClearBuffer ();
 		sound_active = true;
 	}
 
@@ -2862,15 +2862,15 @@ LONG WINAPI MainWndProc (
 				default:
 					if (!in_mode_set)
 					{
-						S_BlockSound ();
-						S_ClearBuffer ();
+						g_SoundSystem->S_BlockSound ();
+						g_SoundSystem->S_ClearBuffer ();
 					}
 
 					lRet = DefWindowProc (hWnd, uMsg, wParam, lParam);
 
 					if (!in_mode_set)
 					{
-						S_UnblockSound ();
+						g_SoundSystem->S_UnblockSound();
 					}
 			}
 			break;

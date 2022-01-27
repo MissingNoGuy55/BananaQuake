@@ -74,7 +74,7 @@ public:
 CGLTexture	gltextures[MAX_GLTEXTURES];
 int			numgltextures;
 
-CQVector<CGLTexture> gltexturevector(NULL, 1024, 1);
+CQVector<CGLTexture> gltexturevector(1024, 1);
 
 void GL_Bind (int texnum)
 {
@@ -430,7 +430,7 @@ void Draw_Init (void)
 	conback->height = vid.conheight;
 
  	// scale console to vid size
- 	dest = ncdata = Hunk_AllocName(vid.conwidth * vid.conheight, "conback");
+ 	dest = ncdata = g_MemCache->Hunk_AllocName(vid.conwidth * vid.conheight, "conback");
  
  	for (y=0 ; y<vid.conheight ; y++, dest += vid.conwidth)
  	{
@@ -1246,7 +1246,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mi
 	// see if the texture is allready present
 	if (identifier[0])
 	{
-		for (i=0, glt=&gltexturevector[i]; i<numgltextures ; i++, glt++)
+		for (i=0, glt=(CGLTexture*)&gltexturevector; i<numgltextures ; i++, glt++)
 		{
 			if (!strcmp (identifier, glt->identifier))
 			{
@@ -1261,13 +1261,14 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mi
 		numgltextures++;
 	}
 
-	strcpy (glt->identifier, identifier);
-	glt->texnum = texture_extension_number;
-	glt->width = width;
-	glt->height = height;
-	glt->mipmap = mipmap;
-
-	Con_Printf("Loaded %s\n", glt->identifier);
+	if (glt)
+	{
+		strncpy(glt->identifier, identifier, strlen(identifier));
+		glt->texnum = texture_extension_number;
+		glt->width = width;
+		glt->height = height;
+		glt->mipmap = mipmap;
+	}
 
 	GL_Bind(texture_extension_number );
 
@@ -1277,21 +1278,6 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mi
 
 	gltexturevector[texture_extension_number-1] = *glt;
 
-#ifdef _DEBUG
-
-	auto test = &gltexturevector[texture_extension_number-1];
-	auto test2 = &gltexturevector[0];
-	CGLTexture testarr[1 << 8];
-
-	for (int i = 0; i < 256; i++)
-	{
-		testarr[i].texnum = test[i].texnum;
-		testarr[i].width = test[i].width;
-		testarr[i].height = test[i].height;
-		Q_strncpy(testarr[i].identifier, test[i].identifier, strlen(test->identifier));
-	}
-
-#endif
 	texture_extension_number++;
 
 	return texture_extension_number-1;

@@ -50,7 +50,7 @@ int			scr_fullupdate;
 int			clearconsole;
 int			clearnotify;
 
-viddef_t	vid;				// global video state
+extern viddef_t	vid;				// global video state
 
 vrect_t		*pconupdate;
 vrect_t		scr_vrect;
@@ -551,7 +551,7 @@ void WritePCXfile (char *filename, byte *data, int width, int height,
 	pcx_t	*pcx;
 	byte		*pack;
 	  
-	pcx = static_cast<pcx_t*>(Hunk_TempAlloc (width*height*2+1000));
+	pcx = static_cast<pcx_t*>(g_MemCache->Hunk_TempAlloc (width*height*2+1000));
 	if (pcx == NULL)
 	{
 		Con_Printf("SCR_ScreenShot_f: not enough memory\n");
@@ -662,7 +662,7 @@ SCR_BeginLoadingPlaque
 */
 void SCR_BeginLoadingPlaque (void)
 {
-	S_StopAllSounds (true);
+	g_SoundSystem->S_StopAllSounds (true);
 
 	if (cls.state != ca_connected)
 		return;
@@ -756,7 +756,7 @@ int SCR_ModalMessage (char *text)
 	SCR_UpdateScreen ();
 	scr_drawdialog = false;
 	
-	S_ClearBuffer ();		// so dma doesn't loop current sound
+	g_SoundSystem->S_ClearBuffer ();		// so dma doesn't loop current sound
 
 	do
 	{
