@@ -108,8 +108,6 @@ sfxcache_t * CSoundSystemWin::S_LoadSound (sfx_t *s)
 	sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Check (&s->cache));
 	if (sc)
 		return sc;
-	else
-		return NULL;
 
 //Con_Printf ("S_LoadSound: %x\n", (int)stackbuf);
 // load it in

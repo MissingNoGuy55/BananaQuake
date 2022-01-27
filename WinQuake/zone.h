@@ -86,84 +86,49 @@ Zone block
 #ifndef ZONE_H
 #define ZONE_H
 
-template<class T, class I = int>
-class CMemBlock
+typedef struct memblock_s
 {
-public:
-
-	CMemBlock(int startSize = 0, int growSize = 1);
-	CMemBlock(T* memory, int numelements);
-	CMemBlock(const T* memory, int numelements);
-
 	int		size;           // including the header and possibly tiny fragments
 	int     tag;            // a tag of 0 is a free block
 	int     id;        		// should be ZONEID
-	CMemBlock<unsigned char> *next, *prev;
+	struct memblock_s* next, * prev;
 	int		pad;			// pad to 64 bit boundary
+} memblock_t;
 
-	T* Base();
-	const T* Base() const;
-
-	// element access
-	T& operator[](I i);
-	const T& operator[](I i) const;
-
-	T& operator=(int i) const;
-
-	T& Element(I i);
-	const T& Element(I i) const;
-
-private:
-
-	T* m_Memory;
-	int	m_growSize;
-	int m_Count;
-
-};
-
-
-//
-//class CMemBlock
-//{
-//public:
-//
-//	CMemBlock();
-//
-//	int		size;           // including the header and possibly tiny fragments
-//	int     tag;            // a tag of 0 is a free block
-//	int     id;        		// should be ZONEID
-//	CMemBlock *next, *prev;
-//	int		pad;			// pad to 64 bit boundary
-//};
-//
+typedef struct
+{
+	int		size;		// total bytes malloced, including header
+	memblock_t	blocklist;		// start / end cap for linked list
+	memblock_t* rover;
+} memzone_t;
 
 typedef struct cache_user_s
 {
 	void* data;
 } cache_user_t;
 
-class CCacheSystem
+typedef struct cache_system_s
 {
-public:
 	int						size;		// including this header
 	cache_user_t* user;
 	char					name[16];
-	class CCacheSystem *prev, *next;
-	class CCacheSystem *lru_prev, *lru_next;	// for LRU flushing	
-};
+	struct cache_system_s* prev, * next;
+	struct cache_system_s* lru_prev, * lru_next;	// for LRU flushing	
+} cache_system_t;
 
 // CMemCache* g_MemCache;
 
-static CCacheSystem	cache_head;
+static cache_system_t	cache_head;
 
 typedef void (*flush_cache_callback)(void);
 
-class CMemZone
+class CMemCache
 {
 public:
-	int		size;		// total bytes malloced, including header
-	CMemBlock<unsigned char>	blocklist;		// start / end cap for linked list
-	CMemBlock<unsigned char>* rover;
+
+	memzone_t* mainzone;
+
+	void Memory_Init(void* buf, int size);
 
 	void Z_Free(void* ptr);
 	void* Z_Malloc(int size);			// returns 0 filled memory
@@ -173,19 +138,8 @@ public:
 	void Z_CheckHeap(void);
 	int Z_FreeMemory(void);
 
-	void Z_ClearZone(CMemZone* zone, int size);
-	void Z_Print(CMemZone* zone);
-};
-
-//CMemZone* mainzone;
-
-class CMemCache
-{
-public:
-
-	CMemZone* mainzone;
-
-	void Memory_Init(void* buf, int size);
+	void Z_ClearZone(memzone_t* zone, int size);
+	void Z_Print(memzone_t* zone);
 
 	void* Hunk_Alloc(int size);
 	void Hunk_Print(bool all);
@@ -202,15 +156,15 @@ public:
 
 	void* Hunk_TempAlloc(int size);
 
-	void Cache_Move(CCacheSystem* c);
+	void Cache_Move(cache_system_t* c);
 
 	void Hunk_Check(void);
 
 	void Cache_FreeHigh(int new_high_hunk);
 	void Cache_FreeLow(int new_low_hunk);
 
-	void Cache_MakeLRU(CCacheSystem* cs);
-	void Cache_UnlinkLRU(CCacheSystem* cs);
+	void Cache_MakeLRU(cache_system_t* cs);
+	void Cache_UnlinkLRU(cache_system_t* cs);
 
 	static void Cache_Flush(void);
 	static flush_cache_callback Cache_Flush_Callback();
@@ -228,15 +182,13 @@ public:
 	// Returns NULL if all purgable data was tossed and there still
 	// wasn't enough room.
 
-	CCacheSystem* Cache_TryAlloc(int size, bool nobottom);
+	cache_system_t* Cache_TryAlloc(int size, bool nobottom);
 
 	void Cache_Report(void);
 	void Cache_Compact(void);
-
-private:
-
-	CCacheSystem* m_CacheSystem;
 };
+
+class CSoundSystemWin;
 
 extern CMemCache* g_MemCache;
 
@@ -248,47 +200,47 @@ inline CMemBlock<T, I>::CMemBlock(int startSize, int growSize)
 	next = prev = NULL;
 	pad = 0;
 	id = 0;
-	m_Memory = 0;
+	m_pMemory = 0;
 	if (startSize > 0)
 	{
-		m_Memory = (T*)malloc(startSize * sizeof(T));
+		m_pMemory = (T*)malloc(startSize * sizeof(T));
 	}
 }
 
 template<class T, class I>
 inline CMemBlock<T, I>::CMemBlock(T* memory, int numelements)
 {
-	m_Memory = memory;
+	m_pMemory = memory;
 }
 
 template<class T, class I>
 inline T* CMemBlock<T, I>::Base()
 {
-	return m_Memory;
+	return m_pMemory;
 }
 
 template<class T, class I>
 inline const T* CMemBlock<T, I>::Base() const
 {
-	return m_Memory;
+	return m_pMemory;
 }
 
 template<class T, class I>
 inline T& CMemBlock<T, I>::operator[](I i)
 {
-	return m_Memory[(Uint32)i];
+	return m_pMemory[(Uint32)i];
 }
 
 template<class T, class I>
 inline const T& CMemBlock<T, I>::operator[](I i) const
 {
-	return m_Memory[(Uint32)i];
+	return m_pMemory[(Uint32)i];
 }
 
 template<class T, class I>
 inline T& CMemBlock<T, I>::operator=(int i) const
 {
-	return m_Memory[i];
+	return m_pMemory[i];
 }
 
 #endif

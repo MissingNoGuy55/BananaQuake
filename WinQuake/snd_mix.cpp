@@ -119,14 +119,6 @@ void CSoundSystemWin::S_TransferPaintBuffer(int endtime)
 	int 	step;
 	int		val;
 	int		snd_vol;
-	DWORD	*pbuf;
-	LPVOID	lpbuf, lpbuf2;
-#ifdef _WIN32
-	int		reps;
-	DWORD	dwSize,dwSize2;
-	DWORD	*pbuf2;
-	HRESULT	hresult;
-#endif
 
 	if (shm->samplebits == 16 && shm->channels == 2)
 	{
@@ -141,40 +133,9 @@ void CSoundSystemWin::S_TransferPaintBuffer(int endtime)
 	step = 3 - shm->channels;
 	snd_vol = volume.value*256;
 
-#ifdef _WIN32
-	if (pDSBuf)
-	{
-		reps = 0;
-
-		while ((hresult = pDSBuf->Lock(0, gSndBufSize, &lpData, &dwSize,
-									   &lpbuf2,&dwSize2, 0)) != DS_OK)
-		{
-			if (hresult != DSERR_BUFFERLOST)
-			{
-				Con_Printf ("S_TransferPaintBuffer: DS::Lock Sound Buffer Failed\n");
-				S_Shutdown ();
-				S_Startup ();
-				return;
-			}
-
-			if (++reps > 10000)
-			{
-				Con_Printf ("S_TransferPaintBuffer: DS: couldn't restore buffer\n");
-				S_Shutdown ();
-				S_Startup ();
-				return;
-			}
-		}
-	}
-	else
-#endif
-	{
-		pbuf = (DWORD *)shm->buffer;
-	}
-
 	if (shm->samplebits == 16)
 	{
-		short *out = (short *) pbuf;
+		short *out = (short *) shm->buffer;
 		while (count--)
 		{
 			val = (*p * snd_vol) >> 8;
@@ -189,7 +150,7 @@ void CSoundSystemWin::S_TransferPaintBuffer(int endtime)
 	}
 	else if (shm->samplebits == 8)
 	{
-		unsigned char *out = (unsigned char *) pbuf;
+		unsigned char *out = (unsigned char *) shm->buffer;
 		while (count--)
 		{
 			val = (*p * snd_vol) >> 8;
@@ -202,23 +163,6 @@ void CSoundSystemWin::S_TransferPaintBuffer(int endtime)
 			out_idx = (out_idx + 1) & out_mask;
 		}
 	}
-
-#ifdef _WIN32
-	if (pDSBuf) {
-		DWORD dwNewpos, dwWrite;
-		int il = paintedtime;
-		int ir = endtime - paintedtime;
-		
-		ir += il;
-
-		pDSBuf->Unlock(pbuf, dwSize, NULL, NULL);
-
-		pDSBuf->GetCurrentPosition(&dwNewpos, &dwWrite);
-
-//		if ((dwNewpos >= il) && (dwNewpos <= ir))
-//			Con_Printf("%d-%d p %d c\n", il, ir, dwNewpos);
-	}
-#endif
 }
 
 

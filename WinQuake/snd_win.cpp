@@ -46,88 +46,12 @@ int	snd_sent, snd_completed;
 
 CSoundSystemWin* g_SoundSystem;
 LPDIRECTSOUNDBUFFER g_SoundBuffer;
+SDL_AudioDeviceID g_SoundDeviceID;
 
-/*
-class CSoundSystemWin : public CSoundInternal
-{
-public:
+//dma_t CSoundInternal::sn = { NULL };
+volatile dma_t* CSoundInternal::shm = NULL;
 
-	//typedef void (*snd_callback)(CSoundSystemWin);
-	//typedef void (*snd_callback)(CSoundSystemWin);
-
-	CSoundSystemWin() { S_Init(); }
-
-	void S_Init(void);
-	void S_Startup(void);
-	void S_Shutdown(void);
-	void S_StartSound(int entnum, int entchannel, sfx_t* sfx, vec3_t origin, float fvol, float attenuation);
-	void S_StaticSound(sfx_t* sfx, vec3_t origin, float vol, float attenuation);
-	void S_UpdateAmbientSounds(void);
-	void S_StopSound(int entnum, int entchannel);
-	void S_StopAllSounds(bool clear);
-	void S_StopAllSoundsC(void);
-	void S_ClearBuffer(void);
-	void S_Update(vec3_t origin, vec3_t v_forward, vec3_t v_right, vec3_t v_up);
-	void GetSoundtime(void);
-	void S_ExtraUpdate(void);
-
-	void S_Update_(void);
-
-	sfx_t* S_PrecacheSound(char* sample);
-	sfx_t* S_FindName(char* name);
-	void S_TouchSound(char* sample);
-	void S_ClearPrecache(void);
-	void S_BeginPrecaching(void);
-	void S_EndPrecaching(void);
-	void S_PaintChannels(int endtime);
-	void S_InitPaintChannels(void);
-
-	// picks a channel based on priorities, empty slots, number of channels
-	channel_t* SND_PickChannel(int entnum, int entchannel);
-
-	// spatializes a channel
-	void SND_Spatialize(channel_t* ch);
-
-	// initializes cycling through a DMA buffer and returns information on it
-	bool SNDDMA_Init(void);
-
-	// gets the current DMA position
-	int SNDDMA_GetDMAPos(void);
-
-	// shutdown the DMA xfer.
-	void SNDDMA_Shutdown(void);
-
-	void S_Play(void);
-
-	void S_PlayVol(void);
-
-	void S_SoundList(void);
-
-	void S_LocalSound(char* s);
-	sfxcache_t* S_LoadSound(sfx_t* s);
-
-	wavinfo_t GetWavinfo(char* name, byte* wav, int wavlength);
-
-	void SND_InitScaletable(void);
-	void SNDDMA_Submit(void);
-
-	void S_AmbientOff(void);
-	void S_AmbientOn(void);
-
-	void S_SoundInfo_f(void);
-
-	bool SNDDMA_InitDirect(void);
-	bool SNDDMA_InitWav(void);
-
-	void S_BlockSound(void);
-	void S_UnblockSound(void);
-
-	void FreeSound(void);
-
-	// void GetCaps(void) { this->GetCaps(); };
-
-};
-*/
+static int	buffersize;
 
 /*
 ==================
@@ -614,75 +538,104 @@ Returns false if nothing is found.
 ==================
 */
 
-bool CSoundSystemWin::SNDDMA_Init(void)
+bool CSoundSystemWin::SNDDMA_Init(dma_t* dma)
 {
 	sndinitstat	stat;
+	int		tmp, val;
+	char	drivername[128];
+
+	SDL_AudioSpec desired, obtained;
+
+	if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
+	{
+		Con_Printf("Couldn't init SDL audio: %s\n", SDL_GetError());
+		return false;
+	}
+
+	/* Set up the desired format */
+	desired.freq = 11025;
+	desired.format = (loadas8bit.value) ? AUDIO_U8 : AUDIO_S16SYS;
+	desired.channels = 2; /* = desired_channels; */
+	if (desired.freq <= 11025)
+		desired.samples = 256;
+	else if (desired.freq <= 22050)
+		desired.samples = 512;
+	else if (desired.freq <= 44100)
+		desired.samples = 1024;
+	else if (desired.freq <= 56000)
+		desired.samples = 2048; /* for 48 kHz */
+	else
+		desired.samples = 4096; /* for 96 kHz */
+	desired.callback = paint_audio;
+	desired.userdata = NULL;
+
+	/* Open the audio device */
+
+	g_SoundDeviceID = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+
+	if (g_SoundDeviceID == -1)
+	{
+		Con_Printf("Couldn't open SDL audio: %s\n", SDL_GetError());
+		SDL_QuitSubSystem(SDL_INIT_AUDIO);
+		return false;
+	}
+
+	memset((void*)dma, 0, sizeof(dma_t));
+	shm = dma;
 
 	if (COM_CheckParm ("-wavonly"))
 		wavonly = true;
 
 	dsound_init = wav_init = 0;
 
-	pDS = NULL;
+	/* Fill the audio DMA information block */
+	/* Since we passed NULL as the 'obtained' spec to SDL_OpenAudio(),
+	 * SDL will convert to hardware format for us if needed, hence we
+	 * directly use the desired values here. */
+	shm->samplebits = (obtained.format & 0xFF); /* first byte of format is bits */
+	shm->signed8 = (obtained.format == AUDIO_S8);
+	shm->speed = obtained.freq;
+	shm->channels = obtained.channels;
+ 	tmp = (obtained.samples * obtained.channels) * 10;
+	if (tmp & (tmp - 1))
+	{	/* make it a power of two */
+		val = 1;
+		while (val < tmp)
+			val <<= 1;
 
-	stat = SIS_FAILURE;	// assume DirectSound won't initialize
-
-	/* Init DirectSound */
-	if (!wavonly)
-	{
-		if (snd_firsttime || snd_isdirect)
-		{
-			stat = static_cast<sndinitstat>(SNDDMA_InitDirect ());
-
-			if (stat == SIS_SUCCESS)
-			{
-				snd_isdirect = true;
-
-				if (snd_firsttime)
-					Con_SafePrintf ("DirectSound initialized\n");
-			}
-			else
-			{
-				snd_isdirect = false;
-				Con_SafePrintf ("DirectSound failed to init\n");
-			}
-		}
+		tmp = val;
 	}
+	shm->samples = tmp;
+	shm->samplepos = 0;
+	shm->submission_chunk = 1;
 
-// if DirectSound didn't succeed in initializing, try to initialize
-// waveOut sound, unless DirectSound failed because the hardware is
-// already allocated (in which case the user has already chosen not
-// to have sound)
-	if (!dsound_init && (stat != SIS_NOTAVAIL))
-	{
-		if (snd_firsttime || snd_iswave)
-		{
+	Con_Printf("SDL audio spec  : %d Hz, %d samples, %d channels\n",
+		obtained.freq, obtained.samples, obtained.channels);
 
-			snd_iswave = SNDDMA_InitWav ();
+		const char* driver = SDL_GetCurrentAudioDriver();
+		const char* device = SDL_GetAudioDeviceName(0, SDL_FALSE);
+		sprintf_s(drivername, sizeof(drivername), "%s - %s",
+			driver != NULL ? driver : "(UNKNOWN)",
+			device != NULL ? device : "(UNKNOWN)");
 
-			if (snd_iswave)
-			{
-				if (snd_firsttime)
-					Con_SafePrintf ("Wave sound initialized\n");
-			}
-			else
-			{
-				Con_SafePrintf ("Wave sound failed to init\n");
-			}
-		}
-	}
+	buffersize = shm->samples * (shm->samplebits / 8);
+	Con_Printf("SDL audio driver: %s, %d bytes buffer\n", drivername, buffersize);
 
 	snd_firsttime = false;
 
-	if (!dsound_init && !wav_init)
+	shm->buffer = (unsigned char*)calloc(1, buffersize);
+	if (!shm->buffer)
 	{
-		if (snd_firsttime)
-			Con_SafePrintf ("No sound device initialized\n");
-
-		return 0;
+		SDL_CloseAudio();
+		SDL_QuitSubSystem(SDL_INIT_AUDIO);
+		shm = NULL;
+		Con_Printf("Failed allocating memory for SDL audio\n");
+		return false;
 	}
 
-	return 1;
+	SDL_PauseAudioDevice(g_SoundDeviceID, 0);
+
+	return true;
 }
 
 /*
@@ -717,6 +670,16 @@ int CSoundSystemWin::SNDDMA_GetDMAPos(void)
 	s &= (shm->samples-1);
 
 	return s;
+}
+
+void CSoundSystemWin::SNDDMA_LockBuffer(void)
+{
+	SDL_LockAudioDevice(g_SoundDeviceID);
+}
+
+void CSoundSystemWin::SNDDMA_UnlockBuffer(void)
+{
+	SDL_UnlockAudioDevice(g_SoundDeviceID);
 }
 
 /*
@@ -776,6 +739,48 @@ void CSoundSystemWin::SNDDMA_Submit(void)
 		} 
 	}
 }
+
+void SDLCALL CSoundSystemWin::paint_audio(void* unused, Uint8* stream, int len)
+{
+	int	pos, tobufend;
+	int	len1, len2;
+
+	if (!shm)
+	{	/* shouldn't happen, but just in case */
+		memset(stream, 0, len);
+		return;
+	}
+
+	pos = (shm->samplepos * (shm->samplebits / 8));
+	if (pos >= buffersize)
+		shm->samplepos = pos = 0;
+
+	tobufend = buffersize - pos;  /* bytes to buffer's end. */
+	len1 = len;
+	len2 = 0;
+
+	if (len1 > tobufend)
+	{
+		len1 = tobufend;
+		len2 = len - len1;
+	}
+
+	Q_memcpy(stream, shm->buffer + pos, len1);
+
+	if (len2 <= 0)
+	{
+		shm->samplepos += (len1 / (shm->samplebits / 8));
+	}
+	else
+	{	/* wraparound? */
+		memcpy(stream + len1, shm->buffer, len2);
+		shm->samplepos = (len2 / (shm->samplebits / 8));
+	}
+
+	if (shm->samplepos >= buffersize)
+		shm->samplepos = 0;
+}
+
 
 /*
 ==============

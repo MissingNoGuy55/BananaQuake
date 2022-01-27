@@ -61,6 +61,7 @@ typedef struct
 	bool		gamealive;
 	bool		soundalive;
 	bool		splitbuffer;
+	bool		signed8;
 	int				channels;
 	int				samples;				// mono samples in buffer
 	int				submission_chunk;		// don't mix less than this #
@@ -118,8 +119,8 @@ public:
 	virtual void S_StopAllSoundsC(void);
 
 	// pointer should go away
-	volatile dma_t* shm = 0;
-	volatile dma_t sn;
+	static volatile dma_t* shm;
+	dma_t sn;
 
 	vec3_t		listener_origin;
 	vec3_t		listener_forward;
@@ -132,7 +133,7 @@ public:
 
 
 #define	MAX_SFX		512
-	sfx_t* known_sfx;		// hunk allocated [MAX_SFX]
+	CQVector<sfx_t*>		known_sfx;		// hunk allocated [MAX_SFX]
 	int			num_sfx;
 
 	sfx_t* ambient_sfx[NUM_AMBIENTS];
@@ -178,7 +179,6 @@ public:
 
 	channel_t   channels[MAX_CHANNELS];
 	DWORD		gSndBufSize;
-	volatile dma_t* shm;
 	int total_channels;
 	int paintedtime;
 
@@ -220,7 +220,7 @@ public:
 	void SND_Spatialize(channel_t* ch);
 
 	// initializes cycling through a DMA buffer and returns information on it
-	bool SNDDMA_Init(void);
+	bool SNDDMA_Init(dma_t* dma);
 
 	// gets the current DMA position
 	int SNDDMA_GetDMAPos(void);
@@ -243,6 +243,8 @@ public:
 	void SND_InitScaletable(void);
 	void SNDDMA_Submit(void);
 
+	static void SDLCALL paint_audio(void* unused, Uint8* stream, int len);
+
 	void S_AmbientOff(void);
 	void S_AmbientOn(void);
 
@@ -250,6 +252,8 @@ public:
 
 	bool SNDDMA_InitDirect(void);
 	bool SNDDMA_InitWav(void);
+	void SNDDMA_LockBuffer(void);
+	void SNDDMA_UnlockBuffer(void);
 
 	void S_BlockSound(void);
 	void S_UnblockSound(void);
@@ -285,8 +289,8 @@ extern vec3_t listener_origin;
 extern vec3_t listener_forward;
 extern vec3_t listener_right;
 extern vec3_t listener_up;
-extern volatile dma_t *shm;
-extern volatile dma_t sn;
+//extern volatile dma_t *shm;
+//extern volatile dma_t sn;
 extern vec_t sound_nominal_clip_dist;
 
 extern	cvar_t loadas8bit;
@@ -300,5 +304,7 @@ extern int		snd_blocked;
 extern CSoundSystemWin* g_SoundSystem;
 
 extern LPDIRECTSOUNDBUFFER g_SoundBuffer;
+
+extern SDL_AudioDeviceID g_SoundDeviceID;
 
 #endif

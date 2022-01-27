@@ -48,7 +48,6 @@ cvar_t _snd_mixahead = {"_snd_mixahead", "0.1", true};
 // User-setable variables
 // ====================================================================
 
-
 //
 // Fake dma is a synchronous faking of the DMA progress used for
 // isolating performance in the renderer.  The fakedma_updates is
@@ -105,7 +104,7 @@ void CSoundSystemWin::S_Startup (void)
 
 	if (!fakedma)
 	{
-		rc = SNDDMA_Init();
+		rc = SNDDMA_Init(&sn);
 
 		if (!rc)
 		{
@@ -126,7 +125,6 @@ CSoundSystemWin::CSoundSystemWin()
 	pDSBuf = NULL;
 	pDSPBuf = NULL;
 	hInstDS = NULL;
-	g_SoundSystem = NULL;
 	gSndBufSize = 0;
 	shm = NULL;
 	total_channels = 0;
@@ -182,7 +180,10 @@ void CSoundSystemWin::S_Init (void)
 
 	SND_InitScaletable ();
 
-	known_sfx = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName (MAX_SFX*sizeof(sfx_t), "sfx_t"));
+	known_sfx.SetCount(MAX_SFX);
+
+	known_sfx[0] = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
+
 	num_sfx = 0;
 
 // create a piece of DMA memory
@@ -262,15 +263,15 @@ sfx_t* CSoundSystemWin::S_FindName (char *name)
 
 // see if already loaded
 	for (i=0 ; i < num_sfx ; i++)
-		if (!Q_strcmp(known_sfx[i].name, name))
+		if (!Q_strcmp(known_sfx[i]->name, name))
 		{
-			return &known_sfx[i];
+			return known_sfx[i];
 		}
 
 	if (num_sfx == MAX_SFX)
 		Sys_Error ("S_FindName: out of sfx_t");
 	
-	sfx = &known_sfx[i];
+	sfx = known_sfx[i];
 	strcpy (sfx->name, name);
 
 	num_sfx++;
@@ -534,12 +535,8 @@ void CSoundInternal::S_StopAllSoundsC (void)
 void CSoundSystemWin::S_ClearBuffer (void)
 {
 	int		clear;
-		
-#ifdef _WIN32
-	if (!sound_started || !shm || (!shm->buffer && !pDSBuf))
-#else
-	if (!sound_started || !shm || !shm->buffer)
-#endif
+
+	if (!sound_started || !shm)
 		return;
 
 	if (shm->samplebits == 8)
@@ -547,44 +544,14 @@ void CSoundSystemWin::S_ClearBuffer (void)
 	else
 		clear = 0;
 
-#ifdef _WIN32
-	if (pDSBuf)
-	{
-		DWORD	dwSize;
-		DWORD	*pData;
-		int		reps;
-		HRESULT	hresult;
-		LPVOID pVoid;
+	SNDDMA_LockBuffer();
+	if (!shm->buffer)
+		return;
 
-		reps = 0;
+	Q_memset(shm->buffer, clear, shm->samples * shm->samplebits / 8);
 
-		while ((hresult = pDSBuf->Lock(0, gSndBufSize, &pVoid, &dwSize, NULL, NULL, 0)) != DS_OK)
-		{
-			if (hresult != DSERR_BUFFERLOST)
-			{
-				Con_Printf ("S_ClearBuffer: DS::Lock Sound Buffer Failed\n");
-				S_Shutdown ();
-				return;
-			}
+	SNDDMA_UnlockBuffer();
 
-			if (++reps > 10000)
-			{
-				Con_Printf ("S_ClearBuffer: DS: couldn't restore buffer\n");
-				S_Shutdown ();
-				return;
-			}
-		}
-
-		Q_memset(pVoid, clear, shm->samples * shm->samplebits/8);
-
-		pDSBuf->Unlock(pVoid, dwSize, NULL, 0);
-	
-	}
-	else
-#endif
-	{
-		Q_memset(shm->buffer, clear, shm->samples * shm->samplebits/8);
-	}
 }
 
 
@@ -837,6 +804,9 @@ void CSoundInternal::S_Update_(void)
 	if (!sound_started || (snd_blocked > 0))
 		return;
 
+	if (!shm->buffer)
+		return;
+
 // Updates DMA time
 	g_SoundSystem->GetSoundtime();
 
@@ -913,11 +883,13 @@ void CSoundSystemWin::S_Play(void)
 
 CSoundInternal::CSoundInternal()
 {
+	known_sfx = { NULL };
 	pDS = NULL;
 	pDSBuf = NULL;
 	pDSPBuf = NULL;
 	hData = NULL;
 	lpData = lpData2 = NULL;
+	shm = NULL;
 }
 
 void CSoundInternal::S_PlayVol(void)
@@ -953,7 +925,7 @@ void CSoundInternal::S_SoundList(void)
 	int		size, total;
 
 	total = 0;
-	for (sfx=known_sfx, i=0 ; i<num_sfx ; i++, sfx++)
+	for (i=0, sfx = known_sfx[i]; i<num_sfx ; i++, sfx++)
 	{
 		sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Check (&sfx->cache));
 		if (!sc)

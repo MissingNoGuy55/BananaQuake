@@ -694,12 +694,12 @@ void _Host_Frame (float time)
 
 // update video
 	if (host_speeds.value)
-		time1 = Sys_DoubleTime ();
+		time1 = Sys_FloatTime ();
 		
 	SCR_UpdateScreen ();
 
 	if (host_speeds.value)
-		time2 = Sys_DoubleTime ();
+		time2 = Sys_FloatTime ();
 		
 // update audio
 	if (cls.signon == SIGNONS)
@@ -715,7 +715,7 @@ void _Host_Frame (float time)
 	if (host_speeds.value)
 	{
 		pass1 = (time1 - time3)*1000;
-		time3 = Sys_DoubleTime ();
+		time3 = Sys_FloatTime ();
 		pass2 = (time2 - time1)*1000;
 		pass3 = (time3 - time2)*1000;
 		Con_Printf ("%3i tot %3i server %3i gfx %3i snd\n",
@@ -738,9 +738,9 @@ void Host_Frame (float time)
 		return;
 	}
 	
-	time1 = Sys_DoubleTime ();
+	time1 = Sys_FloatTime ();
 	_Host_Frame (time);
-	time2 = Sys_DoubleTime ();	
+	time2 = Sys_FloatTime ();	
 	
 	timetotal += time2 - time1;
 	timecount++;
@@ -839,7 +839,7 @@ void Host_Init (quakeparms_t *parms)
 	else
 		minimum_memory = MINIMUM_MEMORY_LEVELPAK;
 
-	SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO);
+	SDL_setenv("SDL_AudioDriver", "directsound", 1);
 
 	if (COM_CheckParm ("-minmemory"))
 		parms->memsize = minimum_memory;
@@ -871,8 +871,6 @@ void Host_Init (quakeparms_t *parms)
 	NET_Init ();
 	SV_Init ();
 
-	Cvar_RegisterVariable(&zone_debug);
-
 	Con_Printf("Exe: %s %s\n", __TIME__, __DATE__);
 	Con_Printf ("%4.1f megabyte heap\n",parms->memsize/ (1024*1024.0));
 	
@@ -889,6 +887,11 @@ void Host_Init (quakeparms_t *parms)
 
 #ifndef _WIN32 // on non win32, mouse comes before video for security reasons
 		IN_Init ();
+#endif
+
+#ifndef GLQUAKE
+		g_SoundSystem = new CSoundSystemWin;
+		g_SoundSystem->S_Init();
 #endif
 		VID_Init (host_basepal);
 
