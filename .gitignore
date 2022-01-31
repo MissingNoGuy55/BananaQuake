@@ -1,0 +1,12 @@
+/WinQuake/id1/*
+/WinQuake/.vs
+/WinQuake/sdl2
+/WinQuake/glew
+/WinQuake/release_gl
+/WinQuake/Debug
+/WinQuake/debug_gl
+/WinQuake/Release
+/WinQuake/x64
+/WinQuake/gas2masm/x64
+/WinQuake/gas2masm/Debug
+/WinQuake/gas2masm/Release
