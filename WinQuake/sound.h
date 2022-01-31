@@ -39,22 +39,23 @@ typedef struct
 	int right;
 } portable_samplepair_t;
 
-typedef struct sfx_s
+struct sfx_t
 {
-	char 	name[MAX_QPATH];
-	cache_user_t	cache;
-} sfx_t;
+	char 	name[MAX_QPATH] = { NULL };
+	cache_user_t	cache = { NULL };
+};
 
 // !!! if this is changed, it much be changed in asm_i386.h too !!!
-typedef struct
+// Missi: needs to be un-typedef'd to avoid cache issues
+struct sfxcache_t
 {
-	int 	length;
-	int 	loopstart;
-	int 	speed;
-	int 	width;
-	int 	stereo;
+	int 	length = 0;
+	int 	loopstart = 0;
+	int 	speed = 0;
+	int 	width = 0;
+	int 	stereo = 0;
 	byte	data[1];		// variable sized
-} sfxcache_t;
+};
 
 typedef struct
 {
@@ -72,10 +73,10 @@ typedef struct
 } dma_t;
 
 // !!! if this is changed, it much be changed in asm_i386.h too !!!
-class channel_t
+struct channel_t
 {
 	public:
-		sfx_t	*sfx;			// sfx number
+		sfx_t	*sfx = NULL;			// sfx number
 		int		leftvol = 0;		// 0-255 volume
 		int		rightvol = 0;		// 0-255 volume
 		int		end = 0;			// end time in global paintsamples
@@ -83,7 +84,7 @@ class channel_t
 		int		looping = 0;		// where to loop, -1 = no looping
 		int		entnum = 0;			// to allow overriding a specific sound
 		int		entchannel = 0;		//
-		vec3_t	origin;			// origin of sound effect
+		vec3_t	origin = { 0, 0, 0 };			// origin of sound effect
 		vec_t	dist_mult;		// distance multiplier (attenuation/clipK)
 		int		master_vol = 0;		// 0-255 master volume
 };
@@ -136,7 +137,7 @@ public:
 	CQVector<sfx_t*>		known_sfx;		// hunk allocated [MAX_SFX]
 	int			num_sfx;
 
-	sfx_t* ambient_sfx[NUM_AMBIENTS];
+	CQVector<sfx_t*> ambient_sfx;
 
 	int 		desired_speed = 11025;
 	int 		desired_bits = 16;
@@ -178,9 +179,9 @@ public:
 	// Global crap
 
 	channel_t   channels[MAX_CHANNELS];
-	DWORD		gSndBufSize;
-	int total_channels;
-	int paintedtime;
+	DWORD		gSndBufSize = 0;
+	int total_channels = 0;
+	int paintedtime = 0;
 
 	void S_Init(void);
 	void S_Startup(void);

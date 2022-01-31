@@ -94,6 +94,7 @@ public:
 	CMemBlock(int startSize = 0, int growSize = 1);
 	CMemBlock(T* memory, int numelements);
 	CMemBlock(const T* memory, int numelements);
+	~CMemBlock();
 
 	int		size;           // including the header and possibly tiny fragments
 	int     tag;            // a tag of 0 is a free block
@@ -104,6 +105,8 @@ public:
 	T* Base();
 	const T* Base() const;
 
+	void Purge();
+
 	// element access
 	T& operator[](I i);
 	const T& operator[](I i) const;
@@ -112,6 +115,11 @@ public:
 
 	T& Element(I i);
 	const T& Element(I i) const;
+
+	int NumAllocated();
+	void Grow(int num);
+
+	int CalcNewAllocationCount(int nAllocationCount, int nGrowSize, int nNewSize, int nBytesItem);
 
 private:
 
@@ -137,10 +145,10 @@ private:
 //};
 //
 
-typedef struct cache_user_s
+struct cache_user_t
 {
-	void* data;
-} cache_user_t;
+	void* data = 0;
+};
 
 class CCacheSystem
 {
@@ -241,24 +249,34 @@ private:
 extern CMemCache* g_MemCache;
 
 template<class T, class I>
-inline CMemBlock<T, I>::CMemBlock(int startSize, int growSize)
+inline CMemBlock<T, I>::CMemBlock(int startSize, int growSize) : m_pMemory(NULL), m_growSize(growSize), size(startSize)
 {
-	size = 0;
 	tag = 1;
 	next = prev = NULL;
 	pad = 0;
 	id = 0;
-	m_pMemory = 0;
-	if (startSize > 0)
+	if (size)
 	{
-		m_pMemory = (T*)malloc(startSize * sizeof(T));
+		m_pMemory = (T*)malloc(size * sizeof(T));
 	}
 }
 
 template<class T, class I>
-inline CMemBlock<T, I>::CMemBlock(T* memory, int numelements)
+inline CMemBlock<T, I>::CMemBlock(T* memory, int numelements) : m_pMemory(memory), m_nAllocationCount(numelements)
 {
-	m_pMemory = memory;
+	m_growSize = 1;
+}
+
+template<class T, class I>
+inline CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory(memory), m_nAllocationCount(numelements)
+{
+	m_growSize = 1;
+}
+
+template<class T, class I>
+inline CMemBlock<T, I>::~CMemBlock()
+{
+	Purge();
 }
 
 template<class T, class I>
@@ -271,6 +289,17 @@ template<class T, class I>
 inline const T* CMemBlock<T, I>::Base() const
 {
 	return m_pMemory;
+}
+
+template<class T, class I>
+inline void CMemBlock<T, I>::Purge()
+{
+	if (m_pMemory)
+	{
+		free((void*)m_pMemory);
+		m_pMemory = 0;
+	}
+	size = 0;
 }
 
 template<class T, class I>
@@ -289,6 +318,90 @@ template<class T, class I>
 inline T& CMemBlock<T, I>::operator=(int i) const
 {
 	return m_pMemory[i];
+}
+
+template<class T, class I>
+inline int CMemBlock<T, I>::NumAllocated()
+{
+	return size;
+}
+
+template<class T, class I>
+inline void CMemBlock<T, I>::Grow(int num)
+{
+
+	if (!num)
+		Con_Printf("CMemBlock::Grow called with 0 grow size!\n");
+
+	// Make sure we have at least numallocated + num allocations.
+	// Use the grow rules specified for this memory (in m_nGrowSize)
+	int nAllocationRequested = size + num;
+
+	int nNewAllocationCount = CalcNewAllocationCount(size, m_growSize, nAllocationRequested, sizeof(T));
+
+	// if m_nAllocationRequested wraps index type I, recalculate
+	if ((int)(I)nNewAllocationCount < nAllocationRequested)
+	{
+		if ((int)(I)nNewAllocationCount == 0 && (int)(I)(nNewAllocationCount - 1) >= nAllocationRequested)
+		{
+			--nNewAllocationCount; // deal w/ the common case of m_nAllocationCount == MAX_USHORT + 1
+		}
+		else
+		{
+			if ((int)(I)nAllocationRequested != nAllocationRequested)
+			{
+				// we've been asked to grow memory to a size s.t. the index type can't address the requested amount of memory
+				return;
+			}
+			while ((int)(I)nNewAllocationCount < nAllocationRequested)
+			{
+				nNewAllocationCount = (nNewAllocationCount + nAllocationRequested) / 2;
+			}
+		}
+	}
+
+	size = nNewAllocationCount;
+
+	if (m_pMemory)
+	{
+		m_pMemory = (T*)realloc(m_pMemory, size * sizeof(T));
+	}
+	else
+	{
+		m_pMemory = (T*)malloc(size * sizeof(T));
+	}
+}
+
+template<class T, class I>
+inline int CMemBlock<T, I>::CalcNewAllocationCount(int nAllocationCount, int nGrowSize, int nNewSize, int nBytesItem)
+{
+	if (nGrowSize)
+	{
+		nAllocationCount = ((1 + ((nNewSize - 1) / nGrowSize)) * nGrowSize);
+	}
+	else
+	{
+		if (!nAllocationCount)
+		{
+			// Compute an allocation which is at least as big as a cache line...
+			nAllocationCount = (31 + nBytesItem) / nBytesItem;
+		}
+
+		while (nAllocationCount < nNewSize)
+		{
+#ifndef _X360
+			nAllocationCount *= 2;
+#else
+			int nNewAllocationCount = (nAllocationCount * 9) / 8; // 12.5 %
+			if (nNewAllocationCount > nAllocationCount)
+				nAllocationCount = nNewAllocationCount;
+			else
+				nAllocationCount *= 2;
+#endif
+		}
+	}
+
+	return nAllocationCount;
 }
 
 #endif

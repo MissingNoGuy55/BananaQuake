@@ -179,7 +179,7 @@ bool CSoundSystemWin::SNDDMA_InitDirect (void)
 
 	shm->channels = 2;
 	shm->samplebits = 16;
-	shm->speed = 11025;
+	shm->speed = 44100;
 
 	memset (&format, 0, sizeof(format));
 	format.wFormatTag = WAVE_FORMAT_PCM;
@@ -416,7 +416,7 @@ bool CSoundSystemWin::SNDDMA_InitWav (void)
 
 	shm->channels = 2;
 	shm->samplebits = 16;
-	shm->speed = 11025;
+	shm->speed = 44100;
 
 	memset (&format, 0, sizeof(format));
 	format.wFormatTag = WAVE_FORMAT_PCM;
@@ -612,14 +612,8 @@ bool CSoundSystemWin::SNDDMA_Init(dma_t* dma)
 	Con_Printf("SDL audio spec  : %d Hz, %d samples, %d channels\n",
 		obtained.freq, obtained.samples, obtained.channels);
 
-		const char* driver = SDL_GetCurrentAudioDriver();
-		const char* device = SDL_GetAudioDeviceName(0, SDL_FALSE);
-		sprintf_s(drivername, sizeof(drivername), "%s - %s",
-			driver != NULL ? driver : "(UNKNOWN)",
-			device != NULL ? device : "(UNKNOWN)");
-
 	buffersize = shm->samples * (shm->samplebits / 8);
-	Con_Printf("SDL audio driver: %s, %d bytes buffer\n", drivername, buffersize);
+	Con_Printf("SDL audio driver: %s, %d bytes buffer\n", SDL_GetCurrentAudioDriver(), buffersize);
 
 	snd_firsttime = false;
 
@@ -765,7 +759,7 @@ void SDLCALL CSoundSystemWin::paint_audio(void* unused, Uint8* stream, int len)
 		len2 = len - len1;
 	}
 
-	Q_memcpy(stream, shm->buffer + pos, len1);
+	memcpy(stream, shm->buffer + pos, len1);
 
 	if (len2 <= 0)
 	{

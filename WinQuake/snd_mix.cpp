@@ -178,8 +178,8 @@ void CSoundSystemWin::S_PaintChannels(int endtime)
 {
 	int 	i;
 	int 	end;
-	channel_t *ch;
-	sfxcache_t	*sc;
+	channel_t *ch = NULL;
+	sfxcache_t	*sc = NULL;
 	int		ltime, count;
 
 	while (paintedtime < endtime)

@@ -267,6 +267,9 @@ SYSTEM IO
 Sys_MakeCodeWriteable
 ================
 */
+
+#ifdef _WIN32
+
 void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
 {
 	DWORD  flOldProtect;
@@ -275,6 +278,7 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
    		Sys_Error("Protection change failed\n");
 }
 
+#endif
 
 // #ifndef _M_IX86
 

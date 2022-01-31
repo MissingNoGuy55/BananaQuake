@@ -1588,7 +1588,7 @@ byte *COM_LoadTempFile (char *path)
 	return COM_LoadFile (path, 2);
 }
 
-void COM_LoadCacheFile (char *path, struct cache_user_s *cu)
+void COM_LoadCacheFile (char *path, cache_user_t *cu)
 {
 	loadcache = cu;
 	COM_LoadFile (path, 3);

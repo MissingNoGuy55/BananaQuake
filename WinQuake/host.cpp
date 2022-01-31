@@ -839,7 +839,7 @@ void Host_Init (quakeparms_t *parms)
 	else
 		minimum_memory = MINIMUM_MEMORY_LEVELPAK;
 
-	SDL_setenv("SDL_AudioDriver", "directsound", 1);
+	SDL_setenv("SDL_AudioDriver", "winmm", 1);
 
 	if (COM_CheckParm ("-minmemory"))
 		parms->memsize = minimum_memory;

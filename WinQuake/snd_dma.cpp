@@ -121,16 +121,7 @@ void CSoundSystemWin::S_Startup (void)
 
 CSoundSystemWin::CSoundSystemWin()
 {
-	pDS = NULL;
-	pDSBuf = NULL;
-	pDSPBuf = NULL;
-	hInstDS = NULL;
-	gSndBufSize = 0;
-	shm = NULL;
-	total_channels = 0;
-	paintedtime = 0;
 }
-
 /*
 ================
 S_Init
@@ -180,9 +171,13 @@ void CSoundSystemWin::S_Init (void)
 
 	SND_InitScaletable ();
 
-	known_sfx.SetCount(MAX_SFX);
+	known_sfx.SetCount(MAX_SFX); // = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
+	ambient_sfx.SetCount(NUM_AMBIENTS); // = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
 
-	known_sfx[0] = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
+	known_sfx.Fill(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")), MAX_SFX);
+	ambient_sfx.Fill(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")), NUM_AMBIENTS);
+
+	//known_sfx[0] = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
 
 	num_sfx = 0;
 
@@ -606,10 +601,10 @@ S_UpdateAmbientSounds
 */
 void CSoundSystemWin::S_UpdateAmbientSounds (void)
 {
-	mleaf_t		*l;
+	mleaf_t		*l = NULL;
 	float		vol;
 	int			ambient_channel;
-	channel_t	*chan;
+	channel_t	*chan = NULL;
 
 	if (!snd_ambient)
 		return;
@@ -629,7 +624,7 @@ void CSoundSystemWin::S_UpdateAmbientSounds (void)
 	for (ambient_channel = 0 ; ambient_channel< NUM_AMBIENTS ; ambient_channel++)
 	{
 		chan = &channels[ambient_channel];	
-		chan->sfx = ambient_sfx[ambient_channel];
+		chan->sfx = ambient_sfx[ambient_channel]; // Missi: caught ya, you bastard
 	
 		vol = ambient_level.value * l->ambient_sound_level[ambient_channel];
 		if (vol < 8)
