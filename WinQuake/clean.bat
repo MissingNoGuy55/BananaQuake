@@ -2,9 +2,11 @@ rmdir /s /q debug
 rmdir /s /q release
 rmdir /s /q debug_gl
 rmdir /s /q release_gl
+rmdir /s /q x64
 
 rmdir /s /q gas2masm\debug
 rmdir /s /q gas2masm\release
+rmdir /s /q gas2masm\x64
 
 del gas2masm\gas2masm.opt
 del gas2masm\gas2masm.plg
