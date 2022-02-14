@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct
 {
 	int			width, height;
-	byte		data[Q_MAXSHORT];			// variably sized
+	byte		data[1];			// variably sized
 } qpic_t;
 
 
