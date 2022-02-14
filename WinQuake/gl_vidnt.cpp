@@ -1608,7 +1608,7 @@ void	VID_Init (unsigned char *palette)
 
 	VID_InitFullDIB (global_hInstance);
 
-	if (COM_CheckParm("-window"))
+	if (COM_CheckParm("-window") || COM_CheckParm("-sw") || COM_CheckParm("-windowed"))		// Missi: because I'm very tired of typing "-window"
 	{
 		hdc = GetDC (NULL);
 
@@ -1647,7 +1647,7 @@ void	VID_Init (unsigned char *palette)
 			}
 			else
 			{
-				if (COM_CheckParm("-width"))
+				if (COM_CheckParm("-width") || COM_CheckParm("-w"))
 				{
 					width = Q_atoi(com_argv[COM_CheckParm("-width")+1]);
 				}
@@ -1667,7 +1667,7 @@ void	VID_Init (unsigned char *palette)
 					findbpp = 1;
 				}
 
-				if (COM_CheckParm("-height"))
+				if (COM_CheckParm("-height") || COM_CheckParm("-h"))
 					height = Q_atoi(com_argv[COM_CheckParm("-height")+1]);
 
 			// if they want to force it, add the specified mode to the list
