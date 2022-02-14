@@ -374,7 +374,7 @@ Draw_Init
 void Draw_Init (void)
 {
 	int		i;
-	qpic_t	*cb;
+	qpic_t* cb = { NULL };
 	byte	*dest, *src;
 	int		x, y;
 	char	ver[40];
@@ -409,7 +409,7 @@ void Draw_Init (void)
 
 	start = g_MemCache->Hunk_LowMark();
 
-	cb = (qpic_t *)COM_LoadTempFile ("gfx/conback.lmp");	
+	cb = (qpic_t *)COM_LoadTempFile ("gfx/conback.lmp");
 	if (!cb)
 		Sys_Error ("Couldn't load gfx/conback.lmp");
 	SwapPic (cb);
@@ -420,6 +420,9 @@ void Draw_Init (void)
 #else
 	sprintf (ver, "(gl %4.2f) %4.2f", (float)GLQUAKE_VERSION, (float)VERSION);
 #endif
+
+	// memset(cb->data, 0, sizeof(cb->data));
+
 	dest = cb->data + 320*186 + 320 - 11 - 8*strlen(ver);
 	y = strlen(ver);
 	for (x=0 ; x<y ; x++)
