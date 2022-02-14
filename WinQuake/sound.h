@@ -105,28 +105,29 @@ public:
 
 	CSoundInternal();
 
-	channel_t   channels[MAX_CHANNELS];
-	int			total_channels;
+	static channel_t   channels[MAX_CHANNELS];
+	static int	total_channels;
 
 	int			snd_blocked = 0;
 	bool		snd_ambient = 1;
 	bool		snd_initialized = false;
 
-	virtual void S_Play(void) = 0;
-	virtual void S_PlayVol(void);
-	virtual void S_SoundList(void);
+	static void S_Play(void);
+	static void S_PlayVol(void);
+	static void S_SoundList(void);
+	static void S_StopAllSoundsC(void);
 	virtual void S_Update_();
-	virtual void S_StopAllSounds(bool clear);
-	virtual void S_StopAllSoundsC(void);
+	static void S_StopAllSounds(bool clear);
+	static void S_SoundInfo_f(void);
 
 	// pointer should go away
 	static volatile dma_t* shm;
 	dma_t sn;
 
-	vec3_t		listener_origin;
-	vec3_t		listener_forward;
-	vec3_t		listener_right;
-	vec3_t		listener_up;
+	static vec3_t		listener_origin;
+	static vec3_t		listener_forward;
+	static vec3_t		listener_right;
+	static vec3_t		listener_up;
 	vec_t		sound_nominal_clip_dist = 1000.0;
 
 	int			soundtime;		// sample PAIRS
@@ -134,43 +135,25 @@ public:
 
 
 #define	MAX_SFX		512
-	CQVector<sfx_t*>		known_sfx;		// hunk allocated [MAX_SFX]
-	int			num_sfx;
+	static sfx_t* known_sfx;		// hunk allocated [MAX_SFX]
+	static int			num_sfx;
 
 	CQVector<sfx_t*> ambient_sfx;
 
 	int 		desired_speed = 11025;
 	int 		desired_bits = 16;
 
-	int sound_started = 0;
+	static int sound_started;
 
 	DWORD	gSndBufSize;
 
-	HANDLE		hData;
-	LPVOID		lpData, lpData2;
-
-	HGLOBAL		hWaveHdr;
-	LPWAVEHDR	lpWaveHdr;
-
-	HWAVEOUT    hWaveOut;
-
-	WAVEOUTCAPS	wavecaps;
-
 	MMTIME		mmstarttime;
-
-	LPDIRECTSOUND pDS;
-	LPDIRECTSOUNDBUFFER pDSBuf, pDSPBuf;
-
-	HINSTANCE hInstDS;
-
-	wavinfo_t GetWavinfo(char* name, byte* wav, int wavlength);
 
 };
 
 class CSoundSystemWin : public CSoundInternal
 {
 public:
-
 
 	typedef void (*snd_callback)(void);
 
@@ -180,7 +163,6 @@ public:
 
 	channel_t   channels[MAX_CHANNELS];
 	DWORD		gSndBufSize = 0;
-	int total_channels = 0;
 	int paintedtime = 0;
 
 	void S_Init(void);
@@ -209,10 +191,9 @@ public:
 	void S_TransferStereo16(int endtime);
 	void S_TransferPaintBuffer(int endtime);
 	void S_PaintChannels(int endtime);
-	void S_InitPaintChannels(void);
 
-	void SND_PaintChannelFrom8(channel_t* ch, sfxcache_t* sc, int endtime);
-	void SND_PaintChannelFrom16(channel_t* ch, sfxcache_t* sc, int endtime);
+	void SND_PaintChannelFrom8(channel_t* ch, sfxcache_t* sc, int endtime, int paintbufferstart);
+	void SND_PaintChannelFrom16(channel_t* ch, sfxcache_t* sc, int endtime, int paintbufferstart);
 
 	// picks a channel based on priorities, empty slots, number of channels
 	channel_t* SND_PickChannel(int entnum, int entchannel);
@@ -229,12 +210,6 @@ public:
 	// shutdown the DMA xfer.
 	void SNDDMA_Shutdown(void);
 
-	void S_Play(void);
-
-	// void S_PlayVol(void);
-
-	// void S_SoundList(void);
-
 	void S_LocalSound(char* s);
 	void ResampleSfx(sfx_t* sfx, int inrate, int inwidth, byte* data);
 	sfxcache_t* S_LoadSound(sfx_t* s);
@@ -244,22 +219,16 @@ public:
 	void SND_InitScaletable(void);
 	void SNDDMA_Submit(void);
 
-	static void SDLCALL paint_audio(void* unused, Uint8* stream, int len);
+	static void paint_audio(void* unused, Uint8* stream, int len);
 
 	void S_AmbientOff(void);
 	void S_AmbientOn(void);
 
-	void S_SoundInfo_f(void);
-
-	bool SNDDMA_InitDirect(void);
-	bool SNDDMA_InitWav(void);
 	void SNDDMA_LockBuffer(void);
 	void SNDDMA_UnlockBuffer(void);
 
 	void S_BlockSound(void);
 	void S_UnblockSound(void);
-
-	void FreeSound(void);
 
 	/*
 *  Global variables. Must be visible to window-procedure function
@@ -294,17 +263,18 @@ extern vec3_t listener_up;
 //extern volatile dma_t sn;
 extern vec_t sound_nominal_clip_dist;
 
-extern	cvar_t loadas8bit;
-extern	cvar_t bgmvolume;
-extern	cvar_t volume;
+extern	cvar_t	loadas8bit;
+extern	cvar_t	bgmvolume;
+extern	cvar_t	volume;
+extern	cvar_t	snd_filterquality;
+extern	cvar_t	snd_mixspeed;
+extern	cvar_t	snd_speed;
 
 extern bool	snd_initialized;
 
 extern int		snd_blocked;
 
 extern CSoundSystemWin* g_SoundSystem;
-
-extern LPDIRECTSOUNDBUFFER g_SoundBuffer;
 
 extern SDL_AudioDeviceID g_SoundDeviceID;
 

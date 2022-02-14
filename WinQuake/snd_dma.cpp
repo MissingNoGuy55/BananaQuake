@@ -43,6 +43,26 @@ cvar_t snd_noextraupdate = {"snd_noextraupdate", "0"};
 cvar_t snd_show = {"snd_show", "0"};
 cvar_t _snd_mixahead = {"_snd_mixahead", "0.1", true};
 
+#if defined(_WIN32)
+#define SND_FILTERQUALITY_DEFAULT "5"
+#else
+#define SND_FILTERQUALITY_DEFAULT "1"
+#endif
+
+cvar_t		snd_filterquality = { "snd_filterquality", SND_FILTERQUALITY_DEFAULT};
+cvar_t		snd_mixspeed = { "snd_mixspeed", "44100" };
+cvar_t		snd_speed = { "snd_speed", "11025" };
+
+
+channel_t CSoundInternal::channels[128];
+int CSoundInternal::total_channels = 0;
+int CSoundInternal::num_sfx = 0;
+int CSoundInternal::sound_started = 0;
+vec3_t CSoundInternal::listener_origin = { 0.f, 0.f, 0.f };
+vec3_t CSoundInternal::listener_forward = { 0.f, 0.f, 0.f };
+vec3_t CSoundInternal::listener_right = { 0.f, 0.f, 0.f };
+vec3_t CSoundInternal::listener_up = { 0.f, 0.f, 0.f };
+sfx_t* CSoundInternal::known_sfx;
 
 // ====================================================================
 // User-setable variables
@@ -70,7 +90,7 @@ void CSoundSystemWin::S_AmbientOn (void)
 }
 
 
-void CSoundSystemWin::S_SoundInfo_f(void)
+void CSoundInternal::S_SoundInfo_f(void)
 {
 	if (!sound_started || !shm)
 	{
@@ -108,9 +128,8 @@ void CSoundSystemWin::S_Startup (void)
 
 		if (!rc)
 		{
-#ifndef	_WIN32
 			Con_Printf("S_Startup: SNDDMA_Init failed.\n");
-#endif
+
 			sound_started = 0;
 			return;
 		}
@@ -138,13 +157,14 @@ void CSoundSystemWin::S_Init (void)
 	if (COM_CheckParm("-simsound"))
 		fakedma = true;
 
-	/*
+	
 	Cmd_AddCommand("play", S_Play);
 	Cmd_AddCommand("playvol", S_PlayVol);
 	Cmd_AddCommand("stopsound", S_StopAllSoundsC);
-	Cmd_AddCommand("soundlist", S_SoundList());
-	Cmd_AddCommand("soundinfo", S_SoundInfo_f());
-	*/	// Missi: enable this later
+	Cmd_AddCommand("soundlist", S_SoundList);
+	Cmd_AddCommand("soundinfo", S_SoundInfo_f);
+
+		// Missi: enable this later
 	Cvar_RegisterVariable(&nosound);
 	Cvar_RegisterVariable(&volume);
 	Cvar_RegisterVariable(&precache);
@@ -156,6 +176,9 @@ void CSoundSystemWin::S_Init (void)
 	Cvar_RegisterVariable(&snd_noextraupdate);
 	Cvar_RegisterVariable(&snd_show);
 	Cvar_RegisterVariable(&_snd_mixahead);
+	Cvar_RegisterVariable(&snd_mixspeed);
+	Cvar_RegisterVariable(&snd_speed);
+	Cvar_RegisterVariable(&snd_filterquality);
 
 	if (host_parms.memsize < 0x800000)
 	{
@@ -171,13 +194,16 @@ void CSoundSystemWin::S_Init (void)
 
 	SND_InitScaletable ();
 
-	known_sfx.SetCount(MAX_SFX); // = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
-	ambient_sfx.SetCount(NUM_AMBIENTS); // = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
+	//known_sfx.SetCount(MAX_SFX); // = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
+	//ambient_sfx.SetCount(NUM_AMBIENTS); // = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
 
-	known_sfx.Fill(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")), MAX_SFX);
-	ambient_sfx.Fill(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")), NUM_AMBIENTS);
+	//known_sfx.Fill(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")), MAX_SFX);
+	//ambient_sfx.Fill(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")), NUM_AMBIENTS);
 
-	//known_sfx[0] = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
+	//known_sfx.AddToTail(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")));
+	//ambient_sfx.AddToTail(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")));
+
+	known_sfx = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
 
 	num_sfx = 0;
 
@@ -205,8 +231,8 @@ void CSoundSystemWin::S_Init (void)
 //	if (shm->buffer)
 //		shm->buffer[4] = shm->buffer[5] = 0x7f;	// force a pop for debugging
 
-	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
-	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
+	ambient_sfx.AddToTail(S_PrecacheSound("ambience/water1.wav"));
+	ambient_sfx.AddToTail(S_PrecacheSound("ambience/wind2.wav"));
 
 	S_StopAllSounds (true);
 }
@@ -258,15 +284,15 @@ sfx_t* CSoundSystemWin::S_FindName (char *name)
 
 // see if already loaded
 	for (i=0 ; i < num_sfx ; i++)
-		if (!Q_strcmp(known_sfx[i]->name, name))
+		if (!Q_strcmp(known_sfx[i].name, name))
 		{
-			return known_sfx[i];
+			return &known_sfx[i];
 		}
 
 	if (num_sfx == MAX_SFX)
 		Sys_Error ("S_FindName: out of sfx_t");
 	
-	sfx = known_sfx[i];
+	sfx = &known_sfx[i];
 	strcpy (sfx->name, name);
 
 	num_sfx++;
@@ -470,20 +496,27 @@ void CSoundSystemWin::S_StartSound(int entnum, int entchannel, sfx_t *sfx, vec3_
 // if an identical sound has also been started this frame, offset the pos
 // a bit to keep it from just making the first one louder
 	check = &channels[NUM_AMBIENTS];
-    for (ch_idx=NUM_AMBIENTS ; ch_idx < NUM_AMBIENTS + MAX_DYNAMIC_CHANNELS ; ch_idx++, check++)
-    {
+	for (ch_idx = NUM_AMBIENTS; ch_idx < NUM_AMBIENTS + MAX_DYNAMIC_CHANNELS; ch_idx++, check++)
+	{
 		if (check == target_chan)
 			continue;
 		if (check->sfx == sfx && !check->pos)
 		{
-			skip = rand () % (int)(0.1*shm->speed);
+			/*
+			skip = rand () % (int)(0.1 * shm->speed);
 			if (skip >= target_chan->end)
 				skip = target_chan->end - 1;
+			*/
+			/* Missi: implemented LadyHavoc's skip fixes */
+			skip = 0.1 * shm->speed; /* 0.1 * sc->speed */
+			if (skip > sc->length)
+				skip = sc->length;
+			if (skip > 0)
+				skip = rand() % skip;
 			target_chan->pos += skip;
 			target_chan->end -= skip;
 			break;
 		}
-		
 	}
 }
 
@@ -734,7 +767,7 @@ void CSoundSystemWin::S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3
 		for (i=0 ; i<total_channels; i++, ch++)
 			if (ch->sfx && (ch->leftvol || ch->rightvol) )
 			{
-				//Con_Printf ("%3i %3i %s\n", ch->leftvol, ch->rightvol, ch->sfx->name);
+				Con_Printf ("%3i %3i %s\n", ch->leftvol, ch->rightvol, ch->sfx->name);
 				total++;
 			}
 		
@@ -799,6 +832,7 @@ void CSoundInternal::S_Update_(void)
 	if (!sound_started || (snd_blocked > 0))
 		return;
 
+	g_SoundSystem->SNDDMA_LockBuffer();
 	if (!shm->buffer)
 		return;
 
@@ -820,25 +854,6 @@ void CSoundInternal::S_Update_(void)
 	if (endtime - soundtime > samps)
 		endtime = soundtime + samps;
 
-#ifdef _WIN32
-// if the buffer was lost or stopped, restore it and/or restart it
-	{
-		DWORD	dwStatus;
-
-		if (pDSBuf)
-		{
-			if (pDSBuf->GetStatus (&dwStatus) != DD_OK)
-				Con_Printf ("Couldn't get sound buffer status\n");
-			
-			if (dwStatus & DSBSTATUS_BUFFERLOST)
-				pDSBuf->Restore ();
-			
-			if (!(dwStatus & DSBSTATUS_PLAYING))
-				pDSBuf->Play(0, 0, DSBPLAY_LOOPING);
-		}
-	}
-#endif
-
 	g_SoundSystem->S_PaintChannels (endtime);
 
 	g_SoundSystem->SNDDMA_Submit ();
@@ -853,15 +868,20 @@ console functions
 ===============================================================================
 */
 
-void CSoundSystemWin::S_Play(void)
+CSoundInternal::CSoundInternal()
 {
-	static int hash=345;
+	shm = NULL;
+}
+
+void CSoundInternal::S_Play(void)
+{
+	static int hash = 345;
 	int 	i;
 	char name[256];
-	sfx_t	*sfx;
-	
+	sfx_t* sfx;
+
 	i = 1;
-	while (i<Cmd_Argc())
+	while (i < Cmd_Argc())
 	{
 		if (!Q_strrchr(Cmd_Argv(i), '.'))
 		{
@@ -874,17 +894,6 @@ void CSoundSystemWin::S_Play(void)
 		g_SoundSystem->S_StartSound(hash++, 0, sfx, listener_origin, 1.0, 1.0);
 		i++;
 	}
-}
-
-CSoundInternal::CSoundInternal()
-{
-	known_sfx = { NULL };
-	pDS = NULL;
-	pDSBuf = NULL;
-	pDSPBuf = NULL;
-	hData = NULL;
-	lpData = lpData2 = NULL;
-	shm = NULL;
 }
 
 void CSoundInternal::S_PlayVol(void)
@@ -920,7 +929,7 @@ void CSoundInternal::S_SoundList(void)
 	int		size, total;
 
 	total = 0;
-	for (i=0, sfx = known_sfx[i]; i<num_sfx ; i++, sfx++)
+	for (i=0, sfx = &known_sfx[i]; i<num_sfx ; i++, sfx++)
 	{
 		sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Check (&sfx->cache));
 		if (!sc)
