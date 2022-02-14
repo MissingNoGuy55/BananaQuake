@@ -99,7 +99,7 @@ public:
 	int		size;           // including the header and possibly tiny fragments
 	int     tag;            // a tag of 0 is a free block
 	int     id;        		// should be ZONEID
-	CMemBlock<unsigned char> *next, *prev;
+	CMemBlock<unsigned char>* next, *prev;
 	int		pad;			// pad to 64 bit boundary
 
 	T* Base();
@@ -123,7 +123,7 @@ public:
 
 private:
 
-	T* m_pMemory;
+	T* m_pMemory {};
 	int	m_growSize;
 	int m_Count;
 
@@ -249,12 +249,19 @@ private:
 extern CMemCache* g_MemCache;
 
 template<class T, class I>
-inline CMemBlock<T, I>::CMemBlock(int startSize, int growSize) : m_pMemory(NULL), m_growSize(growSize), size(startSize)
+inline CMemBlock<T, I>::CMemBlock(int startSize, int growSize) : 
+	m_pMemory(0),
+	m_growSize(growSize), 
+	size(startSize),
+	tag(1),
+	next(NULL),
+	prev(NULL),
+	pad(0),
+	id(0)
 {
-	tag = 1;
-	next = prev = NULL;
-	pad = 0;
-	id = 0;
+	if (m_growSize < 0)
+		return;
+
 	if (size)
 	{
 		m_pMemory = (T*)malloc(size * sizeof(T));
@@ -262,15 +269,15 @@ inline CMemBlock<T, I>::CMemBlock(int startSize, int growSize) : m_pMemory(NULL)
 }
 
 template<class T, class I>
-inline CMemBlock<T, I>::CMemBlock(T* memory, int numelements) : m_pMemory(memory), m_nAllocationCount(numelements)
+inline CMemBlock<T, I>::CMemBlock(T* memory, int numelements) : m_pMemory(memory), size(numelements)
 {
-	m_growSize = 1;
+	m_growSize = -1;
 }
 
 template<class T, class I>
-inline CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory(memory), m_nAllocationCount(numelements)
+inline CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory(memory), size(numelements)
 {
-	m_growSize = 1;
+	m_growSize = -2;
 }
 
 template<class T, class I>
@@ -289,6 +296,18 @@ template<class T, class I>
 inline const T* CMemBlock<T, I>::Base() const
 {
 	return m_pMemory;
+}
+
+template<class T, class I>
+inline T& CMemBlock<T, I>::Element(I i)
+{
+	return m_pMemory[(Uint32)i];
+}
+
+template<class T, class I>
+inline const T& CMemBlock<T, I>::Element(I i) const
+{
+	return m_pMemory[(Uint32)i];
 }
 
 template<class T, class I>
@@ -369,6 +388,8 @@ inline void CMemBlock<T, I>::Grow(int num)
 	else
 	{
 		m_pMemory = (T*)malloc(size * sizeof(T));
+		auto test = &m_pMemory;
+		Con_Printf("Test %x", test);
 	}
 }
 
