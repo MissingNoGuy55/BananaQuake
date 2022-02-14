@@ -83,6 +83,12 @@ void InsertLinkAfter (link_t *l, link_t *after);
 #define Q_MINLONG ((int)0x80000000)
 #define Q_MINFLOAT ((int)0x7fffffff)
 
+
+// Missi: copied from QuakeSpasm (2/11/22)
+#define	CLAMP(_minval, x, _maxval)		\
+	((x) < (_minval) ? (_minval) :		\
+	 (x) > (_maxval) ? (_maxval) : (x))
+
 //============================================================================
 
 extern	bool		bigendien;
