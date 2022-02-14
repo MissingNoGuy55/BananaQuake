@@ -44,8 +44,6 @@ extern LPDIRECTDRAWSURFACE	lpPrimary;
 extern LPDIRECTDRAWSURFACE	lpFrontBuffer;
 extern LPDIRECTDRAWSURFACE	lpBackBuffer;
 extern LPDIRECTDRAWPALETTE	lpDDPal;
-extern LPDIRECTSOUND* pDS;
-extern LPDIRECTSOUNDBUFFER pDSBuf, pDSPBuf;
 
 
 extern DWORD gSndBufSize;
