@@ -886,6 +886,9 @@ PDWORD RawValuePointer (int axis)
 		return &ji.dwUpos;
 	case JOY_AXIS_V:
 		return &ji.dwVpos;
+	default:
+		Con_Printf("RawValuePointer returned no axis!");
+		return (PDWORD)0;	// Missi: shut up compiler (2/14/22)
 	}
 }
 
