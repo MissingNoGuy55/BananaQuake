@@ -67,6 +67,8 @@ public:
 	int InsertBefore(int elem, const T& src);
 	int InsertAfter(int elem, const T& src);
 
+	bool IsValidElement(int i);
+
 	// Returns the number of elements in the vector
 	int Count() const;
 
@@ -152,12 +154,20 @@ inline void CQVector<T, S>::Destruct(T* element)
 template<typename T, class S>
 inline T& CQVector<T, S>::operator[](int i)
 {
+#ifdef _DEBUG
+	if ((unsigned)i > (unsigned)vecSize);
+		return m_Memory[0];
+#endif
 	return m_Memory[i];
 }
 
 template<typename T, class S>
 inline const T& CQVector<T, S>::operator[](int i) const
 {
+#ifdef _DEBUG
+	if ((unsigned)i > (unsigned)vecSize);
+		return m_Memory[0];
+#endif
 	return m_Memory[i];
 }
 
@@ -171,6 +181,30 @@ template<class T, class S>
 inline const T& CQVector<T, S>::Element(int i) const
 {
 	return m_Memory[i];
+}
+
+template<class T, class S>
+inline T& CQVector<T, S>::Head()
+{
+	return m_Memory[0];
+}
+
+template<class T, class S>
+inline const T& CQVector<T, S>::Head() const
+{
+	return m_Memory[0];
+}
+
+template<class T, class S>
+inline T& CQVector<T, S>::Tail()
+{
+	return m_Memory[vecSize - 1];
+}
+
+template<class T, class S>
+inline const T& CQVector<T, S>::Tail() const
+{
+	return m_Memory[vecSize - 1];
 }
 
 template<class T, class S>
@@ -199,15 +233,14 @@ inline void CQVector<T, S>::Fill(const T& src, int amount)
 {
 	if (amount == 0)
 	{
-		Con_Printf("CQVector::Fill called with an amount of 0!\n");
 		return;
 	}
 
-	if (src)
+	if (&src)
 	{
 		for (int i = 0; i < Count(); i++)
 		{
-			(*this)[i] = &src[i];
+			(*this)[i] = (&src)[i];
 		}
 		RefreshElements();
 	}
@@ -259,12 +292,18 @@ inline int CQVector<T, S>::AddToTail()
 template<class T, class S>
 inline int CQVector<T, S>::AddToHead(const T& src)
 {
+	/*if (Base() == NULL || (&src < Base()) || (&src >= (Base() + Count())))
+		return -1;*/
+
 	return InsertBefore(0, src);
 }
 
 template<class T, class S>
 inline int CQVector<T, S>::AddToTail(const T& src)
 {
+	/*if (Base() == NULL || (&src < Base()) || (&src >= (Base() + Count())))
+		return -1;*/
+
 	return InsertBefore(vecSize, src);
 }
 
@@ -331,6 +370,10 @@ inline int CQVector<T, S>::InsertAfter(int elem)
 template<class T, class S>
 inline int CQVector<T, S>::InsertBefore(int elem)
 {
+
+	//if (elem != Count() || !IsValidElement(elem))
+	//	return -1;
+
 	GrowVector();
 	ShiftElementsRight(elem + 1);
 	return elem;
@@ -339,6 +382,13 @@ inline int CQVector<T, S>::InsertBefore(int elem)
 template<class T, class S>
 inline int CQVector<T, S>::InsertBefore(int elem, const T& src)
 {
+
+	//if (Base() != NULL || (&src > Base()) || (&src < (Base() + Count())))
+	//	return -1;
+
+	//if (elem != Count() || !IsValidElement(elem))
+	//	return -1;
+
 	GrowVector();
 	ShiftElementsRight(elem);
 	CopyConstruct(&Element(elem), src);
@@ -349,6 +399,12 @@ template<class T, class S>
 inline int CQVector<T, S>::InsertAfter(int elem, const T& src)
 {
 	return InsertBefore(elem + 1, src);
+}
+
+template<class T, class S>
+inline bool CQVector<T, S>::IsValidElement(int i)
+{
+	return (i >= 0) && (i < vecSize);
 }
 
 template< typename T, class A >
