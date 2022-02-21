@@ -100,7 +100,7 @@ void CGLRenderer::GL_Bind (int texnum)
 
 int			scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
 byte		scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT*4];
-bool	scrap_dirty;
+bool		scrap_dirty;
 int			scrap_texnum;
 
 // returns a texture number and the position inside it
@@ -180,7 +180,7 @@ byte		menuplyr_pixels[4096];
 int		pic_texels;
 int		pic_count;
 
-qpic_t * CGLRenderer::Draw_PicFromWad (char *name)
+qpic_t* CGLRenderer::Draw_PicFromWad (char *name)
 {
 	qpic_t	*p;
 	glpic_t	*gl;
