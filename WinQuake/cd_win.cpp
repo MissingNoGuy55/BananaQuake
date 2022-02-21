@@ -360,39 +360,39 @@ static void CD_f (void)
 }
 
 
-LONG CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	if (lParam != wDeviceID)
-		return 1;
-
-	switch (wParam)
-	{
-		case MCI_NOTIFY_SUCCESSFUL:
-			if (playing)
-			{
-				playing = false;
-				if (playLooping)
-					CDAudio_Play(playTrack, true);
-			}
-			break;
-
-		case MCI_NOTIFY_ABORTED:
-		case MCI_NOTIFY_SUPERSEDED:
-			break;
-
-		case MCI_NOTIFY_FAILURE:
-			Con_DPrintf("MCI_NOTIFY_FAILURE\n");
-			CDAudio_Stop ();
-			cdValid = false;
-			break;
-
-		default:
-			Con_DPrintf("Unexpected MM_MCINOTIFY type (%i)\n", wParam);
-			return 1;
-	}
-
-	return 0;
-}
+//long CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+//{
+//	if (lParam != wDeviceID)
+//		return 1;
+//
+//	switch (wParam)
+//	{
+//		case MCI_NOTIFY_SUCCESSFUL:
+//			if (playing)
+//			{
+//				playing = false;
+//				if (playLooping)
+//					CDAudio_Play(playTrack, true);
+//			}
+//			break;
+//
+//		case MCI_NOTIFY_ABORTED:
+//		case MCI_NOTIFY_SUPERSEDED:
+//			break;
+//
+//		case MCI_NOTIFY_FAILURE:
+//			Con_DPrintf("MCI_NOTIFY_FAILURE\n");
+//			CDAudio_Stop ();
+//			cdValid = false;
+//			break;
+//
+//		default:
+//			Con_DPrintf("Unexpected MM_MCINOTIFY type (%i)\n", wParam);
+//			return 1;
+//	}
+//
+//	return 0;
+//}
 
 
 void CDAudio_Update(void)
