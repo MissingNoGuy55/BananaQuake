@@ -931,7 +931,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	// Sys_Init ();
 
 // because sound is off until we become active
-	g_SoundSystem->S_BlockSound ();
+	// g_SoundSystem->S_BlockSound ();
 
 	Sys_Printf ("Host_Init\n");
 	Host_Init (&parms);

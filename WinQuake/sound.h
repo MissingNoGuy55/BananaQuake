@@ -145,9 +145,9 @@ public:
 
 	static int sound_started;
 
-	DWORD	gSndBufSize;
+	unsigned long	gSndBufSize;
 
-	MMTIME		mmstarttime;
+	float		mmstarttime;
 
 };
 
@@ -162,7 +162,7 @@ public:
 	// Global crap
 
 	channel_t   channels[MAX_CHANNELS];
-	DWORD		gSndBufSize = 0;
+	unsigned long		gSndBufSize = 0;
 	int paintedtime = 0;
 
 	void S_Init(void);
@@ -275,7 +275,6 @@ extern bool	snd_initialized;
 extern int		snd_blocked;
 
 extern CSoundSystemWin* g_SoundSystem;
-
 extern SDL_AudioDeviceID g_SoundDeviceID;
 
 #endif

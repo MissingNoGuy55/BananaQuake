@@ -23,9 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define iDirectSoundCreate(a,b,c)	pDirectSoundCreate(a,b,c)
 
-typedef HRESULT (CALLBACK *PDIRECTSOUNDCREATE)(GUID FAR *lpGUID, LPDIRECTSOUND FAR *lplpDS, IUnknown FAR *pUnkOuter);
+// typedef HRESULT (CALLBACK *PDIRECTSOUNDCREATE)(GUID FAR *lpGUID, LPDIRECTSOUND FAR *lplpDS, IUnknown FAR *pUnkOuter);
 
-PDIRECTSOUNDCREATE pDirectSoundCreate;
+// PDIRECTSOUNDCREATE pDirectSoundCreate;
 
 // 64K is > 1 second at 16-bit, 22050 Hz
 #define	WAV_BUFFERS				64
@@ -106,7 +106,7 @@ bool CSoundSystemWin::SNDDMA_Init(dma_t* dma)
 
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
 	{
-		Con_Printf("Couldn't init SDL audio: %s\n", SDL_GetError());
+		Sys_Error("Couldn't init SDL audio: %s\n", SDL_GetError());
 		return false;
 	}
 
