@@ -390,7 +390,7 @@ void Mod_LoadTextures (lump_t *l)
 		else
 		{
 			texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
-			tx->gl_texturenum = GL_LoadTexture (mt->name, tx->width, tx->height, (byte *)(tx+1), true, false);
+			tx->gl_texturenum = g_GLRenderer->GL_LoadTexture (mt->name, tx->width, tx->height, (byte *)(tx+1), true, false);
 			texture_mode = GL_LINEAR;
 		}
 	}
@@ -1445,7 +1445,7 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 			pheader->gl_texturenum[i][1] =
 			pheader->gl_texturenum[i][2] =
 			pheader->gl_texturenum[i][3] =
-				GL_LoadTexture (name, pheader->skinwidth, 
+				g_GLRenderer->GL_LoadTexture (name, pheader->skinwidth,
 				pheader->skinheight, (byte *)(pskintype + 1), true, false);
 			pskintype = (daliasskintype_t *)((byte *)(pskintype+1) + s);
 		} else {
@@ -1467,7 +1467,7 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 					}
 					sprintf (name, "%s_%i_%i", loadmodel->name, i,j);
 					pheader->gl_texturenum[i][j&3] = 
-						GL_LoadTexture (name, pheader->skinwidth, 
+						g_GLRenderer->GL_LoadTexture (name, pheader->skinwidth, 
 						pheader->skinheight, (byte *)(pskintype), true, false);
 					pskintype = (daliasskintype_t *)((byte *)(pskintype) + s);
 			}
@@ -1686,7 +1686,7 @@ void * Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
 	pspriteframe->right = width + origin[0];
 
 	sprintf (name, "%s_%i", loadmodel->name, framenum);
-	pspriteframe->gl_texturenum = GL_LoadTexture (name, width, height, (byte *)(pinframe + 1), true, true);
+	pspriteframe->gl_texturenum = g_GLRenderer->GL_LoadTexture (name, width, height, (byte *)(pinframe + 1), true, true);
 
 	return (void *)((byte *)pinframe + sizeof (dspriteframe_t) + size);
 }

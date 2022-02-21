@@ -59,35 +59,28 @@ int		gl_filter_max = GL_LINEAR;
 
 int		texels;
 
-class CGLTexture
-{
-public:
-	CGLTexture();
-
-	int		texnum = 0;
-	char	identifier[64];
-	int		width = 0, height = 0;
-	bool	mipmap = false;
-};
-
 #define	MAX_GLTEXTURES	1024
 CGLTexture	gltextures[MAX_GLTEXTURES];
+CQVector<CGLTexture> CGLRenderer::gltexturevector(1024);
 int			numgltextures;
 
-CQVector<CGLTexture> gltexturevector(1024, 1);
+CGLRenderer* g_GLRenderer;
 
-void GL_Bind (int texnum)
+void CGLRenderer::GL_Bind (int texnum)
 {
 	if (gl_nobind.value)
 		texnum = char_texture;
 	if (currenttexture == texnum)
 		return;
 	currenttexture = texnum;
-#ifdef _WIN32
-	bindTexFunc (GL_TEXTURE_2D, texnum);
-#else
-	glBindTexture(GL_TEXTURE_2D, texnum);
-#endif
+
+	glBindTexture(GL_TEXTURE_2D, (GLuint)texnum);
+
+	//#ifdef _WIN32
+//	bindTexFunc (GL_TEXTURE_2D, texnum);
+//#else
+//	glBindTexture(GL_TEXTURE_2D, texnum);
+//#endif
 }
 
 /*
@@ -111,7 +104,7 @@ bool	scrap_dirty;
 int			scrap_texnum;
 
 // returns a texture number and the position inside it
-int Scrap_AllocBlock (int w, int h, int *x, int *y)
+int CGLRenderer::Scrap_AllocBlock (int w, int h, int *x, int *y)
 {
 	int		i, j;
 	int		best, best2;
@@ -155,14 +148,14 @@ int Scrap_AllocBlock (int w, int h, int *x, int *y)
 
 int	scrap_uploads;
 
-void Scrap_Upload (void)
+void CGLRenderer::Scrap_Upload (void)
 {
 	int		texnum;
 
 	scrap_uploads++;
 
 	for (texnum=0 ; texnum<MAX_SCRAPS ; texnum++) {
-		GL_Bind(scrap_texnum + texnum);
+		g_GLRenderer->GL_Bind(scrap_texnum + texnum);
 		GL_Upload8 (scrap_texels[texnum], BLOCK_WIDTH, BLOCK_HEIGHT, false, true);
 	}
 	scrap_dirty = false;
@@ -187,13 +180,16 @@ byte		menuplyr_pixels[4096];
 int		pic_texels;
 int		pic_count;
 
-qpic_t *Draw_PicFromWad (char *name)
+qpic_t * CGLRenderer::Draw_PicFromWad (char *name)
 {
 	qpic_t	*p;
 	glpic_t	*gl;
 
-	p = static_cast<qpic_t*>(W_GetLumpName (name));
+	p = (qpic_t *)W_GetLumpName (name);
 	gl = (glpic_t *)p->data;
+
+	if (!p)
+		return NULL;
 
 	// load little ones into the scrap
 	if (p->width < 64 && p->height < 64)
@@ -226,6 +222,7 @@ qpic_t *Draw_PicFromWad (char *name)
 		gl->tl = 0;
 		gl->th = 1;
 	}
+
 	return p;
 }
 
@@ -235,7 +232,7 @@ qpic_t *Draw_PicFromWad (char *name)
 Draw_CachePic
 ================
 */
-qpic_t	*Draw_CachePic (char *path)
+qpic_t* CGLRenderer::Draw_CachePic (char *path)
 {
 	cachepic_t	*pic;
 	int			i;
@@ -279,7 +276,7 @@ qpic_t	*Draw_CachePic (char *path)
 }
 
 
-void Draw_CharToConback (int num, byte *dest)
+void CGLRenderer::Draw_CharToConback (int num, byte *dest)
 {
 	int		row, col;
 	byte	*source;
@@ -323,7 +320,7 @@ glmode_t modes[] = {
 Draw_TextureMode_f
 ===============
 */
-void Draw_TextureMode_f (void)
+void CGLRenderer::Draw_TextureMode_f (void)
 {
 	int		i;
 	CGLTexture	*glt;
@@ -355,11 +352,11 @@ void Draw_TextureMode_f (void)
 	gl_filter_max = modes[i].maximize;
 
 	// change all the existing mipmap texture objects
-	for (i=0, glt=&gltexturevector[i]; i<numgltextures ; i++, glt++)
+	for (i=0, glt=(CGLTexture*)&gltexturevector[i]; i<numgltextures ; i++, glt++)
 	{
 		if (glt->mipmap)
 		{
-			GL_Bind (glt->texnum);
+			g_GLRenderer->GL_Bind (glt->texnum);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 		}
@@ -371,7 +368,7 @@ void Draw_TextureMode_f (void)
 Draw_Init
 ===============
 */
-void Draw_Init (void)
+void CGLRenderer::Draw_Init (void)
 {
 	int		i;
 	qpic_t* cb = { NULL };
@@ -383,7 +380,6 @@ void Draw_Init (void)
 	byte	*ncdata;
 	int		f, fstep;
 
-
 	Cvar_RegisterVariable (&gl_nobind);
 	Cvar_RegisterVariable (&gl_max_size);
 	Cvar_RegisterVariable (&gl_picmip);
@@ -393,7 +389,7 @@ void Draw_Init (void)
 		strstr((char *)gl_renderer, "Glide"))
 		Cvar_Set ("gl_max_size", "256");
 
-	Cmd_AddCommand ("gl_texturemode", &Draw_TextureMode_f);
+	Cmd_AddCommand ("gl_texturemode", &CGLRenderer::Draw_TextureMode_f);
 
 	// load the console background and the charset
 	// by hand, because we need to write the version
@@ -503,7 +499,7 @@ It can be clipped to the top of the screen to allow the console to be
 smoothly scrolled off.
 ================
 */
-void Draw_Character (int x, int y, int num)
+void CGLRenderer::Draw_Character (int x, int y, int num)
 {
 	byte			*dest;
 	byte			*source;
@@ -527,7 +523,7 @@ void Draw_Character (int x, int y, int num)
 	fcol = col*0.0625;
 	size = 0.0625;
 
-	GL_Bind (char_texture);
+	g_GLRenderer->GL_Bind (char_texture);
 
 	glBegin (GL_QUADS);
 	glTexCoord2f (fcol, frow);
@@ -546,7 +542,7 @@ void Draw_Character (int x, int y, int num)
 Draw_String
 ================
 */
-void Draw_String (int x, int y, char *str)
+void CGLRenderer::Draw_String (int x, int y, char *str)
 {
 	while (*str)
 	{
@@ -565,7 +561,7 @@ This is for debugging lockups by drawing different chars in different parts
 of the code.
 ================
 */
-void Draw_DebugChar (char num)
+void CGLRenderer::Draw_DebugChar (char num)
 {
 }
 
@@ -574,7 +570,7 @@ void Draw_DebugChar (char num)
 Draw_AlphaPic
 =============
 */
-void Draw_AlphaPic (int x, int y, qpic_t *pic, float alpha)
+void CGLRenderer::Draw_AlphaPic (int x, int y, qpic_t *pic, float alpha)
 {
 	byte			*dest, *source;
 	unsigned short	*pusdest;
@@ -589,7 +585,7 @@ void Draw_AlphaPic (int x, int y, qpic_t *pic, float alpha)
 //	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //	glCullFace(GL_FRONT);
 	glColor4f (1,1,1,alpha);
-	GL_Bind (gl->texnum);
+	g_GLRenderer->GL_Bind (gl->texnum);
 	glBegin (GL_QUADS);
 	glTexCoord2f (gl->sl, gl->tl);
 	glVertex2f (x, y);
@@ -611,7 +607,7 @@ void Draw_AlphaPic (int x, int y, qpic_t *pic, float alpha)
 Draw_Pic
 =============
 */
-void Draw_Pic (int x, int y, qpic_t *pic)
+void CGLRenderer::Draw_Pic (int x, int y, qpic_t *pic)
 {
 	byte			*dest, *source;
 	unsigned short	*pusdest;
@@ -622,7 +618,7 @@ void Draw_Pic (int x, int y, qpic_t *pic)
 		Scrap_Upload ();
 	gl = (glpic_t *)pic->data;
 	glColor4f (1,1,1,1);
-	GL_Bind (gl->texnum);
+	g_GLRenderer->GL_Bind (gl->texnum);
 	glBegin (GL_QUADS);
 	glTexCoord2f (gl->sl, gl->tl);
 	glVertex2f (x, y);
@@ -641,7 +637,7 @@ void Draw_Pic (int x, int y, qpic_t *pic)
 Draw_TransPic
 =============
 */
-void Draw_TransPic (int x, int y, qpic_t *pic)
+void CGLRenderer::Draw_TransPic (int x, int y, qpic_t *pic)
 {
 	byte	*dest, *source, tbyte;
 	unsigned short	*pusdest;
@@ -664,14 +660,14 @@ Draw_TransPicTranslate
 Only used for the player color selection menu
 =============
 */
-void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation)
+void CGLRenderer::Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation)
 {
 	int				v, u, c;
 	unsigned		trans[64*64], *dest;
 	byte			*src;
 	int				p;
 
-	GL_Bind (translate_texture);
+	g_GLRenderer->GL_Bind (translate_texture);
 
 	c = pic->width * pic->height;
 
@@ -714,7 +710,7 @@ Draw_ConsoleBackground
 
 ================
 */
-void Draw_ConsoleBackground (int lines)
+void CGLRenderer::Draw_ConsoleBackground (int lines)
 {
 	int y = (vid.height * 3) >> 2;
 
@@ -733,10 +729,10 @@ This repeats a 64*64 tile graphic to fill the screen around a sized down
 refresh window.
 =============
 */
-void Draw_TileClear (int x, int y, int w, int h)
+void CGLRenderer::Draw_TileClear (int x, int y, int w, int h)
 {
 	glColor3f (1,1,1);
-	GL_Bind (*(int *)draw_backtile->data);
+	g_GLRenderer->GL_Bind (*(int *)draw_backtile->data);
 	glBegin (GL_QUADS);
 	glTexCoord2f (x/64.0, y/64.0);
 	glVertex2f (x, y);
@@ -757,7 +753,7 @@ Draw_Fill
 Fills a box of pixels with a single color
 =============
 */
-void Draw_Fill (int x, int y, int w, int h, int c)
+void CGLRenderer::Draw_Fill (int x, int y, int w, int h, int c)
 {
 	glDisable (GL_TEXTURE_2D);
 	glColor3f (host_basepal[c*3]/255.0,
@@ -783,7 +779,7 @@ Draw_FadeScreen
 
 ================
 */
-void Draw_FadeScreen (void)
+void CGLRenderer::Draw_FadeScreen (void)
 {
 	glEnable (GL_BLEND);
 	glDisable (GL_TEXTURE_2D);
@@ -813,7 +809,7 @@ Draws the little blue disc in the corner of the screen.
 Call before beginning any disc IO.
 ================
 */
-void Draw_BeginDisc (void)
+void CGLRenderer::Draw_BeginDisc (void)
 {
 	if (!draw_disc)
 		return;
@@ -831,7 +827,7 @@ Erases the disc icon.
 Call after completing any disc IO
 ================
 */
-void Draw_EndDisc (void)
+void CGLRenderer::Draw_EndDisc (void)
 {
 }
 
@@ -842,7 +838,7 @@ GL_Set2D
 Setup as if the screen was 320*200
 ================
 */
-void GL_Set2D (void)
+void CGLRenderer::GL_Set2D (void)
 {
 	glViewport (glx, gly, glwidth, glheight);
 
@@ -869,12 +865,12 @@ void GL_Set2D (void)
 GL_FindTexture
 ================
 */
-int GL_FindTexture (char *identifier)
+int CGLRenderer::GL_FindTexture (char *identifier)
 {
 	int		i;
 	CGLTexture	*glt;
 
-	for (i=0, glt=&gltexturevector[i] ; i<numgltextures ; i++, glt++)
+	for (i=0, glt=(CGLTexture*)&gltexturevector[i] ; i<numgltextures ; i++, glt++)
 	{
 		if (!strcmp (identifier, glt->identifier))
 			return gltexturevector[i].texnum;
@@ -888,7 +884,7 @@ int GL_FindTexture (char *identifier)
 GL_ResampleTexture
 ================
 */
-void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,  int outwidth, int outheight)
+void CGLRenderer::GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,  int outwidth, int outheight)
 {
 	int		i, j;
 	unsigned	*inrow;
@@ -918,7 +914,7 @@ void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,
 GL_Resample8BitTexture -- JACK
 ================
 */
-void GL_Resample8BitTexture (unsigned char *in, int inwidth, int inheight, unsigned char *out,  int outwidth, int outheight)
+void CGLRenderer::GL_Resample8BitTexture (unsigned char *in, int inwidth, int inheight, unsigned char *out,  int outwidth, int outheight)
 {
 	int		i, j;
 	unsigned	char *inrow;
@@ -951,7 +947,7 @@ GL_MipMap
 Operates in place, quartering the size of the texture
 ================
 */
-void GL_MipMap (byte *in, int width, int height)
+void CGLRenderer::GL_MipMap (byte *in, int width, int height)
 {
 	int		i, j;
 	byte	*out;
@@ -978,7 +974,7 @@ GL_MipMap8Bit
 Mipping for 8 bit textures
 ================
 */
-void GL_MipMap8Bit (byte *in, int width, int height)
+void CGLRenderer::GL_MipMap8Bit (byte *in, int width, int height)
 {
 	int		i, j;
 	unsigned short     r,g,b;
@@ -1010,7 +1006,7 @@ void GL_MipMap8Bit (byte *in, int width, int height)
 GL_Upload32
 ===============
 */
-void GL_Upload32 (unsigned *data, int width, int height,  bool mipmap, bool alpha)
+void CGLRenderer::GL_Upload32 (unsigned *data, int width, int height,  bool mipmap, bool alpha)
 {
 	int			samples;
 static	unsigned	scaled[1024*512];	// [512*256];
@@ -1095,7 +1091,7 @@ done: ;
 	}
 }
 
-void GL_Upload8_EXT (byte *data, int width, int height,  bool mipmap, bool alpha) 
+void CGLRenderer::GL_Upload8_EXT (byte *data, int width, int height,  bool mipmap, bool alpha) 
 {
 	int			i, s;
 	bool	noalpha;
@@ -1191,7 +1187,7 @@ done: ;
 GL_Upload8
 ===============
 */
-void GL_Upload8 (byte *data, int width, int height,  bool mipmap, bool alpha)
+void CGLRenderer::GL_Upload8 (byte *data, int width, int height,  bool mipmap, bool alpha)
 {
 static	unsigned	trans[640*480];		// FIXME, temporary
 	int			i, s;
@@ -1240,11 +1236,11 @@ static	unsigned	trans[640*480];		// FIXME, temporary
 GL_LoadTexture
 ================
 */
-int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mipmap, bool alpha)
+int CGLRenderer::GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mipmap, bool alpha)
 {
 	bool	noalpha;
 	int			i, p, s;
-	CGLTexture	*glt;
+	CGLTexture*	glt;
 
 	// see if the texture is allready present
 	if (identifier[0])
@@ -1260,7 +1256,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mi
 		}
 	}
 	else {
-		glt = &gltexturevector[numgltextures];
+		glt = (CGLTexture*)&gltexturevector[numgltextures];
 		numgltextures++;
 	}
 
@@ -1273,13 +1269,13 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mi
 		glt->mipmap = mipmap;
 	}
 
-	GL_Bind(texture_extension_number );
+	g_GLRenderer->GL_Bind(texture_extension_number );
 
 	GL_Upload8 (data, width, height, mipmap, alpha);
 
 	gltextures[texture_extension_number-1] = *glt;
 
-	gltexturevector[texture_extension_number-1] = *glt;
+	gltexturevector.AddToTail(*glt);
 
 	texture_extension_number++;
 
@@ -1291,7 +1287,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mi
 GL_LoadPicTexture
 ================
 */
-int GL_LoadPicTexture (qpic_t *pic)
+int CGLRenderer::GL_LoadPicTexture (qpic_t *pic)
 {
 	return GL_LoadTexture ("", pic->width, pic->height, pic->data, false, true);
 }
@@ -1300,7 +1296,7 @@ int GL_LoadPicTexture (qpic_t *pic)
 
 static GLenum oldtarget = TEXTURE0_SGIS;
 
-void GL_SelectTexture (GLenum target) 
+void CGLRenderer::GL_SelectTexture (GLenum target)
 {
 	if (!gl_mtexable)
 		return;
@@ -1321,4 +1317,5 @@ CGLTexture::CGLTexture()
 	width = 0;
 	height = 0;
 	mipmap = false;
+	sl = tl = sh = th = 0;
 }

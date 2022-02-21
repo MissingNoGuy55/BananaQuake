@@ -660,7 +660,7 @@ void R_DrawParticles (void)
 	vec3_t			up, right;
 	float			scale;
 
-    GL_Bind(particletexture);
+    g_GLRenderer->GL_Bind(particletexture);
 	glEnable (GL_BLEND);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glBegin (GL_TRIANGLES);

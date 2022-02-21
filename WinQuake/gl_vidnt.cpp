@@ -1126,7 +1126,7 @@ LONG WINAPI MainWndProc (
         break;
 
 		case MM_MCINOTIFY:
-            lRet = CDAudio_MessageHandler (hWnd, uMsg, wParam, lParam);
+            //lRet = CDAudio_MessageHandler (hWnd, uMsg, wParam, lParam);
 			break;
 
     	default:
@@ -1871,7 +1871,7 @@ void VID_MenuDraw (void)
 	char		temp[100];
 	vmode_t		*pv;
 
-	p = Draw_CachePic ("gfx/vidmodes.lmp");
+	p = g_GLRenderer->Draw_CachePic ("gfx/vidmodes.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
 	vid_wmodes = 0;

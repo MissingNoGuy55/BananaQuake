@@ -57,10 +57,10 @@ extern	int		texture_mode;
 
 extern	float	gldepthmin, gldepthmax;
 
-void GL_Upload32 (unsigned *data, int width, int height,  bool mipmap, bool alpha);
-void GL_Upload8 (byte *data, int width, int height,  bool mipmap, bool alpha);
-int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mipmap, bool alpha);
-int GL_FindTexture (char *identifier);
+//void GL_Upload32 (unsigned *data, int width, int height,  bool mipmap, bool alpha);
+//void GL_Upload8 (byte *data, int width, int height,  bool mipmap, bool alpha);
+//int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mipmap, bool alpha);
+//int GL_FindTexture (char *identifier);
 
 typedef struct
 {
@@ -147,6 +147,97 @@ typedef struct particle_s
 	ptype_t		type;
 } particle_t;
 
+// Missi: BananaQuake stuff (2/17/22)
+
+class CGLTexture
+{
+public:
+	CGLTexture();
+
+	GLuint		texnum = 0;
+	char	identifier[64];
+	unsigned int		width, height;
+	bool	mipmap = false;
+
+	GLfloat	sl = 0;
+	GLfloat	tl = 0;
+	GLfloat	sh = 0;
+	GLfloat	th = 0;
+
+};
+
+class CGLRenderer
+{
+public:
+
+	static void GL_Bind(int texnum);
+
+	int Scrap_AllocBlock(int w, int h, int* x, int* y);
+
+	void Scrap_Upload(void);
+
+	qpic_t* Draw_PicFromWad(char* name);
+
+	qpic_t* Draw_CachePic(char* path);
+
+	void Draw_CharToConback(int num, byte* dest);
+
+	static void Draw_TextureMode_f(void);
+
+	void Draw_Init(void);
+
+	void Draw_Character(int x, int y, int num);
+
+	void Draw_String(int x, int y, char* str);
+
+	void Draw_DebugChar(char num);
+
+	void Draw_AlphaPic(int x, int y, qpic_t* pic, float alpha);
+
+	void Draw_Pic(int x, int y, qpic_t* pic);
+
+	void Draw_TransPic(int x, int y, qpic_t* pic);
+
+	void Draw_TransPicTranslate(int x, int y, qpic_t* pic, byte* translation);
+
+	void Draw_ConsoleBackground(int lines);
+
+	void Draw_TileClear(int x, int y, int w, int h);
+
+	void Draw_Fill(int x, int y, int w, int h, int c);
+
+	void Draw_FadeScreen(void);
+
+	void Draw_BeginDisc(void);
+
+	void Draw_EndDisc(void);
+
+	void GL_Set2D(void);
+
+	int GL_FindTexture(char* identifier);
+	void GL_ResampleTexture(unsigned* in, int inwidth, int inheight, unsigned* out, int outwidth, int outheight);
+	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
+	void GL_SelectTexture(GLenum target);
+	int GL_LoadPicTexture(qpic_t* pic);
+	int GL_LoadTexture(char* identifier, int width, int height, byte* data, bool mipmap, bool alpha);
+
+
+	void GL_MipMap(byte* in, int width, int height);
+
+	void GL_MipMap8Bit(byte* in, int width, int height);
+
+	void GL_Upload32(unsigned* data, int width, int height, bool mipmap, bool alpha);
+
+	void GL_Upload8_EXT(byte* data, int width, int height, bool mipmap, bool alpha);
+
+	void GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha);
+
+
+	static CQVector<CGLTexture> gltexturevector;
+
+
+
+};
 
 //====================================================
 
@@ -231,7 +322,6 @@ extern	const char *gl_version;
 extern	const char *gl_extensions;
 
 void R_TranslatePlayerSkin (int playernum);
-void GL_Bind (int texnum);
 
 // Multitexture
 #define    TEXTURE0_SGIS				0x835E
@@ -247,6 +337,8 @@ extern lpMTexFUNC qglMTexCoord2fSGIS;
 extern lpSelTexFUNC qglSelectTextureSGIS;
 
 extern bool gl_mtexable;
+
+extern CGLRenderer* g_GLRenderer;	// Missi (2/21/2022)
 
 void GL_DisableMultitexture(void);
 void GL_EnableMultitexture(void);

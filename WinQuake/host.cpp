@@ -834,12 +834,13 @@ Host_Init
 void Host_Init (quakeparms_t *parms)
 {
 
+	if (SDL_Init < 0)
+		Sys_Error("Could not initialize SDL: %s", SDL_GetError());
+
 	if (standard_quake)
 		minimum_memory = MINIMUM_MEMORY;
 	else
 		minimum_memory = MINIMUM_MEMORY_LEVELPAK;
-
-	SDL_setenv("SDL_AudioDriver", "winmm", 1);
 
 	if (COM_CheckParm ("-minmemory"))
 		parms->memsize = minimum_memory;
@@ -894,8 +895,12 @@ void Host_Init (quakeparms_t *parms)
 		g_SoundSystem->S_Init();
 #endif
 		VID_Init (host_basepal);
-
+#ifndef GLQUAKE
 		Draw_Init ();
+#else
+		g_GLRenderer = new CGLRenderer;
+		g_GLRenderer->Draw_Init();
+#endif
 		SCR_Init ();
 		R_Init ();
 #ifndef	_WIN32
@@ -903,6 +908,15 @@ void Host_Init (quakeparms_t *parms)
 	// can put up a popup if the sound hardware is in use
 		S_Init ();
 #else
+
+#ifdef _DEBUG
+
+		auto test = SDL_GetAudioDriver(g_SoundDeviceID);
+
+		if (strncmp(test, "winmm", 5) == 0)
+			SDL_setenv("SDL_AudioDriver", "dsound", 1);
+
+#endif
 
 #ifdef	GLQUAKE
 	// FIXME: doesn't use the new one-window approach yet

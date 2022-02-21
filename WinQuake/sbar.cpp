@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+CSoftwareRenderer* g_SoftwareRenderer;
 
 int			sb_updates;		// if >= vid.numpages, no update needed
 
@@ -114,136 +115,136 @@ void Sbar_Init (void)
 
 	for (i=0 ; i<10 ; i++)
 	{
-		sb_nums[0][i] = Draw_PicFromWad (va("num_%i",i));
-		sb_nums[1][i] = Draw_PicFromWad (va("anum_%i",i));
+		sb_nums[0][i] = g_GLRenderer->Draw_PicFromWad (va("num_%i",i));
+		sb_nums[1][i] = g_GLRenderer->Draw_PicFromWad (va("anum_%i",i));
 	}
 
-	sb_nums[0][10] = Draw_PicFromWad ("num_minus");
-	sb_nums[1][10] = Draw_PicFromWad ("anum_minus");
+	sb_nums[0][10] = g_GLRenderer->Draw_PicFromWad ("num_minus");
+	sb_nums[1][10] = g_GLRenderer->Draw_PicFromWad ("anum_minus");
 
-	sb_colon = Draw_PicFromWad ("num_colon");
-	sb_slash = Draw_PicFromWad ("num_slash");
+	sb_colon = g_GLRenderer->Draw_PicFromWad ("num_colon");
+	sb_slash = g_GLRenderer->Draw_PicFromWad ("num_slash");
 
-	sb_weapons[0][0] = Draw_PicFromWad ("inv_shotgun");
-	sb_weapons[0][1] = Draw_PicFromWad ("inv_sshotgun");
-	sb_weapons[0][2] = Draw_PicFromWad ("inv_nailgun");
-	sb_weapons[0][3] = Draw_PicFromWad ("inv_snailgun");
-	sb_weapons[0][4] = Draw_PicFromWad ("inv_rlaunch");
-	sb_weapons[0][5] = Draw_PicFromWad ("inv_srlaunch");
-	sb_weapons[0][6] = Draw_PicFromWad ("inv_lightng");
+	sb_weapons[0][0] = g_GLRenderer->Draw_PicFromWad ("inv_shotgun");
+	sb_weapons[0][1] = g_GLRenderer->Draw_PicFromWad ("inv_sshotgun");
+	sb_weapons[0][2] = g_GLRenderer->Draw_PicFromWad ("inv_nailgun");
+	sb_weapons[0][3] = g_GLRenderer->Draw_PicFromWad ("inv_snailgun");
+	sb_weapons[0][4] = g_GLRenderer->Draw_PicFromWad ("inv_rlaunch");
+	sb_weapons[0][5] = g_GLRenderer->Draw_PicFromWad ("inv_srlaunch");
+	sb_weapons[0][6] = g_GLRenderer->Draw_PicFromWad ("inv_lightng");
 
-	sb_weapons[1][0] = Draw_PicFromWad ("inv2_shotgun");
-	sb_weapons[1][1] = Draw_PicFromWad ("inv2_sshotgun");
-	sb_weapons[1][2] = Draw_PicFromWad ("inv2_nailgun");
-	sb_weapons[1][3] = Draw_PicFromWad ("inv2_snailgun");
-	sb_weapons[1][4] = Draw_PicFromWad ("inv2_rlaunch");
-	sb_weapons[1][5] = Draw_PicFromWad ("inv2_srlaunch");
-	sb_weapons[1][6] = Draw_PicFromWad ("inv2_lightng");
+	sb_weapons[1][0] = g_GLRenderer->Draw_PicFromWad ("inv2_shotgun");
+	sb_weapons[1][1] = g_GLRenderer->Draw_PicFromWad ("inv2_sshotgun");
+	sb_weapons[1][2] = g_GLRenderer->Draw_PicFromWad ("inv2_nailgun");
+	sb_weapons[1][3] = g_GLRenderer->Draw_PicFromWad ("inv2_snailgun");
+	sb_weapons[1][4] = g_GLRenderer->Draw_PicFromWad ("inv2_rlaunch");
+	sb_weapons[1][5] = g_GLRenderer->Draw_PicFromWad ("inv2_srlaunch");
+	sb_weapons[1][6] = g_GLRenderer->Draw_PicFromWad ("inv2_lightng");
 
 	for (i=0 ; i<5 ; i++)
 	{
-		sb_weapons[2+i][0] = Draw_PicFromWad (va("inva%i_shotgun",i+1));
-		sb_weapons[2+i][1] = Draw_PicFromWad (va("inva%i_sshotgun",i+1));
-		sb_weapons[2+i][2] = Draw_PicFromWad (va("inva%i_nailgun",i+1));
-		sb_weapons[2+i][3] = Draw_PicFromWad (va("inva%i_snailgun",i+1));
-		sb_weapons[2+i][4] = Draw_PicFromWad (va("inva%i_rlaunch",i+1));
-		sb_weapons[2+i][5] = Draw_PicFromWad (va("inva%i_srlaunch",i+1));
-		sb_weapons[2+i][6] = Draw_PicFromWad (va("inva%i_lightng",i+1));
+		sb_weapons[2+i][0] = g_GLRenderer->Draw_PicFromWad (va("inva%i_shotgun",i+1));
+		sb_weapons[2+i][1] = g_GLRenderer->Draw_PicFromWad (va("inva%i_sshotgun",i+1));
+		sb_weapons[2+i][2] = g_GLRenderer->Draw_PicFromWad (va("inva%i_nailgun",i+1));
+		sb_weapons[2+i][3] = g_GLRenderer->Draw_PicFromWad (va("inva%i_snailgun",i+1));
+		sb_weapons[2+i][4] = g_GLRenderer->Draw_PicFromWad (va("inva%i_rlaunch",i+1));
+		sb_weapons[2+i][5] = g_GLRenderer->Draw_PicFromWad (va("inva%i_srlaunch",i+1));
+		sb_weapons[2+i][6] = g_GLRenderer->Draw_PicFromWad (va("inva%i_lightng",i+1));
 	}
 
-	sb_ammo[0] = Draw_PicFromWad ("sb_shells");
-	sb_ammo[1] = Draw_PicFromWad ("sb_nails");
-	sb_ammo[2] = Draw_PicFromWad ("sb_rocket");
-	sb_ammo[3] = Draw_PicFromWad ("sb_cells");
+	sb_ammo[0] = g_GLRenderer->Draw_PicFromWad ("sb_shells");
+	sb_ammo[1] = g_GLRenderer->Draw_PicFromWad ("sb_nails");
+	sb_ammo[2] = g_GLRenderer->Draw_PicFromWad ("sb_rocket");
+	sb_ammo[3] = g_GLRenderer->Draw_PicFromWad ("sb_cells");
 
-	sb_armor[0] = Draw_PicFromWad ("sb_armor1");
-	sb_armor[1] = Draw_PicFromWad ("sb_armor2");
-	sb_armor[2] = Draw_PicFromWad ("sb_armor3");
+	sb_armor[0] = g_GLRenderer->Draw_PicFromWad ("sb_armor1");
+	sb_armor[1] = g_GLRenderer->Draw_PicFromWad ("sb_armor2");
+	sb_armor[2] = g_GLRenderer->Draw_PicFromWad ("sb_armor3");
 
-	sb_items[0] = Draw_PicFromWad ("sb_key1");
-	sb_items[1] = Draw_PicFromWad ("sb_key2");
-	sb_items[2] = Draw_PicFromWad ("sb_invis");
-	sb_items[3] = Draw_PicFromWad ("sb_invuln");
-	sb_items[4] = Draw_PicFromWad ("sb_suit");
-	sb_items[5] = Draw_PicFromWad ("sb_quad");
+	sb_items[0] = g_GLRenderer->Draw_PicFromWad ("sb_key1");
+	sb_items[1] = g_GLRenderer->Draw_PicFromWad ("sb_key2");
+	sb_items[2] = g_GLRenderer->Draw_PicFromWad ("sb_invis");
+	sb_items[3] = g_GLRenderer->Draw_PicFromWad ("sb_invuln");
+	sb_items[4] = g_GLRenderer->Draw_PicFromWad ("sb_suit");
+	sb_items[5] = g_GLRenderer->Draw_PicFromWad ("sb_quad");
 
-	sb_sigil[0] = Draw_PicFromWad ("sb_sigil1");
-	sb_sigil[1] = Draw_PicFromWad ("sb_sigil2");
-	sb_sigil[2] = Draw_PicFromWad ("sb_sigil3");
-	sb_sigil[3] = Draw_PicFromWad ("sb_sigil4");
+	sb_sigil[0] = g_GLRenderer->Draw_PicFromWad ("sb_sigil1");
+	sb_sigil[1] = g_GLRenderer->Draw_PicFromWad ("sb_sigil2");
+	sb_sigil[2] = g_GLRenderer->Draw_PicFromWad ("sb_sigil3");
+	sb_sigil[3] = g_GLRenderer->Draw_PicFromWad ("sb_sigil4");
 
-	sb_faces[4][0] = Draw_PicFromWad ("face1");
-	sb_faces[4][1] = Draw_PicFromWad ("face_p1");
-	sb_faces[3][0] = Draw_PicFromWad ("face2");
-	sb_faces[3][1] = Draw_PicFromWad ("face_p2");
-	sb_faces[2][0] = Draw_PicFromWad ("face3");
-	sb_faces[2][1] = Draw_PicFromWad ("face_p3");
-	sb_faces[1][0] = Draw_PicFromWad ("face4");
-	sb_faces[1][1] = Draw_PicFromWad ("face_p4");
-	sb_faces[0][0] = Draw_PicFromWad ("face5");
-	sb_faces[0][1] = Draw_PicFromWad ("face_p5");
+	sb_faces[4][0] = g_GLRenderer->Draw_PicFromWad ("face1");
+	sb_faces[4][1] = g_GLRenderer->Draw_PicFromWad ("face_p1");
+	sb_faces[3][0] = g_GLRenderer->Draw_PicFromWad ("face2");
+	sb_faces[3][1] = g_GLRenderer->Draw_PicFromWad ("face_p2");
+	sb_faces[2][0] = g_GLRenderer->Draw_PicFromWad ("face3");
+	sb_faces[2][1] = g_GLRenderer->Draw_PicFromWad ("face_p3");
+	sb_faces[1][0] = g_GLRenderer->Draw_PicFromWad ("face4");
+	sb_faces[1][1] = g_GLRenderer->Draw_PicFromWad ("face_p4");
+	sb_faces[0][0] = g_GLRenderer->Draw_PicFromWad ("face5");
+	sb_faces[0][1] = g_GLRenderer->Draw_PicFromWad ("face_p5");
 
-	sb_face_invis = Draw_PicFromWad ("face_invis");
-	sb_face_invuln = Draw_PicFromWad ("face_invul2");
-	sb_face_invis_invuln = Draw_PicFromWad ("face_inv2");
-	sb_face_quad = Draw_PicFromWad ("face_quad");
+	sb_face_invis = g_GLRenderer->Draw_PicFromWad ("face_invis");
+	sb_face_invuln = g_GLRenderer->Draw_PicFromWad ("face_invul2");
+	sb_face_invis_invuln = g_GLRenderer->Draw_PicFromWad ("face_inv2");
+	sb_face_quad = g_GLRenderer->Draw_PicFromWad ("face_quad");
 
 	Cmd_AddCommand ("+showscores", Sbar_ShowScores);
 	Cmd_AddCommand ("-showscores", Sbar_DontShowScores);
 
-	sb_sbar = Draw_PicFromWad ("sbar");
-	sb_ibar = Draw_PicFromWad ("ibar");
-	sb_scorebar = Draw_PicFromWad ("scorebar");
+	sb_sbar = g_GLRenderer->Draw_PicFromWad ("sbar");
+	sb_ibar = g_GLRenderer->Draw_PicFromWad ("ibar");
+	sb_scorebar = g_GLRenderer->Draw_PicFromWad ("scorebar");
 
 //MED 01/04/97 added new hipnotic weapons
 	if (hipnotic)
 	{
-	  hsb_weapons[0][0] = Draw_PicFromWad ("inv_laser");
-	  hsb_weapons[0][1] = Draw_PicFromWad ("inv_mjolnir");
-	  hsb_weapons[0][2] = Draw_PicFromWad ("inv_gren_prox");
-	  hsb_weapons[0][3] = Draw_PicFromWad ("inv_prox_gren");
-	  hsb_weapons[0][4] = Draw_PicFromWad ("inv_prox");
+	  hsb_weapons[0][0] = g_GLRenderer->Draw_PicFromWad ("inv_laser");
+	  hsb_weapons[0][1] = g_GLRenderer->Draw_PicFromWad ("inv_mjolnir");
+	  hsb_weapons[0][2] = g_GLRenderer->Draw_PicFromWad ("inv_gren_prox");
+	  hsb_weapons[0][3] = g_GLRenderer->Draw_PicFromWad ("inv_prox_gren");
+	  hsb_weapons[0][4] = g_GLRenderer->Draw_PicFromWad ("inv_prox");
 
-	  hsb_weapons[1][0] = Draw_PicFromWad ("inv2_laser");
-	  hsb_weapons[1][1] = Draw_PicFromWad ("inv2_mjolnir");
-	  hsb_weapons[1][2] = Draw_PicFromWad ("inv2_gren_prox");
-	  hsb_weapons[1][3] = Draw_PicFromWad ("inv2_prox_gren");
-	  hsb_weapons[1][4] = Draw_PicFromWad ("inv2_prox");
+	  hsb_weapons[1][0] = g_GLRenderer->Draw_PicFromWad ("inv2_laser");
+	  hsb_weapons[1][1] = g_GLRenderer->Draw_PicFromWad ("inv2_mjolnir");
+	  hsb_weapons[1][2] = g_GLRenderer->Draw_PicFromWad ("inv2_gren_prox");
+	  hsb_weapons[1][3] = g_GLRenderer->Draw_PicFromWad ("inv2_prox_gren");
+	  hsb_weapons[1][4] = g_GLRenderer->Draw_PicFromWad ("inv2_prox");
 
 	  for (i=0 ; i<5 ; i++)
 	  {
-		 hsb_weapons[2+i][0] = Draw_PicFromWad (va("inva%i_laser",i+1));
-		 hsb_weapons[2+i][1] = Draw_PicFromWad (va("inva%i_mjolnir",i+1));
-		 hsb_weapons[2+i][2] = Draw_PicFromWad (va("inva%i_gren_prox",i+1));
-		 hsb_weapons[2+i][3] = Draw_PicFromWad (va("inva%i_prox_gren",i+1));
-		 hsb_weapons[2+i][4] = Draw_PicFromWad (va("inva%i_prox",i+1));
+		 hsb_weapons[2+i][0] = g_GLRenderer->Draw_PicFromWad (va("inva%i_laser",i+1));
+		 hsb_weapons[2+i][1] = g_GLRenderer->Draw_PicFromWad (va("inva%i_mjolnir",i+1));
+		 hsb_weapons[2+i][2] = g_GLRenderer->Draw_PicFromWad (va("inva%i_gren_prox",i+1));
+		 hsb_weapons[2+i][3] = g_GLRenderer->Draw_PicFromWad (va("inva%i_prox_gren",i+1));
+		 hsb_weapons[2+i][4] = g_GLRenderer->Draw_PicFromWad (va("inva%i_prox",i+1));
 	  }
 
-	  hsb_items[0] = Draw_PicFromWad ("sb_wsuit");
-	  hsb_items[1] = Draw_PicFromWad ("sb_eshld");
+	  hsb_items[0] = g_GLRenderer->Draw_PicFromWad ("sb_wsuit");
+	  hsb_items[1] = g_GLRenderer->Draw_PicFromWad ("sb_eshld");
 	}
 
 	if (rogue)
 	{
-		rsb_invbar[0] = Draw_PicFromWad ("r_invbar1");
-		rsb_invbar[1] = Draw_PicFromWad ("r_invbar2");
+		rsb_invbar[0] = g_GLRenderer->Draw_PicFromWad ("r_invbar1");
+		rsb_invbar[1] = g_GLRenderer->Draw_PicFromWad ("r_invbar2");
 
-		rsb_weapons[0] = Draw_PicFromWad ("r_lava");
-		rsb_weapons[1] = Draw_PicFromWad ("r_superlava");
-		rsb_weapons[2] = Draw_PicFromWad ("r_gren");
-		rsb_weapons[3] = Draw_PicFromWad ("r_multirock");
-		rsb_weapons[4] = Draw_PicFromWad ("r_plasma");
+		rsb_weapons[0] = g_GLRenderer->Draw_PicFromWad ("r_lava");
+		rsb_weapons[1] = g_GLRenderer->Draw_PicFromWad ("r_superlava");
+		rsb_weapons[2] = g_GLRenderer->Draw_PicFromWad ("r_gren");
+		rsb_weapons[3] = g_GLRenderer->Draw_PicFromWad ("r_multirock");
+		rsb_weapons[4] = g_GLRenderer->Draw_PicFromWad ("r_plasma");
 
-		rsb_items[0] = Draw_PicFromWad ("r_shield1");
-        rsb_items[1] = Draw_PicFromWad ("r_agrav1");
+		rsb_items[0] = g_GLRenderer->Draw_PicFromWad ("r_shield1");
+        rsb_items[1] = g_GLRenderer->Draw_PicFromWad ("r_agrav1");
 
 // PGM 01/19/97 - team color border
-        rsb_teambord = Draw_PicFromWad ("r_teambord");
+        rsb_teambord = g_GLRenderer->Draw_PicFromWad ("r_teambord");
 // PGM 01/19/97 - team color border
 
-		rsb_ammo[0] = Draw_PicFromWad ("r_ammolava");
-		rsb_ammo[1] = Draw_PicFromWad ("r_ammomulti");
-		rsb_ammo[2] = Draw_PicFromWad ("r_ammoplasma");
+		rsb_ammo[0] = g_GLRenderer->Draw_PicFromWad ("r_ammolava");
+		rsb_ammo[1] = g_GLRenderer->Draw_PicFromWad ("r_ammomulti");
+		rsb_ammo[2] = g_GLRenderer->Draw_PicFromWad ("r_ammoplasma");
 	}
 }
 
@@ -260,9 +261,9 @@ Sbar_DrawPic
 void Sbar_DrawPic (int x, int y, qpic_t *pic)
 {
 	if (cl.gametype == GAME_DEATHMATCH)
-		Draw_Pic (x /* + ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
+		g_GLRenderer->Draw_Pic (x /* + ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
 	else
-		Draw_Pic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
+		g_GLRenderer->Draw_Pic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
 }
 
 /*
@@ -273,9 +274,9 @@ Sbar_DrawTransPic
 void Sbar_DrawTransPic (int x, int y, qpic_t *pic)
 {
 	if (cl.gametype == GAME_DEATHMATCH)
-		Draw_TransPic (x /*+ ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
+		g_GLRenderer->Draw_TransPic (x /*+ ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
 	else
-		Draw_TransPic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
+		g_GLRenderer->Draw_TransPic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
 }
 
 /*
@@ -288,9 +289,9 @@ Draws one solid graphics character
 void Sbar_DrawCharacter (int x, int y, int num)
 {
 	if (cl.gametype == GAME_DEATHMATCH)
-		Draw_Character ( x /*+ ((vid.width - 320)>>1) */ + 4 , y + vid.height-SBAR_HEIGHT, num);
+		g_GLRenderer->Draw_Character ( x /*+ ((vid.width - 320)>>1) */ + 4 , y + vid.height-SBAR_HEIGHT, num);
 	else
-		Draw_Character ( x + ((vid.width - 320)>>1) + 4 , y + vid.height-SBAR_HEIGHT, num);
+		g_GLRenderer->Draw_Character ( x + ((vid.width - 320)>>1) + 4 , y + vid.height-SBAR_HEIGHT, num);
 }
 
 /*
@@ -301,9 +302,9 @@ Sbar_DrawString
 void Sbar_DrawString (int x, int y, char *str)
 {
 	if (cl.gametype == GAME_DEATHMATCH)
-		Draw_String (x /*+ ((vid.width - 320)>>1)*/, y+ vid.height-SBAR_HEIGHT, str);
+		g_GLRenderer->Draw_String (x /*+ ((vid.width - 320)>>1)*/, y+ vid.height-SBAR_HEIGHT, str);
 	else
-		Draw_String (x + ((vid.width - 320)>>1), y+ vid.height-SBAR_HEIGHT, str);
+		g_GLRenderer->Draw_String (x + ((vid.width - 320)>>1), y+ vid.height-SBAR_HEIGHT, str);
 }
 
 /*
@@ -797,8 +798,8 @@ void Sbar_DrawFrags (void)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 
-		Draw_Fill (xofs + x*8 + 10, y, 28, 4, top);
-		Draw_Fill (xofs + x*8 + 10, y+4, 28, 3, bottom);
+		g_GLRenderer->Draw_Fill (xofs + x*8 + 10, y, 28, 4, top);
+		g_GLRenderer->Draw_Fill (xofs + x*8 + 10, y+4, 28, 3, bottom);
 
 	// draw number
 		f = s->frags;
@@ -854,8 +855,8 @@ void Sbar_DrawFace (void)
 			xofs = ((vid.width - 320)>>1) + 113;
 
 		Sbar_DrawPic (112, 0, rsb_teambord);
-		Draw_Fill (xofs, vid.height-SBAR_HEIGHT+3, 22, 9, top);
-		Draw_Fill (xofs, vid.height-SBAR_HEIGHT+12, 22, 9, bottom);
+		g_GLRenderer->Draw_Fill (xofs, vid.height-SBAR_HEIGHT+3, 22, 9, top);
+		g_GLRenderer->Draw_Fill (xofs, vid.height-SBAR_HEIGHT+12, 22, 9, bottom);
 
 		// draw number
 		f = s->frags;
@@ -936,7 +937,7 @@ void Sbar_Draw (void)
 	sb_updates++;
 
 	if (sb_lines && vid.width > 320) 
-		Draw_TileClear (0, vid.height - sb_lines, vid.width, sb_lines);
+		g_GLRenderer->Draw_TileClear (0, vid.height - sb_lines, vid.width, sb_lines);
 
 	if (sb_lines > 24)
 	{
@@ -1071,7 +1072,7 @@ void Sbar_IntermissionNumber (int x, int y, int num, int digits, int color)
 		else
 			frame = *ptr -'0';
 
-		Draw_TransPic (x,y,sb_nums[color][frame]);
+		g_GLRenderer->Draw_TransPic (x,y,sb_nums[color][frame]);
 		x += 24;
 		ptr++;
 	}
@@ -1095,7 +1096,7 @@ void Sbar_DeathmatchOverlay (void)
 	scr_copyeverything = 1;
 	scr_fullupdate = 0;
 
-	pic = Draw_CachePic ("gfx/ranking.lmp");
+	pic = g_GLRenderer->Draw_CachePic ("gfx/ranking.lmp");
 	M_DrawPic ((320-pic->width)/2, 8, pic);
 
 // scores
@@ -1119,19 +1120,19 @@ void Sbar_DeathmatchOverlay (void)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 
-		Draw_Fill ( x, y, 40, 4, top);
-		Draw_Fill ( x, y+4, 40, 4, bottom);
+		g_GLRenderer->Draw_Fill ( x, y, 40, 4, top);
+		g_GLRenderer->Draw_Fill ( x, y+4, 40, 4, bottom);
 
 	// draw number
 		f = s->frags;
 		sprintf (num, "%3i",f);
 
-		Draw_Character ( x+8 , y, num[0]);
-		Draw_Character ( x+16 , y, num[1]);
-		Draw_Character ( x+24 , y, num[2]);
+		g_GLRenderer->Draw_Character ( x+8 , y, num[0]);
+		g_GLRenderer->Draw_Character ( x+16 , y, num[1]);
+		g_GLRenderer->Draw_Character ( x+24 , y, num[2]);
 
 		if (k == cl.viewentity - 1)
-			Draw_Character ( x - 8, y, 12);
+			g_GLRenderer->Draw_Character ( x - 8, y, 12);
 
 #if 0
 {
@@ -1152,7 +1153,7 @@ void Sbar_DeathmatchOverlay (void)
 #endif
 
 	// draw name
-		Draw_String (x+64, y, s->name);
+g_GLRenderer->Draw_String (x+64, y, s->name);
 
 		y += 10;
 	}
@@ -1219,20 +1220,20 @@ void Sbar_MiniDeathmatchOverlay (void)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 
-		Draw_Fill ( x, y+1, 40, 3, top);
-		Draw_Fill ( x, y+4, 40, 4, bottom);
+		g_GLRenderer->Draw_Fill ( x, y+1, 40, 3, top);
+		g_GLRenderer->Draw_Fill ( x, y+4, 40, 4, bottom);
 
 	// draw number
 		f = s->frags;
 		sprintf (num, "%3i",f);
 
-		Draw_Character ( x+8 , y, num[0]);
-		Draw_Character ( x+16 , y, num[1]);
-		Draw_Character ( x+24 , y, num[2]);
+		g_GLRenderer->Draw_Character ( x+8 , y, num[0]);
+		g_GLRenderer->Draw_Character ( x+16 , y, num[1]);
+		g_GLRenderer->Draw_Character ( x+24 , y, num[2]);
 
 		if (k == cl.viewentity - 1) {
-			Draw_Character ( x, y, 16);
-			Draw_Character ( x + 32, y, 17);
+			g_GLRenderer->Draw_Character ( x, y, 16);
+			g_GLRenderer->Draw_Character ( x + 32, y, 17);
 		}
 
 #if 0
@@ -1254,7 +1255,7 @@ void Sbar_MiniDeathmatchOverlay (void)
 #endif
 
 	// draw name
-		Draw_String (x+48, y, s->name);
+		g_GLRenderer->Draw_String (x+48, y, s->name);
 
 		y += 8;
 	}
@@ -1281,26 +1282,26 @@ void Sbar_IntermissionOverlay (void)
 		return;
 	}
 
-	pic = Draw_CachePic ("gfx/complete.lmp");
-	Draw_Pic (64, 24, pic);
+	pic = g_GLRenderer->Draw_CachePic ("gfx/complete.lmp");
+	g_GLRenderer->Draw_Pic (64, 24, pic);
 
-	pic = Draw_CachePic ("gfx/inter.lmp");
-	Draw_TransPic (0, 56, pic);
+	pic = g_GLRenderer->Draw_CachePic ("gfx/inter.lmp");
+	g_GLRenderer->Draw_TransPic (0, 56, pic);
 
 // time
 	dig = cl.completed_time/60;
 	Sbar_IntermissionNumber (160, 64, dig, 3, 0);
 	num = cl.completed_time - dig*60;
-	Draw_TransPic (234,64,sb_colon);
-	Draw_TransPic (246,64,sb_nums[0][num/10]);
-	Draw_TransPic (266,64,sb_nums[0][num%10]);
+	g_GLRenderer->Draw_TransPic (234,64,sb_colon);
+	g_GLRenderer->Draw_TransPic (246,64,sb_nums[0][num/10]);
+	g_GLRenderer->Draw_TransPic (266,64,sb_nums[0][num%10]);
 
 	Sbar_IntermissionNumber (160, 104, cl.stats[STAT_SECRETS], 3, 0);
-	Draw_TransPic (232,104,sb_slash);
+	g_GLRenderer->Draw_TransPic (232,104,sb_slash);
 	Sbar_IntermissionNumber (240, 104, cl.stats[STAT_TOTALSECRETS], 3, 0);
 
 	Sbar_IntermissionNumber (160, 144, cl.stats[STAT_MONSTERS], 3, 0);
-	Draw_TransPic (232,144,sb_slash);
+	g_GLRenderer->Draw_TransPic (232,144,sb_slash);
 	Sbar_IntermissionNumber (240, 144, cl.stats[STAT_TOTALMONSTERS], 3, 0);
 
 }
@@ -1318,6 +1319,6 @@ void Sbar_FinaleOverlay (void)
 
 	scr_copyeverything = 1;
 
-	pic = Draw_CachePic ("gfx/finale.lmp");
-	Draw_TransPic ( (vid.width-pic->width)/2, 16, pic);
+	pic = g_GLRenderer->Draw_CachePic ("gfx/finale.lmp");
+	g_GLRenderer->Draw_TransPic ( (vid.width-pic->width)/2, 16, pic);
 }
