@@ -911,10 +911,7 @@ void Host_Init (quakeparms_t *parms)
 
 #ifdef _DEBUG
 
-		auto test = SDL_GetAudioDriver(g_SoundDeviceID);
-
-		if (strncmp(test, "winmm", 5) == 0)
-			SDL_setenv("SDL_AudioDriver", "dsound", 1);
+		SDL_setenv("SDL_AudioDriver", "directsound", 1);
 
 #endif
 
