@@ -91,6 +91,7 @@ class CMemBlock
 {
 public:
 
+	CMemBlock();
 	CMemBlock(int startSize = 0, int growSize = 1);
 	CMemBlock(T* memory, int numelements);
 	CMemBlock(const T* memory, int numelements);
@@ -249,15 +250,20 @@ private:
 extern CMemCache* g_MemCache;
 
 template<class T, class I>
-inline CMemBlock<T, I>::CMemBlock(int startSize, int growSize) : 
+inline CMemBlock<T, I>::CMemBlock() :
 	m_pMemory(0),
-	m_growSize(growSize), 
-	size(startSize),
+	m_growSize(1), 
+	size(0),
 	tag(1),
 	next(NULL),
 	prev(NULL),
 	pad(0),
 	id(0)
+{
+}
+
+template<class T, class I>
+inline CMemBlock<T, I>::CMemBlock(int startSize, int growSize) : size(startSize), m_growSize(growSize)
 {
 	if (m_growSize < 0)
 		return;
