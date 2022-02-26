@@ -436,7 +436,7 @@ void R_DrawSequentialPoly (msurface_t *s)
 			t = R_TextureAnimation (s->texinfo->texture);
 			// Binds world to texture env 0
 			g_GLRenderer->GL_SelectTexture(TEXTURE0_SGIS);
-			g_GLRenderer->GL_Bind (t->gl_texturenum);
+			g_GLRenderer->GL_Bind (t->gltexture->texnum);
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 			// Binds lightmap to texenv 1
 			GL_EnableMultitexture(); // Same as SelectTexture (TEXTURE1)
@@ -469,7 +469,7 @@ void R_DrawSequentialPoly (msurface_t *s)
 			p = s->polys;
 
 			t = R_TextureAnimation (s->texinfo->texture);
-			g_GLRenderer->GL_Bind (t->gl_texturenum);
+			g_GLRenderer->GL_Bind (t->gltexture->texnum);
 			glBegin (GL_POLYGON);
 			v = p->verts[0];
 			for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
@@ -503,7 +503,7 @@ void R_DrawSequentialPoly (msurface_t *s)
 	if (s->flags & SURF_DRAWTURB)
 	{
 		GL_DisableMultitexture();
-		g_GLRenderer->GL_Bind (s->texinfo->texture->gl_texturenum);
+		g_GLRenderer->GL_Bind (s->texinfo->texture->gltexture->texnum);
 		EmitWaterPolys (s);
 		return;
 	}
@@ -539,7 +539,7 @@ void R_DrawSequentialPoly (msurface_t *s)
 
 		t = R_TextureAnimation (s->texinfo->texture);
 		g_GLRenderer->GL_SelectTexture(TEXTURE0_SGIS);
-		g_GLRenderer->GL_Bind (t->gl_texturenum);
+		g_GLRenderer->GL_Bind (t->gltexture->texnum);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		GL_EnableMultitexture();
 		g_GLRenderer->GL_Bind (lightmap_textures + s->lightmaptexturenum);
@@ -576,7 +576,7 @@ void R_DrawSequentialPoly (msurface_t *s)
 		p = s->polys;
 
 		t = R_TextureAnimation (s->texinfo->texture);
-		g_GLRenderer->GL_Bind (t->gl_texturenum);
+		g_GLRenderer->GL_Bind (t->gltexture->texnum);
 		DrawGLWaterPoly (p);
 
 		g_GLRenderer->GL_Bind (lightmap_textures + s->lightmaptexturenum);
@@ -773,7 +773,7 @@ void R_RenderBrushPoly (msurface_t *fa)
 	}
 		
 	t = R_TextureAnimation (fa->texinfo->texture);
-	g_GLRenderer->GL_Bind (t->gl_texturenum);
+	g_GLRenderer->GL_Bind (t->gltexture->texnum);
 
 	if (fa->flags & SURF_DRAWTURB)
 	{	// warp texture, no lightmaps
@@ -982,7 +982,7 @@ void R_DrawWaterSurfaces (void)
 			return;
 
 		for ( s = waterchain ; s ; s=s->texturechain) {
-			g_GLRenderer->GL_Bind (s->texinfo->texture->gl_texturenum);
+			g_GLRenderer->GL_Bind (s->texinfo->texture->gltexture->texnum);
 			EmitWaterPolys (s);
 		}
 		
@@ -1002,7 +1002,7 @@ void R_DrawWaterSurfaces (void)
 
 			// set modulate mode explicitly
 			
-			g_GLRenderer->GL_Bind (t->gl_texturenum);
+			g_GLRenderer->GL_Bind (t->gltexture->texnum);
 
 			for ( ; s ; s=s->texturechain)
 				EmitWaterPolys (s);

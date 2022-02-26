@@ -218,8 +218,8 @@ public:
 	void GL_ResampleTexture(unsigned* in, int inwidth, int inheight, unsigned* out, int outwidth, int outheight);
 	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
-	int GL_LoadPicTexture(qpic_t* pic);
-	int GL_LoadTexture(char* identifier, int width, int height, byte* data, bool mipmap, bool alpha);
+	CGLTexture* GL_LoadPicTexture(qpic_t* pic);
+	CGLTexture* GL_LoadTexture(char* identifier, int width, int height, byte* data, bool mipmap, bool alpha);
 
 
 	void GL_MipMap(byte* in, int width, int height);

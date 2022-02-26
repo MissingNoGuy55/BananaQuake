@@ -216,7 +216,7 @@ qpic_t* CGLRenderer::Draw_PicFromWad (char *name)
 	}
 	else
 	{
-		gl->texnum = GL_LoadPicTexture (p);
+		gl->texnum = GL_LoadPicTexture (p)->texnum;
 		gl->sl = 0;
 		gl->sh = 1;
 		gl->tl = 0;
@@ -266,7 +266,7 @@ qpic_t* CGLRenderer::Draw_CachePic (char *path)
 	pic->pic.height = dat->height;
 
 	gl = (glpic_t *)pic->pic.data;
-	gl->texnum = GL_LoadPicTexture (dat);
+	gl->texnum = GL_LoadPicTexture (dat)->texnum;
 	gl->sl = 0;
 	gl->sh = 1;
 	gl->tl = 0;
@@ -401,7 +401,7 @@ void CGLRenderer::Draw_Init (void)
 			draw_chars[i] = 255;	// proper transparent color
 
 	// now turn them into textures
-	char_texture = GL_LoadTexture ("charset", 128, 128, draw_chars, false, true);
+	char_texture = GL_LoadTexture ("charset", 128, 128, draw_chars, false, true)->texnum;
 
 	start = g_MemCache->Hunk_LowMark();
 
@@ -463,7 +463,7 @@ void CGLRenderer::Draw_Init (void)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	gl = (glpic_t *)conback->data;
-	gl->texnum = GL_LoadTexture ("conback", conback->width, conback->height, ncdata, false, false);
+	gl->texnum = GL_LoadTexture ("conback", conback->width, conback->height, ncdata, false, false)->texnum;
 	gl->sl = 0;
 	gl->sh = 1;
 	gl->tl = 0;
@@ -1236,7 +1236,7 @@ static	unsigned	trans[640*480];		// FIXME, temporary
 GL_LoadTexture
 ================
 */
-int CGLRenderer::GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mipmap, bool alpha)
+CGLTexture* CGLRenderer::GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mipmap, bool alpha)
 {
 	bool	noalpha;
 	int			i, p, s;
@@ -1251,7 +1251,7 @@ int CGLRenderer::GL_LoadTexture (char *identifier, int width, int height, byte *
 			{
 				if (width != glt->width || height != glt->height)
 					Sys_Error ("GL_LoadTexture: cache mismatch");
-				return gltexturevector[i].texnum;
+				return &gltexturevector[i];
 			}
 		}
 	}
@@ -1279,7 +1279,7 @@ int CGLRenderer::GL_LoadTexture (char *identifier, int width, int height, byte *
 
 	texture_extension_number++;
 
-	return texture_extension_number-1;
+	return glt;
 }
 
 /*
@@ -1287,7 +1287,7 @@ int CGLRenderer::GL_LoadTexture (char *identifier, int width, int height, byte *
 GL_LoadPicTexture
 ================
 */
-int CGLRenderer::GL_LoadPicTexture (qpic_t *pic)
+CGLTexture* CGLRenderer::GL_LoadPicTexture (qpic_t *pic)
 {
 	return GL_LoadTexture ("", pic->width, pic->height, pic->data, false, true);
 }
