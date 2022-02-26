@@ -5,7 +5,7 @@
 
 class CCacheSystem;
 
-// CQVector -- a growable vector inspired by CUtlVector from Source.
+// CQVector -- copied CUtlVector from Source.
 
 template<class T, class S = CMemBlock<T> >
 class CQVector
