@@ -145,7 +145,10 @@ void* CMemZone::Z_TagMalloc (int size, int tag)
 {
 	int		extra;
 	CMemBlock<byte> *start, *rover, *m_new, *base;
-	start = rover = m_new = base = new CMemBlock<byte>(size);
+
+	start = rover = m_new = base = NULL;
+
+	// start = rover = m_new = base = new CMemBlock<byte>(size);
 
 	if (!tag)
 		Sys_Error ("Z_TagMalloc: tried to use a 0 tag");
