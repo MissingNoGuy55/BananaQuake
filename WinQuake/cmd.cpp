@@ -553,7 +553,7 @@ void	Cmd_AddCommand (char *cmd_name, xcommand_t function)
 		}
 	}
 
-	cmd = static_cast<cmd_function_s*>(g_MemCache->Hunk_Alloc (sizeof(cmd_function_t)));
+	cmd = static_cast<cmd_function_t*>(g_MemCache->Hunk_Alloc (sizeof(cmd_function_t)));
 	cmd->name = cmd_name;
 	cmd->function = function;
 	cmd->next = cmd_functions;
