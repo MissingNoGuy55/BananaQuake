@@ -170,6 +170,8 @@ class CGLRenderer
 {
 public:
 
+	CGLRenderer();
+
 	static void GL_Bind(int texnum);
 
 	int Scrap_AllocBlock(int w, int h, int* x, int* y);
@@ -185,31 +187,18 @@ public:
 	static void Draw_TextureMode_f(void);
 
 	void Draw_Init(void);
-
 	void Draw_Character(int x, int y, int num);
-
 	void Draw_String(int x, int y, char* str);
-
 	void Draw_DebugChar(char num);
-
 	void Draw_AlphaPic(int x, int y, qpic_t* pic, float alpha);
-
 	void Draw_Pic(int x, int y, qpic_t* pic);
-
 	void Draw_TransPic(int x, int y, qpic_t* pic);
-
 	void Draw_TransPicTranslate(int x, int y, qpic_t* pic, byte* translation);
-
 	void Draw_ConsoleBackground(int lines);
-
 	void Draw_TileClear(int x, int y, int w, int h);
-
 	void Draw_Fill(int x, int y, int w, int h, int c);
-
 	void Draw_FadeScreen(void);
-
 	void Draw_BeginDisc(void);
-
 	void Draw_EndDisc(void);
 
 	void GL_Set2D(void);
@@ -223,15 +212,12 @@ public:
 
 
 	void GL_MipMap(byte* in, int width, int height);
-
 	void GL_MipMap8Bit(byte* in, int width, int height);
-
 	void GL_Upload32(unsigned* data, int width, int height, bool mipmap, bool alpha);
-
 	void GL_Upload8_EXT(byte* data, int width, int height, bool mipmap, bool alpha);
-
 	void GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha);
 
+	static void PrintTexVector();
 
 	static CQVector<CGLTexture> gltexturevector;
 
