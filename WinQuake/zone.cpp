@@ -22,11 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "zone.h"
 
-#define	DYNAMIC_SIZE	0xc000
-
-#define	ZONEID	0x1d4a11
-#define MINFRAGMENT	64
-
 cvar_t	zone_debug = { "zone_debug", "0" };
 
 void Cache_FreeLow (int new_low_hunk);

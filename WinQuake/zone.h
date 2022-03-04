@@ -86,22 +86,26 @@ Zone block
 #ifndef ZONE_H
 #define ZONE_H
 
+#define	DYNAMIC_SIZE	0xc000
+
+#define	ZONEID	0x1d4a11
+#define MINFRAGMENT	64
+
 template<class T, class I = int>
 class CMemBlock
 {
 public:
 
-	CMemBlock();
-	CMemBlock(int startSize = 0, int growSize = 1);
+	CMemBlock(int growSize = 0, int startSize = 0);
 	CMemBlock(T* memory, int numelements);
 	CMemBlock(const T* memory, int numelements);
 	~CMemBlock();
 
-	int		size;           // including the header and possibly tiny fragments
-	int     tag;            // a tag of 0 is a free block
-	int     id;        		// should be ZONEID
-	CMemBlock<unsigned char>* next, *prev;
-	int		pad;			// pad to 64 bit boundary
+	int		size = 0;           // including the header and possibly tiny fragments
+	int     tag = 0;            // a tag of 0 is a free block
+	int     id = ZONEID;        		// should be ZONEID
+	CMemBlock<unsigned char>* next, *prev = NULL;
+	int		pad = 0;			// pad to 64 bit boundary
 
 	T* Base();
 	const T* Base() const;
@@ -120,13 +124,15 @@ public:
 	int NumAllocated();
 	void Grow(int num);
 
+	bool IsExternallyAllocated();
+
 	int CalcNewAllocationCount(int nAllocationCount, int nGrowSize, int nNewSize, int nBytesItem);
 
 private:
 
-	T* m_pMemory {};
+	T* m_pMemory;
 	int	m_growSize;
-	int m_Count;
+	// int m_Count;
 
 };
 
@@ -250,38 +256,25 @@ private:
 extern CMemCache* g_MemCache;
 
 template<class T, class I>
-inline CMemBlock<T, I>::CMemBlock() :
-	m_pMemory(0),
-	m_growSize(1), 
-	size(0),
-	tag(1),
-	next(NULL),
-	prev(NULL),
-	pad(0),
-	id(0)
-{
-}
-
-template<class T, class I>
-inline CMemBlock<T, I>::CMemBlock(int startSize, int growSize) : size(startSize), m_growSize(growSize)
+CMemBlock<T, I>::CMemBlock(int growSize, int allocationCount) : m_pMemory(0), size(allocationCount), m_growSize(growSize)
 {
 	if (m_growSize < 0)
 		return;
 
 	if (size)
 	{
-		m_pMemory = (T*)malloc(size * sizeof(T));
+		m_pMemory = (T*)g_MemCache->Hunk_Alloc(size * sizeof(T));
 	}
 }
 
 template<class T, class I>
-inline CMemBlock<T, I>::CMemBlock(T* memory, int numelements) : m_pMemory(memory), size(numelements)
+CMemBlock<T, I>::CMemBlock(T* memory, int numelements) : m_pMemory(memory), size(numelements)
 {
 	m_growSize = -1;
 }
 
 template<class T, class I>
-inline CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory(memory), size(numelements)
+CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory(memory), size(numelements)
 {
 	m_growSize = -2;
 }
@@ -352,8 +345,11 @@ inline int CMemBlock<T, I>::NumAllocated()
 }
 
 template<class T, class I>
-inline void CMemBlock<T, I>::Grow(int num)
+void CMemBlock<T, I>::Grow(int num)
 {
+
+	if (IsExternallyAllocated())
+		return;
 
 	if (!num)
 		Con_Printf("CMemBlock::Grow called with 0 grow size!\n");
@@ -389,14 +385,21 @@ inline void CMemBlock<T, I>::Grow(int num)
 
 	if (m_pMemory)
 	{
-		m_pMemory = (T*)realloc(m_pMemory, size * sizeof(T));
+		m_pMemory = static_cast<T*>(realloc(m_pMemory, size * sizeof(T)));
+
+		if (!m_pMemory)
+			return;
 	}
 	else
 	{
-		m_pMemory = (T*)malloc(size * sizeof(T));
-		auto test = &m_pMemory;
-		Con_Printf("Test %x", test);
+		m_pMemory = static_cast<T*>(malloc(size * sizeof(T)));
 	}
+}
+
+template<class T, class I>
+inline bool CMemBlock<T, I>::IsExternallyAllocated()
+{
+	return (m_growSize < 0);
 }
 
 template<class T, class I>
