@@ -111,6 +111,7 @@ public:
 	const T* Base() const;
 
 	void Purge();
+	void Purge(int numElements);
 
 	// element access
 	T& operator[](I i);
@@ -263,7 +264,11 @@ CMemBlock<T, I>::CMemBlock(int growSize, int allocationCount) : m_pMemory(0), si
 
 	if (size)
 	{
-		m_pMemory = (T*)g_MemCache->Hunk_Alloc(size * sizeof(T));
+		m_pMemory = (T*)calloc(size, sizeof(T));	// Missi: allocate if we specified a size (3/3/2022)
+	}
+	else
+	{
+		m_pMemory = (T*)calloc(1, sizeof(T));	// Missi: allocate anyway even if a size wasn't specified (3/3/2022)
 	}
 }
 
@@ -432,6 +437,44 @@ inline int CMemBlock<T, I>::CalcNewAllocationCount(int nAllocationCount, int nGr
 	}
 
 	return nAllocationCount;
+}
+
+template<class T, class I>
+inline void CMemBlock<T, I>::Purge(int numElements)
+{
+	if (numElements > size)
+	{
+		return;
+	}
+
+	// If we have zero elements, simply do a purge:
+	if (numElements == 0)
+	{
+		Purge();
+		return;
+	}
+
+	if (IsExternallyAllocated())
+	{
+		// Can't shrink a buffer whose memory was externally allocated, fail silently like purge 
+		return;
+	}
+
+	// If the number of elements is the same as the allocation count, we are done.
+	if (numElements == size)
+	{
+		return;
+	}
+
+
+	if (!m_pMemory)
+	{
+		return;
+	}
+
+	size = numElements;
+
+	m_pMemory = (T*)realloc(m_pMemory, size * sizeof(T));
 }
 
 #endif
