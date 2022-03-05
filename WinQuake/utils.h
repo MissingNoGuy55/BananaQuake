@@ -15,16 +15,14 @@ public:
 
 	typedef T ElementType;
 	
-	CQVector(int startSize = 0, int growSize = 1);
-	CQVector(T* memory, int startSize, int growSize = 1);
+	explicit CQVector(int startSize = 0, int growSize = 0);
+	explicit CQVector(T* memory, int allocationCount, int numElements = 0);
 	~CQVector();
 
 	CQVector<T, S>& operator=(const CQVector<T, S>& other);
 
 	void Construct(T* element);
-
 	void CopyConstruct(T* element, const T& src);
-
 	void Destruct(T* element);
 
 	T* Base() { return m_Memory.Base(); }
@@ -40,8 +38,6 @@ public:
 	const T& Tail() const;
 	T& Random();
 	const T& Random() const;
-
-	void SetCount(int count);
 
 	void ShiftElementsRight(int elem, int num = 1);
 	void ShiftElementsLeft(int elem, int num = 1);
@@ -71,10 +67,12 @@ public:
 
 	// Returns the number of elements in the vector
 	int Count() const;
+	void SetCount(int count);
 
 	void Purge();
 	void GrowVector(int num = 1);
 	void Fill(const T& src = NULL, int amount = 0);
+	void Compact();
 
 	// Is the vector empty?
 	inline bool IsEmpty(void) const
@@ -104,19 +102,19 @@ private:
 // template<typename T, class S> CQVector<byte>::CQVector(byte);
 
 template<class T, class S>
-inline CQVector<T, S>::CQVector(int startSize, int growSize) : m_Memory(startSize, growSize), vecSize(0)
+CQVector<T, S>::CQVector(int growSize, int startSize) : m_Memory(growSize, startSize), vecSize(0)
 {
 	RefreshElements();
 }
 
 template<class T, class S>
-inline CQVector<T, S>::CQVector(T* memory, int startSize, int numElements) : m_Memory(numElements), vecSize(numElements)
+CQVector<T, S>::CQVector(T* memory, int allocationCount, int numElements) : m_Memory(memory, allocationCount), vecSize(numElements)
 {
 	RefreshElements();
 }
 
 template<class T, class S>
-inline CQVector<T, S>::~CQVector()
+CQVector<T, S>::~CQVector()
 {
 	Purge();
 }
@@ -134,19 +132,19 @@ inline CQVector<T, S>& CQVector<T, S>::operator=(const CQVector<T, S>& other)
 }
 
 template<class T, class S>
-inline void CQVector<T, S>::Construct(T* element)
+void CQVector<T, S>::Construct(T* element)
 {
 	::new (element) T;
 }
 
 template<class T, class S>
-inline void CQVector<T, S>::CopyConstruct(T* element, const T& src)
+void CQVector<T, S>::CopyConstruct(T* element, const T& src)
 {
 	::new (element) T(src);
 }
 
 template<class T, class S>
-inline void CQVector<T, S>::Destruct(T* element)
+void CQVector<T, S>::Destruct(T* element)
 {
 	element->~T();
 }
@@ -154,20 +152,20 @@ inline void CQVector<T, S>::Destruct(T* element)
 template<typename T, class S>
 inline T& CQVector<T, S>::operator[](int i)
 {
-#ifdef _DEBUG
-	if ((unsigned)i > (unsigned)vecSize);
-		return m_Memory[0];
-#endif
+//#ifdef _DEBUG
+//	if ((unsigned)i > (unsigned)vecSize);
+//		return m_Memory[0];
+//#endif
 	return m_Memory[i];
 }
 
 template<typename T, class S>
 inline const T& CQVector<T, S>::operator[](int i) const
 {
-#ifdef _DEBUG
-	if ((unsigned)i > (unsigned)vecSize);
-		return m_Memory[0];
-#endif
+//#ifdef _DEBUG
+//	if ((unsigned)i > (unsigned)vecSize);
+//		return m_Memory[0];
+//#endif
 	return m_Memory[i];
 }
 
@@ -216,7 +214,7 @@ inline void CQVector<T, S>::Purge()
 }
 
 template<class T, class S>
-inline void CQVector<T, S>::GrowVector(int num)
+void CQVector<T, S>::GrowVector(int num)
 {
 
 	if (vecSize + num > m_Memory.NumAllocated())
@@ -229,7 +227,7 @@ inline void CQVector<T, S>::GrowVector(int num)
 }
 
 template<class T, class S>
-inline void CQVector<T, S>::Fill(const T& src, int amount)
+void CQVector<T, S>::Fill(const T& src, int amount)
 {
 	if (amount == 0)
 	{
@@ -253,7 +251,7 @@ inline int CQVector<T, S>::Count() const
 }
 
 template<class T, class S>
-inline void CQVector<T, S>::ShiftElementsRight(int elem, int num)
+void CQVector<T, S>::ShiftElementsRight(int elem, int num)
 {
 	int numToMove = vecSize - elem - num;
 	if ((numToMove > 0) && (num > 0))
@@ -261,7 +259,7 @@ inline void CQVector<T, S>::ShiftElementsRight(int elem, int num)
 }
 
 template<class T, class S>
-inline void CQVector<T, S>::ShiftElementsLeft(int elem, int num)
+void CQVector<T, S>::ShiftElementsLeft(int elem, int num)
 {
 	int numToMove = vecSize - elem - num;
 	if ((numToMove > 0) && (num > 0))
@@ -301,9 +299,6 @@ inline int CQVector<T, S>::AddToHead(const T& src)
 template<class T, class S>
 inline int CQVector<T, S>::AddToTail(const T& src)
 {
-	/*if (Base() == NULL || (&src < Base()) || (&src >= (Base() + Count())))
-		return -1;*/
-
 	return InsertBefore(vecSize, src);
 }
 
@@ -351,7 +346,7 @@ inline int CQVector<T, S>::InsertMultipleAfter(int elem, int num)
 }
 
 template<class T, class S>
-inline void CQVector<T, S>::RemoveAll()
+void CQVector<T, S>::RemoveAll()
 {
 	for (int i = vecSize; --i >= 0; )
 	{
@@ -362,32 +357,29 @@ inline void CQVector<T, S>::RemoveAll()
 }
 
 template<class T, class S>
-inline int CQVector<T, S>::InsertAfter(int elem)
+int CQVector<T, S>::InsertAfter(int elem)
 {
 	return InsertBefore(elem + 1);
 }
 
 template<class T, class S>
-inline int CQVector<T, S>::InsertBefore(int elem)
+int CQVector<T, S>::InsertBefore(int elem)
 {
 
-	//if (elem != Count() || !IsValidElement(elem))
-	//	return -1;
+	/*if (elem > Count() || !IsValidElement(elem))
+		return -1;*/
 
 	GrowVector();
-	ShiftElementsRight(elem + 1);
+	ShiftElementsRight(elem);
+	Construct(&Element(elem));
 	return elem;
 }
 
 template<class T, class S>
-inline int CQVector<T, S>::InsertBefore(int elem, const T& src)
+int CQVector<T, S>::InsertBefore(int elem, const T& src)
 {
-
-	//if (Base() != NULL || (&src > Base()) || (&src < (Base() + Count())))
-	//	return -1;
-
-	//if (elem != Count() || !IsValidElement(elem))
-	//	return -1;
+	/*if (Base() != NULL || (&src > Base()) || (&src < (Base() + Count())))
+		return -1;*/
 
 	GrowVector();
 	ShiftElementsRight(elem);
@@ -412,6 +404,13 @@ void CQVector<T, A>::SetCount(int count)
 {
 	RemoveAll();
 	AddMultipleToTail(count);
+}
+
+template<class T, class S>
+inline void CQVector<T, S>::Compact()
+{
+	m_Memory.Purge(vecSize);
+	RefreshElements();
 }
 
 /* use our own copies of strlcpy and strlcat taken from OpenBSD */

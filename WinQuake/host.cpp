@@ -854,7 +854,6 @@ void Host_Init (quakeparms_t *parms)
 	com_argv = parms->argv;
 
 	g_MemCache = new CMemCache;
-
 	g_MemCache->Memory_Init (parms->membase, parms->memsize);
 	Cbuf_Init ();
 	Cmd_Init ();	

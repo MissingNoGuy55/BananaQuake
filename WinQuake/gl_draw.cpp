@@ -61,7 +61,7 @@ int		texels;
 
 #define	MAX_GLTEXTURES	1024
 CGLTexture	gltextures[MAX_GLTEXTURES];
-CQVector<CGLTexture> CGLRenderer::gltexturevector(1024);
+CQVector<CGLTexture> CGLRenderer::gltexturevector;
 int			numgltextures;
 
 CGLRenderer* g_GLRenderer;
@@ -102,6 +102,10 @@ int			scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
 byte		scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT*4];
 bool		scrap_dirty;
 int			scrap_texnum;
+
+CGLRenderer::CGLRenderer()
+{
+}
 
 // returns a texture number and the position inside it
 int CGLRenderer::Scrap_AllocBlock (int w, int h, int *x, int *y)
@@ -265,7 +269,7 @@ qpic_t* CGLRenderer::Draw_CachePic (char *path)
 	pic->pic.width = dat->width;
 	pic->pic.height = dat->height;
 
-	gl = (glpic_t *)pic->pic.data;
+	gl = (glpic_t*)pic->pic.data;
 	gl->texnum = GL_LoadPicTexture (dat)->texnum;
 	gl->sl = 0;
 	gl->sh = 1;
@@ -352,7 +356,7 @@ void CGLRenderer::Draw_TextureMode_f (void)
 	gl_filter_max = modes[i].maximize;
 
 	// change all the existing mipmap texture objects
-	for (i=0, glt=(CGLTexture*)&gltexturevector[i]; i<numgltextures ; i++, glt++)
+	for (i=0, glt=gltexturevector.Base(); i<numgltextures ; i++, glt++)
 	{
 		if (glt->mipmap)
 		{
@@ -371,14 +375,17 @@ Draw_Init
 void CGLRenderer::Draw_Init (void)
 {
 	int		i;
-	qpic_t* cb = { NULL };
+	qpic_t* cb;
 	byte	*dest, *src;
 	int		x, y;
 	char	ver[40];
-	glpic_t	*gl;
+	glpic_t* gl = { NULL };
 	int		start;
-	byte	*ncdata;
+	byte	*ncdata = NULL;
 	int		f, fstep;
+
+	CQVector<byte> cbvec;
+	cbvec.SetCount(0);
 
 	Cvar_RegisterVariable (&gl_nobind);
 	Cvar_RegisterVariable (&gl_max_size);
@@ -404,12 +411,25 @@ void CGLRenderer::Draw_Init (void)
 	char_texture = GL_LoadTexture ("charset", 128, 128, draw_chars, false, true)->texnum;
 
 	start = g_MemCache->Hunk_LowMark();
-
+	
 	cb = (qpic_t *)COM_LoadTempFile ("gfx/conback.lmp");
+
 	if (!cb)
-		Sys_Error ("Couldn't load gfx/conback.lmp");
+	{
+		Sys_Error("Couldn't load gfx/conback.lmp");
+		return;
+	}
+
 	SwapPic (cb);
 
+	// Missi: there's no clean way to do this unfortunately, we're gonna have to do an iteration (3/4/2022)
+	for (int j = 0; j < 10; j++)
+	{
+		if (!cb->data[j])
+			break;
+		
+		cbvec.AddToTail(cb->data[j]);
+	}
 	// hack the version number directly into the pic
 #if defined(__linux__)
 	sprintf (ver, "(Linux %2.2f, gl %4.2f) %4.2f", (float)LINUX_VERSION, (float)GLQUAKE_VERSION, (float)VERSION);
@@ -419,7 +439,12 @@ void CGLRenderer::Draw_Init (void)
 
 	// memset(cb->data, 0, sizeof(cb->data));
 
-	dest = cb->data + 320*186 + 320 - 11 - 8*strlen(ver);
+	cbvec.Compact();
+
+	dest = cbvec.Base() + 320*186 + 320 - 11 - 8*strlen(ver);
+
+	
+
 	y = strlen(ver);
 	for (x=0 ; x<y ; x++)
 		Draw_CharToConback (ver[x], dest+(x<<3));
@@ -463,7 +488,7 @@ void CGLRenderer::Draw_Init (void)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	gl = (glpic_t *)conback->data;
-	gl->texnum = GL_LoadTexture ("conback", conback->width, conback->height, ncdata, false, false)->texnum;
+	gl->texnum = GL_LoadTexture ("conback", conback->width, conback->height, cbvec.Base(), false, false)->texnum;
 	gl->sl = 0;
 	gl->sh = 1;
 	gl->tl = 0;
@@ -831,6 +856,17 @@ void CGLRenderer::Draw_EndDisc (void)
 {
 }
 
+void CGLRenderer::PrintTexVec()
+{
+	if (gltexturevector.Base())
+	{
+		for (int i = 0; i < gltexturevector.Count(); i++)
+		{
+			Con_Printf("gltexturevector[%d]: %s\n", i, gltexturevector[i].identifier);
+		}
+	}
+}
+
 /*
 ================
 GL_Set2D
@@ -870,7 +906,7 @@ int CGLRenderer::GL_FindTexture (char *identifier)
 	int		i;
 	CGLTexture	*glt;
 
-	for (i=0, glt=(CGLTexture*)&gltexturevector[i] ; i<numgltextures ; i++, glt++)
+	for (i=0, glt=gltexturevector.Base(); i<numgltextures ; i++, glt++)
 	{
 		if (!strcmp (identifier, glt->identifier))
 			return gltexturevector[i].texnum;
@@ -1245,7 +1281,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (char *identifier, int width, int height
 	// see if the texture is allready present
 	if (identifier[0])
 	{
-		for (i=0, glt=(CGLTexture*)&gltexturevector; i<numgltextures ; i++, glt++)
+		for (i=0, glt=gltexturevector.Base(); i<numgltextures ; i++, glt++)
 		{
 			if (!strcmp (identifier, glt->identifier))
 			{
@@ -1256,26 +1292,31 @@ CGLTexture* CGLRenderer::GL_LoadTexture (char *identifier, int width, int height
 		}
 	}
 	else {
-		glt = (CGLTexture*)&gltexturevector[numgltextures];
+		glt = &gltexturevector[numgltextures];
 		numgltextures++;
 	}
 
 	if (glt)
 	{
-		strncpy(glt->identifier, identifier, strlen(identifier));
+		strncpy(glt->identifier, identifier, sizeof(glt->identifier));
 		glt->texnum = texture_extension_number;
 		glt->width = width;
 		glt->height = height;
 		glt->mipmap = mipmap;
+	}
+	else
+	{
+		glt = (CGLTexture*)calloc(1, sizeof(CGLTexture));	// Missi: dummy texture (3/4/2022)
 	}
 
 	g_GLRenderer->GL_Bind(texture_extension_number );
 
 	GL_Upload8 (data, width, height, mipmap, alpha);
 
-	gltextures[texture_extension_number-1] = *glt;
+	/*gltextures[texture_extension_number-1] = *glt;*/
 
-	gltexturevector.AddToTail(*glt);
+	if (glt)
+		gltexturevector.AddToTail(*glt);
 
 	texture_extension_number++;
 

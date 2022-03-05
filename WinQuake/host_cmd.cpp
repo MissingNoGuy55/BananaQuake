@@ -1922,4 +1922,5 @@ void Host_InitCommands (void)
 	Cmd_AddCommand ("viewprev", Host_Viewprev_f);
 
 	Cmd_AddCommand ("mcache", Mod_Print);
+	Cmd_AddCommand ("printtexvec", CGLRenderer::PrintTexVec);
 }

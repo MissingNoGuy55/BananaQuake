@@ -217,11 +217,9 @@ public:
 	void GL_Upload8_EXT(byte* data, int width, int height, bool mipmap, bool alpha);
 	void GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha);
 
-	static void PrintTexVector();
-
 	static CQVector<CGLTexture> gltexturevector;
 
-
+	static void PrintTexVec();
 
 };
 
