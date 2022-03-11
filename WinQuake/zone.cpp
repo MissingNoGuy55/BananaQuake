@@ -379,12 +379,12 @@ void CMemCache::Hunk_Print (bool all)
 	
 }
 
-/*
-===================
+/*===================
 Hunk_AllocName
-===================
-*/
-void* CMemCache::Hunk_AllocName (int size, char *name)
+
+Missi: Allocates a named block of memory on the hunk. Castable to any type. Use only for things like models and textures. If you need small, possibly volatile memory, use CMemZone::Z_TagMalloc instead.
+===================*/
+void* CMemCache::Hunk_AllocName (int size, const char *name)
 {
 	hunk_t	*h;
 	
@@ -414,11 +414,13 @@ void* CMemCache::Hunk_AllocName (int size, char *name)
 	return (void *)(h+1);
 }
 
-/*
-===================
+/*===================
 Hunk_Alloc
-===================
-*/
+
+Missi: Allocates a block of memory on the hunk. Usually used for things like textures and models. Use CMemZone if you need string or volatile memory allocation.
+
+This function exists just for brevity; it calls Hunk_AllocName with a const char parameter of "unknown" (3/8/2022)
+===================*/
 void* CMemCache::Hunk_Alloc (int size)
 {
 	return Hunk_AllocName (size, "unknown");
@@ -467,7 +469,7 @@ void CMemCache::Hunk_FreeToHighMark (int mark)
 Hunk_HighAllocName
 ===================
 */
-void* CMemCache::Hunk_HighAllocName (int size, char *name)
+void* CMemCache::Hunk_HighAllocName (int size, const char *name)
 {
 	hunk_t	*h;
 

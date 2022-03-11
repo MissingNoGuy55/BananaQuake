@@ -206,9 +206,9 @@ public:
 	void* Hunk_Alloc(int size);
 	void Hunk_Print(bool all);
 	// returns 0 filled memory
-	void* Hunk_AllocName(int size, char* name);
+	void* Hunk_AllocName(int size, const char* name);
 
-	void* Hunk_HighAllocName(int size, char* name);
+	void* Hunk_HighAllocName(int size, const char* name);
 
 	int	Hunk_LowMark(void);
 	void Hunk_FreeToLowMark(int mark);
@@ -393,7 +393,10 @@ void CMemBlock<T, I>::Grow(int num)
 		m_pMemory = static_cast<T*>(realloc(m_pMemory, size * sizeof(T)));
 
 		if (!m_pMemory)
+		{
+			Sys_Error("CMemBlock::Grow: m_pMemory returned NULL\n");
 			return;
+		}
 	}
 	else
 	{
