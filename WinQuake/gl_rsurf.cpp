@@ -1613,7 +1613,7 @@ void GL_BuildLightmaps (void)
 
 	if (!lightmap_textures)
 	{
-		lightmap_textures = (CGLTexture*)g_MemCache->Hunk_Alloc(sizeof(CGLTexture));
+		lightmap_textures = (CGLTexture*)g_MemCache->Hunk_Alloc(sizeof(CGLTexture));	// Missi: something's not right here, I'm getting padding with some lightmap textures... (3/10/2022)
 		lightmap_textures->texnum = texture_extension_number;
 		texture_extension_number += MAX_LIGHTMAPS;
 	}
