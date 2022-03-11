@@ -598,6 +598,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="glquake.cpp" />
     <ClCompile Include="gl_draw.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
