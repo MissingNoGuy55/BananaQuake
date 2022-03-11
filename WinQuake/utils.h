@@ -5,7 +5,11 @@
 
 class CCacheSystem;
 
-// CQVector -- copied CUtlVector from Source.
+// Missi: CQVector -- copied CUtlVector from Source. (3/8/2022)
+// !!!
+// !!!WARNING!!! Elements are moved around in memory every time a new element is added. Never maintain pointers to any element of a CUtlVector object.
+// !!!
+// Instead, pass the element as an argument.
 
 template<class T, class S = CMemBlock<T> >
 class CQVector
@@ -236,9 +240,9 @@ void CQVector<T, S>::Fill(const T& src, int amount)
 
 	if (&src)
 	{
-		for (int i = 0; i < Count(); i++)
+		for (int i = 0; i < amount; i++)
 		{
-			(*this)[i] = (&src)[i];
+			(*this)[i] = (T)AddToTail(src);
 		}
 		RefreshElements();
 	}

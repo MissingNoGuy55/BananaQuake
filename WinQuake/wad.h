@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //   TYPES
 //===============
 
+#ifndef WAD_H
+#define WAD_H
+
 #define	CMP_NONE		0
 #define	CMP_LZSS		1
 
@@ -36,14 +39,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	TYP_SOUND		67
 #define	TYP_MIPTEX		68
 
-typedef struct
+class CGLTexture;
+
+class CQuakePic
 {
+public:
+
+	explicit CQuakePic();
+	explicit CQuakePic(byte* mem);
 
 	int			width, height;
 	byte		data[1];			// variably sized
-	CQVector<byte> datavec;
 
-} qpic_t;
+};
 
 typedef struct
 {
@@ -73,4 +81,6 @@ lumpinfo_t	*W_GetLumpinfo (char *name);
 void	*W_GetLumpName (char *name);
 void	*W_GetLumpNum (int num);
 
-void SwapPic (qpic_t *pic);
+void	SwapPic(CQuakePic* pic);
+
+#endif

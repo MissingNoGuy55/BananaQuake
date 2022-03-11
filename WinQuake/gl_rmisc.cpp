@@ -80,7 +80,8 @@ void R_InitParticleTexture (void)
 	//
 	// particle texture
 	//
-	particletexture = texture_extension_number++;
+	particletexture = (CGLTexture*)g_MemCache->Hunk_Alloc(sizeof(CGLTexture));
+	particletexture->texnum = texture_extension_number; //++;
     g_GLRenderer->GL_Bind(particletexture);
 
 	for (x=0 ; x<8 ; x++)
@@ -110,7 +111,7 @@ Grab six views for environment mapping tests
 */
 void R_Envmap_f (void)
 {
-	byte	buffer[256*256*4];
+	byte*	buffer = (byte*)g_MemCache->Hunk_Alloc(256*256*4);	// Missi (3/8/2022)
 	char	name[1024];
 
 	glDrawBuffer  (GL_FRONT);
@@ -221,7 +222,8 @@ void R_Init (void)
 	Test_Init ();
 #endif
 
-	playertextures = texture_extension_number;
+	playertextures = new CGLTexture;
+	playertextures->texnum = texture_extension_number;
 	texture_extension_number += 16;
 }
 
@@ -241,7 +243,8 @@ void R_TranslatePlayerSkin (int playernum)
 	model_t	*model;
 	aliashdr_t *paliashdr;
 	byte	*original;
-	unsigned	pixels[512*256], *out;
+	unsigned	*pixels = (unsigned*)g_MemCache->Hunk_Alloc(512 * 256);	// Missi (3/8/2022) TWO MINS BEFORE MIDNIGHT BAYBEEEEEEEEE
+	unsigned	*out;
 	unsigned	scaled_width, scaled_height;
 	int			inwidth, inheight;
 	byte		*inrow;

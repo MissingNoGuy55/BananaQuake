@@ -136,12 +136,12 @@ void M_PrintWhite (int cx, int cy, char *str)
 	}
 }
 
-void M_DrawTransPic (int x, int y, qpic_t *pic)
+void M_DrawTransPic (int x, int y, CQuakePic *pic)
 {
 	g_GLRenderer->Draw_TransPic (x + ((vid.width - 320)>>1), y, pic);
 }
 
-void M_DrawPic (int x, int y, qpic_t *pic)
+void M_DrawPic (int x, int y, CQuakePic *pic)
 {
 	g_GLRenderer->Draw_Pic (x + ((vid.width - 320)>>1), y, pic);
 }
@@ -174,7 +174,7 @@ void M_BuildTranslationTable(int top, int bottom)
 }
 
 
-void M_DrawTransPicTranslate (int x, int y, qpic_t *pic)
+void M_DrawTransPicTranslate (int x, int y, CQuakePic *pic)
 {
 	g_GLRenderer->Draw_TransPicTranslate (x + ((vid.width - 320)>>1), y, pic, translationTable);
 }
@@ -182,7 +182,7 @@ void M_DrawTransPicTranslate (int x, int y, qpic_t *pic)
 
 void M_DrawTextBox (int x, int y, int width, int lines)
 {
-	qpic_t	*p;
+	CQuakePic	*p;
 	int		cx, cy;
 	int		n;
 
@@ -293,7 +293,7 @@ void M_Menu_Main_f (void)
 void M_Main_Draw (void)
 {
 	int		f;
-	qpic_t	*p;
+	CQuakePic	*p;
 
 	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
 	p = g_GLRenderer->Draw_CachePic ("gfx/ttl_main.lmp");
@@ -376,7 +376,7 @@ void M_Menu_SinglePlayer_f (void)
 void M_SinglePlayer_Draw (void)
 {
 	int		f;
-	qpic_t	*p;
+	CQuakePic	*p;
 
 	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
 	p = g_GLRenderer->Draw_CachePic ("gfx/ttl_sgl.lmp");
@@ -500,7 +500,7 @@ void M_Menu_Save_f (void)
 void M_Load_Draw (void)
 {
 	int		i;
-	qpic_t	*p;
+	CQuakePic	*p;
 
 	p = g_GLRenderer->Draw_CachePic ("gfx/p_load.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
@@ -516,7 +516,7 @@ void M_Load_Draw (void)
 void M_Save_Draw (void)
 {
 	int		i;
-	qpic_t	*p;
+	CQuakePic	*p;
 
 	p = g_GLRenderer->Draw_CachePic ("gfx/p_save.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
@@ -621,7 +621,7 @@ void M_Menu_MultiPlayer_f (void)
 void M_MultiPlayer_Draw (void)
 {
 	int		f;
-	qpic_t	*p;
+	CQuakePic	*p;
 
 	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
 	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
@@ -708,7 +708,7 @@ void M_Menu_Setup_f (void)
 
 void M_Setup_Draw (void)
 {
-	qpic_t	*p;
+	CQuakePic	*p;
 
 	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
 	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
@@ -901,7 +901,7 @@ void M_Menu_Net_f (void)
 void M_Net_Draw (void)
 {
 	int		f;
-	qpic_t	*p;
+	CQuakePic	*p;
 
 	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
 	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
@@ -1180,7 +1180,7 @@ void M_DrawCheckbox (int x, int y, int on)
 void M_Options_Draw (void)
 {
 	float		r;
-	qpic_t	*p;
+	CQuakePic	*p;
 
 	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
 	p = g_GLRenderer->Draw_CachePic ("gfx/p_option.lmp");
@@ -1400,7 +1400,7 @@ void M_Keys_Draw (void)
 	int		keys[2];
 	char	*name;
 	int		x, y;
-	qpic_t	*p;
+	CQuakePic	*p;
 
 	p = g_GLRenderer->Draw_CachePic ("gfx/ttl_cstm.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
@@ -1777,7 +1777,7 @@ void M_Menu_SerialConfig_f (void)
 
 void M_SerialConfig_Draw (void)
 {
-	qpic_t	*p;
+	CQuakePic	*p;
 	int		basex;
 	char	*startJoin;
 	char	*directModem;
@@ -2029,7 +2029,7 @@ void M_Menu_ModemConfig_f (void)
 
 void M_ModemConfig_Draw (void)
 {
-	qpic_t	*p;
+	CQuakePic	*p;
 	int		basex;
 
 	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
@@ -2213,7 +2213,7 @@ void M_Menu_LanConfig_f (void)
 
 void M_LanConfig_Draw (void)
 {
-	qpic_t	*p;
+	CQuakePic	*p;
 	int		basex;
 	char	*startJoin;
 	char	*protocol;
@@ -2551,7 +2551,7 @@ int		gameoptions_cursor;
 
 void M_GameOptions_Draw (void)
 {
-	qpic_t	*p;
+	CQuakePic	*p;
 	int		x;
 
 	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
@@ -2858,7 +2858,7 @@ void M_Menu_Search_f (void)
 
 void M_Search_Draw (void)
 {
-	qpic_t	*p;
+	CQuakePic	*p;
 	int x;
 
 	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
@@ -2919,7 +2919,7 @@ void M_ServerList_Draw (void)
 {
 	int		n;
 	char	string [64];
-	qpic_t	*p;
+	CQuakePic	*p;
 
 	if (!slist_sorted)
 	{

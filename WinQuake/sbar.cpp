@@ -26,45 +26,45 @@ CSoftwareRenderer* g_SoftwareRenderer;
 int			sb_updates;		// if >= vid.numpages, no update needed
 
 #define STAT_MINUS		10	// num frame for '-' stats digit
-qpic_t		*sb_nums[2][11];
-qpic_t		*sb_colon, *sb_slash;
-qpic_t		*sb_ibar;
-qpic_t		*sb_sbar;
-qpic_t		*sb_scorebar;
+CQuakePic		*sb_nums[2][11];
+CQuakePic		*sb_colon, *sb_slash;
+CQuakePic		*sb_ibar;
+CQuakePic		*sb_sbar;
+CQuakePic		*sb_scorebar;
 
-qpic_t      *sb_weapons[7][8];   // 0 is active, 1 is owned, 2-5 are flashes
-qpic_t      *sb_ammo[4];
-qpic_t		*sb_sigil[4];
-qpic_t		*sb_armor[3];
-qpic_t		*sb_items[32];
+CQuakePic      *sb_weapons[7][8];   // 0 is active, 1 is owned, 2-5 are flashes
+CQuakePic      *sb_ammo[4];
+CQuakePic		*sb_sigil[4];
+CQuakePic		*sb_armor[3];
+CQuakePic		*sb_items[32];
 
-qpic_t	*sb_faces[7][2];		// 0 is gibbed, 1 is dead, 2-6 are alive
+CQuakePic	*sb_faces[7][2];		// 0 is gibbed, 1 is dead, 2-6 are alive
 							// 0 is static, 1 is temporary animation
-qpic_t	*sb_face_invis;
-qpic_t	*sb_face_quad;
-qpic_t	*sb_face_invuln;
-qpic_t	*sb_face_invis_invuln;
+CQuakePic	*sb_face_invis;
+CQuakePic	*sb_face_quad;
+CQuakePic	*sb_face_invuln;
+CQuakePic	*sb_face_invis_invuln;
 
 bool	sb_showscores;
 
 int			sb_lines;			// scan lines to draw
 
-qpic_t      *rsb_invbar[2];
-qpic_t      *rsb_weapons[5];
-qpic_t      *rsb_items[2];
-qpic_t      *rsb_ammo[3];
-qpic_t      *rsb_teambord;		// PGM 01/19/97 - team color border
+CQuakePic      *rsb_invbar[2];
+CQuakePic      *rsb_weapons[5];
+CQuakePic      *rsb_items[2];
+CQuakePic      *rsb_ammo[3];
+CQuakePic      *rsb_teambord;		// PGM 01/19/97 - team color border
 
 //MED 01/04/97 added two more weapons + 3 alternates for grenade launcher
-qpic_t      *hsb_weapons[7][5];   // 0 is active, 1 is owned, 2-5 are flashes
+CQuakePic      *hsb_weapons[7][5];   // 0 is active, 1 is owned, 2-5 are flashes
 //MED 01/04/97 added array to simplify weapon parsing
 int         hipweapons[4] = {HIT_LASER_CANNON_BIT,HIT_MJOLNIR_BIT,4,HIT_PROXIMITY_GUN_BIT};
 //MED 01/04/97 added hipnotic items array
-qpic_t      *hsb_items[2];
+CQuakePic      *hsb_items[2];
 
 void Sbar_MiniDeathmatchOverlay (void);
 void Sbar_DeathmatchOverlay (void);
-void M_DrawPic (int x, int y, qpic_t *pic);
+void M_DrawPic (int x, int y, CQuakePic *pic);
 
 /*
 ===============
@@ -258,7 +258,7 @@ void Sbar_Init (void)
 Sbar_DrawPic
 =============
 */
-void Sbar_DrawPic (int x, int y, qpic_t *pic)
+void Sbar_DrawPic (int x, int y, CQuakePic *pic)
 {
 	if (cl.gametype == GAME_DEATHMATCH)
 		g_GLRenderer->Draw_Pic (x /* + ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
@@ -271,7 +271,7 @@ void Sbar_DrawPic (int x, int y, qpic_t *pic)
 Sbar_DrawTransPic
 =============
 */
-void Sbar_DrawTransPic (int x, int y, qpic_t *pic)
+void Sbar_DrawTransPic (int x, int y, CQuakePic *pic)
 {
 	if (cl.gametype == GAME_DEATHMATCH)
 		g_GLRenderer->Draw_TransPic (x /*+ ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
@@ -1086,7 +1086,7 @@ Sbar_DeathmatchOverlay
 */
 void Sbar_DeathmatchOverlay (void)
 {
-	qpic_t			*pic;
+	CQuakePic			*pic;
 	int				i, k, l;
 	int				top, bottom;
 	int				x, y, f;
@@ -1167,7 +1167,7 @@ Sbar_DeathmatchOverlay
 */
 void Sbar_MiniDeathmatchOverlay (void)
 {
-	qpic_t			*pic;
+	CQuakePic			*pic;
 	int				i, k, l;
 	int				top, bottom;
 	int				x, y, f;
@@ -1269,7 +1269,7 @@ Sbar_IntermissionOverlay
 */
 void Sbar_IntermissionOverlay (void)
 {
-	qpic_t	*pic;
+	CQuakePic	*pic;
 	int		dig;
 	int		num;
 
@@ -1315,7 +1315,7 @@ Sbar_FinaleOverlay
 */
 void Sbar_FinaleOverlay (void)
 {
-	qpic_t	*pic;
+	CQuakePic	*pic;
 
 	scr_copyeverything = 1;
 

@@ -41,9 +41,9 @@ cvar_t		scr_printspeed = {"scr_printspeed","8"};
 
 bool	scr_initialized;		// ready to draw
 
-qpic_t		*scr_ram;
-qpic_t		*scr_net;
-qpic_t		*scr_turtle;
+CQuakePic		*scr_ram;
+CQuakePic		*scr_net;
+CQuakePic		*scr_turtle;
 
 int			scr_fullupdate;
 
@@ -401,7 +401,7 @@ DrawPause
 */
 void SCR_DrawPause (void)
 {
-	qpic_t	*pic;
+	CQuakePic	*pic;
 
 	if (!scr_showpause.value)		// turn off for screenshots
 		return;
@@ -423,7 +423,7 @@ SCR_DrawLoading
 */
 void SCR_DrawLoading (void)
 {
-	qpic_t	*pic;
+	CQuakePic	*pic;
 
 	if (!scr_drawloading)
 		return;

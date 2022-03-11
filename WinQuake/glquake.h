@@ -95,6 +95,8 @@ extern	PROC QglVertexPointerEXT;
 
 #define BACKFACE_EPSILON	0.01
 
+#define	MAX_GLTEXTURES	1024
+
 
 void R_TimeRefresh_f (void);
 void R_ReadPointFile_f (void);
@@ -147,40 +149,21 @@ typedef struct particle_s
 	ptype_t		type;
 } particle_t;
 
-// Missi: BananaQuake stuff (2/17/22)
-
-class CGLTexture
-{
-public:
-	CGLTexture();
-
-	GLuint		texnum = 0;
-	char	identifier[64];
-	unsigned int		width, height;
-	bool	mipmap = false;
-
-	GLfloat	sl = 0;
-	GLfloat	tl = 0;
-	GLfloat	sh = 0;
-	GLfloat	th = 0;
-
-};
-
 class CGLRenderer
 {
 public:
 
 	CGLRenderer();
 
-	static void GL_Bind(int texnum);
+	static void GL_Bind(CGLTexture* tex);
 
 	int Scrap_AllocBlock(int w, int h, int* x, int* y);
 
 	void Scrap_Upload(void);
 
-	qpic_t* Draw_PicFromWad(char* name);
+	CQuakePic* Draw_PicFromWad(char* name);
 
-	qpic_t* Draw_CachePic(char* path);
+	CQuakePic* Draw_CachePic(const char* path);
 
 	void Draw_CharToConback(int num, byte* dest);
 
@@ -190,10 +173,10 @@ public:
 	void Draw_Character(int x, int y, int num);
 	void Draw_String(int x, int y, char* str);
 	void Draw_DebugChar(char num);
-	void Draw_AlphaPic(int x, int y, qpic_t* pic, float alpha);
-	void Draw_Pic(int x, int y, qpic_t* pic);
-	void Draw_TransPic(int x, int y, qpic_t* pic);
-	void Draw_TransPicTranslate(int x, int y, qpic_t* pic, byte* translation);
+	void Draw_AlphaPic(int x, int y, CQuakePic* pic, float alpha);
+	void Draw_Pic(int x, int y, CQuakePic* pic);
+	void Draw_TransPic(int x, int y, CQuakePic* pic);
+	void Draw_TransPicTranslate(int x, int y, CQuakePic* pic, byte* translation);
 	void Draw_ConsoleBackground(int lines);
 	void Draw_TileClear(int x, int y, int w, int h);
 	void Draw_Fill(int x, int y, int w, int h, int c);
@@ -207,7 +190,7 @@ public:
 	void GL_ResampleTexture(unsigned* in, int inwidth, int inheight, unsigned* out, int outwidth, int outheight);
 	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
-	CGLTexture* GL_LoadPicTexture(qpic_t* pic);
+	CGLTexture* GL_LoadPicTexture(CQuakePic* pic);
 	CGLTexture* GL_LoadTexture(char* identifier, int width, int height, byte* data, bool mipmap, bool alpha);
 
 
@@ -217,9 +200,46 @@ public:
 	void GL_Upload8_EXT(byte* data, int width, int height, bool mipmap, bool alpha);
 	void GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha);
 
+	static CGLTexture gltextures[MAX_GLTEXTURES];
+
 	static CQVector<CGLTexture> gltexturevector;
 
 	static void PrintTexVec();
+
+};
+
+class COpenGLPic
+{
+public:
+
+	COpenGLPic();
+	COpenGLPic(CGLTexture* mem);
+
+	//CGLTexture* gltexture;
+	float	sl, tl, sh, th;
+};
+
+// Missi: BananaQuake stuff (2/17/22)
+
+class CGLTexture
+{
+public:
+	CGLTexture();
+	CGLTexture(CQuakePic* qpic, COpenGLPic* glpic = NULL);
+	CGLTexture(const CGLTexture& obj);
+
+	CQuakePic* pic;
+	COpenGLPic* glpic;
+
+	unsigned int		texnum;
+	char	identifier[64];
+	unsigned int	width, height;
+	bool	mipmap;
+
+	float	sl;
+	float	tl;
+	float	sh;
+	float	th;
 
 };
 
@@ -253,10 +273,10 @@ extern	texture_t	*r_notexture_mip;
 extern	int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 extern	bool	envmap;
-extern	int	currenttexture;
-extern	int	cnttextures[2];
-extern	int	particletexture;
-extern	int	playertextures;
+extern	CGLTexture* currenttexture;
+extern	CGLTexture* cnttextures[2];
+extern	CGLTexture* particletexture;
+extern	CGLTexture* playertextures;
 
 extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
 

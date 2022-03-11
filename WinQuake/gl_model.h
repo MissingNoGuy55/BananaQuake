@@ -210,7 +210,7 @@ typedef struct mspriteframe_s
 	int		width;
 	int		height;
 	float	up, down, left, right;
-	int		gl_texturenum;
+	CGLTexture* gltexture;
 } mspriteframe_t;
 
 typedef struct
@@ -301,7 +301,7 @@ typedef struct {
 	int					poseverts;
 	int					posedata;	// numposes*poseverts trivert_t
 	int					commands;	// gl command list with embedded s/t
-	int					gl_texturenum[MAX_SKINS][4];
+	CGLTexture*			gltextures[MAX_SKINS][4];
 	int					texels[MAX_SKINS];	// only for player skins
 	maliasframedesc_t	frames[1];	// variable sized
 } aliashdr_t;

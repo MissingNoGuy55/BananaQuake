@@ -41,12 +41,12 @@ int			c_brush_polys, c_alias_polys;
 
 bool	envmap;				// true during envmap command capture 
 
-int			currenttexture = -1;		// to avoid unnecessary texture sets
+CGLTexture* currenttexture = NULL;		// to avoid unnecessary texture sets
 
-int			cnttextures[2] = {-1, -1};     // cached
+CGLTexture* cnttextures[2] = {NULL, NULL};     // cached
 
-int			particletexture;	// little dot for particles
-int			playertextures;		// up to 16 color translated skins
+CGLTexture*			particletexture;	// little dot for particles
+CGLTexture*			playertextures;		// up to 16 color translated skins
 
 int			mirrortexturenum;	// quake texturenum, not gltexturenum
 bool	mirror;
@@ -227,7 +227,7 @@ void R_DrawSpriteModel (entity_t *e)
 
 	GL_DisableMultitexture();
 
-    g_GLRenderer->GL_Bind(frame->gl_texturenum);
+    g_GLRenderer->GL_Bind(frame->gltexture);
 
 	glEnable (GL_ALPHA_TEST);
 	glBegin (GL_QUADS);
@@ -567,7 +567,7 @@ void R_DrawAliasModel (entity_t *e)
 	}
 
 	anim = (int)(cl.time*10) & 3;
-    g_GLRenderer->GL_Bind(paliashdr->gl_texturenum[currententity->skinnum][anim]);
+    g_GLRenderer->GL_Bind(paliashdr->gltextures[currententity->skinnum][anim]);
 
 	// we can't dynamically colormap textures, so they are cached
 	// seperately for the players.  Heads are just uncolored.

@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern	model_t	*loadmodel;
 
-int		solidskytexture;
-int		alphaskytexture;
+CGLTexture*		solidskytexture;
+CGLTexture*		alphaskytexture;
 float	speedscale;		// for top sky and bottom sky
 
 msurface_t	*warpface;
@@ -1064,7 +1064,7 @@ void R_InitSky (texture_t *mt)
 
 
 	if (!solidskytexture)
-		solidskytexture = texture_extension_number++;
+		solidskytexture = &g_GLRenderer->gltexturevector[texture_extension_number++]; // ++];
 	g_GLRenderer->GL_Bind (solidskytexture );
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1082,7 +1082,7 @@ void R_InitSky (texture_t *mt)
 		}
 
 	if (!alphaskytexture)
-		alphaskytexture = texture_extension_number++;
+		alphaskytexture = &g_GLRenderer->gltexturevector[texture_extension_number++]; //++];
 	g_GLRenderer->GL_Bind(alphaskytexture);
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

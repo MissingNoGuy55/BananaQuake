@@ -3045,8 +3045,8 @@ extern void M_Menu_Options_f (void);
 extern void M_Print (int cx, int cy, char *str);
 extern void M_PrintWhite (int cx, int cy, char *str);
 extern void M_DrawCharacter (int cx, int line, int num);
-extern void M_DrawTransPic (int x, int y, qpic_t *pic);
-extern void M_DrawPic (int x, int y, qpic_t *pic);
+extern void M_DrawTransPic (int x, int y, CQuakePic *pic);
+extern void M_DrawPic (int x, int y, CQuakePic *pic);
 
 static int	vid_line, vid_wmodes;
 
@@ -3072,7 +3072,7 @@ VID_MenuDraw
 */
 void VID_MenuDraw (void)
 {
-	qpic_t		*p;
+	CQuakePic		*p;
 	char		*ptr;
 	int			lnummodes, i, j, k, column, row, dup, dupmode;
 	char		temp[100];

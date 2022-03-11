@@ -35,7 +35,7 @@ int			skytexturenum;
 
 int		lightmap_bytes;		// 1, 2, or 4
 
-int		lightmap_textures;
+CGLTexture* lightmap_textures;
 
 unsigned		blocklights[18*18];
 
@@ -274,8 +274,8 @@ texture_t *R_TextureAnimation (texture_t *base)
 */
 
 
-extern	int		solidskytexture;
-extern	int		alphaskytexture;
+extern	CGLTexture* solidskytexture;
+extern	CGLTexture* alphaskytexture;
 extern	float	speedscale;		// for top sky and bottom sky
 
 void DrawGLWaterPoly (glpoly_t *p);
@@ -436,7 +436,7 @@ void R_DrawSequentialPoly (msurface_t *s)
 			t = R_TextureAnimation (s->texinfo->texture);
 			// Binds world to texture env 0
 			g_GLRenderer->GL_SelectTexture(TEXTURE0_SGIS);
-			g_GLRenderer->GL_Bind (t->gltexture->texnum);
+			g_GLRenderer->GL_Bind (t->gltexture);
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 			// Binds lightmap to texenv 1
 			GL_EnableMultitexture(); // Same as SelectTexture (TEXTURE1)
@@ -469,7 +469,7 @@ void R_DrawSequentialPoly (msurface_t *s)
 			p = s->polys;
 
 			t = R_TextureAnimation (s->texinfo->texture);
-			g_GLRenderer->GL_Bind (t->gltexture->texnum);
+			g_GLRenderer->GL_Bind (t->gltexture);
 			glBegin (GL_POLYGON);
 			v = p->verts[0];
 			for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
@@ -503,7 +503,7 @@ void R_DrawSequentialPoly (msurface_t *s)
 	if (s->flags & SURF_DRAWTURB)
 	{
 		GL_DisableMultitexture();
-		g_GLRenderer->GL_Bind (s->texinfo->texture->gltexture->texnum);
+		g_GLRenderer->GL_Bind (s->texinfo->texture->gltexture);
 		EmitWaterPolys (s);
 		return;
 	}
@@ -539,7 +539,7 @@ void R_DrawSequentialPoly (msurface_t *s)
 
 		t = R_TextureAnimation (s->texinfo->texture);
 		g_GLRenderer->GL_SelectTexture(TEXTURE0_SGIS);
-		g_GLRenderer->GL_Bind (t->gltexture->texnum);
+		g_GLRenderer->GL_Bind (t->gltexture);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		GL_EnableMultitexture();
 		g_GLRenderer->GL_Bind (lightmap_textures + s->lightmaptexturenum);
@@ -576,7 +576,7 @@ void R_DrawSequentialPoly (msurface_t *s)
 		p = s->polys;
 
 		t = R_TextureAnimation (s->texinfo->texture);
-		g_GLRenderer->GL_Bind (t->gltexture->texnum);
+		g_GLRenderer->GL_Bind (t->gltexture);
 		DrawGLWaterPoly (p);
 
 		g_GLRenderer->GL_Bind (lightmap_textures + s->lightmaptexturenum);
@@ -773,7 +773,7 @@ void R_RenderBrushPoly (msurface_t *fa)
 	}
 		
 	t = R_TextureAnimation (fa->texinfo->texture);
-	g_GLRenderer->GL_Bind (t->gltexture->texnum);
+	g_GLRenderer->GL_Bind (t->gltexture);
 
 	if (fa->flags & SURF_DRAWTURB)
 	{	// warp texture, no lightmaps
@@ -982,7 +982,7 @@ void R_DrawWaterSurfaces (void)
 			return;
 
 		for ( s = waterchain ; s ; s=s->texturechain) {
-			g_GLRenderer->GL_Bind (s->texinfo->texture->gltexture->texnum);
+			g_GLRenderer->GL_Bind (s->texinfo->texture->gltexture);
 			EmitWaterPolys (s);
 		}
 		
@@ -1002,7 +1002,7 @@ void R_DrawWaterSurfaces (void)
 
 			// set modulate mode explicitly
 			
-			g_GLRenderer->GL_Bind (t->gltexture->texnum);
+			g_GLRenderer->GL_Bind (t->gltexture);
 
 			for ( ; s ; s=s->texturechain)
 				EmitWaterPolys (s);
@@ -1089,7 +1089,7 @@ void R_DrawBrushModel (entity_t *e)
 	bool	rotated;
 
 	currententity = e;
-	currenttexture = -1;
+	currenttexture = NULL;
 
 	clmodel = e->model;
 
@@ -1326,7 +1326,7 @@ void R_DrawWorld (void)
 	VectorCopy (r_refdef.vieworg, modelorg);
 
 	currententity = &ent;
-	currenttexture = -1;
+	currenttexture = NULL;
 
 	glColor3f (1,1,1);
 	memset (lightmap_polys, 0, sizeof(lightmap_polys));
@@ -1613,7 +1613,8 @@ void GL_BuildLightmaps (void)
 
 	if (!lightmap_textures)
 	{
-		lightmap_textures = texture_extension_number;
+		lightmap_textures = (CGLTexture*)g_MemCache->Hunk_Alloc(sizeof(CGLTexture));
+		lightmap_textures->texnum = texture_extension_number;
 		texture_extension_number += MAX_LIGHTMAPS;
 	}
 

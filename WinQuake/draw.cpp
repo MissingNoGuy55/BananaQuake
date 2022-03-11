@@ -34,8 +34,8 @@ typedef struct {
 static rectdesc_t	r_rectdesc;
 
 byte		*draw_chars;				// 8*8 graphic characters
-qpic_t		*draw_disc;
-qpic_t		*draw_backtile;
+CQuakePic		*draw_disc;
+CQuakePic		*draw_backtile;
 
 //=============================================================================
 /* Support Routines */
@@ -51,9 +51,9 @@ cachepic_t	menu_cachepics[MAX_CACHED_PICS];
 int			menu_numcachepics;
 
 
-qpic_t	*Draw_PicFromWad (char *name)
+CQuakePic	*Draw_PicFromWad (char *name)
 {
-	return static_cast<qpic_t*>(W_GetLumpName (name));
+	return static_cast<CQuakePic*>(W_GetLumpName (name));
 }
 
 /*
@@ -61,11 +61,11 @@ qpic_t	*Draw_PicFromWad (char *name)
 Draw_CachePic
 ================
 */
-qpic_t	*Draw_CachePic (char *path)
+CQuakePic	*Draw_CachePic (char *path)
 {
 	cachepic_t	*pic;
 	int			i;
-	qpic_t		*dat;
+	CQuakePic		*dat;
 	
 	for (pic=menu_cachepics, i=0 ; i<menu_numcachepics ; pic++, i++)
 		if (!strcmp (path, pic->name))
@@ -79,7 +79,7 @@ qpic_t	*Draw_CachePic (char *path)
 		strcpy (pic->name, path);
 	}
 
-	dat = static_cast<qpic_t*>(Cache_Check (&pic->cache));
+	dat = static_cast<CQuakePic*>(Cache_Check (&pic->cache));
 
 	if (dat)
 		return dat;
@@ -89,7 +89,7 @@ qpic_t	*Draw_CachePic (char *path)
 //
 	COM_LoadCacheFile (path, &pic->cache);
 	
-	dat = (qpic_t *)pic->cache.data;
+	dat = (CQuakePic *)pic->cache.data;
 	if (!dat)
 	{
 		Sys_Error ("Draw_CachePic: failed to load %s", path);
@@ -112,8 +112,8 @@ void Draw_Init (void)
 	int		i;
 
 	draw_chars = static_cast<byte*>(W_GetLumpName ("conchars"));
-	draw_disc = static_cast<qpic_t*>(W_GetLumpName ("disc"));
-	draw_backtile = static_cast<qpic_t*>(W_GetLumpName ("backtile"));
+	draw_disc = static_cast<CQuakePic*>(W_GetLumpName ("disc"));
+	draw_backtile = static_cast<CQuakePic*>(W_GetLumpName ("backtile"));
 
 	r_rectdesc.width = draw_backtile->width;
 	r_rectdesc.height = draw_backtile->height;
@@ -286,7 +286,7 @@ void Draw_DebugChar (char num)
 Draw_Pic
 =============
 */
-void Draw_Pic (int x, int y, qpic_t *pic)
+void Draw_Pic (int x, int y, CQuakePic *pic)
 {
 	byte			*dest, *source;
 	unsigned short	*pusdest;
@@ -337,7 +337,7 @@ void Draw_Pic (int x, int y, qpic_t *pic)
 Draw_TransPic
 =============
 */
-void Draw_TransPic (int x, int y, qpic_t *pic)
+void Draw_TransPic (int x, int y, CQuakePic *pic)
 {
 	byte	*dest, *source, tbyte;
 	unsigned short	*pusdest;
@@ -424,7 +424,7 @@ void Draw_TransPic (int x, int y, qpic_t *pic)
 Draw_TransPicTranslate
 =============
 */
-void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation)
+void Draw_TransPicTranslate (int x, int y, CQuakePic *pic, byte *translation)
 {
 	byte	*dest, *source, tbyte;
 	unsigned short	*pusdest;
@@ -542,7 +542,7 @@ void Draw_ConsoleBackground (int lines)
 	byte			*src, *dest;
 	unsigned short	*pusdest;
 	int				f, fstep;
-	qpic_t			*conback;
+	CQuakePic			*conback;
 	char			ver[100];
 
 	conback = Draw_CachePic ("gfx/conback.lmp");

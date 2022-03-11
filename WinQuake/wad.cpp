@@ -20,12 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // wad.c
 
 #include "quakedef.h"
+#include "wad.h"
 
 int			wad_numlumps;
 lumpinfo_t	*wad_lumps;
 byte		*wad_base;
-
-void SwapPic (qpic_t *pic);
 
 /*
 ==================
@@ -94,7 +93,7 @@ void W_LoadWadFile (char *filename)
 		lump_p->size = LittleLong(lump_p->size);
 		W_CleanupName (lump_p->name, lump_p->name);
 		if (lump_p->type == TYP_QPIC)
-			SwapPic ( (qpic_t *)(wad_base + lump_p->filepos));
+			SwapPic ( (CQuakePic *)(wad_base + lump_p->filepos));
 	}
 }
 
@@ -151,8 +150,22 @@ automatic byte swapping
 =============================================================================
 */
 
-void SwapPic (qpic_t *pic)
+void SwapPic (CQuakePic *pic)
 {
 	pic->width = LittleLong(pic->width);
-	pic->height = LittleLong(pic->height);	
+	pic->height = LittleLong(pic->height);
+}
+
+CQuakePic::CQuakePic()
+{
+}
+
+CQuakePic::CQuakePic(byte* mem)
+{
+	int j = 0;
+	
+	while (data)
+	{
+		mem[j] = data[j];
+	}
 }
