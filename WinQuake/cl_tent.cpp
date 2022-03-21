@@ -130,7 +130,7 @@ void CL_ParseTEnt (void)
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_RunParticleEffect (pos, vec3_origin, 20, 30);
+		g_CoreRenderer->R_RunParticleEffect (pos, vec3_origin, 20, 30);
 		g_SoundSystem->S_StartSound (-1, 0, cl_sfx_wizhit, pos, 1, 1);
 		break;
 		
@@ -138,7 +138,7 @@ void CL_ParseTEnt (void)
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_RunParticleEffect (pos, vec3_origin, 226, 20);
+		g_CoreRenderer->R_RunParticleEffect (pos, vec3_origin, 226, 20);
 		g_SoundSystem->S_StartSound (-1, 0, cl_sfx_knighthit, pos, 1, 1);
 		break;
 		
@@ -149,7 +149,7 @@ void CL_ParseTEnt (void)
 #ifdef GLTEST
 		Test_Spawn (pos);
 #else
-		R_RunParticleEffect (pos, vec3_origin, 0, 10);
+		g_CoreRenderer->R_RunParticleEffect (pos, vec3_origin, 0, 10);
 #endif
 		if ( rand() % 5 )
 			g_SoundSystem->S_StartSound (-1, 0, cl_sfx_tink1, pos, 1, 1);
@@ -168,7 +168,7 @@ void CL_ParseTEnt (void)
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_RunParticleEffect (pos, vec3_origin, 0, 20);
+		g_CoreRenderer->R_RunParticleEffect (pos, vec3_origin, 0, 20);
 
 		if ( rand() % 5 )
 			g_SoundSystem->S_StartSound (-1, 0, cl_sfx_tink1, pos, 1, 1);
@@ -188,14 +188,14 @@ void CL_ParseTEnt (void)
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_RunParticleEffect (pos, vec3_origin, 0, 20);
+		g_CoreRenderer->R_RunParticleEffect (pos, vec3_origin, 0, 20);
 		break;
 		
 	case TE_EXPLOSION:			// rocket explosion
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_ParticleExplosion (pos);
+		g_CoreRenderer->R_ParticleExplosion (pos);
 		dl = CL_AllocDlight (0);
 		VectorCopy (pos, dl->origin);
 		dl->radius = 350;
@@ -208,7 +208,7 @@ void CL_ParseTEnt (void)
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_BlobExplosion (pos);
+		g_CoreRenderer->R_BlobExplosion (pos);
 
 		g_SoundSystem->S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
 		break;
@@ -235,14 +235,14 @@ void CL_ParseTEnt (void)
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_LavaSplash (pos);
+		g_CoreRenderer->R_LavaSplash (pos);
 		break;
 	
 	case TE_TELEPORT:
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_TeleportSplash (pos);
+		g_CoreRenderer->R_TeleportSplash (pos);
 		break;
 		
 	case TE_EXPLOSION2:				// color mapped explosion
@@ -251,7 +251,7 @@ void CL_ParseTEnt (void)
 		pos[2] = MSG_ReadCoord ();
 		colorStart = MSG_ReadByte ();
 		colorLength = MSG_ReadByte ();
-		R_ParticleExplosion2 (pos, colorStart, colorLength);
+		g_CoreRenderer->R_ParticleExplosion2 (pos, colorStart, colorLength);
 		dl = CL_AllocDlight (0);
 		VectorCopy (pos, dl->origin);
 		dl->radius = 350;

@@ -49,10 +49,6 @@ static void	(*surfmiptable[4])(void) = {
 	R_DrawSurfaceBlock8_mip3
 };
 
-
-
-unsigned		blocklights[18*18];
-
 /*
 ===============
 R_AddDynamicLights
@@ -146,7 +142,7 @@ R_BuildLightMap
 Combine and scale multiple lightmaps into the 8.8 format in blocklights
 ===============
 */
-void R_BuildLightMap (void)
+void CCoreRenderer::R_BuildLightMap (void)
 {
 	int			smax, tmax;
 	int			t;

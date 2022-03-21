@@ -34,3 +34,5 @@ float V_CalcRoll (vec3_t angles, vec3_t velocity);
 void V_UpdatePalette (void);
 
 void V_CalcBlend(void);
+
+void R_PushDlights(void);

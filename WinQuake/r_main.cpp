@@ -142,6 +142,8 @@ extern cvar_t	scr_fov;
 void CreatePassages (void);
 void SetVisibilityByPassages (void);
 
+CCoreRenderer* g_CoreRenderer;
+
 /*
 ==================
 R_InitTextures
@@ -153,7 +155,7 @@ void	R_InitTextures (void)
 	byte	*dest;
 	
 // create a simple checkerboard texture for the default
-	r_notexture_mip = static_cast<texture_t*>(Hunk_AllocName (sizeof(texture_t) + 16*16+8*8+4*4+2*2, "notexture"));
+	r_notexture_mip = static_cast<texture_t*>(g_MemCache->Hunk_AllocName (sizeof(texture_t) + 16*16+8*8+4*4+2*2, "notexture"));
 	
 	r_notexture_mip->width = r_notexture_mip->height = 16;
 	r_notexture_mip->offsets[0] = sizeof(texture_t);
@@ -180,7 +182,7 @@ void	R_InitTextures (void)
 R_Init
 ===============
 */
-void R_Init (void)
+void CCoreRenderer::R_Init (void)
 {
 	int		dummy;
 	
@@ -190,7 +192,7 @@ void R_Init (void)
 	R_InitTurb ();
 	
 	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);	
-	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);	
+	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);
 
 	Cvar_RegisterVariable (&r_draworder);
 	Cvar_RegisterVariable (&r_speeds);
@@ -243,7 +245,7 @@ void R_Init (void)
 R_NewMap
 ===============
 */
-void R_NewMap (void)
+void CCoreRenderer::R_NewMap (void)
 {
 	int		i;
 	
@@ -262,7 +264,7 @@ void R_NewMap (void)
 
 	if (r_cnumsurfs > NUMSTACKSURFACES)
 	{
-		surfaces = static_cast<surf_t*>(Hunk_AllocName (r_cnumsurfs * sizeof(surf_t), "surfaces"));
+		surfaces = static_cast<surf_t*>(g_MemCache->Hunk_AllocName (r_cnumsurfs * sizeof(surf_t), "surfaces"));
 		surface_p = surfaces;
 		surf_max = &surfaces[r_cnumsurfs];
 		r_surfsonstack = false;
@@ -290,7 +292,7 @@ void R_NewMap (void)
 	}
 	else
 	{
-		auxedges = static_cast<edge_t*>(Hunk_AllocName (r_numallocatededges * sizeof(edge_t),
+		auxedges = static_cast<edge_t*>(g_MemCache->Hunk_AllocName (r_numallocatededges * sizeof(edge_t),
 								   "edges"));
 	}
 
@@ -307,7 +309,7 @@ CreatePassages ();
 R_SetVrect
 ===============
 */
-void R_SetVrect (vrect_t *pvrectin, vrect_t *pvrect, int lineadj)
+void CCoreRenderer::R_SetVrect (vrect_t *pvrectin, vrect_t *pvrect, int lineadj)
 {
 	int		h;
 	float	size;
@@ -355,7 +357,7 @@ Called every time the vid structure or r_refdef changes.
 Guaranteed to be called before the first refresh
 ===============
 */
-void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect)
+void CCoreRenderer::R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect)
 {
 	int		i;
 	float	res_scale;
@@ -488,7 +490,7 @@ void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect)
 R_MarkLeaves
 ===============
 */
-void R_MarkLeaves (void)
+void CCoreRenderer::R_MarkLeaves (void)
 {
 	byte	*vis;
 	mnode_t	*node;
@@ -524,7 +526,7 @@ void R_MarkLeaves (void)
 R_DrawEntitiesOnList
 =============
 */
-void R_DrawEntitiesOnList (void)
+void CCoreRenderer::R_DrawEntitiesOnList (void)
 {
 	int			i, j;
 	int			lnum;
@@ -603,7 +605,7 @@ void R_DrawEntitiesOnList (void)
 R_DrawViewModel
 =============
 */
-void R_DrawViewModel (void)
+void CCoreRenderer::R_DrawViewModel (void)
 {
 // FIXME: remove and do real lighting
 	float		lightvec[3] = {-1, 0, 0};
@@ -677,7 +679,7 @@ void R_DrawViewModel (void)
 R_BmodelCheckBBox
 =============
 */
-int R_BmodelCheckBBox (model_t *clmodel, float *minmaxs)
+int CCoreRenderer::R_BmodelCheckBBox (model_t *clmodel, float *minmaxs)
 {
 	int			i, *pindex, clipflags;
 	vec3_t		acceptpt, rejectpt;
@@ -735,13 +737,12 @@ int R_BmodelCheckBBox (model_t *clmodel, float *minmaxs)
 	return clipflags;
 }
 
-
 /*
 =============
 R_DrawBEntitiesOnList
 =============
 */
-void R_DrawBEntitiesOnList (void)
+void CCoreRenderer::R_DrawBEntitiesOnList (void)
 {
 	int			i, j, k, clipflags;
 	vec3_t		oldorigin;
@@ -873,7 +874,7 @@ void R_DrawBEntitiesOnList (void)
 R_EdgeDrawing
 ================
 */
-void R_EdgeDrawing (void)
+void CCoreRenderer::R_EdgeDrawing (void)
 {
 	edge_t	ledges[NUMSTACKEDGES +
 				((CACHE_SIZE - 1) / sizeof(edge_t)) + 1];
@@ -934,7 +935,7 @@ void R_EdgeDrawing (void)
 	if (!r_dspeeds.value)
 	{
 		VID_UnlockBuffer ();
-		S_ExtraUpdate ();	// don't let sound get messed up if going slow
+		g_SoundSystem->S_ExtraUpdate ();	// don't let sound get messed up if going slow
 		VID_LockBuffer ();
 	}
 	
@@ -950,7 +951,7 @@ R_RenderView
 r_refdef must be set before the first call
 ================
 */
-void R_RenderView_ (void)
+void CCoreRenderer::R_RenderView_ (void)
 {
 	byte	warpbuffer[WARP_WIDTH * WARP_HEIGHT];
 
@@ -979,7 +980,7 @@ SetVisibilityByPassages ();
 	if (!r_dspeeds.value)
 	{
 		VID_UnlockBuffer ();
-		S_ExtraUpdate ();	// don't let sound get messed up if going slow
+		g_SoundSystem->S_ExtraUpdate ();	// don't let sound get messed up if going slow
 		VID_LockBuffer ();
 	}
 	
@@ -988,7 +989,7 @@ SetVisibilityByPassages ();
 	if (!r_dspeeds.value)
 	{
 		VID_UnlockBuffer ();
-		S_ExtraUpdate ();	// don't let sound get messed up if going slow
+		g_SoundSystem->S_ExtraUpdate ();	// don't let sound get messed up if going slow
 		VID_LockBuffer ();
 	}
 	
@@ -1046,7 +1047,7 @@ SetVisibilityByPassages ();
 	Sys_HighFPPrecision ();
 }
 
-void R_RenderView (void)
+void CCoreRenderer::R_RenderView (void)
 {
 	int		dummy;
 	int		delta;
@@ -1055,7 +1056,7 @@ void R_RenderView (void)
 	if (delta < -10000 || delta > 10000)
 		Sys_Error ("R_RenderView: called without enough stack");
 
-	if ( Hunk_LowMark() & 3 )
+	if ( g_MemCache->Hunk_LowMark() & 3 )
 		Sys_Error ("Hunk is missaligned");
 
 	if ( (long)(&dummy) & 3 )
@@ -1072,7 +1073,7 @@ void R_RenderView (void)
 R_InitTurb
 ================
 */
-void R_InitTurb (void)
+void CCoreRenderer::R_InitTurb (void)
 {
 	int		i;
 	

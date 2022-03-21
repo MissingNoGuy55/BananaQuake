@@ -873,9 +873,7 @@ void Host_Init (quakeparms_t *parms)
 
 	Con_Printf("Exe: %s %s\n", __TIME__, __DATE__);
 	Con_Printf ("%4.1f megabyte heap\n",parms->memsize/ (1024*1024.0));
-	
-	R_InitTextures ();		// needed even for dedicated servers
- 
+
 	if (cls.state != ca_dedicated)
 	{
 		host_basepal = (byte *)COM_LoadHunkFile ("gfx/palette.lmp");
@@ -894,14 +892,17 @@ void Host_Init (quakeparms_t *parms)
 		g_SoundSystem->S_Init();
 #endif
 		VID_Init (host_basepal);
+		g_CoreRenderer = new CCoreRenderer;		// needed even for dedicated servers
 #ifndef GLQUAKE
-		Draw_Init ();
+		g_CoreRenderer->R_Init();
+		g_SoftwareRenderer = new CSoftwareRenderer;
+		g_SoftwareRenderer->Draw_Init ();
 #else
 		g_GLRenderer = new CGLRenderer;
 		g_GLRenderer->Draw_Init();
+		g_GLRenderer->R_Init();
 #endif
-		SCR_Init ();
-		R_Init ();
+		SCR_Init();
 #ifndef	_WIN32
 	// on Win32, sound initialization has to come before video initialization, so we
 	// can put up a popup if the sound hardware is in use

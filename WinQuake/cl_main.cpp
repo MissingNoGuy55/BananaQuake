@@ -483,7 +483,7 @@ void CL_RelinkEntities (void)
 		if (!ent->model)
 		{	// empty slot
 			if (ent->forcelink)
-				R_RemoveEfrags (ent);	// just became empty
+				g_CoreRenderer->R_RemoveEfrags (ent);	// just became empty
 			continue;
 		}
 
@@ -532,7 +532,7 @@ void CL_RelinkEntities (void)
 			ent->angles[1] = bobjrotate;
 
 		if (ent->effects & EF_BRIGHTFIELD)
-			R_EntityParticles (ent);
+			g_CoreRenderer->R_EntityParticles (ent);
 #ifdef QUAKE2
 		if (ent->effects & EF_DARKFIELD)
 			R_DarkFieldParticles (ent);
@@ -585,25 +585,25 @@ void CL_RelinkEntities (void)
 #endif
 
 		if (ent->model->flags & EF_GIB)
-			R_RocketTrail (oldorg, ent->origin, 2);
+			g_CoreRenderer->R_RocketTrail (oldorg, ent->origin, 2);
 		else if (ent->model->flags & EF_ZOMGIB)
-			R_RocketTrail (oldorg, ent->origin, 4);
+			g_CoreRenderer->R_RocketTrail (oldorg, ent->origin, 4);
 		else if (ent->model->flags & EF_TRACER)
-			R_RocketTrail (oldorg, ent->origin, 3);
+			g_CoreRenderer->R_RocketTrail (oldorg, ent->origin, 3);
 		else if (ent->model->flags & EF_TRACER2)
-			R_RocketTrail (oldorg, ent->origin, 5);
+			g_CoreRenderer->R_RocketTrail (oldorg, ent->origin, 5);
 		else if (ent->model->flags & EF_ROCKET)
 		{
-			R_RocketTrail (oldorg, ent->origin, 0);
+			g_CoreRenderer->R_RocketTrail (oldorg, ent->origin, 0);
 			dl = CL_AllocDlight (i);
 			VectorCopy (ent->origin, dl->origin);
 			dl->radius = 200;
 			dl->die = cl.time + 0.01;
 		}
 		else if (ent->model->flags & EF_GRENADE)
-			R_RocketTrail (oldorg, ent->origin, 1);
+			g_CoreRenderer->R_RocketTrail (oldorg, ent->origin, 1);
 		else if (ent->model->flags & EF_TRACER3)
-			R_RocketTrail (oldorg, ent->origin, 6);
+			g_CoreRenderer->R_RocketTrail (oldorg, ent->origin, 6);
 
 		ent->forcelink = false;
 

@@ -4,6 +4,9 @@
 #define UTILS_H
 
 class CCacheSystem;
+class CCoreRenderer;
+class CSoftwareRenderer;
+class CGLRenderer;
 
 // Missi: CQVector -- copied CUtlVector from Source. (3/8/2022)
 // !!!

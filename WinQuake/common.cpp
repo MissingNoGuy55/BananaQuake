@@ -1570,10 +1570,20 @@ byte *COM_LoadFile (const char *path, int usehunk)
 		
 	((byte *)buf)[len] = 0;
 
-	g_GLRenderer->Draw_BeginDisc ();
+#ifndef GLQUAKE
+	g_SoftwareRenderer->Draw_BeginDisc ();
+#else
+	g_GLRenderer->Draw_BeginDisc();
+#endif
+
 	Sys_FileRead (h, buf, len);                     
 	COM_CloseFile (h);
-	g_GLRenderer->Draw_EndDisc ();
+
+#ifndef GLQUAKE
+	g_SoftwareRenderer->Draw_EndDisc ();
+#else
+	g_GLRenderer->Draw_EndDisc();
+#endif
 
 	return buf;
 }

@@ -32,7 +32,10 @@ public:
 	void Draw_Pic(int x, int y, CQuakePic* tex);
 	void Draw_TransPic(int x, int y, CQuakePic* tex);
 	void Draw_TransPicTranslate(int x, int y, CQuakePic* tex, byte* translation);
+	void Draw_CharToConback(int num, byte* dest);
 	void Draw_ConsoleBackground(int lines);
+	void R_DrawRect8(vrect_t* prect, int rowbytes, byte* psrc, int transparent);
+	void R_DrawRect16(vrect_t* prect, int rowbytes, byte* psrc, int transparent);
 	void Draw_BeginDisc(void);
 	void Draw_EndDisc(void);
 	void Draw_TileClear(int x, int y, int w, int h);

@@ -97,10 +97,23 @@ extern	PROC QglVertexPointerEXT;
 
 #define	MAX_GLTEXTURES	1024
 
+#define	BLOCK_WIDTH		256
+#define	BLOCK_HEIGHT	256
 
-void R_TimeRefresh_f (void);
-void R_ReadPointFile_f (void);
-texture_t *R_TextureAnimation (texture_t *base);
+#define	MAX_LIGHTMAPS	64
+
+#ifndef GL_RGBA4
+#define	GL_RGBA4	0
+#endif
+
+#define GLVECTEST()										\
+														\
+	CGLTexture* test[MAX_GLTEXTURES];					\
+														\
+	for (int i = 0; i < gltexturevector.Count(); i++)	\
+		test[i] = gltexturevector[i];					\
+														\
+	Con_Printf("Test\n");								\
 
 typedef struct surfcache_s
 {
@@ -149,11 +162,16 @@ typedef struct particle_s
 	ptype_t		type;
 } particle_t;
 
+typedef struct glRect_s {
+	unsigned char l, t, w, h;
+} glRect_t;
+
 class CGLRenderer
 {
 public:
 
 	CGLRenderer();
+	CGLRenderer(const CGLRenderer& src);
 
 	static void GL_Bind(CGLTexture* tex);
 
@@ -161,13 +179,15 @@ public:
 
 	void Scrap_Upload(void);
 
-	CQuakePic* Draw_PicFromWad(char* name);
+	CQuakePic* Draw_PicFromWad(const char* name);
 
 	CQuakePic* Draw_CachePic(const char* path);
 
 	void Draw_CharToConback(int num, byte* dest);
 
 	static void Draw_TextureMode_f(void);
+
+	int AllocBlock(int w, int h, int* x, int* y);
 
 	void Draw_Init(void);
 	void Draw_Character(int x, int y, int num);
@@ -191,20 +211,153 @@ public:
 	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
 	CGLTexture* GL_LoadPicTexture(CQuakePic* pic);
-	CGLTexture* GL_LoadTexture(char* identifier, int width, int height, byte* data, bool mipmap, bool alpha);
+	CGLTexture* GL_LoadTexture(const char* identifier, int width, int height, byte* data, bool mipmap, bool alpha);
 
+	void BuildSurfaceDisplayList(msurface_t* fa);
 
 	void GL_MipMap(byte* in, int width, int height);
 	void GL_MipMap8Bit(byte* in, int width, int height);
 	void GL_Upload32(unsigned* data, int width, int height, bool mipmap, bool alpha);
 	void GL_Upload8_EXT(byte* data, int width, int height, bool mipmap, bool alpha);
 	void GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha);
+	void GL_BuildLightmaps(void);
+	void GL_CreateSurfaceLightmap(msurface_t* surf);
+	void GL_SubdivideSurface(msurface_t* fa);
+
+	void EmitWaterPolys(msurface_t* fa);
+	void EmitSkyPolys(msurface_t* fa);
+	void EmitBothSkyLayers(msurface_t* fa);
+
+	void BoundPoly(int numverts, float* verts, vec3_t mins, vec3_t maxs);
+	void SubdividePolygon(int numverts, float* verts);
+
+	int RecursiveLightPoint(mnode_t* node, vec3_t start, vec3_t end);
+
+	void R_Init(void);
+	void R_InitParticleTexture(void);
+	void R_InitTextures(void);
+	void R_DrawBrushModel(entity_t* e);
+	void R_DrawSkyChain(msurface_t* s);
+	void R_DrawWorld(void);
+	void R_DrawViewModel(void);
+	void R_RecursiveWorldNode(mnode_t* node);
+	void R_RenderBrushPoly(msurface_t* fa);
+	void R_InitSky(texture_t* mt);
+	void R_AddDynamicLights(msurface_t* surf);
+	void R_BuildLightMap(msurface_t* surf, byte* dest, int stride);
+	void R_BlendLightmaps(void);
+	void R_DrawAliasModel(entity_t* e);
+	void R_DrawWaterSurfaces(void);
+	void R_RenderScene(void);
+	void R_PushDlights(void);
+	void R_RenderView(void);
+	void R_SetupFrame(void);
+	void R_NewMap(void);
+	void R_SplitEntityOnNode(mnode_t* node);
+	void R_AddEfrags(entity_t* ent);
+
+	int R_LightPoint(vec3_t p);
+	void R_MarkLights(dlight_t* light, int bit, mnode_t* node);
+	void R_AnimateLight(void);
+	void R_RenderDlights(void);
+
+	void R_Envmap_f(void);
+
+	void DrawTextureChains(void);
+	void DrawGLWaterPoly(glpoly_t* p);
+	void DrawGLWaterPolyLightmap(glpoly_t* p);
+
+	texture_t* R_TextureAnimation(texture_t* base);
 
 	static CGLTexture gltextures[MAX_GLTEXTURES];
 
 	static CQVector<CGLTexture> gltexturevector;
 
 	static void PrintTexVec();
+
+	void R_RenderDynamicLightmaps(msurface_t* fa);
+	void R_TimeRefresh_f(void);
+	void R_MarkLeaves(void);
+
+	void R_TranslatePlayerSkin(int playernum);
+
+	void R_DrawSequentialPoly(msurface_t* s);
+	void R_Mirror(void);
+	void R_RenderDlight(dlight_t* light);
+	void R_StoreEfrags(efrag_t** ppefrag);
+
+	void AddLightBlend(float r, float g, float b, float a2);
+	void DrawGLPoly(glpoly_t* p);
+
+	void GL_DisableMultitexture(void);
+	void GL_EnableMultitexture(void);
+
+	void R_MirrorChain(msurface_t* s);
+	mspriteframe_t* R_GetSpriteFrame(entity_t* currententity);
+	void R_DrawSpriteModel(entity_t* e);
+
+// -------------------------------------
+
+	bool R_CullBox(vec3_t mins, vec3_t maxs);
+	void R_RotateForEntity(entity_t* e);
+
+	void GL_DrawAliasFrame(aliashdr_t* paliashdr, int posenum);
+
+	void GL_DrawAliasShadow(aliashdr_t* paliashdr, int posenum);
+
+
+
+
+	void R_SetupAliasFrame(int frame, aliashdr_t* paliashdr);
+
+
+
+
+	void R_DrawEntitiesOnList(void);
+
+
+
+	void R_PolyBlend(void);
+
+
+	int SignbitsForPlane(mplane_t* out);
+
+
+	void R_SetFrustum(void);
+
+
+	void MYgluPerspective(GLdouble fovy, GLdouble aspect,
+		GLdouble zNear, GLdouble zFar);
+
+
+
+	void R_SetupGL(void);
+
+	void R_Clear(void);
+
+private:
+
+	int			skytexturenum;
+
+	glpoly_t* lightmap_polys[MAX_LIGHTMAPS];
+	bool	lightmap_modified[MAX_LIGHTMAPS];
+	glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
+
+	int			allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
+
+	// the lightmap texture data needs to be kept in
+	// main memory so texsubimage can update properly
+	byte		lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
+
+	// For gl_texsort 0
+	msurface_t* skychain = NULL;
+	msurface_t* waterchain = NULL;
+
+	int		lightmap_bytes;		// 1, 2, or 4
+
+	CGLTexture* lightmap_textures;
+	unsigned		blocklights[18 * 18];
+	int			active_lightmaps;
 
 };
 
@@ -344,5 +497,3 @@ extern bool gl_mtexable;
 
 extern CGLRenderer* g_GLRenderer;	// Missi (2/21/2022)
 
-void GL_DisableMultitexture(void);
-void GL_EnableMultitexture(void);

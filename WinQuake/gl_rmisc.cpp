@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 R_InitTextures
 ==================
 */
-void	R_InitTextures (void)
+void	CGLRenderer::R_InitTextures (void)
 {
 	int		x,y, m;
 	byte	*dest;
@@ -72,7 +72,7 @@ byte	dottexture[8][8] =
 	{0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,0,0},
 };
-void R_InitParticleTexture (void)
+void CGLRenderer::R_InitParticleTexture (void)
 {
 	int		x,y;
 	byte	data[8][8][4];
@@ -81,7 +81,7 @@ void R_InitParticleTexture (void)
 	// particle texture
 	//
 	particletexture = (CGLTexture*)g_MemCache->Hunk_Alloc(sizeof(CGLTexture));
-	particletexture->texnum = texture_extension_number; //++;
+	particletexture->texnum = texture_extension_number++; //++;
     g_GLRenderer->GL_Bind(particletexture);
 
 	for (x=0 ; x<8 ; x++)
@@ -109,7 +109,7 @@ R_Envmap_f
 Grab six views for environment mapping tests
 ===============
 */
-void R_Envmap_f (void)
+void CGLRenderer::R_Envmap_f (void)
 {
 	byte*	buffer = (byte*)g_MemCache->Hunk_Alloc(256*256*4);	// Missi (3/8/2022)
 	char	name[1024];
@@ -174,14 +174,14 @@ void R_Envmap_f (void)
 R_Init
 ===============
 */
-void R_Init (void)
+void CGLRenderer::R_Init (void)
 {	
 	extern byte *hunk_base;
 	extern cvar_t gl_finish;
 
-	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);	
-	Cmd_AddCommand ("envmap", R_Envmap_f);	
-	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);	
+	//Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);	
+	//Cmd_AddCommand ("envmap", R_Envmap_f);
+	Cmd_AddCommand ("pointfile", CCoreRenderer::R_ReadPointFile_f);	
 
 	Cvar_RegisterVariable (&r_norefresh);
 	Cvar_RegisterVariable (&r_lightmap);
@@ -215,7 +215,7 @@ void R_Init (void)
 
 	Cvar_RegisterVariable (&gl_doubleeyes);
 
-	R_InitParticles ();
+	g_CoreRenderer->R_InitParticles ();
 	R_InitParticleTexture ();
 
 #ifdef GLTEST
@@ -234,7 +234,7 @@ R_TranslatePlayerSkin
 Translates a skin texture by the per-player color lookup
 ===============
 */
-void R_TranslatePlayerSkin (int playernum)
+void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 {
 	int		top, bottom;
 	byte	translate[256];
@@ -384,7 +384,7 @@ void R_TranslatePlayerSkin (int playernum)
 R_NewMap
 ===============
 */
-void R_NewMap (void)
+void CGLRenderer::R_NewMap (void)
 {
 	int		i;
 	
@@ -400,7 +400,7 @@ void R_NewMap (void)
 		cl.worldmodel->leafs[i].efrags = NULL;
 		 	
 	r_viewleaf = NULL;
-	R_ClearParticles ();
+	g_CoreRenderer->R_ClearParticles ();
 
 	GL_BuildLightmaps ();
 
@@ -430,7 +430,7 @@ R_TimeRefresh_f
 For program optimization
 ====================
 */
-void R_TimeRefresh_f (void)
+void CGLRenderer::R_TimeRefresh_f (void)
 {
 	int			i;
 	float		start, stop, time;

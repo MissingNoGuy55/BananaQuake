@@ -30,7 +30,7 @@ int	r_dlightframecount;
 R_AnimateLight
 ==================
 */
-void R_AnimateLight (void)
+void CGLRenderer::R_AnimateLight (void)
 {
 	int			i,j,k;
 	
@@ -60,7 +60,7 @@ DYNAMIC LIGHTS BLEND RENDERING
 =============================================================================
 */
 
-void AddLightBlend (float r, float g, float b, float a2)
+void CGLRenderer::AddLightBlend (float r, float g, float b, float a2)
 {
 	float	a;
 
@@ -73,7 +73,7 @@ void AddLightBlend (float r, float g, float b, float a2)
 	v_blend[2] = v_blend[2]*(1-a2) + b*a2;
 }
 
-void R_RenderDlight (dlight_t *light)
+void CGLRenderer::R_RenderDlight (dlight_t *light)
 {
 	int		i, j;
 	float	a;
@@ -111,7 +111,7 @@ void R_RenderDlight (dlight_t *light)
 R_RenderDlights
 =============
 */
-void R_RenderDlights (void)
+void CGLRenderer::R_RenderDlights (void)
 {
 	int		i;
 	dlight_t	*l;
@@ -156,7 +156,7 @@ DYNAMIC LIGHTS
 R_MarkLights
 =============
 */
-void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
+void CGLRenderer::R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 {
 	mplane_t	*splitplane;
 	float		dist;
@@ -202,7 +202,7 @@ void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 R_PushDlights
 =============
 */
-void R_PushDlights (void)
+void CGLRenderer::R_PushDlights (void)
 {
 	int		i;
 	dlight_t	*l;
@@ -234,7 +234,7 @@ LIGHT SAMPLING
 mplane_t		*lightplane;
 vec3_t			lightspot;
 
-int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
+int CGLRenderer::RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 {
 	int			r;
 	float		front, back, frac;
@@ -333,7 +333,7 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	return RecursiveLightPoint (node->children[!side], mid, end);
 }
 
-int R_LightPoint (vec3_t p)
+int CGLRenderer::R_LightPoint (vec3_t p)
 {
 	vec3_t		end;
 	int			r;

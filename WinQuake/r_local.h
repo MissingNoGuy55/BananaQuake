@@ -297,19 +297,4 @@ extern int		r_clipflags;
 extern int		r_dlightframecount;
 extern bool	r_fov_greater_than_90;
 
-void R_StoreEfrags (efrag_t **ppefrag);
-void R_TimeRefresh_f (void);
-void R_TimeGraph (void);
-void R_PrintAliasStats (void);
-void R_PrintTimes (void);
-void R_PrintDSpeeds (void);
-void R_AnimateLight (void);
-int R_LightPoint (vec3_t p);
-void R_SetupFrame (void);
-void R_cshift_f (void);
-void R_EmitEdge (mvertex_t *pv0, mvertex_t *pv1);
-void R_ClipEdge (mvertex_t *pv0, mvertex_t *pv1, clipplane_t *clip);
-void R_SplitEntityOnNode2 (mnode_t *node);
-void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
-
 #endif

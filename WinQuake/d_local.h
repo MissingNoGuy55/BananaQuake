@@ -40,6 +40,20 @@ typedef struct sspan_s
 	int				u, v, count;
 } sspan_t;
 
+typedef struct surfcache_s
+{
+	struct surfcache_s* next;
+	struct surfcache_s** owner;		// NULL is an empty chunk of memory
+	int					lightadj[MAXLIGHTMAPS]; // checked for strobe flush
+	int					dlight;
+	int					size;		// including header
+	unsigned			width;
+	unsigned			height;		// DEBUG only needed for debug
+	float				mipscale;
+	struct texture_s* texture;	// checked for animating textures
+	byte				data[4];	// width*height elements
+} surfcache_t;
+
 cvar_t	d_subdiv16;
 
 float	scale_for_mip;

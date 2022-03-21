@@ -74,9 +74,6 @@ texture_t	*r_notexture_mip;
 
 int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
-
-void R_MarkLeaves (void);
-
 cvar_t	r_norefresh = {"r_norefresh","0"};
 cvar_t	r_drawentities = {"r_drawentities","1"};
 cvar_t	r_drawviewmodel = {"r_drawviewmodel","1"};
@@ -103,7 +100,18 @@ cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","0"};
 cvar_t	gl_reporttjunctions = {"gl_reporttjunctions","0"};
 cvar_t	gl_doubleeyes = {"gl_doubleeys", "1"};
 
+CCoreRenderer* g_CoreRenderer;
+
 extern	cvar_t	gl_ztrick;
+
+int skytexturenum;
+
+CCoreRenderer::CCoreRenderer()
+{
+	solidskytexture = NULL;
+	alphaskytexture = NULL;
+	speedscale = 1.0f;
+}
 
 /*
 =================
@@ -112,7 +120,7 @@ R_CullBox
 Returns true if the box is completely outside the frustom
 =================
 */
-bool R_CullBox (vec3_t mins, vec3_t maxs)
+bool CGLRenderer::R_CullBox (vec3_t mins, vec3_t maxs)
 {
 	int		i;
 
@@ -123,7 +131,7 @@ bool R_CullBox (vec3_t mins, vec3_t maxs)
 }
 
 
-void R_RotateForEntity (entity_t *e)
+void CGLRenderer::R_RotateForEntity (entity_t *e)
 {
     glTranslatef (e->origin[0],  e->origin[1],  e->origin[2]);
 
@@ -145,7 +153,7 @@ void R_RotateForEntity (entity_t *e)
 R_GetSpriteFrame
 ================
 */
-mspriteframe_t *R_GetSpriteFrame (entity_t *currententity)
+mspriteframe_t * CGLRenderer::R_GetSpriteFrame (entity_t *currententity)
 {
 	msprite_t		*psprite;
 	mspritegroup_t	*pspritegroup;
@@ -198,7 +206,7 @@ R_DrawSpriteModel
 
 =================
 */
-void R_DrawSpriteModel (entity_t *e)
+void CGLRenderer::R_DrawSpriteModel (entity_t *e)
 {
 	vec3_t	point;
 	mspriteframe_t	*frame;
@@ -305,7 +313,7 @@ int	lastposenum;
 GL_DrawAliasFrame
 =============
 */
-void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
+void CGLRenderer::GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 {
 	float	s, t;
 	float 	l;
@@ -363,7 +371,7 @@ GL_DrawAliasShadow
 */
 extern	vec3_t			lightspot;
 
-void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
+void CGLRenderer::GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 {
 	float	s, t, l;
 	int		i, j;
@@ -431,7 +439,7 @@ R_SetupAliasFrame
 
 =================
 */
-void R_SetupAliasFrame (int frame, aliashdr_t *paliashdr)
+void CGLRenderer::R_SetupAliasFrame (int frame, aliashdr_t *paliashdr)
 {
 	int				pose, numposes;
 	float			interval;
@@ -462,7 +470,7 @@ R_DrawAliasModel
 
 =================
 */
-void R_DrawAliasModel (entity_t *e)
+void CGLRenderer::R_DrawAliasModel (entity_t *e)
 {
 	int			i, j;
 	int			lnum;
@@ -618,7 +626,7 @@ void R_DrawAliasModel (entity_t *e)
 R_DrawEntitiesOnList
 =============
 */
-void R_DrawEntitiesOnList (void)
+void CGLRenderer::R_DrawEntitiesOnList (void)
 {
 	int		i;
 
@@ -663,7 +671,7 @@ void R_DrawEntitiesOnList (void)
 R_DrawViewModel
 =============
 */
-void R_DrawViewModel (void)
+void CGLRenderer::R_DrawViewModel (void)
 {
 	float		ambient[4], diffuse[4];
 	int			j;
@@ -734,7 +742,7 @@ void R_DrawViewModel (void)
 R_PolyBlend
 ============
 */
-void R_PolyBlend (void)
+void CGLRenderer::R_PolyBlend (void)
 {
 	if (!gl_polyblend.value)
 		return;
@@ -768,8 +776,7 @@ void R_PolyBlend (void)
 	glEnable (GL_ALPHA_TEST);
 }
 
-
-int SignbitsForPlane (mplane_t *out)
+int CGLRenderer::SignbitsForPlane (mplane_t *out)
 {
 	int	bits, j;
 
@@ -785,7 +792,7 @@ int SignbitsForPlane (mplane_t *out)
 }
 
 
-void R_SetFrustum (void)
+void CGLRenderer::R_SetFrustum (void)
 {
 	int		i;
 
@@ -826,7 +833,7 @@ void R_SetFrustum (void)
 R_SetupFrame
 ===============
 */
-void R_SetupFrame (void)
+void CGLRenderer::R_SetupFrame (void)
 {
 	int				edgecount;
 	vrect_t			vrect;
@@ -860,7 +867,7 @@ void R_SetupFrame (void)
 }
 
 
-void MYgluPerspective( GLdouble fovy, GLdouble aspect,
+void CGLRenderer::MYgluPerspective( GLdouble fovy, GLdouble aspect,
 		     GLdouble zNear, GLdouble zFar )
 {
    GLdouble xmin, xmax, ymin, ymax;
@@ -880,7 +887,7 @@ void MYgluPerspective( GLdouble fovy, GLdouble aspect,
 R_SetupGL
 =============
 */
-void R_SetupGL (void)
+void CGLRenderer::R_SetupGL (void)
 {
 	float	screenaspect;
 	float	yfov;
@@ -965,7 +972,7 @@ R_RenderScene
 r_refdef must be set before the first call
 ================
 */
-void R_RenderScene (void)
+void CGLRenderer::R_RenderScene (void)
 {
 	R_SetupFrame ();
 
@@ -985,7 +992,7 @@ void R_RenderScene (void)
 
 	R_RenderDlights ();
 
-	R_DrawParticles ();
+	g_CoreRenderer->R_DrawParticles ();
 
 #ifdef GLTEST
 	Test_Draw ();
@@ -999,7 +1006,7 @@ void R_RenderScene (void)
 R_Clear
 =============
 */
-void R_Clear (void)
+void CGLRenderer::R_Clear (void)
 {
 	if (r_mirroralpha.value != 1.0)
 	{
@@ -1051,7 +1058,7 @@ void R_Clear (void)
 R_Mirror
 =============
 */
-void R_Mirror (void)
+void CGLRenderer::R_Mirror (void)
 {
 	float		d;
 	msurface_t	*s;
@@ -1120,7 +1127,7 @@ R_RenderView
 r_refdef must be set before the first call
 ================
 */
-void R_RenderView (void)
+void CGLRenderer::R_RenderView (void)
 {
 	double	time1, time2;
 	GLfloat colors[4] = {(GLfloat) 0.0, (GLfloat) 0.0, (GLfloat) 1, (GLfloat) 0.20};
@@ -1175,4 +1182,17 @@ void R_RenderView (void)
 		time2 = Sys_FloatTime ();
 		Con_Printf ("%3i ms  %4i wpoly %4i epoly\n", (int)((time2-time1)*1000), c_brush_polys, c_alias_polys); 
 	}
+}
+
+ERenderContext R_ResolveRenderer()
+{
+#ifndef GLQUAKE
+		g_SoftwareRenderer = new CSoftwareRenderer;
+		g_SoftwareRenderer->R_InitTextures();
+		return RENDER_SOFTWARE;
+#else
+		g_GLRenderer = new CGLRenderer;
+		g_GLRenderer->R_InitTextures();
+		return RENDER_OPENGL;
+#endif
 }

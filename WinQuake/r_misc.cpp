@@ -66,7 +66,7 @@ R_TimeRefresh_f
 For program optimization
 ====================
 */
-void R_TimeRefresh_f (void)
+void CCoreRenderer::R_TimeRefresh_f (void)
 {
 	int			i;
 	float		start, stop, time;
@@ -82,7 +82,10 @@ void R_TimeRefresh_f (void)
 
 		VID_LockBuffer ();
 
-		R_RenderView ();
+		if (!g_CoreRenderer)
+			return;
+
+		g_CoreRenderer->R_RenderView ();	// Missi: I am NOT making all these functions static (3/15/2022)
 
 		VID_UnlockBuffer ();
 
@@ -147,7 +150,7 @@ Performance monitoring tool
 */
 #define	MAX_TIMINGS		100
 extern float mouse_x, mouse_y;
-void R_TimeGraph (void)
+void CCoreRenderer::R_TimeGraph (void)
 {
 	static	int		timex;
 	int		a;
@@ -191,7 +194,7 @@ void R_TimeGraph (void)
 R_PrintTimes
 =============
 */
-void R_PrintTimes (void)
+void CCoreRenderer::R_PrintTimes (void)
 {
 	float	r_time2;
 	float		ms;
@@ -211,7 +214,7 @@ void R_PrintTimes (void)
 R_PrintDSpeeds
 =============
 */
-void R_PrintDSpeeds (void)
+void CCoreRenderer::R_PrintDSpeeds (void)
 {
 	float	ms, dp_time, r_time2, rw_time, db_time, se_time, de_time, dv_time;
 
@@ -236,7 +239,7 @@ void R_PrintDSpeeds (void)
 R_PrintAliasStats
 =============
 */
-void R_PrintAliasStats (void)
+void CCoreRenderer::R_PrintAliasStats (void)
 {
 	Con_Printf ("%3i polygon model drawn\n", r_amodels_drawn);
 }
@@ -364,7 +367,7 @@ void R_SetUpFrustumIndexes (void)
 R_SetupFrame
 ===============
 */
-void R_SetupFrame (void)
+void CCoreRenderer::R_SetupFrame (void)
 {
 	int				edgecount;
 	vrect_t			vrect;

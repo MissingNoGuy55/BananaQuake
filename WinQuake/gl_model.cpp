@@ -386,7 +386,7 @@ void Mod_LoadTextures (lump_t *l)
 		
 
 		if (!Q_strncmp(mt->name,"sky",3))	
-			R_InitSky (tx);
+			g_GLRenderer->R_InitSky (tx);
 		else
 		{
 			texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
@@ -816,7 +816,7 @@ void Mod_LoadFaces (lump_t *l)
 		{
 			out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
 #ifndef QUAKE2
-			GL_SubdivideSurface (out);	// cut up polygon for warps
+			g_GLRenderer->GL_SubdivideSurface (out);	// cut up polygon for warps
 #endif
 			continue;
 		}
@@ -829,7 +829,7 @@ void Mod_LoadFaces (lump_t *l)
 				out->extents[i] = 16384;
 				out->texturemins[i] = -8192;
 			}
-			GL_SubdivideSurface (out);	// cut up polygon for warps
+			g_GLRenderer->GL_SubdivideSurface (out);	// cut up polygon for warps
 			continue;
 		}
 

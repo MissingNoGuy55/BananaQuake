@@ -44,7 +44,7 @@ BRUSH MODELS
 // in memory representation
 //
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
-typedef struct
+typedef struct mvertex_s
 {
 	vec3_t		position;
 } mvertex_t;

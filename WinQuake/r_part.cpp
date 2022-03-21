@@ -43,7 +43,7 @@ vec3_t			r_pright, r_pup, r_ppn;
 R_InitParticles
 ===============
 */
-void R_InitParticles (void)
+void CCoreRenderer::R_InitParticles (void)
 {
 	int		i;
 
@@ -121,7 +121,7 @@ vec3_t	avelocity = {23, 7, 3};
 float	partstep = 0.01;
 float	timescale = 0.01;
 
-void R_EntityParticles (entity_t *ent)
+void CCoreRenderer::R_EntityParticles (entity_t *ent)
 {
 	int			count;
 	int			i;
@@ -180,7 +180,7 @@ avelocities[0][i] = (rand()&255) * 0.01;
 R_ClearParticles
 ===============
 */
-void R_ClearParticles (void)
+void CCoreRenderer::R_ClearParticles (void)
 {
 	int		i;
 	
@@ -193,7 +193,7 @@ void R_ClearParticles (void)
 }
 
 
-void R_ReadPointFile_f (void)
+void CCoreRenderer::R_ReadPointFile_f (void)
 {
 	FILE	*f;
 	vec3_t	org;
@@ -248,7 +248,7 @@ R_ParseParticleEffect
 Parse an effect out of the server message
 ===============
 */
-void R_ParseParticleEffect (void)
+void CCoreRenderer::R_ParseParticleEffect (void)
 {
 	vec3_t		org, dir;
 	int			i, count, msgcount, color;
@@ -274,7 +274,7 @@ R_ParticleExplosion
 
 ===============
 */
-void R_ParticleExplosion (vec3_t org)
+void CCoreRenderer::R_ParticleExplosion (vec3_t org)
 {
 	int			i, j;
 	particle_t	*p;
@@ -318,7 +318,7 @@ R_ParticleExplosion2
 
 ===============
 */
-void R_ParticleExplosion2 (vec3_t org, int colorStart, int colorLength)
+void CCoreRenderer::R_ParticleExplosion2 (vec3_t org, int colorStart, int colorLength)
 {
 	int			i, j;
 	particle_t	*p;
@@ -352,7 +352,7 @@ R_BlobExplosion
 
 ===============
 */
-void R_BlobExplosion (vec3_t org)
+void CCoreRenderer::R_BlobExplosion (vec3_t org)
 {
 	int			i, j;
 	particle_t	*p;
@@ -397,7 +397,7 @@ R_RunParticleEffect
 
 ===============
 */
-void R_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count)
+void CCoreRenderer::R_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count)
 {
 	int			i, j;
 	particle_t	*p;
@@ -456,7 +456,7 @@ R_LavaSplash
 
 ===============
 */
-void R_LavaSplash (vec3_t org)
+void CCoreRenderer::R_LavaSplash (vec3_t org)
 {
 	int			i, j, k;
 	particle_t	*p;
@@ -498,7 +498,7 @@ R_TeleportSplash
 
 ===============
 */
-void R_TeleportSplash (vec3_t org)
+void CCoreRenderer::R_TeleportSplash (vec3_t org)
 {
 	int			i, j, k;
 	particle_t	*p;
@@ -534,7 +534,7 @@ void R_TeleportSplash (vec3_t org)
 			}
 }
 
-void R_RocketTrail (vec3_t start, vec3_t end, int type)
+void CCoreRenderer::R_RocketTrail (vec3_t start, vec3_t end, int type)
 {
 	vec3_t		vec;
 	float		len;
@@ -646,7 +646,7 @@ R_DrawParticles
 */
 extern	cvar_t	sv_gravity;
 
-void R_DrawParticles (void)
+void CCoreRenderer::R_DrawParticles (void)
 {
 	particle_t		*p, *kill;
 	float			grav;

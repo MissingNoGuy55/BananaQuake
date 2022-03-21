@@ -319,7 +319,7 @@ inline void CMemBlock<T, I>::Purge()
 {
 	if (m_pMemory)
 	{
-		free((void*)m_pMemory);
+		free(m_pMemory);
 		m_pMemory = 0;
 	}
 	size = 0;

@@ -100,6 +100,13 @@ typedef struct
 	int			ambientlight;
 } refdef_t;
 
+enum ERenderContext
+{
+	RENDER_INVALID = -1,
+	RENDER_CORE,
+	RENDER_SOFTWARE,
+	RENDER_OPENGL
+};
 
 //
 // refresh
@@ -112,37 +119,91 @@ extern vec3_t	r_origin, vpn, vright, vup;
 
 extern	struct texture_s	*r_notexture_mip;
 
+class CCoreRenderer
+{
+public:
 
-void R_Init (void);
-void R_InitTextures (void);
-void R_InitEfrags (void);
-void R_RenderView (void);		// must set r_refdef first
-void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect);
-								// called whenever r_refdef or vid change
-void R_InitSky (struct texture_s *mt);	// called at level load
+	CCoreRenderer();
 
-void R_AddEfrags (entity_t *ent);
-void R_RemoveEfrags (entity_t *ent);
+	void R_Init(void);
+	void R_InitTextures(void);
+	void R_InitTurb(void);
+	// void R_InitEfrags(void);
+	void R_DrawEntitiesOnList(void);
+	void R_DrawViewModel(void);
+	void R_DrawBEntitiesOnList(void);
+	void R_EdgeDrawing(void);
+	void R_RenderView_(void);
+	void R_RenderView(void);		// must set r_refdef first
+	void R_ViewChanged(vrect_t* pvrect, int lineadj, float aspect);
+	void R_MarkLeaves(void);
+	// called whenever r_refdef or vid change
+	// void R_InitSky(struct texture_s* mt);	// called at level load
 
-void R_NewMap (void);
+	void R_AddEfrags(entity_t* ent);
+	void R_RemoveEfrags(entity_t* ent);
+
+	void R_NewMap(void);
 
 
-void R_ParseParticleEffect (void);
-void R_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count);
-void R_RocketTrail (vec3_t start, vec3_t end, int type);
+	void R_ParseParticleEffect(void);
+	void R_RunParticleEffect(vec3_t org, vec3_t dir, int color, int count);
+	void R_RocketTrail(vec3_t start, vec3_t end, int type);
 
 #ifdef QUAKE2
-void R_DarkFieldParticles (entity_t *ent);
+	void R_DarkFieldParticles(entity_t* ent);
 #endif
-void R_EntityParticles (entity_t *ent);
-void R_BlobExplosion (vec3_t org);
-void R_ParticleExplosion (vec3_t org);
-void R_ParticleExplosion2 (vec3_t org, int colorStart, int colorLength);
-void R_LavaSplash (vec3_t org);
-void R_TeleportSplash (vec3_t org);
+	void R_EntityParticles(entity_t* ent);
+	void R_BlobExplosion(vec3_t org);
+	void R_ParticleExplosion(vec3_t org);
+	void R_ParticleExplosion2(vec3_t org, int colorStart, int colorLength);
+	void R_LavaSplash(vec3_t org);
+	void R_TeleportSplash(vec3_t org);
 
-void R_PushDlights (void);
+	// void R_PushDlights(void);
+	void R_SetVrect(vrect_t* pvrect, vrect_t* pvrectin, int lineadj);
 
+	static void R_ReadPointFile_f(void);
+	void R_DrawParticles(void);
+	void R_InitParticles(void);
+	void R_ClearParticles(void);
+	void R_PushDlights(void);
+
+	CGLTexture* solidskytexture;
+	CGLTexture* alphaskytexture;
+	float	speedscale;		// for top sky and bottom sky
+
+	void R_SplitEntityOnNode(mnode_s* node);
+
+	void R_StoreEfrags(efrag_t** ppefrag);
+
+#ifndef GLQUAKE
+	static void R_TimeRefresh_f(void);
+	void R_TimeGraph(void);
+	void R_PrintAliasStats(void);
+	void R_PrintTimes(void);
+	void R_PrintDSpeeds(void);
+	void R_AnimateLight(void);
+	int R_LightPoint(vec3_t p);
+	void R_SetupFrame(void);
+	void R_cshift_f(void);
+	struct msurface_s* warpface;
+
+	void R_BuildLightMap(void);
+	void R_EmitEdge(struct mvertex_s* pv0, mvertex_s* pv1);
+	void R_ClipEdge(struct mvertex_s* pv0, mvertex_s* pv1, struct clipplane_t* clip);
+	void R_SplitEntityOnNode2(struct mnode_s* node);
+	void R_MarkLights(struct dlight_s* light, int bit, struct mnode_s* node);
+	void R_SplitEntityOnNode(struct mnode_s* node);
+	int R_BmodelCheckBBox(struct model_s* clmodel, float* minmaxs);
+#endif
+
+	unsigned		blocklights[18 * 18];
+
+};
+
+extern cvar_t gl_subdivide_size;
+extern CCoreRenderer* g_CoreRenderer;
 
 //
 // surface cache related
@@ -154,5 +215,7 @@ int	D_SurfaceCacheForRes (int width, int height);
 void D_FlushCaches (void);
 void D_DeleteSurfaceCache (void);
 void D_InitCaches (void *buffer, int size);
-void R_SetVrect (vrect_t *pvrect, vrect_t *pvrectin, int lineadj);
+
+extern ERenderContext R_ResolveRenderer();		// Missi: nasty! gross! horrid! i hate myself! (3/15/2022)
+
 

@@ -503,9 +503,14 @@ void Con_DrawInput (void)
 // draw it
 	y = con_vislines-16;
 
-	for (i=0 ; i<con_linewidth ; i++)
-		g_GLRenderer->Draw_Character ( (i+1)<<3, con_vislines - 16, text[i]);
-
+	for (i = 0; i < con_linewidth; i++)
+	{
+#ifndef GLQUAKE
+		g_SoftwareRenderer->Draw_Character((i + 1) << 3, con_vislines - 16, text[i]);
+#else
+		g_GLRenderer->Draw_Character((i + 1) << 3, con_vislines - 16, text[i]);
+#endif
+	}
 // remove cursor
 	key_lines[edit_line][key_linepos] = 0;
 }
@@ -542,9 +547,14 @@ void Con_DrawNotify (void)
 		clearnotify = 0;
 		scr_copytop = 1;
 
-		for (x = 0 ; x < con_linewidth ; x++)
-			g_GLRenderer->Draw_Character ( (x+1)<<3, v, text[x]);
-
+		for (x = 0; x < con_linewidth; x++)
+		{
+#ifndef GLQUAKE
+			g_SoftwareRenderer->Draw_Character((x + 1) << 3, v, text[x]);
+#else
+			g_GLRenderer->Draw_Character((x + 1) << 3, v, text[x]);
+#endif
+		}
 		v += 8;
 	}
 
@@ -555,14 +565,25 @@ void Con_DrawNotify (void)
 		scr_copytop = 1;
 	
 		x = 0;
-		
-		g_GLRenderer->Draw_String (8, v, "say:");
+#ifndef GLQUAKE
+		g_SoftwareRenderer->Draw_String (8, v, "say:");
+#else
+		g_GLRenderer->Draw_String(8, v, "say:");
+#endif
 		while(chat_buffer[x])
 		{
-			g_GLRenderer->Draw_Character ( (x+5)<<3, v, chat_buffer[x]);
+#ifndef GLQUAKE
+			g_SoftwareRenderer->Draw_Character ( (x+5)<<3, v, chat_buffer[x]);
+#else
+			g_GLRenderer->Draw_Character((x + 5) << 3, v, chat_buffer[x]);
+#endif
 			x++;
 		}
-		g_GLRenderer->Draw_Character ( (x+5)<<3, v, 10+((int)(realtime*con_cursorspeed)&1));
+#ifndef GLQUAKE
+		g_SoftwareRenderer->Draw_Character ( (x+5)<<3, v, 10+((int)(realtime*con_cursorspeed)&1));
+#else
+		g_GLRenderer->Draw_Character((x + 5) << 3, v, 10 + ((int)(realtime * con_cursorspeed) & 1));
+#endif
 		v += 8;
 	}
 	
@@ -589,7 +610,12 @@ void Con_DrawConsole (int lines, bool drawinput)
 		return;
 
 // draw the background
-	g_GLRenderer->Draw_ConsoleBackground (lines);
+
+#ifndef GLQUAKE
+	g_SoftwareRenderer->Draw_ConsoleBackground (lines);
+#else
+	g_GLRenderer->Draw_ConsoleBackground(lines);
+#endif
 
 // draw the text
 	con_vislines = lines;
@@ -604,8 +630,14 @@ void Con_DrawConsole (int lines, bool drawinput)
 			j = 0;
 		text = con_text + (j % con_totallines)*con_linewidth;
 
-		for (x=0 ; x<con_linewidth ; x++)
-			g_GLRenderer->Draw_Character ( (x+1)<<3, y, text[x]);
+		for (x = 0; x < con_linewidth; x++)
+		{
+#ifndef GLQUAKE
+			g_SoftwareRenderer->Draw_Character((x + 1) << 3, y, text[x]);
+#else
+			g_GLRenderer->Draw_Character((x + 1) << 3, y, text[x]);
+#endif
+		}
 	}
 
 // draw the input prompt, user text, and cursor if desired

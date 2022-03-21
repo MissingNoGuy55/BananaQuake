@@ -30,7 +30,7 @@ int	r_dlightframecount;
 R_AnimateLight
 ==================
 */
-void R_AnimateLight (void)
+void CCoreRenderer::R_AnimateLight (void)
 {
 	int			i,j,k;
 	
@@ -112,7 +112,7 @@ void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 R_PushDlights
 =============
 */
-void R_PushDlights (void)
+void CCoreRenderer::R_PushDlights (void)
 {
 	int		i;
 	dlight_t	*l;
@@ -235,7 +235,7 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	return RecursiveLightPoint (node->children[!side], mid, end);
 }
 
-int R_LightPoint (vec3_t p)
+int CCoreRenderer::R_LightPoint (vec3_t p)
 {
 	vec3_t		end;
 	int			r;

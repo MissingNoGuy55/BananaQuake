@@ -1015,8 +1015,11 @@ void V_RenderView (void)
 			V_CalcRefdef ();
 	}
 
-	R_PushDlights ();
-
+#ifndef GLQUAKE
+	g_CoreRenderer->R_PushDlights ();
+#else
+	g_GLRenderer->R_PushDlights();
+#endif
 	if (lcd_x.value)
 	{
 		//
@@ -1030,16 +1033,30 @@ void V_RenderView (void)
 		r_refdef.viewangles[YAW] -= lcd_yaw.value;
 		for (i=0 ; i<3 ; i++)
 			r_refdef.vieworg[i] -= right[i]*lcd_x.value;
-		R_RenderView ();
+
+#ifndef GLQUAKE
+		g_CoreRenderer->R_RenderView();
+#else
+		g_GLRenderer->R_RenderView();
+#endif
 
 		vid.buffer += vid.rowbytes>>1;
 
-		R_PushDlights ();
+#ifndef GLQUAKE
+		g_CoreRenderer->R_PushDlights();
+#else
+		g_GLRenderer->R_PushDlights();
+#endif
 
 		r_refdef.viewangles[YAW] += lcd_yaw.value*2;
 		for (i=0 ; i<3 ; i++)
 			r_refdef.vieworg[i] += 2*right[i]*lcd_x.value;
-		R_RenderView ();
+
+#ifndef GLQUAKE
+		g_CoreRenderer->R_RenderView();
+#else
+		g_GLRenderer->R_RenderView();
+#endif
 
 		vid.buffer -= vid.rowbytes>>1;
 
@@ -1050,7 +1067,11 @@ void V_RenderView (void)
 	}
 	else
 	{
-		R_RenderView ();
+#ifndef GLQUAKE
+		g_CoreRenderer->R_RenderView();
+#else
+		g_GLRenderer->R_RenderView();
+#endif
 	}
 
 #ifndef GLQUAKE

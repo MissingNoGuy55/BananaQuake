@@ -69,7 +69,7 @@ typedef struct
 #define	SIGNONS		4			// signon messages to receive before connected
 
 #define	MAX_DLIGHTS		32
-typedef struct
+typedef struct dlight_s
 {
 	vec3_t	origin;
 	float	radius;

@@ -1433,6 +1433,8 @@ del $(OutDir)%(Filename).spp </Command>
   <ItemGroup>
     <ClInclude Include="anorms.h" />
     <ClInclude Include="anorm_dots.h" />
+    <ClInclude Include="asm_draw.h" />
+    <ClInclude Include="asm_i386.h" />
     <ClInclude Include="bspfile.h" />
     <ClInclude Include="cdaudio.h" />
     <ClInclude Include="client.h" />

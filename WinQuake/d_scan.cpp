@@ -384,7 +384,7 @@ void D_DrawSpans8 (espan_t *pspan)
 #endif
 
 
-#if	!id386
+//#if	!id386
 
 /*
 =============
@@ -444,5 +444,5 @@ void D_DrawZSpans (espan_t *pspan)
 	} while ((pspan = pspan->pnext) != NULL);
 }
 
-#endif
+//#endif
 

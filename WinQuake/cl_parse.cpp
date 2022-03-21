@@ -308,8 +308,12 @@ void CL_ParseServerInfo (void)
 // local state
 	cl_entities[0].model = cl.worldmodel = cl.model_precache[1];
 	
-	R_NewMap ();
-
+#ifndef GLQUAKE
+	g_CoreRenderer->R_NewMap();
+#else
+	g_GLRenderer->R_NewMap();
+#endif
+	
 	g_MemCache->Hunk_Check ();		// make sure nothing is hurt
 	
 	noclip_anglehack = false;		// noclip is turned off at start	
@@ -393,7 +397,7 @@ if (bits&(1<<i))
 			forcelink = true;	// hack to make null model players work
 #ifdef GLQUAKE
 		if (num > 0 && num <= cl.maxclients)
-			R_TranslatePlayerSkin (num - 1);
+			g_GLRenderer->R_TranslatePlayerSkin (num - 1);
 #endif
 	}
 	
@@ -423,7 +427,7 @@ if (bits&(1<<i))
 	if (skin != ent->skinnum) {
 		ent->skinnum = skin;
 		if (num > 0 && num <= cl.maxclients)
-			R_TranslatePlayerSkin (num - 1);
+			g_GLRenderer->R_TranslatePlayerSkin (num - 1);
 	}
 
 #else
@@ -641,7 +645,7 @@ void CL_NewTranslation (int slot)
 	top = cl.scores[slot].colors & 0xf0;
 	bottom = (cl.scores[slot].colors &15)<<4;
 #ifdef GLQUAKE
-	R_TranslatePlayerSkin (slot);
+	g_GLRenderer->R_TranslatePlayerSkin (slot);
 #endif
 
 	for (i=0 ; i<VID_GRADES ; i++, dest += 256, source+=256)
@@ -686,7 +690,11 @@ void CL_ParseStatic (void)
 
 	VectorCopy (ent->baseline.origin, ent->origin);
 	VectorCopy (ent->baseline.angles, ent->angles);	
-	R_AddEfrags (ent);
+#ifndef GLQUAKE
+	g_CoreRenderer->R_AddEfrags (ent);
+#else
+	g_GLRenderer->R_AddEfrags(ent);
+#endif
 }
 
 /*
@@ -862,7 +870,7 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_particle:
-			R_ParseParticleEffect ();
+			g_CoreRenderer->R_ParseParticleEffect ();
 			break;
 
 		case svc_spawnbaseline:

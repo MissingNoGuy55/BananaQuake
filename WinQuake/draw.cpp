@@ -51,7 +51,7 @@ cachepic_t	menu_cachepics[MAX_CACHED_PICS];
 int			menu_numcachepics;
 
 
-CQuakePic	*Draw_PicFromWad (char *name)
+CQuakePic* CSoftwareRenderer::Draw_PicFromWad (char *name)
 {
 	return static_cast<CQuakePic*>(W_GetLumpName (name));
 }
@@ -61,7 +61,7 @@ CQuakePic	*Draw_PicFromWad (char *name)
 Draw_CachePic
 ================
 */
-CQuakePic	*Draw_CachePic (char *path)
+CQuakePic* CSoftwareRenderer::Draw_CachePic (char *path)
 {
 	cachepic_t	*pic;
 	int			i;
@@ -79,7 +79,7 @@ CQuakePic	*Draw_CachePic (char *path)
 		strcpy (pic->name, path);
 	}
 
-	dat = static_cast<CQuakePic*>(Cache_Check (&pic->cache));
+	dat = static_cast<CQuakePic*>(g_MemCache->Cache_Check (&pic->cache));
 
 	if (dat)
 		return dat;
@@ -87,7 +87,7 @@ CQuakePic	*Draw_CachePic (char *path)
 //
 // load the pic from disk
 //
-	COM_LoadCacheFile (path, &pic->cache);
+	COM_LoadCacheFile (path, (cache_user_s*)&pic->cache);
 	
 	dat = (CQuakePic *)pic->cache.data;
 	if (!dat)
@@ -107,7 +107,7 @@ CQuakePic	*Draw_CachePic (char *path)
 Draw_Init
 ===============
 */
-void Draw_Init (void)
+void CSoftwareRenderer::Draw_Init (void)
 {
 	int		i;
 
@@ -132,7 +132,7 @@ It can be clipped to the top of the screen to allow the console to be
 smoothly scrolled off.
 ================
 */
-void Draw_Character (int x, int y, int num)
+void CSoftwareRenderer::Draw_Character (int x, int y, int num)
 {
 	byte			*dest;
 	byte			*source;
@@ -228,7 +228,7 @@ void Draw_Character (int x, int y, int num)
 Draw_String
 ================
 */
-void Draw_String (int x, int y, char *str)
+void CSoftwareRenderer::Draw_String (int x, int y, char *str)
 {
 	while (*str)
 	{
@@ -247,7 +247,7 @@ This is for debugging lockups by drawing different chars in different parts
 of the code.
 ================
 */
-void Draw_DebugChar (char num)
+void CSoftwareRenderer::Draw_DebugChar (char num)
 {
 	byte			*dest;
 	byte			*source;
@@ -286,7 +286,7 @@ void Draw_DebugChar (char num)
 Draw_Pic
 =============
 */
-void Draw_Pic (int x, int y, CQuakePic *pic)
+void CSoftwareRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 {
 	byte			*dest, *source;
 	unsigned short	*pusdest;
@@ -337,7 +337,7 @@ void Draw_Pic (int x, int y, CQuakePic *pic)
 Draw_TransPic
 =============
 */
-void Draw_TransPic (int x, int y, CQuakePic *pic)
+void CSoftwareRenderer::Draw_TransPic (int x, int y, CQuakePic *pic)
 {
 	byte	*dest, *source, tbyte;
 	unsigned short	*pusdest;
@@ -424,7 +424,7 @@ void Draw_TransPic (int x, int y, CQuakePic *pic)
 Draw_TransPicTranslate
 =============
 */
-void Draw_TransPicTranslate (int x, int y, CQuakePic *pic, byte *translation)
+void CSoftwareRenderer::Draw_TransPicTranslate (int x, int y, CQuakePic *pic, byte *translation)
 {
 	byte	*dest, *source, tbyte;
 	unsigned short	*pusdest;
@@ -506,7 +506,7 @@ void Draw_TransPicTranslate (int x, int y, CQuakePic *pic, byte *translation)
 }
 
 
-void Draw_CharToConback (int num, byte *dest)
+void CSoftwareRenderer::Draw_CharToConback (int num, byte *dest)
 {
 	int		row, col;
 	byte	*source;
@@ -536,7 +536,7 @@ Draw_ConsoleBackground
 
 ================
 */
-void Draw_ConsoleBackground (int lines)
+void CSoftwareRenderer::Draw_ConsoleBackground (int lines)
 {
 	int				x, y, v;
 	byte			*src, *dest;
@@ -627,7 +627,7 @@ void Draw_ConsoleBackground (int lines)
 R_DrawRect8
 ==============
 */
-void R_DrawRect8 (vrect_t *prect, int rowbytes, byte *psrc,
+void CSoftwareRenderer::R_DrawRect8 (vrect_t *prect, int rowbytes, byte *psrc,
 	int transparent)
 {
 	byte	t;
@@ -676,7 +676,7 @@ void R_DrawRect8 (vrect_t *prect, int rowbytes, byte *psrc,
 R_DrawRect16
 ==============
 */
-void R_DrawRect16 (vrect_t *prect, int rowbytes, byte *psrc,
+void CSoftwareRenderer::R_DrawRect16 (vrect_t *prect, int rowbytes, byte *psrc,
 	int transparent)
 {
 	byte			t;
@@ -737,7 +737,7 @@ This repeats a 64*64 tile graphic to fill the screen around a sized down
 refresh window.
 =============
 */
-void Draw_TileClear (int x, int y, int w, int h)
+void CSoftwareRenderer::Draw_TileClear (int x, int y, int w, int h)
 {
 	int				width, height, tileoffsetx, tileoffsety;
 	byte			*psrc;
@@ -809,7 +809,7 @@ Draw_Fill
 Fills a box of pixels with a single color
 =============
 */
-void Draw_Fill (int x, int y, int w, int h, int c)
+void CSoftwareRenderer::Draw_Fill (int x, int y, int w, int h, int c)
 {
 	byte			*dest;
 	unsigned short	*pusdest;
@@ -841,13 +841,13 @@ Draw_FadeScreen
 
 ================
 */
-void Draw_FadeScreen (void)
+void CSoftwareRenderer::Draw_FadeScreen (void)
 {
 	int			x,y;
 	byte		*pbuf;
 
 	VID_UnlockBuffer ();
-	S_ExtraUpdate ();
+	g_SoundSystem->S_ExtraUpdate ();
 	VID_LockBuffer ();
 
 	for (y=0 ; y<vid.height ; y++)
@@ -865,7 +865,7 @@ void Draw_FadeScreen (void)
 	}
 
 	VID_UnlockBuffer ();
-	S_ExtraUpdate ();
+	g_SoundSystem->S_ExtraUpdate ();
 	VID_LockBuffer ();
 }
 

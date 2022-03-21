@@ -32,7 +32,7 @@ msurface_t	*warpface;
 
 extern cvar_t gl_subdivide_size;
 
-void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs)
+void CGLRenderer::BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs)
 {
 	int		i, j;
 	float	*v;
@@ -50,7 +50,7 @@ void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs)
 		}
 }
 
-void SubdividePolygon (int numverts, float *verts)
+void CGLRenderer::SubdividePolygon (int numverts, float *verts)
 {
 	int		i, j, k;
 	vec3_t	mins, maxs;
@@ -142,7 +142,7 @@ boundaries so that turbulent and sky warps
 can be done reasonably.
 ================
 */
-void GL_SubdivideSurface (msurface_t *fa)
+void CGLRenderer::GL_SubdivideSurface (msurface_t *fa)
 {
 	vec3_t		verts[64];
 	int			numverts;
@@ -190,7 +190,7 @@ EmitWaterPolys
 Does a water warp on the pre-fragmented glpoly_t chain
 =============
 */
-void EmitWaterPolys (msurface_t *fa)
+void CGLRenderer::EmitWaterPolys (msurface_t *fa)
 {
 	glpoly_t	*p;
 	float		*v;
@@ -227,7 +227,7 @@ void EmitWaterPolys (msurface_t *fa)
 EmitSkyPolys
 =============
 */
-void EmitSkyPolys (msurface_t *fa)
+void CGLRenderer::EmitSkyPolys (msurface_t *fa)
 {
 	glpoly_t	*p;
 	float		*v;
@@ -270,7 +270,7 @@ This will be called for brushmodels, the world
 will have them chained together.
 ===============
 */
-void EmitBothSkyLayers (msurface_t *fa)
+void CGLRenderer::EmitBothSkyLayers (msurface_t *fa)
 {
 	int			i;
 	int			lindex;
@@ -300,7 +300,7 @@ void EmitBothSkyLayers (msurface_t *fa)
 R_DrawSkyChain
 =================
 */
-void R_DrawSkyChain (msurface_t *s)
+void CGLRenderer::R_DrawSkyChain (msurface_t *s)
 {
 	msurface_t	*fa;
 
@@ -1030,7 +1030,7 @@ R_InitSky
 A sky texture is 256*128, with the right side being a masked overlay
 ==============
 */
-void R_InitSky (texture_t *mt)
+void CGLRenderer::R_InitSky (texture_t *mt)
 {
 	int			i, j, p;
 	byte		*src;
@@ -1062,9 +1062,8 @@ void R_InitSky (texture_t *mt)
 	((byte *)&transpix)[2] = b/(128*128);
 	((byte *)&transpix)[3] = 0;
 
-
 	if (!solidskytexture)
-		solidskytexture = &g_GLRenderer->gltexturevector[texture_extension_number++]; // ++];
+		solidskytexture = &g_GLRenderer->gltextures[texture_extension_number]; // ++];
 	g_GLRenderer->GL_Bind (solidskytexture );
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1082,7 +1081,7 @@ void R_InitSky (texture_t *mt)
 		}
 
 	if (!alphaskytexture)
-		alphaskytexture = &g_GLRenderer->gltexturevector[texture_extension_number++]; //++];
+		alphaskytexture = &g_GLRenderer->gltextures[texture_extension_number]; //++];
 	g_GLRenderer->GL_Bind(alphaskytexture);
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

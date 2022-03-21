@@ -88,7 +88,7 @@ void R_RemoveEfrags (entity_t *ent)
 R_SplitEntityOnNode
 ===================
 */
-void R_SplitEntityOnNode (mnode_t *node)
+void CCoreRenderer::R_SplitEntityOnNode (mnode_t *node)
 {
 	efrag_t		*ef;
 	mplane_t	*splitplane;
@@ -236,7 +236,7 @@ R_StoreEfrags
 // FIXME: a lot of this goes away with edge-based
 ================
 */
-void R_StoreEfrags (efrag_t **ppefrag)
+void CCoreRenderer::R_StoreEfrags (efrag_t **ppefrag)
 {
 	entity_t	*pent;
 	model_t		*clmodel;
