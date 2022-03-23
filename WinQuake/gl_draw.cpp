@@ -1323,31 +1323,28 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 			}
 		}
 	}
-	else {
-		glt = &gltextures[numgltextures];
-		numgltextures++;
-	}
 
-	if (glt)
-	{
-		char id[64];
-		strcpy(glt->identifier, identifier);
-		glt->texnum = texture_extension_number;
-		glt->width = width;
-		glt->height = height;
-		glt->mipmap = mipmap;
-		glt->pic = (CQuakePic*)data;
-		glt->pic->width = width;
-		glt->pic->height = height;
-		glt->glpic = (COpenGLPic*)data;
+// Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
+	glt = &gltextures[numgltextures];
+	numgltextures++;
 
-		g_GLRenderer->GL_Bind(glt);
+	char id[64];
+	strcpy(glt->identifier, identifier);
+	glt->texnum = texture_extension_number;
+	glt->width = width;
+	glt->height = height;
+	glt->mipmap = mipmap;
+	glt->pic = (CQuakePic*)data;
+	glt->pic->width = width;
+	glt->pic->height = height;
+	glt->glpic = (COpenGLPic*)data;
 
-		GL_Upload8(data, width, height, mipmap, alpha);
+	g_GLRenderer->GL_Bind(glt);
 
-		texture_extension_number++;
-		numgltextures++;
-	}
+	GL_Upload8(data, width, height, mipmap, alpha);
+
+	texture_extension_number++;
+	numgltextures++;
 
 	return glt;
 
