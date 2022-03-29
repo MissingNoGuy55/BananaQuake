@@ -138,7 +138,7 @@ public:
 	static sfx_t* known_sfx;		// hunk allocated [MAX_SFX]
 	static int			num_sfx;
 
-	CQVector<sfx_t*> ambient_sfx;
+	sfx_t* ambient_sfx[NUM_AMBIENTS];
 
 	int 		desired_speed = 11025;
 	int 		desired_bits = 16;
