@@ -1663,9 +1663,9 @@ pack_t *COM_LoadPackFile (char *packfile)
 	Sys_FileRead (packhandle, (void *)info, header.dirlen);
 
 // crc the directory to check for modifications
-	CRC_Init (&crc);
+	g_CRCManager->CRC_Init (&crc);
 	for (i=0 ; i<header.dirlen ; i++)
-		CRC_ProcessByte (&crc, ((byte *)info)[i]);
+		g_CRCManager->CRC_ProcessByte (&crc, ((byte *)info)[i]);
 	if (crc != PAK0_CRC)
 		com_modified = true;
 
