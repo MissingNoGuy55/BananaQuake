@@ -141,13 +141,13 @@ inline CQVector<T, S>& CQVector<T, S>::operator=(const CQVector<T, S>& other)
 template<class T, class S>
 void CQVector<T, S>::Construct(T* element)
 {
-	::new (element) T;
+	new (element) T;
 }
 
 template<class T, class S>
 void CQVector<T, S>::CopyConstruct(T* element, const T& src)
 {
-	::new (element) T(src);
+	new (element) T(src);
 }
 
 template<class T, class S>
