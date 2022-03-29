@@ -46,7 +46,7 @@
     <ProjectName>winquake</ProjectName>
     <SccProjectName />
     <SccLocalPath />
-    <ProjectGuid>{FD2AA67B-F09B-4B49-8DE2-C18BA1B1FE4B}</ProjectGuid>
+    <ProjectGuid>{A133C4F6-21BE-4C5A-8FF8-DA5AD4AAE0F4}</ProjectGuid>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
