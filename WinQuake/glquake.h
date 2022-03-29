@@ -52,7 +52,7 @@ extern	DELTEXFUNCPTR delTexFunc;
 extern	TEXSUBIMAGEPTR TexSubImage2DFunc;
 #endif
 
-extern	int texture_extension_number;
+//extern	int texture_extension_number;
 extern	int		texture_mode;
 
 extern	float	gldepthmin, gldepthmax;
@@ -193,9 +193,9 @@ public:
 	void Draw_Character(int x, int y, int num);
 	void Draw_String(int x, int y, char* str);
 	void Draw_DebugChar(char num);
-	void Draw_AlphaPic(int x, int y, CQuakePic* pic, float alpha);
-	void Draw_Pic(int x, int y, CQuakePic* pic);
-	void Draw_TransPic(int x, int y, CQuakePic* pic);
+	void Draw_AlphaPic(int x, int y, CQuakePic* pic, float alpha, const char* identifier = "");
+	void Draw_Pic(int x, int y, CQuakePic* pic, const char* identifier = "");
+	void Draw_TransPic(int x, int y, CQuakePic* pic, const char* identifier = "");
 	void Draw_TransPicTranslate(int x, int y, CQuakePic* pic, byte* translation);
 	void Draw_ConsoleBackground(int lines);
 	void Draw_TileClear(int x, int y, int w, int h);
@@ -206,11 +206,11 @@ public:
 
 	void GL_Set2D(void);
 
-	int GL_FindTexture(char* identifier);
+	CGLTexture* GL_FindTexture(const char* identifier, byte* data = 0);
 	void GL_ResampleTexture(unsigned* in, int inwidth, int inheight, unsigned* out, int outwidth, int outheight);
 	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
-	CGLTexture* GL_LoadPicTexture(CQuakePic* pic);
+	CGLTexture* GL_LoadPicTexture(CQuakePic* pic, const char* identifier = NULL);
 	CGLTexture* GL_LoadTexture(const char* identifier, int width, int height, byte* data, bool mipmap, bool alpha);
 
 	void BuildSurfaceDisplayList(msurface_t* fa);
@@ -271,7 +271,7 @@ public:
 
 	static CGLTexture gltextures[MAX_GLTEXTURES];
 
-	static CQVector<CGLTexture> gltexturevector;
+	static CQVector<CGLTexture*> gltexturevector;
 
 	static void PrintTexVec();
 
@@ -367,6 +367,7 @@ public:
 
 	COpenGLPic();
 	COpenGLPic(CGLTexture* mem);
+	const COpenGLPic(const COpenGLPic& src);
 
 	//CGLTexture* gltexture;
 	float	sl, tl, sh, th;
@@ -389,10 +390,10 @@ public:
 	unsigned int	width, height;
 	bool	mipmap;
 
-	float	sl;
-	float	tl;
-	float	sh;
-	float	th;
+	// Missi: hash stuff (3/27/2022)
+
+	unsigned lhcsum;
+	//int lhcsumtable[256];
 
 };
 

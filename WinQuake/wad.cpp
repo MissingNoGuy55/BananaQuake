@@ -156,16 +156,32 @@ void SwapPic (CQuakePic *pic)
 	pic->height = LittleLong(pic->height);
 }
 
-CQuakePic::CQuakePic()
+CQuakePic::CQuakePic() : width(0), height(0)
 {
+	int j = 0;
+
+	while (data)
+	{
+		data[j] = 0;
+	}
 }
 
-CQuakePic::CQuakePic(byte* mem)
+CQuakePic::CQuakePic(byte* mem) : width(0), height(0)
 {
 	int j = 0;
 	
 	while (data)
 	{
 		mem[j] = data[j];
+	}
+}
+
+CQuakePic::CQuakePic(const CQuakePic& src) : width(0), height(0)
+{
+	int j = 0;
+
+	while (data)
+	{
+		data[j] = 0;
 	}
 }

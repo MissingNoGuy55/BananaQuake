@@ -47,6 +47,7 @@ public:
 
 	explicit CQuakePic();
 	explicit CQuakePic(byte* mem);
+	CQuakePic(const CQuakePic& src);
 
 	int			width, height;
 	byte		data[1];			// variably sized
