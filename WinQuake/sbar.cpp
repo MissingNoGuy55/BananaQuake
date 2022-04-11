@@ -261,9 +261,9 @@ Sbar_DrawPic
 void Sbar_DrawPic (int x, int y, CQuakePic *pic)
 {
 	if (cl.gametype == GAME_DEATHMATCH)
-		g_GLRenderer->Draw_Pic (x /* + ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic, "sbar");
+		g_GLRenderer->Draw_Pic (x /* + ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
 	else
-		g_GLRenderer->Draw_Pic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic, "sbar");
+		g_GLRenderer->Draw_Pic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
 }
 
 /*
@@ -274,9 +274,9 @@ Sbar_DrawTransPic
 void Sbar_DrawTransPic (int x, int y, CQuakePic *pic)
 {
 	if (cl.gametype == GAME_DEATHMATCH)
-		g_GLRenderer->Draw_TransPic (x /*+ ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic, "sbar");
+		g_GLRenderer->Draw_TransPic (x /*+ ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
 	else
-		g_GLRenderer->Draw_TransPic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic, "sbar");
+		g_GLRenderer->Draw_TransPic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
 }
 
 /*

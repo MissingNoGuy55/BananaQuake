@@ -335,7 +335,7 @@ byte	*mod_base;
 
 /*
 =================
-Mod_LoadTextures -- Missi: modified (3/28/2022)
+Mod_LoadTextures
 =================
 */
 void Mod_LoadTextures (lump_t *l)
@@ -386,7 +386,7 @@ void Mod_LoadTextures (lump_t *l)
 		
 
 		if (!Q_strncmp(mt->name,"sky",3))	
-			g_GLRenderer->R_InitSky (tx);	// -- Missi (3/28/2022)
+			g_GLRenderer->R_InitSky (tx);
 		else
 		{
 			texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;

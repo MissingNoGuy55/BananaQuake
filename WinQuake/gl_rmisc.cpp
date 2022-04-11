@@ -81,7 +81,7 @@ void CGLRenderer::R_InitParticleTexture (void)
 	// particle texture
 	//
 	particletexture = (CGLTexture*)g_MemCache->Hunk_Alloc(sizeof(CGLTexture));
-	//particletexture->texnum = texture_extension_number++; //++;
+	particletexture->texnum = texture_extension_number++; //++;
     g_GLRenderer->GL_Bind(particletexture);
 
 	for (x=0 ; x<8 ; x++)
@@ -223,8 +223,8 @@ void CGLRenderer::R_Init (void)
 #endif
 
 	playertextures = new CGLTexture;
-	//playertextures->texnum = texture_extension_number;
-	//texture_extension_number += 16;
+	playertextures->texnum = texture_extension_number;
+	texture_extension_number += 16;
 }
 
 /*
