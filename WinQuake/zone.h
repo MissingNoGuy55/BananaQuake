@@ -161,6 +161,11 @@ struct cache_user_t
 class CCacheSystem
 {
 public:
+
+	CCacheSystem();
+	CCacheSystem(const CCacheSystem& src);
+
+
 	int						size;		// including this header
 	cache_user_t* user;
 	char					name[16];

@@ -871,9 +871,28 @@ console functions
 ===============================================================================
 */
 
-CSoundInternal::CSoundInternal()
+CSoundInternal::CSoundInternal() : snd_blocked(0), 
+	snd_ambient(true), 
+	snd_initialized(false), 
+	soundtime(0), 
+	paintedtime(0), 
+	desired_speed(11025),
+	desired_bits(16), 
+	gSndBufSize(0), 
+	mmstarttime(0.f),
+	sound_nominal_clip_dist(1000.0)
 {
+	for (int i = 0; i < NUM_AMBIENTS; i++)
+		ambient_sfx[i] = NULL;
+	
 	shm = NULL;
+
+	memset(&listener_origin, 0, sizeof(vec3_t));
+	memset(&listener_forward, 0, sizeof(vec3_t));
+	memset(&listener_right, 0, sizeof(vec3_t));
+	memset(&listener_up, 0, sizeof(vec3_t));
+
+	memset(&sn, 0, sizeof(dma_t));
 }
 
 void CSoundInternal::S_Play(void)

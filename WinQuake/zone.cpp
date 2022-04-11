@@ -544,6 +544,26 @@ CACHE MEMORY
 ===============================================================================
 */
 
+CCacheSystem::CCacheSystem() : lru_next(NULL), 
+	lru_prev(NULL),
+	name(""),
+	next(NULL),
+	prev(NULL),
+	user(NULL),
+	size(0)
+{
+}
+
+CCacheSystem::CCacheSystem(const CCacheSystem& src) : lru_next(NULL),
+	lru_prev(NULL),
+	name(""),
+	next(NULL),
+	prev(NULL),
+	user(NULL),
+	size(0)
+{
+}
+
 /*
 ===========
 Cache_Move

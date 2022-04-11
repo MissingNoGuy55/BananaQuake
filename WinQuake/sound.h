@@ -108,9 +108,9 @@ public:
 	static channel_t   channels[MAX_CHANNELS];
 	static int	total_channels;
 
-	int			snd_blocked = 0;
-	bool		snd_ambient = 1;
-	bool		snd_initialized = false;
+	int			snd_blocked;
+	bool		snd_ambient;
+	bool		snd_initialized;
 
 	static void S_Play(void);
 	static void S_PlayVol(void);
@@ -128,7 +128,7 @@ public:
 	static vec3_t		listener_forward;
 	static vec3_t		listener_right;
 	static vec3_t		listener_up;
-	vec_t		sound_nominal_clip_dist = 1000.0;
+	vec_t		sound_nominal_clip_dist;
 
 	int			soundtime;		// sample PAIRS
 	int   		paintedtime; 	// sample PAIRS
@@ -140,8 +140,8 @@ public:
 
 	sfx_t* ambient_sfx[NUM_AMBIENTS];
 
-	int 		desired_speed = 11025;
-	int 		desired_bits = 16;
+	int 		desired_speed;
+	int 		desired_bits;
 
 	static int sound_started;
 
