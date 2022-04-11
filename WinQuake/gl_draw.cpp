@@ -1318,7 +1318,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	numgltextures++;
 
 	char id[64];
-	strcpy(glt->identifier, identifier);
+	Q_strncpy(glt->identifier, identifier, sizeof(glt->identifier));	// Missi: this was strcpy at one point. Caused heap corruption. (4/11/2022)
 	glt->texnum = texture_extension_number;
 	glt->width = width;
 	glt->height = height;
