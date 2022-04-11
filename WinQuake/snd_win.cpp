@@ -36,7 +36,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef enum {SIS_SUCCESS, SIS_FAILURE, SIS_NOTAVAIL} sndinitstat;
 
 bool	wavonly;
-bool	dsound_init;
 bool	wav_init;
 bool	snd_firsttime = true, snd_isdirect, snd_iswave;
 bool	primary_format_set;
@@ -144,7 +143,7 @@ bool CSoundSystemWin::SNDDMA_Init(dma_t* dma)
 	if (COM_CheckParm ("-wavonly"))
 		wavonly = true;
 
-	dsound_init = wav_init = 0;
+	wav_init = 0;
 
 	/* Fill the audio DMA information block */
 	/* Since we passed NULL as the 'obtained' spec to SDL_OpenAudio(),

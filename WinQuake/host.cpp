@@ -834,8 +834,11 @@ Host_Init
 void Host_Init (quakeparms_t *parms)
 {
 
-	if (SDL_Init < 0)
-		Sys_Error("Could not initialize SDL: %s", SDL_GetError());
+	//if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+	//{
+	//	SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
+	//	Sys_Error("Could not initialize SDL: %s", SDL_GetError());
+	//}
 
 	if (standard_quake)
 		minimum_memory = MINIMUM_MEMORY;
@@ -910,11 +913,11 @@ void Host_Init (quakeparms_t *parms)
 		S_Init ();
 #else
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 
-		SDL_setenv("SDL_AudioDriver", "directsound", 1);
+		//SDL_setenv("SDL_AudioDriver", "directsound", 1);
 
-#endif
+//#endif
 
 #ifdef	GLQUAKE
 	// FIXME: doesn't use the new one-window approach yet

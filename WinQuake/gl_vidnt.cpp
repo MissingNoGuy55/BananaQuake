@@ -1582,6 +1582,9 @@ void	VID_Init (unsigned char *palette)
 
 	memset(&devmode, 0, sizeof(devmode));
 
+	if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
+		Sys_Error("SDL failed to load: %s", SDL_GetError());
+
 	Cvar_RegisterVariable (&vid_mode);
 	Cvar_RegisterVariable (&vid_wait);
 	Cvar_RegisterVariable (&vid_nopageflip);
