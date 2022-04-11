@@ -128,10 +128,10 @@ void ClearAllStates (void);
 void VID_UpdateWindowStatus (void);
 void GL_Init (void);
 
-PROC QglArrayElementEXT;
-PROC QglColorPointerEXT;
-PROC QglTexCoordPointerEXT;
-PROC QglVertexPointerEXT;
+void* QglArrayElementEXT;
+void* QglColorPointerEXT;
+void* QglTexCoordPointerEXT;
+void* QglVertexPointerEXT;
 
 typedef void (APIENTRY *lp3DFXFUNC) (int, int, int, int, int, const void*);
 lp3DFXFUNC QglColorTableEXT;
@@ -499,69 +499,69 @@ BINDTEXFUNCPTR bindTexFunc;
 
 #define TEXTURE_EXT_STRING "GL_EXT_texture_object"
 
+/*
+===============
+GL_ParseExtensionList
+
+Missi: copied from QuakeSpasm (4/11/2022)
+===============
+*/
+
+static bool GL_ParseExtensionList(const char* list, const char* name)
+{
+	const char* start;
+	const char* where, * terminator;
+
+	if (!list || !name || !*name)
+		return false;
+	if (strchr(name, ' ') != NULL)
+		return false;	// extension names must not have spaces
+
+	start = list;
+	while (1) {
+		where = strstr(start, name);
+		if (!where)
+			break;
+		terminator = where + strlen(name);
+		if (where == start || where[-1] == ' ')
+			if (*terminator == ' ' || *terminator == '\0')
+				return true;
+		start = terminator;
+	}
+	return false;
+}
 
 void CheckTextureExtensions (void)
 {
-	char		*tmp;
-	bool	texture_ext;
-	HINSTANCE	hInstGL;
-
-	texture_ext = FALSE;
-	/* check for texture extension */
-	tmp = (char *)glGetString(GL_EXTENSIONS);
-	while (*tmp)
-	{
-		if (strncmp((const char*)tmp, TEXTURE_EXT_STRING, strlen(TEXTURE_EXT_STRING)) == 0)
-			texture_ext = TRUE;
-		tmp++;
-	}
-
-	if (!texture_ext || COM_CheckParm ("-gl11") )
-	{
-		hInstGL = LoadLibrary("opengl32.dll");
-		
-		if (hInstGL == NULL)
-			Sys_Error ("Couldn't load opengl32.dll\n");
-
-		bindTexFunc = (BINDTEXFUNCPTR)GetProcAddress(hInstGL,"glBindTexture");
-
-		if (!bindTexFunc)
-			Sys_Error ("No texture objects!");
-		return;
-	}
 
 /* load library and get procedure adresses for texture extension API */
-	if ((bindTexFunc = (BINDTEXFUNCPTR)
-		wglGetProcAddress((LPCSTR) "glBindTextureEXT")) == NULL)
+	/*if ((bindTexFunc = (BINDTEXFUNCPTR)SDL_GL_GetProcAddress("glBindTexture")) == NULL)
 	{
 		Sys_Error ("GetProcAddress for BindTextureEXT failed");
 		return;
-	}
+	}*/
 }
 
 void CheckArrayExtensions (void)
 {
-	char		*tmp;
 
 	/* check for texture extension */
-	tmp = (char *)glGetString(GL_EXTENSIONS);
-	while (*tmp)
+
+	if (SDL_GL_ExtensionSupported("GL_EXT_vertex_array"))
 	{
-		if (strncmp((const char*)tmp, "GL_EXT_vertex_array", strlen("GL_EXT_vertex_array")) == 0)
+		if (
+			((QglArrayElementEXT = SDL_GL_GetProcAddress("glArrayElementEXT")) == NULL) ||
+			((QglColorPointerEXT = SDL_GL_GetProcAddress("glColorPointerEXT")) == NULL) ||
+			((QglTexCoordPointerEXT = SDL_GL_GetProcAddress("glTexCoordPointerEXT")) == NULL) ||
+			((QglVertexPointerEXT = SDL_GL_GetProcAddress("glVertexPointerEXT")) == NULL)
+		)
 		{
-			if (
-((QglArrayElementEXT = wglGetProcAddress("glArrayElementEXT")) == NULL) ||
-((QglColorPointerEXT = wglGetProcAddress("glColorPointerEXT")) == NULL) ||
-((QglTexCoordPointerEXT = wglGetProcAddress("glTexCoordPointerEXT")) == NULL) ||
-((QglVertexPointerEXT = wglGetProcAddress("glVertexPointerEXT")) == NULL) )
-			{
-				Sys_Error ("GetProcAddress for vertex extension failed");
-				return;
-			}
+			Sys_Error ("GetProcAddress for vertex extension failed");
 			return;
 		}
-		tmp++;
+		return;
 	}
+
 
 	Sys_Error ("Vertex array extension not present");
 }
@@ -599,7 +599,7 @@ GL_Init
 */
 void GL_Init (void)
 {
-	gl_vendor = reinterpret_cast<const char*>(SDL_GL_GetAttribute (GL_VENDOR));
+	gl_vendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
 	Con_Printf ("GL_VENDOR: %s\n", gl_vendor);
 	gl_renderer = reinterpret_cast<const char*>(glGetString (GL_RENDERER));
 	Con_Printf ("GL_RENDERER: %s\n", gl_renderer);
@@ -1125,9 +1125,9 @@ LONG WINAPI MainWndProc (
         }
         break;
 
-		case MM_MCINOTIFY:
+		//case MM_MCINOTIFY:
             //lRet = CDAudio_MessageHandler (hWnd, uMsg, wParam, lParam);
-			break;
+			//break;
 
     	default:
             /* pass all unhandled messages to DefWindowProc */
