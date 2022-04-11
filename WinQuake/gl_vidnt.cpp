@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include "resource.h"
 #include <commctrl.h>
-#include <GL/glew.h>
+//#include <GL/glew.h>
 
 #define MAX_MODE_LIST	30
 #define VID_ROW_SIZE	3
@@ -599,7 +599,7 @@ GL_Init
 */
 void GL_Init (void)
 {
-	gl_vendor = reinterpret_cast<const char*>(glGetString (GL_VENDOR));
+	gl_vendor = reinterpret_cast<const char*>(SDL_GL_GetAttribute (GL_VENDOR));
 	Con_Printf ("GL_VENDOR: %s\n", gl_vendor);
 	gl_renderer = reinterpret_cast<const char*>(glGetString (GL_RENDERER));
 	Con_Printf ("GL_RENDERER: %s\n", gl_renderer);

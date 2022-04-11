@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma warning(disable : 4136)     // X86
 #pragma warning(disable : 4051)     // ALPHA
   
-#include <GL/glew.h>
+//#include <GL/glew.h>
 
 #ifdef _WIN32
 #include <windows.h>
