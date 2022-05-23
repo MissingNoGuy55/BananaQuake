@@ -273,6 +273,7 @@
       <ProgramDataBaseFileName>.\debug_gl\</ProgramDataBaseFileName>
       <AdditionalIncludeDirectories>.\sdl2\include;.\glew\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>

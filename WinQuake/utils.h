@@ -3,7 +3,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-class CCacheSystem;
 class CCoreRenderer;
 class CSoftwareRenderer;
 class CGLRenderer;
@@ -92,7 +91,7 @@ public:
 		m_pElements = Base();
 	}
 
-//	const CCacheSystem* m_Cache;
+//	const cache_system_t* m_Cache;
 
 	CMemAllocator m_Memory;
 

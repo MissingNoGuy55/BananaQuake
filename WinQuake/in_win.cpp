@@ -51,6 +51,9 @@ static bool	mouseparmsvalid, mouseactivatetoggle;
 static bool	mouseshowtoggle = 1;
 static bool	dinput_acquired;
 
+static SDL_JoystickID joy_active_instaceid = -1; // Missi: copied from QuakeSpasm (4/11/2022)
+static SDL_GameController* joy_active_controller = NULL; // Missi: copied from QuakeSpasm (4/11/2022)
+
 static unsigned int		mstate_di;
 
 // joystick defines and variables
@@ -436,42 +439,9 @@ void IN_StartupMouse (void)
 
 	mouseinitialized = true;
 
-	if (COM_CheckParm ("-dinput"))
+	if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0)
 	{
-		dinput = IN_InitDInput ();
-
-		if (dinput)
-		{
-			Con_SafePrintf ("DirectInput initialized\n");
-		}
-		else
-		{
-			Con_SafePrintf ("DirectInput not initialized\n");
-		}
-	}
-
-	if (!dinput)
-	{
-		mouseparmsvalid = SystemParametersInfo (SPI_GETMOUSE, 0, originalmouseparms, 0);
-
-		if (mouseparmsvalid)
-		{
-			if ( COM_CheckParm ("-noforcemspd") ) 
-				newmouseparms[2] = originalmouseparms[2];
-
-			if ( COM_CheckParm ("-noforcemaccel") ) 
-			{
-				newmouseparms[0] = originalmouseparms[0];
-				newmouseparms[1] = originalmouseparms[1];
-			}
-
-			if ( COM_CheckParm ("-noforcemparms") ) 
-			{
-				newmouseparms[0] = originalmouseparms[0];
-				newmouseparms[1] = originalmouseparms[1];
-				newmouseparms[2] = originalmouseparms[2];
-			}
-		}
+		Con_Printf("WARNING: SDL_SetRelativeMouseMode(SDL_TRUE) failed.\n");
 	}
 
 	mouse_buttons = 3;
@@ -479,7 +449,12 @@ void IN_StartupMouse (void)
 // if a fullscreen video mode was set before the mouse was initialized,
 // set the mouse state appropriately
 	if (mouseactivatetoggle)
-		IN_ActivateMouse ();
+	{
+		SDL_EventFilter currentFilter;
+		void* currentUserdata;
+		if (SDL_GetEventFilter(&currentFilter, &currentUserdata) == SDL_TRUE)
+			SDL_SetEventFilter(NULL, NULL);
+	}
 }
 
 
@@ -799,13 +774,16 @@ void IN_ClearStates (void)
 /* 
 =============== 
 IN_StartupJoystick 
+
+Missi: completely revised. Copied from QuakeSpasm (4/11/2022)
 =============== 
 */  
 void IN_StartupJoystick (void) 
 { 
-	int			i, numdevs;
-	JOYCAPS		jc;
-	MMRESULT	mmr;
+	int i;
+	int nummappings;
+	char controllerdb[MAX_OSPATH];
+	SDL_GameController* gamecontroller;
  
  	// assume no joystick
 	joy_avail = false; 
@@ -814,52 +792,52 @@ void IN_StartupJoystick (void)
 	if ( COM_CheckParm ("-nojoy") ) 
 		return; 
  
-	// verify joystick driver is present
-	if ((numdevs = joyGetNumDevs ()) == 0)
+	if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) == -1)
 	{
-		Con_Printf ("\njoystick not found -- driver not present\n\n");
+		Con_Printf("could not initialize SDL Game Controller\n");
 		return;
 	}
 
-	// cycle through the joystick ids for the first valid one
-	for (joy_id=0 ; joy_id<numdevs ; joy_id++)
-	{
-		memset (&ji, 0, sizeof(ji));
-		ji.dwSize = sizeof(ji);
-		ji.dwFlags = JOY_RETURNCENTERED;
+	// Load additional SDL2 controller definitions from gamecontrollerdb.txt
+	snprintf(controllerdb, sizeof(controllerdb), "%s/gamecontrollerdb.txt", com_gamedir);
+	nummappings = SDL_GameControllerAddMappingsFromFile(controllerdb);
+	if (nummappings > 0)
+		Con_Printf("%d mappings loaded from gamecontrollerdb.txt\n", nummappings);
 
-		if ((mmr = joyGetPosEx (joy_id, &ji)) == JOYERR_NOERROR)
-			break;
-	} 
-
-	// abort startup if we didn't find a valid joystick
-	if (mmr != JOYERR_NOERROR)
+	// Also try host_parms->userdir
+	if (host_parms.cachedir != host_parms.basedir)
 	{
-		Con_Printf ("\njoystick not found -- no valid joysticks (%x)\n\n", mmr);
-		return;
+		snprintf(controllerdb, sizeof(controllerdb), "%s/gamecontrollerdb.txt", host_parms.cachedir);
+		nummappings = SDL_GameControllerAddMappingsFromFile(controllerdb);
+		if (nummappings > 0)
+			Con_Printf("%d mappings loaded from gamecontrollerdb.txt\n", nummappings);
 	}
 
-	// get the capabilities of the selected joystick
-	// abort startup if command fails
-	memset (&jc, 0, sizeof(jc));
-	if ((mmr = joyGetDevCaps (joy_id, &jc, sizeof(jc))) != JOYERR_NOERROR)
+	for (i = 0; i < SDL_NumJoysticks(); i++)
 	{
-		Con_Printf ("\njoystick not found -- invalid joystick capabilities (%x)\n\n", mmr); 
-		return;
+		const char* joyname = SDL_JoystickNameForIndex(i);
+		if (SDL_IsGameController(i))
+		{
+			const char* controllername = SDL_GameControllerNameForIndex(i);
+			gamecontroller = SDL_GameControllerOpen(i);
+			if (gamecontroller)
+			{
+				Con_Printf("detected controller: %s\n", controllername != NULL ? controllername : "NULL");
+
+				joy_active_instaceid = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamecontroller));
+				joy_active_controller = gamecontroller;
+				break;
+			}
+			else
+			{
+				Con_Printf("failed to open controller: %s\n", controllername != NULL ? controllername : "NULL");
+			}
+		}
+		else
+		{
+			Con_Printf("joystick missing controller mappings: %s\n", joyname != NULL ? joyname : "NULL");
+		}
 	}
-
-	// save the joystick's number of buttons and POV status
-	joy_numbuttons = jc.wNumButtons;
-	joy_haspov = jc.wCaps & JOYCAPS_HASPOV;
-
-	// old button and POV states default to no buttons pressed
-	joy_oldbuttonstate = joy_oldpovstate = 0;
-
-	// mark the joystick as available and advanced initialization not completed
-	// this is needed as cvars are not available during initialization
-
-	joy_avail = true; 
-	joy_advancedinit = false;
 
 	Con_Printf ("\njoystick detected\n\n"); 
 }

@@ -595,6 +595,8 @@ void CheckMultiTextureExtensions(void)
 /*
 ===============
 GL_Init
+
+Missi: modified. changed the printing functions to Con_SafePrintf (5/23/2022)
 ===============
 */
 void GL_Init (void)
