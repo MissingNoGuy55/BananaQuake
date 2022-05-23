@@ -158,24 +158,19 @@ struct cache_user_t
 	void* data = 0;
 };
 
-class CCacheSystem
+#define CACHENAME_LEN	32
+typedef struct cache_system_s
 {
-public:
-
-	CCacheSystem();
-	CCacheSystem(const CCacheSystem& src);
-
-
-	int						size;		// including this header
+	int			size;		// including this header
 	cache_user_t* user;
-	char					name[16];
-	class CCacheSystem *prev, *next;
-	class CCacheSystem *lru_prev, *lru_next;	// for LRU flushing	
-};
+	char			name[CACHENAME_LEN];
+	struct cache_system_s* prev, * next;
+	struct cache_system_s* lru_prev, * lru_next;	// for LRU flushing
+} cache_system_t;
 
 // CMemCache* g_MemCache;
 
-static CCacheSystem	cache_head;
+static cache_system_t	cache_head;
 
 typedef void (*flush_cache_callback)(void);
 
@@ -223,15 +218,15 @@ public:
 
 	void* Hunk_TempAlloc(int size);
 
-	void Cache_Move(CCacheSystem* c);
+	void Cache_Move(cache_system_t* c);
 
 	void Hunk_Check(void);
 
 	void Cache_FreeHigh(int new_high_hunk);
 	void Cache_FreeLow(int new_low_hunk);
 
-	void Cache_MakeLRU(CCacheSystem* cs);
-	void Cache_UnlinkLRU(CCacheSystem* cs);
+	void Cache_MakeLRU(cache_system_t* cs);
+	void Cache_UnlinkLRU(cache_system_t* cs);
 
 	static void Cache_Flush(void);
 	static flush_cache_callback Cache_Flush_Callback();
@@ -249,14 +244,14 @@ public:
 	// Returns NULL if all purgable data was tossed and there still
 	// wasn't enough room.
 
-	CCacheSystem* Cache_TryAlloc(int size, bool nobottom);
+	cache_system_t* Cache_TryAlloc(int size, bool nobottom);
 
 	void Cache_Report(void);
 	void Cache_Compact(void);
 
 private:
 
-	CCacheSystem* m_CacheSystem;
+	cache_system_t* m_CacheSystem;
 };
 
 extern CMemCache* g_MemCache;
