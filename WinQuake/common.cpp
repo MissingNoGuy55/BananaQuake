@@ -423,6 +423,33 @@ float Q_atof (const char *str)
 	return val*sign;
 }
 
+// Missi: copied from Quakespasm (5/22/22)
+
+/* platform dependant (v)snprintf function names: */
+#if defined(_WIN32)
+#define	snprintf_func		_snprintf
+#define	vsnprintf_func		_vsnprintf
+#else
+#define	snprintf_func		snprintf
+#define	vsnprintf_func		vsnprintf
+#endif
+
+int q_vsnprintf(char* str, size_t size, const char* format, va_list args)
+{
+	int		ret;
+
+	ret = vsnprintf_func(str, size, format, args);
+
+	if (ret < 0)
+		ret = (int)size;
+	if (size == 0)	/* no buffer */
+		return ret;
+	if ((size_t)ret >= size)
+		str[size - 1] = '\0';
+
+	return ret;
+}
+
 /*
 ============================================================================
 
