@@ -117,25 +117,22 @@ S_Startup
 
 void CSoundSystemWin::S_Startup (void)
 {
-	int		rc;
-
 	if (!snd_initialized)
 		return;
 
-	if (!fakedma)
+	sound_started = SNDDMA_Init(&sn);
+
+	if (!sound_started)
 	{
-		rc = SNDDMA_Init(&sn);
-
-		if (!rc)
-		{
-			Con_Printf("S_Startup: SNDDMA_Init failed.\n");
-
-			sound_started = 0;
-			return;
-		}
+		Con_Printf("Failed initializing sound\n");
 	}
-
-	sound_started = 1;
+	else
+	{
+		Con_Printf("Audio: %d bit, %s, %d Hz\n",
+			shm->samplebits,
+			(shm->channels == 2) ? "stereo" : "mono",
+			shm->speed);
+	}
 }
 
 CSoundSystemWin::CSoundSystemWin()
@@ -186,22 +183,11 @@ void CSoundSystemWin::S_Init (void)
 		Con_Printf ("loading all sounds as 8bit\n");
 	}
 
-
-
 	snd_initialized = true;
 
 	S_Startup ();
 
 	SND_InitScaletable ();
-
-	//known_sfx.SetCount(MAX_SFX); // = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
-	//ambient_sfx.SetCount(NUM_AMBIENTS); // = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
-
-	//known_sfx.Fill(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")), MAX_SFX);
-	//ambient_sfx.Fill(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")), NUM_AMBIENTS);
-
-	//known_sfx.AddToTail(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")));
-	//ambient_sfx.AddToTail(static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t")));
 
 	known_sfx = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
 
@@ -225,14 +211,6 @@ void CSoundSystemWin::S_Init (void)
 	}
 
 	Con_Printf ("Sound sampling rate: %i\n", shm->speed);
-
-	// provides a tick sound until washed clean
-
-//	if (shm->buffer)
-//		shm->buffer[4] = shm->buffer[5] = 0x7f;	// force a pop for debugging
-
-	//ambient_sfx.AddToTail(S_PrecacheSound("ambience/water1.wav"));
-	//ambient_sfx.AddToTail(S_PrecacheSound("ambience/wind2.wav"));
 
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound("ambience/water1.wav");
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound("ambience/wind2.wav");

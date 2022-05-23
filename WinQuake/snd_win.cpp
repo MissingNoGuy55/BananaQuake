@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "quakedef.h"
 #include "winquake.h"
-#include <mmeapi.h>
+//#include <mmeapi.h>
 
 #define iDirectSoundCreate(a,b,c)	pDirectSoundCreate(a,b,c)
 
@@ -97,11 +97,9 @@ Returns false if nothing is found.
 
 bool CSoundSystemWin::SNDDMA_Init(dma_t* dma)
 {
-	sndinitstat	stat;
+	SDL_AudioSpec desired;
 	int		tmp, val;
 	char	drivername[128];
-
-	SDL_AudioSpec desired;
 
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
 	{
