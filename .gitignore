@@ -1,6 +1,5 @@
 /WinQuake/id1/*
 /WinQuake/.vs
-/WinQuake/sdl2
 /WinQuake/glew
 /WinQuake/release_gl
 /WinQuake/Debug
