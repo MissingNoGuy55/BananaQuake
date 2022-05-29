@@ -62,7 +62,7 @@ vec3_t CSoundInternal::listener_origin = { 0.f, 0.f, 0.f };
 vec3_t CSoundInternal::listener_forward = { 0.f, 0.f, 0.f };
 vec3_t CSoundInternal::listener_right = { 0.f, 0.f, 0.f };
 vec3_t CSoundInternal::listener_up = { 0.f, 0.f, 0.f };
-sfx_t* CSoundInternal::known_sfx;
+sfx_t* CSoundInternal::known_sfx[MAX_SFX] = { (sfx_t*)calloc(1, sizeof(sfx_t)) };
 
 // ====================================================================
 // User-setable variables
@@ -189,7 +189,7 @@ void CSoundSystemWin::S_Init (void)
 
 	SND_InitScaletable ();
 
-	known_sfx = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
+	//known_sfx = static_cast<sfx_t*>(g_MemCache->Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t"));
 
 	num_sfx = 0;
 
@@ -255,7 +255,7 @@ S_FindName
 sfx_t* CSoundSystemWin::S_FindName (char *name)
 {
 	int		i;
-	sfx_t	*sfx;
+	sfx_t*	sfx;
 
 	if (!name)
 		Sys_Error ("S_FindName: NULL\n");
@@ -265,16 +265,16 @@ sfx_t* CSoundSystemWin::S_FindName (char *name)
 
 // see if already loaded
 	for (i=0 ; i < num_sfx ; i++)
-		if (!Q_strcmp(known_sfx[i].name, name))
+		if (!Q_strcmp(known_sfx[i]->name, name))
 		{
-			return &known_sfx[i];
+			return known_sfx[i];
 		}
 
 	if (num_sfx == MAX_SFX)
 		Sys_Error ("S_FindName: out of sfx_t");
 	
-	sfx = &known_sfx[i];
-	strcpy (sfx->name, name);
+	sfx = known_sfx[i];
+	Q_strcpy (sfx->name, name);
 
 	num_sfx++;
 	
@@ -862,6 +862,9 @@ CSoundInternal::CSoundInternal() : snd_blocked(0),
 {
 	for (int i = 0; i < NUM_AMBIENTS; i++)
 		ambient_sfx[i] = NULL;
+
+	for (int i = 0; i < MAX_SFX; i++)
+		known_sfx[i] = (sfx_t*)calloc(1, sizeof(sfx_t));
 	
 	shm = NULL;
 
@@ -929,7 +932,7 @@ void CSoundInternal::S_SoundList(void)
 	int		size, total;
 
 	total = 0;
-	for (i=0, sfx = &known_sfx[i]; i<num_sfx ; i++, sfx++)
+	for (i=0, sfx = known_sfx[i]; i<num_sfx; i++, sfx++)
 	{
 		sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Check (&sfx->cache));
 		if (!sc)

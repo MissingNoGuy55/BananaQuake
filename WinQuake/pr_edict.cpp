@@ -258,7 +258,7 @@ eval_t *GetEdictFieldValue(edict_t *ed, char *field)
 	if (strlen(field) < MAX_FIELD_LEN)
 	{
 		gefvCache[rep].pcache = def;
-		strcpy (gefvCache[rep].field, field);
+		Q_strcpy (gefvCache[rep].field, field);
 		rep ^= 1;
 	}
 
@@ -398,8 +398,8 @@ char *PR_GlobalString (int ofs)
 	
 	i = strlen(line);
 	for ( ; i<20 ; i++)
-		strcat (line," ");
-	strcat (line," ");
+		Q_strcat (line," ");
+	Q_strcat (line," ");
 		
 	return line;
 }
@@ -418,8 +418,8 @@ char *PR_GlobalStringNoContents (int ofs)
 	
 	i = strlen(line);
 	for ( ; i<20 ; i++)
-		strcat (line," ");
-	strcat (line," ");
+		Q_strcat (line," ");
+	Q_strcat (line," ");
 		
 	return line;
 }
@@ -660,7 +660,7 @@ void ED_ParseGlobals (char *data)
 		if (!data)
 			Sys_Error ("ED_ParseEntity: EOF without closing brace");
 
-		strcpy (keyname, com_token);
+		Q_strcpy (keyname, com_token);
 
 	// parse value	
 		data = COM_Parse (data);
@@ -747,7 +747,7 @@ bool	ED_ParseEpair (void *base, ddef_t *key, char *s)
 		break;
 		
 	case ev_vector:
-		strcpy (string, s);
+		Q_strcpy (string, s);
 		v = string;
 		w = string;
 		for (i=0 ; i<3 ; i++)
@@ -827,7 +827,7 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 // and allow them to be turned into vectors. (FIXME...)
 if (!strcmp(com_token, "angle"))
 {
-	strcpy (com_token, "angles");
+	Q_strcpy (com_token, "angles");
 	anglehack = true;
 }
 else
@@ -835,9 +835,9 @@ else
 
 // FIXME: change light to _light to get rid of this hack
 if (!strcmp(com_token, "light"))
-	strcpy (com_token, "light_lev");	// hack for single light def
+	Q_strcpy (com_token, "light_lev");	// hack for single light def
 
-		strcpy (keyname, com_token);
+		Q_strcpy (keyname, com_token);
 
 		// another hack to fix heynames with trailing spaces
 		n = strlen(keyname);
@@ -872,7 +872,7 @@ if (!strcmp(com_token, "light"))
 if (anglehack)
 {
 char	temp[32];
-strcpy (temp, com_token);
+Q_strcpy (temp, com_token);
 sprintf (com_token, "0 %s 0", temp);
 }
 

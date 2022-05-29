@@ -76,7 +76,7 @@ CQuakePic* CSoftwareRenderer::Draw_CachePic (char *path)
 		if (menu_numcachepics == MAX_CACHED_PICS)
 			Sys_Error ("menu_numcachepics == MAX_CACHED_PICS");
 		menu_numcachepics++;
-		strcpy (pic->name, path);
+		Q_strcpy (pic->name, path);
 	}
 
 	dat = static_cast<CQuakePic*>(g_MemCache->Cache_Check (&pic->cache));

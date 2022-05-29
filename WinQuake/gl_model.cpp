@@ -202,7 +202,7 @@ model_t *Mod_FindName (char *name)
 	{
 		if (mod_numknown == MAX_MOD_KNOWN)
 			Sys_Error ("mod_numknown == MAX_MOD_KNOWN");
-		strcpy (mod->name, name);
+		Q_strcpy (mod->name, name);
 		mod->needload = true;
 		mod_numknown++;
 	}
@@ -1230,7 +1230,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 			sprintf (name, "*%i", i+1);
 			loadmodel = Mod_FindName (name);
 			*loadmodel = *mod;
-			strcpy (loadmodel->name, name);
+			Q_strcpy (loadmodel->name, name);
 			mod = loadmodel;
 		}
 	}
@@ -1270,7 +1270,7 @@ void * Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame)
 	
 	pdaliasframe = (daliasframe_t *)pin;
 
-	strcpy (frame->name, pdaliasframe->name);
+	Q_strcpy (frame->name, pdaliasframe->name);
 	frame->firstpose = posenum;
 	frame->numposes = 1;
 

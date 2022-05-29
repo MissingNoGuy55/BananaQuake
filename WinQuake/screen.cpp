@@ -619,7 +619,7 @@ void SCR_ScreenShot_f (void)
 // 
 // find a file name to save it to 
 // 
-	strcpy(pcxname,"quake00.pcx");
+	Q_strcpy(pcxname,"quake00.pcx");
 		
 	for (i=0 ; i<=99 ; i++) 
 	{ 

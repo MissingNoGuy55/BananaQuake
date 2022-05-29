@@ -29,6 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <windows.h>
 #endif
 
+#include <SDL_opengl.h>
+
 //#include <GL/gl.h>
 //#include <GL/glu.h>
 
@@ -106,15 +108,6 @@ extern	PROC QglVertexPointerEXT;
 #define	GL_RGBA4	0
 #endif
 
-#define GLVECTEST()										\
-														\
-	CGLTexture* test[MAX_GLTEXTURES];					\
-														\
-	for (int i = 0; i < gltexturevector.Count(); i++)	\
-		test[i] = gltexturevector[i];					\
-														\
-	Con_Printf("Test\n");								\
-
 typedef struct surfcache_s
 {
 	struct surfcache_s	*next;
@@ -178,6 +171,8 @@ public:
 	int Scrap_AllocBlock(int w, int h, int* x, int* y);
 
 	void Scrap_Upload(void);
+
+	int GL_PadConditional(int s);
 
 	CQuakePic* Draw_PicFromWad(const char* name);
 
@@ -271,10 +266,6 @@ public:
 
 	static CGLTexture gltextures[MAX_GLTEXTURES];
 
-	static CQVector<CGLTexture> gltexturevector;
-
-	static void PrintTexVec();
-
 	void R_RenderDynamicLightmaps(msurface_t* fa);
 	void R_TimeRefresh_f(void);
 	void R_MarkLeaves(void);
@@ -347,7 +338,7 @@ private:
 
 	// the lightmap texture data needs to be kept in
 	// main memory so texsubimage can update properly
-	byte		lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
+	byte		lightmaps[MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
 
 	// For gl_texsort 0
 	msurface_t* skychain = NULL;
@@ -368,7 +359,7 @@ public:
 	COpenGLPic();
 	COpenGLPic(CGLTexture* mem);
 
-	//CGLTexture* gltexture;
+	CGLTexture* gltexture;
 	float	sl, tl, sh, th;
 };
 

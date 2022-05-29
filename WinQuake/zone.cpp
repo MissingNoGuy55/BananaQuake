@@ -547,9 +547,9 @@ CACHE MEMORY
 Cache_Move
 ===========
 */
-void CMemCache::Cache_Move ( cache_system_t *c)
+void CMemCache::Cache_Move ( CMemCacheSystem *c)
 {
-	cache_system_t		*c_new;
+	CMemCacheSystem		*c_new;
 
 // we are clearing up space at the bottom, so only allocate it late
 	c_new = Cache_TryAlloc (c->size, true);
@@ -557,7 +557,7 @@ void CMemCache::Cache_Move ( cache_system_t *c)
 	{
 //		Con_Printf ("cache_move ok\n");
 
-		Q_memcpy (c_new +1, c+1, c->size - sizeof(cache_system_t) );
+		Q_memcpy (c_new +1, c+1, c->size - sizeof(CMemCacheSystem) );
 		c_new->user = c->user;
 		Q_memcpy (c_new->name, c->name, sizeof(c_new->name));
 		Cache_Free (c->user);
@@ -580,7 +580,7 @@ Throw things out until the hunk can be expanded to the given point
 */
 void CMemCache::Cache_FreeLow (int new_low_hunk)
 {
-	cache_system_t	*c;
+	CMemCacheSystem	*c;
 	
 	while (1)
 	{
@@ -602,7 +602,7 @@ Throw things out until the hunk can be expanded to the given point
 */
 void CMemCache::Cache_FreeHigh (int new_high_hunk)
 {
-	cache_system_t	*c, *prev;
+	CMemCacheSystem	*c, *prev;
 	
 	prev = NULL;
 	while (1)
@@ -622,7 +622,7 @@ void CMemCache::Cache_FreeHigh (int new_high_hunk)
 	}
 }
 
-void CMemCache::Cache_UnlinkLRU (cache_system_t *cs)
+void CMemCache::Cache_UnlinkLRU (CMemCacheSystem *cs)
 {
 	if (!cs->lru_next || !cs->lru_prev)
 		Sys_Error ("Cache_UnlinkLRU: NULL link");
@@ -633,7 +633,7 @@ void CMemCache::Cache_UnlinkLRU (cache_system_t *cs)
 	cs->lru_prev = cs->lru_next = NULL;
 }
 
-void CMemCache::Cache_MakeLRU (cache_system_t *cs)
+void CMemCache::Cache_MakeLRU (CMemCacheSystem *cs)
 {
 	if (cs->lru_next || cs->lru_prev)
 		Sys_Error ("Cache_MakeLRU: active link");
@@ -652,9 +652,9 @@ Looks for a free block of memory between the high and low hunk marks
 Size should already include the header and padding
 ============
 */
-cache_system_t* CMemCache::Cache_TryAlloc (int size, bool nobottom)
+CMemCacheSystem* CMemCache::Cache_TryAlloc (int size, bool nobottom)
 {
-	cache_system_t	*cs, *c_new;
+	CMemCacheSystem	*cs, *c_new;
 	
 // is the cache completely empty?
 
@@ -663,7 +663,7 @@ cache_system_t* CMemCache::Cache_TryAlloc (int size, bool nobottom)
 		if (hunk_size - hunk_high_used - hunk_low_used < size)
 			Sys_Error ("Cache_TryAlloc: %i is greater then free hunk", size);
 
-		c_new = (cache_system_t *) (hunk_base + hunk_low_used);
+		c_new = (CMemCacheSystem *) (hunk_base + hunk_low_used);
 		memset (c_new, 0, sizeof(*c_new));
 		c_new->size = size;
 
@@ -677,7 +677,7 @@ cache_system_t* CMemCache::Cache_TryAlloc (int size, bool nobottom)
 	
 // search from the bottom up for space
 
-	c_new = (cache_system_t *) (hunk_base + hunk_low_used);
+	c_new = (CMemCacheSystem *) (hunk_base + hunk_low_used);
 	cs = cache_head.next;
 	
 	do
@@ -702,7 +702,7 @@ cache_system_t* CMemCache::Cache_TryAlloc (int size, bool nobottom)
 		}
 
 	// continue looking		
-		c_new = (cache_system_t *)((byte *)cs + cs->size);
+		c_new = (CMemCacheSystem *)((byte *)cs + cs->size);
 		cs = cs->next;
 
 	} while (cs != &cache_head);
@@ -749,7 +749,7 @@ Cache_Print
 */
 void CMemCache::Cache_Print (void)
 {
-	cache_system_t	*cd;
+	CMemCacheSystem	*cd;
 
 	for (cd = cache_head.next ; cd != &cache_head ; cd = cd->next)
 	{
@@ -807,12 +807,12 @@ Frees the memory and removes it from the LRU list
 */
 void CMemCache::Cache_Free (cache_user_t *c)
 {
-	cache_system_t	*cs;
+	CMemCacheSystem	*cs;
 
 	if (!c->data)
 		Sys_Error ("Cache_Free: not allocated");
 
-	cs = ((cache_system_t *)c->data) - 1;
+	cs = ((CMemCacheSystem *)c->data) - 1;
 
 	cs->prev->next = cs->next;
 	cs->next->prev = cs->prev;
@@ -832,12 +832,12 @@ Cache_Check
 */
 void* CMemCache::Cache_Check (cache_user_t *c)
 {
-	cache_system_t	*cs;
+	CMemCacheSystem	*cs;
 
 	if (!c->data)
 		return NULL;
 
-	cs = ((cache_system_t *)c->data) - 1;
+	cs = ((CMemCacheSystem *)c->data) - 1;
 
 // move to head of LRU
 	Cache_UnlinkLRU (cs);
@@ -854,7 +854,7 @@ Cache_Alloc
 */
 void* CMemCache::Cache_Alloc (cache_user_t *c, int size, char *name)
 {
-	cache_system_t	*cs;
+	CMemCacheSystem	*cs;
 
 	if (c->data)
 		Sys_Error ("Cache_Alloc: allready allocated");
@@ -862,7 +862,7 @@ void* CMemCache::Cache_Alloc (cache_user_t *c, int size, char *name)
 	if (size <= 0)
 		Sys_Error ("Cache_Alloc: size %i", size);
 
-	size = (size + sizeof(cache_system_t) + 15) & ~15;
+	size = (size + sizeof(CMemCacheSystem) + 15) & ~15;
 
 // find memory for it	
 	while (1)
@@ -887,6 +887,14 @@ void* CMemCache::Cache_Alloc (cache_user_t *c, int size, char *name)
 }
 
 //============================================================================
+
+CMemCache::CMemCache()
+{
+	if (!m_CacheSystem)
+	{
+		m_CacheSystem = new CMemCacheSystem;
+	}
+}
 
 /*
 ========================
@@ -914,4 +922,8 @@ void CMemCache::Memory_Init (void *buf, int size)
 	}
 	mainzone = static_cast<CMemZone*>(g_MemCache->Hunk_AllocName (zonesize, "zone" ));
 	mainzone->Z_ClearZone (mainzone, zonesize);
+}
+
+CMemCacheSystem::CMemCacheSystem() : size(0), user(NULL), name(""), prev(NULL), next(NULL), lru_prev(NULL), lru_next(NULL)
+{
 }

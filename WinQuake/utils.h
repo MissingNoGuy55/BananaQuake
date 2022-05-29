@@ -91,7 +91,7 @@ public:
 		m_pElements = Base();
 	}
 
-//	const cache_system_t* m_Cache;
+//	const CMemCacheSystem* m_Cache;
 
 	CMemAllocator m_Memory;
 

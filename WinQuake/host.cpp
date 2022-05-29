@@ -834,13 +834,8 @@ Host_Init
 void Host_Init (quakeparms_t *parms)
 {
 
-	int test = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0;
-
-	if (test < 0)
-	{
-		SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
-		Sys_Error("Could not initialize SDL: %s", SDL_GetError());
-	}
+	if (SDL_Init(0) < 0)
+		Sys_Error("Couldn't initialize SDL");
 
 	if (standard_quake)
 		minimum_memory = MINIMUM_MEMORY;

@@ -30,6 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	LINUX_VERSION		1.30
 #define	X11_VERSION			1.10
 
+#define MAX_VARARRLEN		((int)0xFFFF)	// Missi: this is a replacement for variable-sized array lengths in C++ as they're buggy in MSVC and require a flag in GCC to enable
+
 //define	PARANOID			// speed sapping error checking
 
 #ifdef QUAKE2
@@ -46,8 +48,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <setjmp.h>
 // #include <dsound.h>
 #include <windows.h>
-#include <SDL.h>
-#include <SDL_opengl.h>
+#include "SDL.h"
 #include "utils.h"
 
 #if defined(_WIN32) && !defined(WINDED)

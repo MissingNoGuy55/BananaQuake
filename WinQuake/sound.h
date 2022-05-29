@@ -54,7 +54,7 @@ struct sfxcache_t
 	int 	speed = 0;
 	int 	width = 0;
 	int 	stereo = 0;
-	byte	data[1];		// variable sized
+	byte	data[MAX_VARARRLEN];		// variable sized
 };
 
 typedef struct
@@ -135,7 +135,7 @@ public:
 
 
 #define	MAX_SFX		512
-	static sfx_t* known_sfx;		// hunk allocated [MAX_SFX]
+	static sfx_t*	known_sfx[MAX_SFX];		// hunk allocated [MAX_SFX]
 	static int			num_sfx;
 
 	sfx_t* ambient_sfx[NUM_AMBIENTS];

@@ -272,13 +272,13 @@ void Host_Map_f (void)
 	cls.mapstring[0] = 0;
 	for (i=0 ; i<Cmd_Argc() ; i++)
 	{
-		strcat (cls.mapstring, Cmd_Argv(i));
-		strcat (cls.mapstring, " ");
+		Q_strcat (cls.mapstring, Cmd_Argv(i));
+		Q_strcat (cls.mapstring, " ");
 	}
-	strcat (cls.mapstring, "\n");
+	Q_strcat (cls.mapstring, "\n");
 
 	svs.serverflags = 0;			// haven't completed an episode yet
-	strcpy (name, Cmd_Argv(1));
+	Q_strcpy (name, Cmd_Argv(1));
 #ifdef QUAKE2
 	SV_SpawnServer (name, NULL);
 #else
@@ -289,12 +289,12 @@ void Host_Map_f (void)
 	
 	if (cls.state != ca_dedicated)
 	{
-		strcpy (cls.spawnparms, "");
+		Q_strcpy (cls.spawnparms, "");
 
 		for (i=2 ; i<Cmd_Argc() ; i++)
 		{
-			strcat (cls.spawnparms, Cmd_Argv(i));
-			strcat (cls.spawnparms, " ");
+			Q_strcat (cls.spawnparms, Cmd_Argv(i));
+			Q_strcat (cls.spawnparms, " ");
 		}
 		
 		Cmd_ExecuteString ("connect local", src_command);
@@ -326,12 +326,12 @@ void Host_Changelevel_f (void)
 		return;
 	}
 
-	strcpy (level, Cmd_Argv(1));
+	Q_strcpy (level, Cmd_Argv(1));
 	if (Cmd_Argc() == 2)
 		startspot = NULL;
 	else
 	{
-		strcpy (_startspot, Cmd_Argv(2));
+		Q_strcpy (_startspot, Cmd_Argv(2));
 		startspot = _startspot;
 	}
 
@@ -351,7 +351,7 @@ void Host_Changelevel_f (void)
 		return;
 	}
 	SV_SaveSpawnparms ();
-	strcpy (level, Cmd_Argv(1));
+	Q_strcpy (level, Cmd_Argv(1));
 	SV_SpawnServer (level);
 #endif
 }
@@ -375,10 +375,10 @@ void Host_Restart_f (void)
 
 	if (cmd_source != src_command)
 		return;
-	strcpy (mapname, sv.name);	// must copy out, because it gets cleared
+	Q_strcpy (mapname, sv.name);	// must copy out, because it gets cleared
 								// in sv_spawnserver
 #ifdef QUAKE2
-	strcpy(startspot, sv.startspot);
+	Q_strcpy(startspot, sv.startspot);
 	SV_SpawnServer (mapname, startspot);
 #else
 	SV_SpawnServer (mapname);
@@ -416,7 +416,7 @@ void Host_Connect_f (void)
 		CL_StopPlayback ();
 		CL_Disconnect ();
 	}
-	strcpy (name, Cmd_Argv(1));
+	Q_strcpy (name, Cmd_Argv(1));
 	CL_EstablishConnection (name);
 	Host_Reconnect_f ();
 }
@@ -642,7 +642,7 @@ void Host_Loadgame_f (void)
 	{
 		fscanf (f, "%s\n", str);
 		sv.lightstyles[i] = static_cast<char*>(g_MemCache->Hunk_Alloc (strlen(str)+1));
-		strcpy (sv.lightstyles[i], str);
+		Q_strcpy (sv.lightstyles[i], str);
 	}
 
 // load the edicts out of the savegame file
@@ -810,7 +810,7 @@ int LoadGamestate(char *level, char *startspot)
 	{
 		fscanf (f, "%s\n", str);
 		sv.lightstyles[i] = Hunk_Alloc (strlen(str)+1);
-		strcpy (sv.lightstyles[i], str);
+		Q_strcpy (sv.lightstyles[i], str);
 	}
 
 // load the edicts out of the savegame file
@@ -879,12 +879,12 @@ void Host_Changelevel2_f (void)
 		return;
 	}
 
-	strcpy (level, Cmd_Argv(1));
+	Q_strcpy (level, Cmd_Argv(1));
 	if (Cmd_Argc() == 2)
 		startspot = NULL;
 	else
 	{
-		strcpy (_startspot, Cmd_Argv(2));
+		Q_strcpy (_startspot, Cmd_Argv(2));
 		startspot = _startspot;
 	}
 
@@ -1051,8 +1051,8 @@ void Host_Say(bool teamonly)
 	if (Q_strlen(p) > j)
 		p[j] = 0;
 
-	strcat (text, p);
-	strcat (text, "\n");
+	Q_strcat (text, p);
+	Q_strcat (text, "\n");
 
 	for (j = 0, client = svs.clients; j < svs.maxclients; j++, client++)
 	{
@@ -1115,8 +1115,8 @@ void Host_Tell_f(void)
 	if (Q_strlen(p) > j)
 		p[j] = 0;
 
-	strcat (text, p);
-	strcat (text, "\n");
+	Q_strcat (text, p);
+	Q_strcat (text, "\n");
 
 	save = host_client;
 	for (j = 0, client = svs.clients; j < svs.maxclients; j++, client++)
@@ -1922,5 +1922,4 @@ void Host_InitCommands (void)
 	Cmd_AddCommand ("viewprev", Host_Viewprev_f);
 
 	Cmd_AddCommand ("mcache", Mod_Print);
-	Cmd_AddCommand ("printtexvec", CGLRenderer::PrintTexVec);
 }

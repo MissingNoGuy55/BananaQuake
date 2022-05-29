@@ -128,10 +128,10 @@ void ClearAllStates (void);
 void VID_UpdateWindowStatus (void);
 void GL_Init (void);
 
-void* QglArrayElementEXT;
-void* QglColorPointerEXT;
-void* QglTexCoordPointerEXT;
-void* QglVertexPointerEXT;
+PROC QglArrayElementEXT;
+PROC QglColorPointerEXT;
+PROC QglTexCoordPointerEXT;
+PROC QglVertexPointerEXT;
 
 typedef void (APIENTRY *lp3DFXFUNC) (int, int, int, int, int, const void*);
 lp3DFXFUNC QglColorTableEXT;
@@ -550,10 +550,10 @@ void CheckArrayExtensions (void)
 	if (SDL_GL_ExtensionSupported("GL_EXT_vertex_array"))
 	{
 		if (
-			((QglArrayElementEXT = SDL_GL_GetProcAddress("glArrayElementEXT")) == NULL) ||
-			((QglColorPointerEXT = SDL_GL_GetProcAddress("glColorPointerEXT")) == NULL) ||
-			((QglTexCoordPointerEXT = SDL_GL_GetProcAddress("glTexCoordPointerEXT")) == NULL) ||
-			((QglVertexPointerEXT = SDL_GL_GetProcAddress("glVertexPointerEXT")) == NULL)
+			((QglArrayElementEXT = wglGetProcAddress("glArrayElementEXT")) == NULL) ||
+			((QglColorPointerEXT = wglGetProcAddress("glColorPointerEXT")) == NULL) ||
+			((QglTexCoordPointerEXT = wglGetProcAddress("glTexCoordPointerEXT")) == NULL) ||
+			((QglVertexPointerEXT = wglGetProcAddress("glVertexPointerEXT")) == NULL)
 		)
 		{
 			Sys_Error ("GetProcAddress for vertex extension failed");
@@ -1584,9 +1584,6 @@ void	VID_Init (unsigned char *palette)
 
 	memset(&devmode, 0, sizeof(devmode));
 
-	if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
-		Sys_Error("SDL failed to load: %s", SDL_GetError());
-
 	Cvar_RegisterVariable (&vid_mode);
 	Cvar_RegisterVariable (&vid_wait);
 	Cvar_RegisterVariable (&vid_nopageflip);
@@ -1824,12 +1821,12 @@ void	VID_Init (unsigned char *palette)
 	vid_realmode = vid_modenum;
 
 	// Check for 3DFX Extensions and initialize them.
-	VID_Init8bitPalette();
+	//VID_Init8bitPalette();
 
 	vid_menudrawfn = VID_MenuDraw;
 	vid_menukeyfn = VID_MenuKey;
 
-	strcpy (badmode.modedesc, "Bad mode");
+	Q_strcpy (badmode.modedesc, "Bad mode");
 	vid_canalttab = true;
 
 	if (COM_CheckParm("-fullsbar"))

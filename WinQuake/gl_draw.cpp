@@ -54,7 +54,6 @@ int		gl_filter_max = GL_LINEAR;
 int		texels;
 
 CGLTexture CGLRenderer::gltextures[MAX_GLTEXTURES];
-CQVector<CGLTexture> CGLRenderer::gltexturevector;
 int			numgltextures;
 
 CGLRenderer* g_GLRenderer;
@@ -237,51 +236,49 @@ int		pic_count;
 CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 {
 	CQuakePic* p = NULL;
-	COpenGLPic* glpic = NULL;
-	CGLTexture* gltex = NULL;
+	COpenGLPic	gl;
+	int offset = 0; //Missi -- copied from QuakeSpasm (5/28/2022)
 
 	p = (CQuakePic*)W_GetLumpName(name);
-	glpic = (COpenGLPic*)p->data;
-	gltex = new CGLTexture(p, glpic);
-
-	if (!gltex)
-	{
-		delete gltex;
-		Sys_Error("CGLRenderer::DrawPicFromWad: gltex returned NULL\n");
-	}
+	if (!p) return NULL; //Missi -- copied from QuakeSpasm (5/28/2022)
 
 	// load little ones into the scrap
-	if (gltex->width < 64 && gltex->height < 64)		// Missi: scrap_allocblock is getting full here
+	if (p->width < 64 && p->height < 64)
 	{
 		int		x, y;
 		int		i, j, k;
 		int		texnum;
 
-		texnum = Scrap_AllocBlock (gltex->width, gltex->height, &x, &y);
+		texnum = Scrap_AllocBlock(p->width, p->height, &x, &y);
 		scrap_dirty = true;
 		k = 0;
-		for (i=0 ; i<gltex->height ; i++)
-			for (j=0 ; j<gltex->width ; j++, k++)
-				scrap_texels[texnum][(y+i)*BLOCK_WIDTH + x + j] = gltex->pic->data[k];
-		//texnum += scrap_texnum;
-		gltex = scrap_textures[texnum];
-		//gltex->pic = p;
-		gltex->sl = x/(float)BLOCK_WIDTH;
-		gltex->sh = (x+p->width)/(float)BLOCK_WIDTH;
-		gltex->tl = y/(float)BLOCK_WIDTH;
-		gltex->th = (y+p->height)/(float)BLOCK_WIDTH;
-
-		pic_count++;
-		pic_texels += gltex->width*gltex->height;
+		for (i = 0; i < p->height; i++)
+		{
+			for (j = 0; j < p->width; j++, k++)
+				scrap_texels[texnum][(y + i) * BLOCK_WIDTH + x + j] = p->data[k];
+		}
+		gl.gltexture = scrap_textures[texnum]; //Missi -- copied from QuakeSpasm (5/28/2022) -- changed to an array
+		//Missi -- copied from QuakeSpasm (5/28/2022) -- no longer go from 0.01 to 0.99
+		gl.sl = x / (float)BLOCK_WIDTH;
+		gl.sh = (x + p->width) / (float)BLOCK_WIDTH;
+		gl.tl = y / (float)BLOCK_WIDTH;
+		gl.th = (y + p->height) / (float)BLOCK_WIDTH;
 	}
 	else
 	{
-		gltex = GL_LoadPicTexture (gltex->pic);
-		gltex->sl = 0;
-		gltex->sh = 1;
-		gltex->tl = 0;
-		gltex->th = 1;
+		//char texturename[64]; //Missi -- copied from QuakeSpasm (5/28/2022)
+		//snprintf(texturename, sizeof(texturename), "%s:%s", texturename, name); //Missi -- copied from QuakeSpasm (5/28/2022)
+
+		offset = (int)p - (int)wad_base + sizeof(int) * 2; //Missi -- copied from QuakeSpasm (5/28/2022)
+
+		gl.gltexture = GL_LoadTexture(name, p->width, p->height, p->data, false, true); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
+		gl.sl = 0;
+		gl.sh = (float)p->width / 1; //Missi -- copied from QuakeSpasm (5/28/2022)
+		gl.tl = 0;
+		gl.th = (float)p->height / 1; //Missi -- copied from QuakeSpasm (5/28/2022)
 	}
+
+	//memcpy(p->data, &gl, sizeof(COpenGLPic));
 
 	return p;
 }
@@ -297,7 +294,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	cachepic_t	*pic;
 	int			i;
 	CQuakePic		*dat;
-	COpenGLPic		*gl;
+	COpenGLPic		*gl = new COpenGLPic;
 
 	for (pic=menu_cachepics, i=0 ; i<menu_numcachepics ; pic++, i++)
 		if (!strcmp (path, pic->name))
@@ -306,7 +303,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	if (menu_numcachepics == MAX_CACHED_PICS)
 		Sys_Error ("menu_numcachepics == MAX_CACHED_PICS");
 	menu_numcachepics++;
-	strcpy (pic->name, path);
+	Q_strcpy (pic->name, path);
 
 //
 // load the pic from disk
@@ -322,10 +319,11 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	if (!strcmp (path, "gfx/menuplyr.lmp"))
 		memcpy (menuplyr_pixels, dat->data, dat->width*dat->height);
 
+	pic->pic = dat;
 	pic->pic->width = dat->width;
 	pic->pic->height = dat->height;
 
-	gl = (COpenGLPic*)pic->pic->data;
+	gl->gltexture = GL_LoadTexture(path, dat->width, dat->height, dat->data, false, false); // (COpenGLPic*)pic->pic->data;
 	gl->sl = 0;
 	gl->sh = 1;
 	gl->tl = 0;
@@ -875,17 +873,6 @@ void CGLRenderer::Draw_EndDisc (void)
 {
 }
 
-void CGLRenderer::PrintTexVec()
-{
-	if (gltexturevector.Base())
-	{
-		for (int i = 0; i < MAX_GLTEXTURES; i++)
-		{
-			Con_Printf("gltextures[%d]: %s\n", i, gltexturevector[i].identifier);
-		}
-	}
-}
-
 /*
 ================
 GL_Set2D
@@ -925,10 +912,10 @@ int CGLRenderer::GL_FindTexture (char *identifier)
 	int		i;
 	CGLTexture* glt;
 
-	for (i=0, glt=(CGLTexture*)&gltexturevector; i<numgltextures ; i++)
+	for (i=0, glt=gltextures; i<numgltextures ; i++)
 	{
 		if (!strcmp (identifier, glt->identifier))
-			return gltexturevector[i].texnum;
+			return gltextures[i].texnum;
 	}
 
 	return -1;
@@ -1295,30 +1282,15 @@ Loads an OpenGL texture via string ID or byte data. Can take an empty string or 
 */
 CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int height, byte *data, bool mipmap, bool alpha)
 {
-	bool	noalpha;
 	int			i, p, s;
 	CGLTexture* glt = NULL;
 
-	//// see if the texture is allready present
-	//if (identifier[0])	// Missi: in the event of NULL so we don't have to use an empty string (3/19/2022)
-	//{
-	//	for (i=0, glt=(CGLTexture*)&gltexturevector; i<numgltextures ; i++, glt++)
-	//	{
-	//		if (!strcmp (identifier, glt->identifier))
-	//		{
-	//			if (width != glt->width || height != glt->height)
-	//				Sys_Error ("GL_LoadTexture: cache mismatch");
-	//			return &gltextures[i];	// Missi: why is "i" 2 sometimes?
-	//		}
-	//	}
-	//}
-
 // Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
-	glt = &gltexturevector[numgltextures];
+	glt = &gltextures[numgltextures];
 	numgltextures++;
 
 	char id[64];
-	Q_strncpy(glt->identifier, identifier, sizeof(glt->identifier));	// Missi: this was strcpy at one point. Caused heap corruption. (4/11/2022)
+	Q_strncpy(glt->identifier, identifier, sizeof(glt->identifier));	// Missi: this was Q_strcpy at one point. Caused heap corruption. (4/11/2022)
 	glt->texnum = texture_extension_number;
 	glt->width = width;
 	glt->height = height;
@@ -1333,7 +1305,6 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	GL_Upload8(data, width, height, mipmap, alpha);
 
 	texture_extension_number++;
-	numgltextures++;
 
 	return glt;
 
@@ -1367,18 +1338,15 @@ void CGLRenderer::GL_SelectTexture (GLenum target)
 
 CGLTexture::CGLTexture() : height(0), width(0), pic(NULL), glpic(NULL), mipmap(false), texnum(0), sh(0), sl(0), th(0), tl(0)
 {
-	for (int i = 0; i < 64; i++)
-		identifier[i] = 0x00;
+	memset(identifier, 0x00, sizeof(identifier));
 }
 
 CGLTexture::CGLTexture(CQuakePic* qpic, COpenGLPic* glpic) : height(qpic->height), width(qpic->width), pic(qpic), glpic(glpic), mipmap(false), texnum(0), sh(0), sl(0), th(0), tl(0)
 {
-	for (int i = 0; i < 64; i++)
-		identifier[i] = 0x00;
+	memset(identifier, 0x00, sizeof(identifier));
 }
 
 CGLTexture::CGLTexture(const CGLTexture& obj) : height(0), width(0), pic(NULL), glpic(NULL), mipmap(false), texnum(0), sh(0), sl(0), th(0), tl(0)
 {
-	for (int i = 0; i < 64; i++)
-		identifier[i] = 0x00;
+	memset(identifier, 0x00, sizeof(identifier));
 }

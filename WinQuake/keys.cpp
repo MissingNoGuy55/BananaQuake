@@ -487,8 +487,8 @@ void Key_Bind_f (void)
 	for (i=2 ; i< c ; i++)
 	{
 		if (i > 2)
-			strcat (cmd, " ");
-		strcat (cmd, Cmd_Argv(i));
+			Q_strcat (cmd, " ");
+		Q_strcat (cmd, Cmd_Argv(i));
 	}
 
 	Key_SetBinding (b, cmd);

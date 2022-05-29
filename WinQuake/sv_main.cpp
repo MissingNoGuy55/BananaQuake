@@ -265,7 +265,7 @@ void SV_ConnectClient (int clientnum)
 	memset (client, 0, sizeof(*client));
 	client->netconnection = netconnection;
 
-	strcpy (client->name, "unconnected");
+	Q_strcpy (client->name, "unconnected");
 	client->active = true;
 	client->spawned = false;
 	client->edict = ent;
@@ -1086,10 +1086,10 @@ void SV_SpawnServer (char *server)
 
 	memset (&sv, 0, sizeof(sv));
 
-	strcpy (sv.name, server);
+	Q_strcpy (sv.name, server);
 #ifdef QUAKE2
 	if (startspot)
-		strcpy(sv.startspot, startspot);
+		Q_strcpy(sv.startspot, startspot);
 #endif
 
 // load progs to get entity field count
@@ -1125,7 +1125,7 @@ void SV_SpawnServer (char *server)
 
 	sv.time = 1.0;
 	
-	strcpy (sv.name, server);
+	Q_strcpy (sv.name, server);
 	sprintf (sv.modelname,"maps/%s.bsp", server);
 	sv.worldmodel = Mod_ForName (sv.modelname, false);
 	if (!sv.worldmodel)

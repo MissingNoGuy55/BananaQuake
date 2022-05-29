@@ -159,18 +159,22 @@ struct cache_user_t
 };
 
 #define CACHENAME_LEN	32
-typedef struct cache_system_s
+class CMemCacheSystem
 {
+public:
+
+	CMemCacheSystem();
+
 	int			size;		// including this header
 	cache_user_t* user;
 	char			name[CACHENAME_LEN];
-	struct cache_system_s* prev, * next;
-	struct cache_system_s* lru_prev, * lru_next;	// for LRU flushing
-} cache_system_t;
+	class CMemCacheSystem* prev, * next;
+	class CMemCacheSystem* lru_prev, * lru_next;	// for LRU flushing
+};
 
 // CMemCache* g_MemCache;
 
-static cache_system_t	cache_head;
+static CMemCacheSystem	cache_head;
 
 typedef void (*flush_cache_callback)(void);
 
@@ -199,6 +203,8 @@ class CMemCache
 {
 public:
 
+	CMemCache();
+
 	CMemZone* mainzone;
 
 	void Memory_Init(void* buf, int size);
@@ -218,15 +224,15 @@ public:
 
 	void* Hunk_TempAlloc(int size);
 
-	void Cache_Move(cache_system_t* c);
+	void Cache_Move(CMemCacheSystem* c);
 
 	void Hunk_Check(void);
 
 	void Cache_FreeHigh(int new_high_hunk);
 	void Cache_FreeLow(int new_low_hunk);
 
-	void Cache_MakeLRU(cache_system_t* cs);
-	void Cache_UnlinkLRU(cache_system_t* cs);
+	void Cache_MakeLRU(CMemCacheSystem* cs);
+	void Cache_UnlinkLRU(CMemCacheSystem* cs);
 
 	static void Cache_Flush(void);
 	static flush_cache_callback Cache_Flush_Callback();
@@ -244,14 +250,14 @@ public:
 	// Returns NULL if all purgable data was tossed and there still
 	// wasn't enough room.
 
-	cache_system_t* Cache_TryAlloc(int size, bool nobottom);
+	CMemCacheSystem* Cache_TryAlloc(int size, bool nobottom);
 
 	void Cache_Report(void);
 	void Cache_Compact(void);
 
 private:
 
-	cache_system_t* m_CacheSystem;
+	CMemCacheSystem* m_CacheSystem;
 };
 
 extern CMemCache* g_MemCache;
@@ -266,10 +272,10 @@ CMemBlock<T, I>::CMemBlock(int growSize, int allocationCount) : m_pMemory(0), si
 	{
 		m_pMemory = (T*)calloc(size, sizeof(T));	// Missi: allocate if we specified a size (3/3/2022)
 	}
-	else
-	{
-		m_pMemory = (T*)calloc(1, sizeof(T));	// Missi: allocate anyway even if a size wasn't specified (3/3/2022)
-	}
+	//else
+	//{
+	//	m_pMemory = (T*)calloc(1, sizeof(T));	// Missi: allocate anyway even if a size wasn't specified (3/3/2022)
+	//}
 }
 
 template<class T, class I>

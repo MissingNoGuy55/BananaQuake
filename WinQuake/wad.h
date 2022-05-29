@@ -49,7 +49,7 @@ public:
 	explicit CQuakePic(byte* mem);
 
 	int			width, height;
-	byte		data[1];			// variably sized
+	byte		data[MAX_VARARRLEN];			// Missi: was a C variably-sized array. they are bugged in MSVC it seems, and it caused me months-worth of a headache (5/28/2022)
 
 };
 

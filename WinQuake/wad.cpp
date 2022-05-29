@@ -166,6 +166,6 @@ CQuakePic::CQuakePic(byte* mem)
 	
 	while (data)
 	{
-		mem[j] = data[j];
+		mem++[j] = data[j++];
 	}
 }

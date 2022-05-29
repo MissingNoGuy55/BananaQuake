@@ -893,7 +893,7 @@ void COM_FileBase (const char *in, char *out)
 	;
 	
 	if (s-s2 < 2)
-		strcpy (out,"?model?");
+		Q_strcpy (out,"?model?");
 	else
 	{
 		s--;
@@ -924,7 +924,7 @@ void COM_DefaultExtension (char *path, const char *extension)
 		src--;
 	}
 
-	strcat (path, extension);
+	Q_strcat (path, extension);
 }
 
 
@@ -1456,7 +1456,7 @@ int COM_FindFile (const char *filename, int *handle, FILE **file)
 				
 		// see if the file needs to be updated in the cache
 			if (!com_cachedir[0])
-				strcpy (cachepath, netpath);
+				Q_strcpy (cachepath, netpath);
 			else
 			{	
 #if defined(_WIN32)
@@ -1472,7 +1472,7 @@ int COM_FindFile (const char *filename, int *handle, FILE **file)
 			
 				if (cachetime < findtime)
 					COM_CopyFile (netpath, cachepath);
-				strcpy (netpath, cachepath);
+				Q_strcpy (netpath, cachepath);
 			}	
 
 			Sys_Printf ("FindFile: %s\n",netpath);
@@ -1699,13 +1699,13 @@ pack_t *COM_LoadPackFile (char *packfile)
 // parse the directory
 	for (i=0 ; i<numpackfiles ; i++)
 	{
-		strcpy (newfiles[i].name, info[i].name);
+		Q_strcpy (newfiles[i].name, info[i].name);
 		newfiles[i].filepos = LittleLong(info[i].filepos);
 		newfiles[i].filelen = LittleLong(info[i].filelen);
 	}
 
 	pack = static_cast<pack_t*>(g_MemCache->Hunk_Alloc (sizeof (pack_t)));
-	strcpy (pack->filename, packfile);
+	Q_strcpy (pack->filename, packfile);
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;
@@ -1730,13 +1730,13 @@ void COM_AddGameDirectory (char *dir)
 	pack_t                  *pak;
 	char                    pakfile[MAX_OSPATH];
 
-	strcpy (com_gamedir, dir);
+	Q_strcpy (com_gamedir, dir);
 
 //
 // add the directory to the search path
 //
 	search = static_cast<searchpath_t*>(g_MemCache->Hunk_Alloc (sizeof(searchpath_t)));
-	strcpy (search->filename, dir);
+	Q_strcpy (search->filename, dir);
 	search->next = com_searchpaths;
 	com_searchpaths = search;
 
@@ -1778,9 +1778,9 @@ void COM_InitFilesystem (void)
 //
 	i = COM_CheckParm ("-basedir");
 	if (i && i < com_argc-1)
-		strcpy (basedir, com_argv[i+1]);
+		Q_strcpy (basedir, com_argv[i+1]);
 	else
-		strcpy (basedir, host_parms.basedir);
+		Q_strcpy (basedir, host_parms.basedir);
 
 	j = strlen (basedir);
 
@@ -1801,10 +1801,10 @@ void COM_InitFilesystem (void)
 		if (com_argv[i+1][0] == '-')
 			com_cachedir[0] = 0;
 		else
-			strcpy (com_cachedir, com_argv[i+1]);
+			Q_strcpy (com_cachedir, com_argv[i+1]);
 	}
 	else if (host_parms.cachedir)
-		strcpy (com_cachedir, host_parms.cachedir);
+		Q_strcpy (com_cachedir, host_parms.cachedir);
 	else
 		com_cachedir[0] = 0;
 
@@ -1851,7 +1851,7 @@ void COM_InitFilesystem (void)
 					Sys_Error ("Couldn't load packfile: %s", com_argv[i]);
 			}
 			else
-				strcpy (search->filename, com_argv[i]);
+				Q_strcpy (search->filename, com_argv[i]);
 			search->next = com_searchpaths;
 			com_searchpaths = search;
 		}

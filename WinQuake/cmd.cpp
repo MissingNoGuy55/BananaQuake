@@ -334,7 +334,7 @@ char *CopyString (char *in)
 	char	*out;
 	
 	out = static_cast<char*>(g_MemCache->mainzone->Z_Malloc (strlen(in)+1));
-	strcpy (out, in);
+	Q_strcpy (out, in);
 	return out;
 }
 
@@ -376,18 +376,18 @@ void Cmd_Alias_f (void)
 		a->next = cmd_alias;
 		cmd_alias = a;
 	}
-	strcpy (a->name, s);	
+	Q_strcpy (a->name, s);	
 
 // copy the rest of the command line
 	cmd[0] = 0;		// start out with a null string
 	c = Cmd_Argc();
 	for (i=2 ; i< c ; i++)
 	{
-		strcat (cmd, Cmd_Argv(i));
+		Q_strcat (cmd, Cmd_Argv(i));
 		if (i != c)
-			strcat (cmd, " ");
+			Q_strcat (cmd, " ");
 	}
-	strcat (cmd, "\n");
+	Q_strcat (cmd, "\n");
 	
 	a->value = CopyString (cmd);
 }

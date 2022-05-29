@@ -220,7 +220,7 @@ model_t *Mod_FindName (char *name)
 		}
 		else
 			mod_numknown++;
-		strcpy (mod->name, name);
+		Q_strcpy (mod->name, name);
 		mod->needload = NL_NEEDS_LOADED;
 	}
 
@@ -1213,7 +1213,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 			sprintf (name, "*%i", i+1);
 			loadmodel = Mod_FindName (name);
 			*loadmodel = *mod;
-			strcpy (loadmodel->name, name);
+			Q_strcpy (loadmodel->name, name);
 			mod = loadmodel;
 		}
 	}
@@ -1241,7 +1241,7 @@ void * Mod_LoadAliasFrame (void * pin, int *pframeindex, int numv,
 
 	pdaliasframe = (daliasframe_t *)pin;
 
-	strcpy (name, pdaliasframe->name);
+	Q_strcpy (name, pdaliasframe->name);
 
 	for (i=0 ; i<3 ; i++)
 	{
