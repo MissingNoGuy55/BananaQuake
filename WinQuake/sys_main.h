@@ -1,0 +1,10 @@
+#pragma once
+
+#define SDL_MIN_X	2
+#define SDL_MIN_Y	0
+#define SDL_MIN_Z	0
+#define SDL_REQUIREDVERSION	(SDL_VERSIONNUM(SDL_MIN_X,SDL_MIN_Y,SDL_MIN_Z))
+#define SDL_NEW_VERSION_REJECT	(SDL_VERSIONNUM(3,0,0))
+
+void Sys_InitSDL();
+
