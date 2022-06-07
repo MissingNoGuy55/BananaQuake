@@ -82,6 +82,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -262,7 +263,7 @@
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <Optimization>Disabled</Optimization>
-      <SuppressStartupBanner>false</SuppressStartupBanner>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\debug_gl\</AssemblerListingLocation>
@@ -782,6 +783,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="server.cpp" />
     <ClCompile Include="snd_dma.cpp" />
     <ClCompile Include="snd_mem.cpp" />
     <ClCompile Include="snd_mix.cpp" />
@@ -1460,6 +1462,7 @@ del $(OutDir)%(Filename).spp </Command>
     <ClInclude Include="gl_vidnt.h" />
     <ClInclude Include="gl_warp.h" />
     <ClInclude Include="gl_warp_sin.h" />
+    <ClInclude Include="host.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="in_win.h" />
     <ClInclude Include="keys.h" />
