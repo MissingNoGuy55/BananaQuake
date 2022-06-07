@@ -206,10 +206,10 @@ void CGLRenderer::EmitWaterPolys (msurface_t *fa)
 			os = v[3];
 			ot = v[4];
 
-			s = os + turbsin[(int)((ot*0.125+realtime) * TURBSCALE) & 255];
+			s = os + turbsin[(int)((ot*0.125+host->realtime) * TURBSCALE) & 255];
 			s *= (1.0/64);
 
-			t = ot + turbsin[(int)((os*0.125+realtime) * TURBSCALE) & 255];
+			t = ot + turbsin[(int)((os*0.125+host->realtime) * TURBSCALE) & 255];
 			t *= (1.0/64);
 
 			glTexCoord2f (s, t);
@@ -279,14 +279,14 @@ void CGLRenderer::EmitBothSkyLayers (msurface_t *fa)
 	GL_DisableMultitexture();
 
 	g_GLRenderer->GL_Bind (solidskytexture);
-	speedscale = realtime*8;
+	speedscale = host->realtime*8;
 	speedscale -= (int)speedscale & ~127 ;
 
 	EmitSkyPolys (fa);
 
 	glEnable (GL_BLEND);
 	g_GLRenderer->GL_Bind (alphaskytexture);
-	speedscale = realtime*16;
+	speedscale = host->realtime*16;
 	speedscale -= (int)speedscale & ~127 ;
 
 	EmitSkyPolys (fa);
@@ -308,7 +308,7 @@ void CGLRenderer::R_DrawSkyChain (msurface_t *s)
 
 	// used when gl_texsort is on
 	g_GLRenderer->GL_Bind(solidskytexture);
-	speedscale = realtime*8;
+	speedscale = host->realtime*8;
 	speedscale -= (int)speedscale & ~127 ;
 
 	for (fa=s ; fa ; fa=fa->texturechain)
@@ -316,7 +316,7 @@ void CGLRenderer::R_DrawSkyChain (msurface_t *s)
 
 	glEnable (GL_BLEND);
 	g_GLRenderer->GL_Bind (alphaskytexture);
-	speedscale = realtime*16;
+	speedscale = host->realtime*16;
 	speedscale -= (int)speedscale & ~127 ;
 
 	for (fa=s ; fa ; fa=fa->texturechain)

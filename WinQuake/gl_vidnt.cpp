@@ -463,7 +463,7 @@ int VID_SetMode (int modenum, unsigned char *palette)
 // fix the leftover Alt from any Alt-Tab or the like that switched us away
 	ClearAllStates ();
 
-	if (!msg_suppress_1)
+	if (!host->msg_suppress_1)
 		Con_SafePrintf ("Video mode %s initialized.\n", VID_GetModeDescription (vid_modenum));
 
 	VID_SetPalette (palette);
@@ -1794,10 +1794,13 @@ void	VID_Init (unsigned char *palette)
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
-	vid.colormap = host_colormap;
+	vid.colormap = host->host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 
 	DestroyWindow (hwnd_dialog);
+
+	if (!palette)
+		return;
 
 	Check_Gamma(palette);
 	VID_SetPalette (palette);

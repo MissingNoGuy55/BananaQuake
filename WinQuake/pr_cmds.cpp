@@ -65,7 +65,7 @@ void PF_error (void)
 	ed = PROG_TO_EDICT(pr_global_struct->self);
 	ED_Print (ed);
 
-	Host_Error ("Program error");
+	host->Host_Error ("Program error");
 }
 
 /*
@@ -90,7 +90,7 @@ void PF_objerror (void)
 	ED_Print (ed);
 	ED_Free (ed);
 	
-	Host_Error ("Program error");
+	host->Host_Error ("Program error");
 }
 
 
@@ -125,7 +125,7 @@ void PF_setorigin (void)
 	e = G_EDICT(OFS_PARM0);
 	org = G_VECTOR(OFS_PARM1);
 	VectorCopy (org, e->v.origin);
-	SV_LinkEdict (e, false);
+	sv.SV_LinkEdict (e, false);
 }
 
 
@@ -200,7 +200,7 @@ void SetMinMaxSize (edict_t *e, float *min, float *max, bool rotate)
 	VectorCopy (rmax, e->v.maxs);
 	VectorSubtract (max, min, e->v.size);
 	
-	SV_LinkEdict (e, false);
+	sv.SV_LinkEdict (e, false);
 }
 
 /*
@@ -275,7 +275,7 @@ void PF_bprint (void)
 	char		*s;
 
 	s = PF_VarString(0);
-	SV_BroadcastPrintf ("%s", s);
+	sv.SV_BroadcastPrintf ("%s", s);
 }
 
 /*
@@ -493,7 +493,7 @@ void PF_particle (void)
 	dir = G_VECTOR(OFS_PARM1);
 	color = G_FLOAT(OFS_PARM2);
 	count = G_FLOAT(OFS_PARM3);
-	SV_StartParticle (org, dir, color, count);
+	sv.SV_StartParticle (org, dir, color, count);
 }
 
 
@@ -578,7 +578,7 @@ void PF_sound (void)
 	if (channel < 0 || channel > 7)
 		Sys_Error ("SV_StartSound: channel = %i", channel);
 
-	SV_StartSound (entity, channel, sample, volume, attenuation);
+	sv.SV_StartSound (entity, channel, sample, volume, attenuation);
 }
 
 /*
@@ -618,7 +618,7 @@ void PF_traceline (void)
 	nomonsters = G_FLOAT(OFS_PARM2);
 	ent = G_EDICT(OFS_PARM3);
 
-	trace = SV_Move (v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
+	trace = sv.SV_Move (v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
 
 	pr_global_struct->trace_allsolid = trace.allsolid;
 	pr_global_struct->trace_startsolid = trace.startsolid;
@@ -804,8 +804,8 @@ stuffcmd (clientent, value)
 void PF_stuffcmd (void)
 {
 	int		entnum;
-	char	*str;
-	client_t	*old;
+	char	*str = "";
+	client_t	*old = NULL;
 	
 	entnum = G_EDICTNUM(OFS_PARM0);
 	if (entnum < 1 || entnum > svs.maxclients)
@@ -814,7 +814,7 @@ void PF_stuffcmd (void)
 	
 	old = host_client;
 	host_client = &svs.clients[entnum-1];
-	Host_ClientCommands ("%s", str);
+	host->Host_ClientCommands ("%s", str);
 	host_client = old;
 }
 
@@ -1171,7 +1171,7 @@ void PF_walkmove (void)
 	oldf = pr_xfunction;
 	oldself = pr_global_struct->self;
 	
-	G_FLOAT(OFS_RETURN) = SV_movestep(ent, move, true);
+	G_FLOAT(OFS_RETURN) = sv.SV_movestep(ent, move, true);
 	
 	
 // restore program state
@@ -1197,14 +1197,14 @@ void PF_droptofloor (void)
 	VectorCopy (ent->v.origin, end);
 	end[2] -= 256;
 	
-	trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, false, ent);
+	trace = sv.SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, false, ent);
 
 	if (trace.fraction == 1 || trace.allsolid)
 		G_FLOAT(OFS_RETURN) = 0;
 	else
 	{
 		VectorCopy (trace.endpos, ent->v.origin);
-		SV_LinkEdict (ent, false);
+		sv.SV_LinkEdict (ent, false);
 		ent->v.flags = (int)ent->v.flags | FL_ONGROUND;
 		ent->v.groundentity = EDICT_TO_PROG(trace.ent);
 		G_FLOAT(OFS_RETURN) = 1;
@@ -1274,7 +1274,7 @@ void PF_checkbottom (void)
 	
 	ent = G_EDICT(OFS_PARM0);
 
-	G_FLOAT(OFS_RETURN) = SV_CheckBottom (ent);
+	G_FLOAT(OFS_RETURN) = sv.SV_CheckBottom (ent);
 }
 
 /*
@@ -1288,7 +1288,7 @@ void PF_pointcontents (void)
 	
 	v = G_VECTOR(OFS_PARM0);
 
-	G_FLOAT(OFS_RETURN) = SV_PointContents (v);	
+	G_FLOAT(OFS_RETURN) = sv.SV_PointContents (v);
 }
 
 /*
@@ -1348,7 +1348,7 @@ void PF_aim (void)
 // try sending a trace straight
 	VectorCopy (pr_global_struct->v_forward, dir);
 	VectorMA (start, 2048, dir, end);
-	tr = SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
+	tr = sv.SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
 	if (tr.ent && tr.ent->v.takedamage == DAMAGE_AIM
 	&& (!teamplay.value || ent->v.team <=0 || ent->v.team != tr.ent->v.team) )
 	{
@@ -1379,7 +1379,7 @@ void PF_aim (void)
 		dist = DotProduct (dir, pr_global_struct->v_forward);
 		if (dist < bestdist)
 			continue;	// to far to turn
-		tr = SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
+		tr = sv.SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
 		if (tr.ent == check)
 		{	// can shoot at this one
 			bestdist = dist;
@@ -1579,8 +1579,6 @@ void PF_WriteEntity (void)
 
 //=============================================================================
 
-int SV_ModelIndex (char *name);
-
 void PF_makestatic (void)
 {
 	edict_t	*ent;
@@ -1590,7 +1588,7 @@ void PF_makestatic (void)
 
 	MSG_WriteByte (&sv.signon,svc_spawnstatic);
 
-	MSG_WriteByte (&sv.signon, SV_ModelIndex(pr_strings + ent->v.model));
+	MSG_WriteByte (&sv.signon, sv.SV_ModelIndex(pr_strings + ent->v.model));
 
 	MSG_WriteByte (&sv.signon, ent->v.frame);
 	MSG_WriteByte (&sv.signon, ent->v.colormap);
@@ -1910,7 +1908,7 @@ PF_Fixme,
 PF_Fixme,
 #endif
 
-SV_MoveToGoal,
+CQuakeServer::SV_MoveToGoal,	// Missi: this is UGLY (6/7/2022)
 PF_precache_file,
 PF_makestatic,
 

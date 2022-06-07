@@ -124,6 +124,7 @@ class CCoreRenderer
 public:
 
 	CCoreRenderer();
+	CCoreRenderer(const CCoreRenderer& src);
 
 	void R_Init(void);
 	void R_InitTextures(void);
@@ -203,7 +204,6 @@ public:
 };
 
 extern cvar_t gl_subdivide_size;
-extern CCoreRenderer* g_CoreRenderer;
 
 //
 // surface cache related

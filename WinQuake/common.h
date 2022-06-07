@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // comndef.h  -- general definitions
 
+#ifndef COMMON_H
+#define COMMON_H
+
 #if !defined BYTE_DEFINED
 typedef unsigned char 		byte;
 #define BYTE_DEFINED 1
@@ -85,9 +88,24 @@ void InsertLinkAfter (link_t *l, link_t *after);
 
 
 // Missi: copied from QuakeSpasm (2/11/22)
+#undef	min
+#undef	max
+#define	q_min(a, b)	(((a) < (b)) ? (a) : (b))
+#define	q_max(a, b)	(((a) > (b)) ? (a) : (b))
 #define	CLAMP(_minval, x, _maxval)		\
 	((x) < (_minval) ? (_minval) :		\
 	 (x) > (_maxval) ? (_maxval) : (x))
+
+// Missi: to get rid of the magic numbers (5/30/2022)
+enum HunkTypes_e
+{
+	HUNK_ZONE = 0,
+	HUNK_FULL = 1,
+	HUNK_TEMP = 2,
+	HUNK_CACHE = 3,
+	HUNK_TEMP_FILL = 4
+
+};
 
 //============================================================================
 
@@ -188,3 +206,5 @@ void COM_LoadCacheFile (const char *path, struct cache_user_s *cu);
 extern	struct cvar_s	registered;
 
 extern bool		standard_quake, rogue, hipnotic;
+
+#endif

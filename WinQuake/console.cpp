@@ -269,7 +269,7 @@ All console printing must go through this in order to be logged to disk
 If no console is visible, the notify window will pop up.
 ================
 */
-void Con_Print (char *txt)
+void Con_Print (const char *txt)
 {
 	int		y;
 	int		c, l;
@@ -319,7 +319,7 @@ void Con_Print (char *txt)
 			Con_Linefeed ();
 		// mark time for transparent overlay
 			if (con_current >= 0)
-				con_times[con_current % NUM_CON_TIMES] = realtime;
+				con_times[con_current % NUM_CON_TIMES] = host->realtime;
 		}
 
 		switch (c)
@@ -351,7 +351,7 @@ void Con_Print (char *txt)
 Con_DebugLog
 ================
 */
-void Con_DebugLog(char *file, char *fmt, ...)
+void Con_DebugLog(const char *file, const char *fmt, ...)
 {
     va_list argptr; 
     static char data[1024];
@@ -375,7 +375,7 @@ Handles cursor positioning, line wrapping, etc
 */
 #define	MAXPRINTMSG	4096
 // FIXME: make a buffer size safe vsprintf?
-void Con_Printf (char *fmt, ...)
+void Con_Printf (const char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
@@ -422,12 +422,12 @@ Con_DPrintf
 A Con_Printf that only shows up if the "developer" cvar is set
 ================
 */
-void Con_DPrintf (char *fmt, ...)
+void Con_DPrintf (const char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
 		
-	if (!developer.value)
+	if (!host->developer.value)
 		return;			// don't confuse non-developers with techie stuff...
 
 	va_start (argptr,fmt);
@@ -445,7 +445,7 @@ Con_SafePrintf
 Okay to call even when the screen can't be updated
 ==================
 */
-void Con_SafePrintf (char *fmt, ...)
+void Con_SafePrintf (const char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[1024];
@@ -490,7 +490,7 @@ void Con_DrawInput (void)
 	text = key_lines[edit_line];
 	
 // add the cursor frame
-	text[key_linepos] = 10+((int)(realtime*con_cursorspeed)&1);
+	text[key_linepos] = 10+((int)(host->realtime*con_cursorspeed)&1);
 	
 // fill out remainder with spaces
 	for (i=key_linepos+1 ; i< con_linewidth ; i++)
@@ -539,7 +539,7 @@ void Con_DrawNotify (void)
 		time = con_times[i % NUM_CON_TIMES];
 		if (time == 0)
 			continue;
-		time = realtime - time;
+		time = host->realtime - time;
 		if (time > con_notifytime.value)
 			continue;
 		text = con_text + (i % con_totallines)*con_linewidth;
@@ -582,7 +582,7 @@ void Con_DrawNotify (void)
 #ifndef GLQUAKE
 		g_SoftwareRenderer->Draw_Character ( (x+5)<<3, v, 10+((int)(realtime*con_cursorspeed)&1));
 #else
-		g_GLRenderer->Draw_Character((x + 5) << 3, v, 10 + ((int)(realtime * con_cursorspeed) & 1));
+		g_GLRenderer->Draw_Character((x + 5) << 3, v, 10 + ((int)(host->realtime * con_cursorspeed) & 1));
 #endif
 		v += 8;
 	}
@@ -651,7 +651,7 @@ void Con_DrawConsole (int lines, bool drawinput)
 Con_NotifyBox
 ==================
 */
-void Con_NotifyBox (char *text)
+void Con_NotifyBox (const char *text)
 {
 	double		t1, t2;
 
@@ -672,11 +672,11 @@ void Con_NotifyBox (char *text)
 		SCR_UpdateScreen ();
 		Sys_SendKeyEvents ();
 		t2 = Sys_DoubleTime ();
-		realtime += t2-t1;		// make the cursor blink
+		host->realtime += t2-t1;		// make the cursor blink
 	} while (key_count < 0);
 
 	Con_Printf ("\n");
 	key_dest = key_game;
-	realtime = 0;				// put the cursor back to invisible
+	host->realtime = 0;				// put the cursor back to invisible
 }
 

@@ -19,7 +19,37 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // server.h
 
+#ifndef SERVER_H
+#define SERVER_H
+
+#include "world.h"
+
+// Missi: copied from world.h (6/7/2022)
+
 typedef struct
+{
+	vec3_t	normal;
+	float	dist;
+} plane_t;
+
+typedef struct
+{
+	bool	allsolid;	// if true, plane is not valid
+	bool	startsolid;	// if true, the initial point was in a solid area
+	bool	inopen, inwater;
+	float	fraction;		// time completed, 1.0 = didn't hit anything
+	vec3_t	endpos;			// final position
+	plane_t	plane;			// surface normal at impact
+	edict_t* ent;			// entity the surface is on
+} trace_t;
+
+struct hull_t;
+
+#define	MOVE_NORMAL		0
+#define	MOVE_NOMONSTERS	1
+#define	MOVE_MISSILE	2
+
+typedef struct server_static_s
 {
 	int			maxclients;
 	int			maxclientslimit;
@@ -31,46 +61,6 @@ typedef struct
 //=============================================================================
 
 typedef enum {ss_loading, ss_active} server_state_t;
-
-typedef struct
-{
-	bool	active;				// false if only a net client
-
-	bool	paused;
-	bool	loadgame;			// handle connections specially
-
-	double		time;
-	
-	int			lastcheck;			// used by PF_checkclient
-	double		lastchecktime;
-	
-	char		name[64];			// map name
-#ifdef QUAKE2
-	char		startspot[64];
-#endif
-	char		modelname[64];		// maps/<name>.bsp, for model_precache[0]
-	struct model_s 	*worldmodel;
-	char		*model_precache[MAX_MODELS];	// NULL terminated
-	struct model_s	*models[MAX_MODELS];
-	char		*sound_precache[MAX_SOUNDS];	// NULL terminated
-	char		*lightstyles[MAX_LIGHTSTYLES];
-	int			num_edicts;
-	int			max_edicts;
-	edict_t		*edicts;			// can NOT be array indexed, because
-									// edict_t is variable sized, but can
-									// be used to reference the world ent
-	server_state_t	state;			// some actions are only valid during load
-
-	sizebuf_t	datagram;
-	byte		datagram_buf[MAX_DATAGRAM];
-
-	sizebuf_t	reliable_datagram;	// copied to all clients at end of frame
-	byte		reliable_datagram_buf[MAX_DATAGRAM];
-
-	sizebuf_t	signon;
-	byte		signon_buf[8192];
-} server_t;
-
 
 #define	NUM_PING_TIMES		16
 #define	NUM_SPAWN_PARMS		16
@@ -107,6 +97,225 @@ typedef struct client_s
 // client known data for deltas	
 	int				old_frags;
 } client_t;
+
+
+class CQuakeServer
+{
+public:
+	CQuakeServer();
+
+	void SV_Init(void);
+
+	void SV_StartParticle(vec3_t org, vec3_t dir, int color, int count);
+	void SV_StartSound(edict_t* entity, int channel, char* sample, int volume,
+		float attenuation);
+
+	void SV_SendServerinfo(client_t* client);
+
+	void SV_DropClient(bool crash);
+
+	void SV_SendNop(client_t* client);
+
+	void SV_SendClientMessages(void);
+	void SV_ClearDatagram(void);
+
+	int SV_ModelIndex(char* name);
+
+	void SV_CreateBaseline(void);
+
+	void SV_SendReconnect(void);
+
+	void SV_SetIdealPitch(void);
+
+	void SV_UserFriction(void);
+
+	void SV_Accelerate(void);
+
+	void SV_AirAccelerate(vec3_t wishveloc);
+
+	void SV_AddUpdates(void);
+
+	void SV_WaterMove(void);
+
+	void SV_WaterJump(void);
+
+	void SV_AirMove(void);
+
+	void SV_ClientThink(void);
+	void SV_ReadClientMove(usercmd_t* move);
+	void SV_AddClientToServer(struct qsocket_s* ret);
+
+	static void SV_ClientPrintf(const char* fmt, ...);
+	void SV_BroadcastPrintf(const char* fmt, ...);
+
+	void SV_Physics_Step(edict_t* ent);
+
+	void SV_Physics(void);
+
+	bool SV_CheckBottom(edict_t* ent);
+	bool SV_movestep(edict_t* ent, vec3_t move, bool relink);
+
+	bool SV_StepDirection(edict_t* ent, float yaw, float dist);
+
+	void SV_FixCheckBottom(edict_t* ent);
+
+	void SV_NewChaseDir(edict_t* actor, edict_t* enemy, float dist);
+
+	bool SV_CloseEnough(edict_t* ent, edict_t* goal, float dist);
+
+	void SV_AddToFatPVS(vec3_t org, mnode_s* node);
+
+	byte* SV_FatPVS(vec3_t org);
+
+	void SV_WriteEntitiesToClient(edict_t* clent, sizebuf_t* msg);
+
+	void SV_CleanupEnts(void);
+
+	void SV_WriteClientdataToMessage(edict_t* ent, sizebuf_t* msg);
+
+	bool SV_SendClientDatagram(client_t* client);
+
+	void SV_UpdateToReliableMessages(void);
+
+	static void SV_MoveToGoal(void);
+
+	void SV_ConnectClient(int clientnum);
+
+	void SV_CheckForNewClients(void);
+	bool SV_ReadClientMessage(void);
+	void SV_RunClients(void);
+	void SV_SaveSpawnparms();
+#ifdef QUAKE2
+	void SV_SpawnServer(char* server, char* startspot);
+#else
+	void SV_SpawnServer(char* server);
+#endif
+
+	void SV_CheckAllEnts(void);
+
+	void SV_CheckVelocity(edict_t* ent);
+
+	bool SV_RunThink(edict_t* ent);
+
+	void SV_Impact(edict_t* e1, edict_t* e2);
+
+	int SV_FlyMove(edict_t* ent, float time, trace_t* steptrace);
+
+	trace_t SV_PushEntity(edict_t* ent, vec3_t push);
+
+	void SV_PushMove(edict_t* pusher, float movetime);
+
+	void SV_Physics_Pusher(edict_t* ent);
+
+	void SV_CheckStuck(edict_t* ent);
+
+	bool SV_CheckWater(edict_t* ent);
+
+	void SV_WallFriction(edict_t* ent, trace_t* trace);
+
+	int SV_TryUnstick(edict_t* ent, vec3_t oldvel);
+
+	void SV_WalkMove(edict_t* ent);
+
+	void SV_Physics_Client(edict_t* ent, int num);
+
+	void SV_Physics_None(edict_t* ent);
+
+	void SV_Physics_Noclip(edict_t* ent);
+
+	void SV_CheckWaterTransition(edict_t* ent);
+
+	void SV_Physics_Toss(edict_t* ent);
+
+	void SV_ClearWorld(void);
+	// called after the world model has been loaded, before linking any entities
+
+	void SV_UnlinkEdict(edict_t* ent);
+	void SV_TouchLinks(edict_t* ent, struct areanode_s* node);
+	// call before removing an entity, and before trying to move one,
+	// so it doesn't clip against itself
+	// flags ent->v.modified
+
+	void SV_InitBoxHull(void);
+
+	hull_t* SV_HullForBox(vec3_t mins, vec3_t maxs);
+
+	hull_t* SV_HullForEntity(edict_t* ent, vec3_t mins, vec3_t maxs, vec3_t offset);
+
+	void SV_LinkEdict(edict_t* ent, bool touch_triggers);
+	int SV_HullPointContents(hull_t* hull, int num, vec3_t p);
+	// Needs to be called any time an entity changes origin, mins, maxs, or solid
+	// flags ent->v.modified
+	// sets ent->v.absmin and ent->v.absmax
+	// if touchtriggers, calls prog functions for the intersected triggers
+
+	int SV_PointContents(vec3_t p);
+	int SV_TruePointContents(vec3_t p);
+	// returns the CONTENTS_* value from the world at the given point.
+	// does not check any entities at all
+	// the non-true version remaps the water current contents to content_water
+
+#ifndef GLQUAKE
+	bool SV_RecursiveHullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t* trace);
+#else
+	bool SV_RecursiveHullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t* trace);
+#endif
+	edict_t* SV_TestEntityPosition(edict_t* ent);
+	trace_t SV_ClipMoveToEntity(edict_t* ent, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end);
+
+	void SV_ClipToLinks(struct areanode_s* node, struct moveclip_s* clip);
+
+	void SV_MoveBounds(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, vec3_t boxmins, vec3_t boxmaxs);
+
+	trace_t SV_Move(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, edict_t* passedict);
+	// mins and maxs are reletive
+
+	// if the entire move stays in a solid volume, trace.allsolid will be set
+
+	// if the starting point is in a solid, it will be allowed to move out
+	// to an open area
+
+	// nomonsters is used for line of sight or edge testing, where mosnters
+	// shouldn't be considered solid objects
+
+	// passedict is explicitly excluded from clipping checks (normally NULL)
+
+	bool	active;				// false if only a net client
+	bool	paused;
+	bool	loadgame;			// handle connections specially
+
+	double		time;
+
+	int			lastcheck;			// used by PF_checkclient
+	double		lastchecktime;
+
+	char		name[64];			// map name
+#ifdef QUAKE2
+	char		startspot[64];
+#endif
+	char		modelname[64];		// maps/<name>.bsp, for model_precache[0]
+	struct model_s* worldmodel;
+	char* model_precache[MAX_MODELS];	// NULL terminated
+	struct model_s* models[MAX_MODELS];
+	char* sound_precache[MAX_SOUNDS];	// NULL terminated
+	char* lightstyles[MAX_LIGHTSTYLES];
+	int			num_edicts;
+	int			max_edicts;
+	edict_t* edicts;			// can NOT be array indexed, because
+									// edict_t is variable sized, but can
+									// be used to reference the world ent
+	server_state_t	state;			// some actions are only valid during load
+
+	sizebuf_t	datagram;
+	byte		datagram_buf[MAX_DATAGRAM];
+
+	sizebuf_t	reliable_datagram;	// copied to all clients at end of frame
+	byte		reliable_datagram_buf[MAX_DATAGRAM];
+
+	sizebuf_t	signon;
+	byte		signon_buf[8192];
+
+};
 
 
 //=============================================================================
@@ -203,7 +412,7 @@ extern	cvar_t	fraglimit;
 extern	cvar_t	timelimit;
 
 extern	server_static_t	svs;				// persistant server info
-extern	server_t		sv;					// local server
+extern	CQuakeServer		sv;					// local server
 
 extern	client_t	*host_client;
 
@@ -215,43 +424,4 @@ extern	edict_t		*sv_player;
 
 //===========================================================
 
-void SV_Init (void);
-
-void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count);
-void SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
-    float attenuation);
-
-void SV_DropClient (bool crash);
-
-void SV_SendClientMessages (void);
-void SV_ClearDatagram (void);
-
-int SV_ModelIndex (char *name);
-
-void SV_SetIdealPitch (void);
-
-void SV_AddUpdates (void);
-
-void SV_ClientThink (void);
-void SV_AddClientToServer (struct qsocket_s	*ret);
-
-void SV_ClientPrintf (char *fmt, ...);
-void SV_BroadcastPrintf (char *fmt, ...);
-
-void SV_Physics (void);
-
-bool SV_CheckBottom (edict_t *ent);
-bool SV_movestep (edict_t *ent, vec3_t move, bool relink);
-
-void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg);
-
-void SV_MoveToGoal (void);
-
-void SV_CheckForNewClients (void);
-void SV_RunClients (void);
-void SV_SaveSpawnparms ();
-#ifdef QUAKE2
-void SV_SpawnServer (char *server, char *startspot);
-#else
-void SV_SpawnServer (char *server);
 #endif

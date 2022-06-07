@@ -172,6 +172,10 @@ public:
 
 	void Scrap_Upload(void);
 
+	int GL_Pad(int s);
+
+	int GL_SafeTextureSize(int s);
+
 	int GL_PadConditional(int s);
 
 	CQuakePic* Draw_PicFromWad(const char* name);
@@ -181,6 +185,8 @@ public:
 	void Draw_CharToConback(int num, byte* dest);
 
 	static void Draw_TextureMode_f(void);
+
+	void R_SplitEntityOnNode(mnode_t* node);
 
 	int AllocBlock(int w, int h, int* x, int* y);
 
@@ -248,7 +254,6 @@ public:
 	void R_RenderView(void);
 	void R_SetupFrame(void);
 	void R_NewMap(void);
-	void R_SplitEntityOnNode(mnode_t* node);
 	void R_AddEfrags(entity_t* ent);
 
 	int R_LightPoint(vec3_t p);
@@ -359,7 +364,6 @@ public:
 	COpenGLPic();
 	COpenGLPic(CGLTexture* mem);
 
-	CGLTexture* gltexture;
 	float	sl, tl, sh, th;
 };
 
@@ -369,21 +373,21 @@ class CGLTexture
 {
 public:
 	CGLTexture();
-	CGLTexture(CQuakePic* qpic, COpenGLPic* glpic = NULL);
+	CGLTexture(CQuakePic qpic, float sl = 0, float tl = 0, float sh = 0, float th = 0);
 	CGLTexture(const CGLTexture& obj);
-
-	CQuakePic* pic;
-	COpenGLPic* glpic;
-
-	unsigned int		texnum;
-	char	identifier[64];
-	unsigned int	width, height;
-	bool	mipmap;
 
 	float	sl;
 	float	tl;
 	float	sh;
 	float	th;
+
+	CQuakePic pic;
+	//COpenGLPic* glcoords;
+
+	unsigned int		texnum;
+	char	identifier[64];
+	unsigned int	width, height;
+	bool	mipmap;
 
 };
 

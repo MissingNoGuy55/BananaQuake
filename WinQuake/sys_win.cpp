@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sys_win.c -- Win32 system interface code
 
 #include "quakedef.h"
+#include "host.h"
 #include "winquake.h"
 #include "errno.h"
 #include "resource.h"
@@ -486,7 +487,7 @@ void Sys_Error (char *error, ...)
 	if (!in_sys_error1)
 	{
 		in_sys_error1 = 1;
-		Host_Shutdown ();
+		host->Host_Shutdown ();
 	}
 
 // shut down QHOST hooks if necessary
@@ -520,7 +521,7 @@ void Sys_Quit (void)
 
 	VID_ForceUnlockedAndReturnState ();
 
-	Host_Shutdown();
+	host->Host_Shutdown();
 
 	if (tevent)
 		CloseHandle (tevent);
@@ -779,12 +780,14 @@ HWND		hwnd_dialog;
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     MSG				msg;
-	quakeparms_t	parms;
+	quakeparms_t<byte*>	parms;
 	double			time, oldtime, newtime;
 	MEMORYSTATUS	lpBuffer;
 	static	char	cwd[1024];
 	int				t;
 	RECT			rect;
+
+	host = new CQuakeHost(parms);
 
     /* previous instances do not exist in Win32 */
     if (hPrevInstance)
@@ -884,12 +887,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			parms.memsize = Q_atoi (com_argv[t]) * 1024;
 	}
 
-	parms.membase = malloc (parms.memsize);
+	parms.membase = (byte*)malloc (parms.memsize);
 
 	if (!parms.membase)
 		Sys_Error ("Not enough memory free; check disk space\n");
 
-	Sys_PageIn (parms.membase, parms.memsize);
+	Sys_PageIn ((void*)parms.membase, parms.memsize);
 
 	// tevent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
@@ -934,7 +937,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	// g_SoundSystem->S_BlockSound ();
 
 	Sys_Printf ("Host_Init\n");
-	Host_Init (&parms);
+	host->Host_Init(parms);
 
 	oldtime = Sys_DoubleTime();
 
@@ -946,7 +949,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			newtime = Sys_DoubleTime ();
 			time = newtime - oldtime;
 
-			while (time < sys_ticrate.value )
+			while (time < host->sys_ticrate.value )
 			{
 				Sys_Sleep();
 				newtime = Sys_DoubleTime ();
@@ -970,7 +973,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			time = newtime - oldtime;
 		}
 
-		Host_Frame (time);
+		host->Host_Frame (time);
 		oldtime = newtime;
 	}
 

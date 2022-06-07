@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-server_t		sv;
+CQuakeServer		sv;
 server_static_t	svs;
 
 char	localmodels[MAX_MODELS][5];			// inline model names for precache
@@ -33,7 +33,7 @@ char	localmodels[MAX_MODELS][5];			// inline model names for precache
 SV_Init
 ===============
 */
-void SV_Init (void)
+void CQuakeServer::SV_Init (void)
 {
 	int		i;
 	extern	cvar_t	sv_maxvelocity;
@@ -77,7 +77,7 @@ SV_StartParticle
 Make sure the event gets sent to all clients
 ==================
 */
-void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count)
+void CQuakeServer::SV_StartParticle (vec3_t org, vec3_t dir, int color, int count)
 {
 	int		i, v;
 
@@ -115,7 +115,7 @@ Larger attenuations will drop off.  (max 4 attenuation)
 
 ==================
 */  
-void SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
+void CQuakeServer::SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
     float attenuation)
 {       
     int         sound_num;
@@ -186,7 +186,7 @@ Sends the first message from the server to a connected client.
 This will be sent on the initial connection and upon each server load.
 ================
 */
-void SV_SendServerinfo (client_t *client)
+void CQuakeServer::SV_SendServerinfo (client_t *client)
 {
 	char			**s;
 	char			message[2048];
@@ -240,7 +240,7 @@ Initializes a client_t for a new net connection.  This will only be called
 once for a player each game, not once for each level change.
 ================
 */
-void SV_ConnectClient (int clientnum)
+void CQuakeServer::SV_ConnectClient (int clientnum)
 {
 	edict_t			*ent;
 	client_t		*client;
@@ -299,7 +299,7 @@ SV_CheckForNewClients
 
 ===================
 */
-void SV_CheckForNewClients (void)
+void CQuakeServer::SV_CheckForNewClients (void)
 {
 	struct qsocket_s	*ret;
 	int				i;
@@ -345,7 +345,7 @@ SV_ClearDatagram
 
 ==================
 */
-void SV_ClearDatagram (void)
+void CQuakeServer::SV_ClearDatagram (void)
 {
 	SZ_Clear (&sv.datagram);
 }
@@ -364,7 +364,7 @@ crosses a waterline.
 int		fatbytes;
 byte	fatpvs[MAX_MAP_LEAFS/8];
 
-void SV_AddToFatPVS (vec3_t org, mnode_t *node)
+void CQuakeServer::SV_AddToFatPVS (vec3_t org, mnode_t *node)
 {
 	int		i;
 	byte	*pvs;
@@ -407,7 +407,7 @@ Calculates a PVS that is the inclusive or of all leafs within 8 pixels of the
 given point.
 =============
 */
-byte *SV_FatPVS (vec3_t org)
+byte* CQuakeServer::SV_FatPVS (vec3_t org)
 {
 	fatbytes = (sv.worldmodel->numleafs+31)>>3;
 	Q_memset (fatpvs, 0, fatbytes);
@@ -424,7 +424,7 @@ SV_WriteEntitiesToClient
 
 =============
 */
-void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
+void CQuakeServer::SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 {
 	int		e, i;
 	int		bits;
@@ -554,7 +554,7 @@ SV_CleanupEnts
 
 =============
 */
-void SV_CleanupEnts (void)
+void CQuakeServer::SV_CleanupEnts (void)
 {
 	int		e;
 	edict_t	*ent;
@@ -573,7 +573,7 @@ SV_WriteClientdataToMessage
 
 ==================
 */
-void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
+void CQuakeServer::SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 {
 	int		bits;
 	int		i;
@@ -717,7 +717,7 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 SV_SendClientDatagram
 =======================
 */
-bool SV_SendClientDatagram (client_t *client)
+bool CQuakeServer::SV_SendClientDatagram (client_t *client)
 {
 	byte		buf[MAX_DATAGRAM];
 	sizebuf_t	msg;
@@ -753,7 +753,7 @@ bool SV_SendClientDatagram (client_t *client)
 SV_UpdateToReliableMessages
 =======================
 */
-void SV_UpdateToReliableMessages (void)
+void CQuakeServer::SV_UpdateToReliableMessages (void)
 {
 	int			i, j;
 	client_t *client;
@@ -795,7 +795,7 @@ Send a nop message without trashing or sending the accumulated client
 message buffer
 =======================
 */
-void SV_SendNop (client_t *client)
+void CQuakeServer::SV_SendNop (client_t *client)
 {
 	sizebuf_t	msg;
 	byte		buf[4];
@@ -808,7 +808,7 @@ void SV_SendNop (client_t *client)
 
 	if (NET_SendUnreliableMessage (client->netconnection, &msg) == -1)
 		SV_DropClient (true);	// if the message couldn't send, kick off
-	client->last_message = realtime;
+	client->last_message = host->realtime;
 }
 
 /*
@@ -816,7 +816,7 @@ void SV_SendNop (client_t *client)
 SV_SendClientMessages
 =======================
 */
-void SV_SendClientMessages (void)
+void CQuakeServer::SV_SendClientMessages (void)
 {
 	int			i;
 	
@@ -843,7 +843,7 @@ void SV_SendClientMessages (void)
 		// between signon stages
 			if (!host_client->sendsignon)
 			{
-				if (realtime - host_client->last_message > 5)
+				if (host->realtime - host_client->last_message > 5)
 					SV_SendNop (host_client);
 				continue;	// don't send out non-signon messages
 			}
@@ -875,7 +875,7 @@ void SV_SendClientMessages (void)
 				, &host_client->message) == -1)
 					SV_DropClient (true);	// if the message couldn't send, kick off
 				SZ_Clear (&host_client->message);
-				host_client->last_message = realtime;
+				host_client->last_message = host->realtime;
 				host_client->sendsignon = false;
 			}
 		}
@@ -901,7 +901,7 @@ SV_ModelIndex
 
 ================
 */
-int SV_ModelIndex (char *name)
+int CQuakeServer::SV_ModelIndex (char *name)
 {
 	int		i;
 	
@@ -922,7 +922,7 @@ SV_CreateBaseline
 
 ================
 */
-void SV_CreateBaseline (void)
+void CQuakeServer::SV_CreateBaseline (void)
 {
 	int			i;
 	edict_t			*svent;
@@ -982,7 +982,7 @@ SV_SendReconnect
 Tell all the clients that the server is changing levels
 ================
 */
-void SV_SendReconnect (void)
+void CQuakeServer::SV_SendReconnect (void)
 {
 	char	data[128];
 	sizebuf_t	msg;
@@ -1012,7 +1012,7 @@ Grabs the current state of each client for saving across the
 transition to another level
 ================
 */
-void SV_SaveSpawnparms (void)
+void CQuakeServer::SV_SaveSpawnparms (void)
 {
 	int		i, j;
 
@@ -1042,9 +1042,9 @@ This is called at the start of each level
 extern float		scr_centertime_off;
 
 #ifdef QUAKE2
-void SV_SpawnServer (char *server, char *startspot)
+void CQuakeServer::SV_SpawnServer (char *server, char *startspot)
 #else
-void SV_SpawnServer (char *server)
+void CQuakeServer::SV_SpawnServer (char *server)
 #endif
 {
 	edict_t		*ent;
@@ -1071,18 +1071,18 @@ void SV_SpawnServer (char *server)
 //
 	if (coop.value)
 		Cvar_SetValue ("deathmatch", 0);
-	current_skill = (int)(skill.value + 0.5);
-	if (current_skill < 0)
-		current_skill = 0;
-	if (current_skill > 3)
-		current_skill = 3;
+	host->current_skill = (int)(skill.value + 0.5);
+	if (host->current_skill < 0)
+		host->current_skill = 0;
+	if (host->current_skill > 3)
+		host->current_skill = 3;
 
-	Cvar_SetValue ("skill", (float)current_skill);
+	Cvar_SetValue ("skill", (float)host->current_skill);
 	
 //
 // set up the new server
 //
-	Host_ClearMemory ();
+	host->Host_ClearMemory ();
 
 	memset (&sv, 0, sizeof(sv));
 
@@ -1183,7 +1183,7 @@ void SV_SpawnServer (char *server)
 	sv.state = ss_active;
 	
 // run two frames to allow everything to settle
-	host_frametime = 0.1;
+	host->host_frametime = 0.1;
 	SV_Physics ();
 	SV_Physics ();
 

@@ -30,7 +30,7 @@ line of sight checks trace->crosscontent, but bullets don't
 */
 
 
-typedef struct
+typedef struct moveclip_s // Missi: modified (6/7/2022)
 {
 	vec3_t		boxmins, boxmaxs;// enclose the test object along entire move
 	float		*mins, *maxs;	// size of the moving object
@@ -65,7 +65,7 @@ Set up the planes and clipnodes so that the six floats of a bounding box
 can just be stored out and get a proper hull_t structure.
 ===================
 */
-void SV_InitBoxHull (void)
+void CQuakeServer::SV_InitBoxHull (void)
 {
 	int		i;
 	int		side;
@@ -102,7 +102,7 @@ To keep everything totally uniform, bounding boxes are turned into small
 BSP trees instead of being compared directly.
 ===================
 */
-hull_t	*SV_HullForBox (vec3_t mins, vec3_t maxs)
+hull_t	* CQuakeServer::SV_HullForBox (vec3_t mins, vec3_t maxs)
 {
 	box_planes[0].dist = maxs[0];
 	box_planes[1].dist = mins[0];
@@ -126,7 +126,7 @@ Offset is filled in to contain the adjustment that must be added to the
 testing object's origin to get a point to use with the returned hull.
 ================
 */
-hull_t *SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs, vec3_t offset)
+hull_t * CQuakeServer::SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs, vec3_t offset)
 {
 	model_t		*model;
 	vec3_t		size;
@@ -244,7 +244,7 @@ SV_ClearWorld
 
 ===============
 */
-void SV_ClearWorld (void)
+void CQuakeServer::SV_ClearWorld (void)
 {
 	SV_InitBoxHull ();
 	
@@ -260,7 +260,7 @@ SV_UnlinkEdict
 
 ===============
 */
-void SV_UnlinkEdict (edict_t *ent)
+void CQuakeServer::SV_UnlinkEdict (edict_t *ent)
 {
 	if (!ent->area.prev)
 		return;		// not linked in anywhere
@@ -274,7 +274,7 @@ void SV_UnlinkEdict (edict_t *ent)
 SV_TouchLinks
 ====================
 */
-void SV_TouchLinks ( edict_t *ent, areanode_t *node )
+void CQuakeServer::SV_TouchLinks ( edict_t *ent, areanode_t *node )
 {
 	link_t		*l, *next;
 	edict_t		*touch;
@@ -369,7 +369,7 @@ SV_LinkEdict
 
 ===============
 */
-void SV_LinkEdict (edict_t *ent, bool touch_triggers)
+void CQuakeServer::SV_LinkEdict (edict_t *ent, bool touch_triggers)
 {
 	areanode_t	*node;
 
@@ -488,7 +488,7 @@ SV_HullPointContents
 
 ==================
 */
-int SV_HullPointContents (hull_t *hull, int num, vec3_t p)
+int CQuakeServer::SV_HullPointContents (hull_t *hull, int num, vec3_t p)
 {
 	float		d;
 	dclipnode_t	*node;
@@ -524,7 +524,7 @@ SV_PointContents
 
 ==================
 */
-int SV_PointContents (vec3_t p)
+int CQuakeServer::SV_PointContents (vec3_t p)
 {
 	int		cont;
 
@@ -534,7 +534,7 @@ int SV_PointContents (vec3_t p)
 	return cont;
 }
 
-int SV_TruePointContents (vec3_t p)
+int CQuakeServer::SV_TruePointContents (vec3_t p)
 {
 	return SV_HullPointContents (&sv.worldmodel->hulls[0], 0, p);
 }
@@ -548,11 +548,11 @@ SV_TestEntityPosition
 This could be a lot more efficient...
 ============
 */
-edict_t	*SV_TestEntityPosition (edict_t *ent)
+edict_t	* CQuakeServer::SV_TestEntityPosition (edict_t *ent)
 {
 	trace_t	trace;
 
-	trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, ent->v.origin, 0, ent);
+	trace = sv.SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, ent->v.origin, 0, ent);
 	
 	if (trace.startsolid)
 		return sv.edicts;
@@ -578,7 +578,7 @@ SV_RecursiveHullCheck
 
 ==================
 */
-bool SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t *trace)
+bool CQuakeServer::SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t *trace)
 {
 	dclipnode_t	*node;
 	mplane_t	*plane;
@@ -719,7 +719,7 @@ Handles selection or creation of a clipping hull, and offseting (and
 eventually rotation) of the end points
 ==================
 */
-trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
+trace_t CQuakeServer::SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
 {
 	trace_t		trace;
 	vec3_t		offset;
@@ -762,7 +762,7 @@ trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t max
 #endif
 
 // trace a line through the apropriate clipping hull
-	SV_RecursiveHullCheck (hull, hull->firstclipnode, 0, 1, start_l, end_l, &trace);
+	sv.SV_RecursiveHullCheck (hull, hull->firstclipnode, 0, 1, start_l, end_l, &trace);
 
 #ifdef QUAKE2
 	// rotate endpos back to world frame of reference
@@ -811,7 +811,7 @@ SV_ClipToLinks
 Mins and maxs enclose the entire area swept by the move
 ====================
 */
-void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip )
+void CQuakeServer::SV_ClipToLinks ( struct areanode_s *node, moveclip_t *clip )
 {
 	link_t		*l, *next;
 	edict_t		*touch;
@@ -890,7 +890,7 @@ void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip )
 SV_MoveBounds
 ==================
 */
-void SV_MoveBounds (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, vec3_t boxmins, vec3_t boxmaxs)
+void CQuakeServer::SV_MoveBounds (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, vec3_t boxmins, vec3_t boxmaxs)
 {
 #if 0
 // debug to test against everything
@@ -920,7 +920,7 @@ boxmaxs[0] = boxmaxs[1] = boxmaxs[2] = 9999;
 SV_Move
 ==================
 */
-trace_t SV_Move (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, edict_t *passedict)
+trace_t CQuakeServer::SV_Move (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, edict_t *passedict)
 {
 	moveclip_t	clip;
 	int			i;

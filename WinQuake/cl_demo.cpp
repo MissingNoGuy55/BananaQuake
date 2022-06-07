@@ -99,13 +99,13 @@ int CL_GetMessage (void)
 		{
 			if (cls.timedemo)
 			{
-				if (host_framecount == cls.td_lastframe)
+				if (host->host_framecount == cls.td_lastframe)
 					return 0;		// allready read this frame's message
-				cls.td_lastframe = host_framecount;
+				cls.td_lastframe = host->host_framecount;
 			// if this is the second frame, grab the real td_starttime
 			// so the bogus time on the first frame doesn't count
-				if (host_framecount == cls.td_startframe + 1)
-					cls.td_starttime = realtime;
+				if (host->host_framecount == cls.td_startframe + 1)
+					cls.td_starttime = host->realtime;
 			}
 			else if ( /* cl.time > 0 && */ cl.time <= cl.mtime[0])
 			{
@@ -330,8 +330,8 @@ void CL_FinishTimeDemo (void)
 	cls.timedemo = false;
 	
 // the first frame didn't count
-	frames = (host_framecount - cls.td_startframe) - 1;
-	time = realtime - cls.td_starttime;
+	frames = (host->host_framecount - cls.td_startframe) - 1;
+	time = host->realtime - cls.td_starttime;
 	if (!time)
 		time = 1;
 	Con_Printf ("%i frames %5.1f seconds %5.1f fps\n", frames, time, frames/time);
@@ -361,7 +361,7 @@ void CL_TimeDemo_f (void)
 // all the loading time doesn't get counted
 	
 	cls.timedemo = true;
-	cls.td_startframe = host_framecount;
+	cls.td_startframe = host->host_framecount;
 	cls.td_lastframe = -1;		// get a new message this frame
 }
 

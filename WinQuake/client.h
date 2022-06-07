@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // client.h
 
+#pragma once
+
 typedef struct
 {
 	vec3_t	viewangles;
@@ -108,7 +110,7 @@ ca_connected		// valid netcon, talking to a server
 // the client_static_t structure is persistant through an arbitrary number
 // of server connections
 //
-typedef struct
+typedef struct client_static_s
 {
 	cactive_t	state;
 
@@ -293,7 +295,7 @@ void	CL_DecayLights (void);
 
 void CL_Init (void);
 
-void CL_EstablishConnection (char *host);
+void CL_EstablishConnection (char *inhost);
 void CL_Signon1 (void);
 void CL_Signon2 (void);
 void CL_Signon3 (void);

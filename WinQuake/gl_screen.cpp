@@ -211,7 +211,7 @@ void SCR_CheckDrawCenterString (void)
 	if (scr_center_lines > scr_erase_lines)
 		scr_erase_lines = scr_center_lines;
 
-	scr_centertime_off -= host_frametime;
+	scr_centertime_off -= host->host_frametime;
 	
 	if (scr_centertime_off <= 0 && !cl.intermission)
 		return;
@@ -425,7 +425,7 @@ void SCR_DrawTurtle (void)
 	if (!scr_showturtle.value)
 		return;
 
-	if (host_frametime < 0.1)
+	if (host->host_frametime < 0.1)
 	{
 		count = 0;
 		return;
@@ -445,7 +445,7 @@ SCR_DrawNet
 */
 void SCR_DrawNet (void)
 {
-	if (realtime - cl.last_received_message < 0.3)
+	if (host->realtime - cl.last_received_message < 0.3)
 		return;
 	if (cls.demoplayback)
 		return;
@@ -524,14 +524,14 @@ void SCR_SetUpToDrawConsole (void)
 	
 	if (scr_conlines < scr_con_current)
 	{
-		scr_con_current -= scr_conspeed.value*host_frametime;
+		scr_con_current -= scr_conspeed.value* host->host_frametime;
 		if (scr_conlines > scr_con_current)
 			scr_con_current = scr_conlines;
 
 	}
 	else if (scr_conlines > scr_con_current)
 	{
-		scr_con_current += scr_conspeed.value*host_frametime;
+		scr_con_current += scr_conspeed.value* host->host_frametime;
 		if (scr_conlines < scr_con_current)
 			scr_con_current = scr_conlines;
 	}
@@ -672,7 +672,7 @@ void SCR_BeginLoadingPlaque (void)
 	scr_drawloading = false;
 
 	scr_disabled_for_loading = true;
-	scr_disabled_time = realtime;
+	scr_disabled_time = host->realtime;
 	scr_fullupdate = 0;
 }
 
@@ -781,7 +781,7 @@ void SCR_BringDownConsole (void)
 		SCR_UpdateScreen ();
 
 	cl.cshifts[0].percent = 0;		// no area contents palette on next frame
-	VID_SetPalette (host_basepal);
+	VID_SetPalette (host->host_basepal);
 }
 
 void SCR_TileClear (void)
@@ -834,7 +834,7 @@ void SCR_UpdateScreen (void)
 
 	if (scr_disabled_for_loading)
 	{
-		if (realtime - scr_disabled_time > 60)
+		if (host->realtime - scr_disabled_time > 60)
 		{
 			scr_disabled_for_loading = false;
 			Con_Printf ("load failed.\n");

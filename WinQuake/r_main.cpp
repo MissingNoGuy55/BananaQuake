@@ -142,7 +142,7 @@ extern cvar_t	scr_fov;
 void CreatePassages (void);
 void SetVisibilityByPassages (void);
 
-CCoreRenderer* g_CoreRenderer;
+//CCoreRenderer* g_CoreRenderer;
 
 /*
 ==================

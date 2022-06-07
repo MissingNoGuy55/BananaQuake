@@ -805,9 +805,9 @@ void IN_StartupJoystick (void)
 		Con_Printf("%d mappings loaded from gamecontrollerdb.txt\n", nummappings);
 
 	// Also try host_parms->userdir
-	if (host_parms.cachedir != host_parms.basedir)
+	if (host->host_parms.cachedir != host->host_parms.basedir)
 	{
-		snprintf(controllerdb, sizeof(controllerdb), "%s/gamecontrollerdb.txt", host_parms.cachedir);
+		snprintf(controllerdb, sizeof(controllerdb), "%s/gamecontrollerdb.txt", host->host_parms.cachedir);
 		nummappings = SDL_GameControllerAddMappingsFromFile(controllerdb);
 		if (nummappings > 0)
 			Con_Printf("%d mappings loaded from gamecontrollerdb.txt\n", nummappings);
@@ -1083,7 +1083,7 @@ void IN_JoyMove (usercmd_t *cmd)
 		speed = cl_movespeedkey.value;
 	else
 		speed = 1;
-	aspeed = speed * host_frametime;
+	aspeed = speed * host->host_frametime;
 
 	// loop through the axes
 	for (i = 0; i < JOY_MAX_AXES; i++)

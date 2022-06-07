@@ -80,7 +80,7 @@ void CGLRenderer::R_InitParticleTexture (void)
 	//
 	// particle texture
 	//
-	particletexture = (CGLTexture*)g_MemCache->Hunk_Alloc(sizeof(CGLTexture));
+	particletexture = static_cast<CGLTexture*>(g_MemCache->Hunk_Alloc(sizeof(CGLTexture)));
 	particletexture->texnum = texture_extension_number++; //++;
     g_GLRenderer->GL_Bind(particletexture);
 
@@ -176,7 +176,7 @@ R_Init
 */
 void CGLRenderer::R_Init (void)
 {	
-	extern byte *hunk_base;
+	//extern byte *hunk_base;
 	extern cvar_t gl_finish;
 
 	//Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);	

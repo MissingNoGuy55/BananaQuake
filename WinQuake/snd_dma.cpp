@@ -177,7 +177,7 @@ void CSoundSystemWin::S_Init (void)
 	Cvar_RegisterVariable(&snd_speed);
 	Cvar_RegisterVariable(&snd_filterquality);
 
-	if (host_parms.memsize < 0x800000)
+	if (host->host_parms.memsize < 0x800000)
 	{
 		Cvar_Set ("loadas8bit", "1");
 		Con_Printf ("loading all sounds as 8bit\n");
@@ -647,13 +647,13 @@ void CSoundSystemWin::S_UpdateAmbientSounds (void)
 	// don't adjust volume too fast
 		if (chan->master_vol < vol)
 		{
-			chan->master_vol += host_frametime * ambient_fade.value;
+			chan->master_vol += host->host_frametime * ambient_fade.value;
 			if (chan->master_vol > vol)
 				chan->master_vol = vol;
 		}
 		else if (chan->master_vol > vol)
 		{
-			chan->master_vol -= host_frametime * ambient_fade.value;
+			chan->master_vol -= host->host_frametime * ambient_fade.value;
 			if (chan->master_vol < vol)
 				chan->master_vol = vol;
 		}

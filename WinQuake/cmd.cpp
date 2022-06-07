@@ -400,25 +400,25 @@ void Cmd_Alias_f (void)
 =============================================================================
 */
 
-typedef struct cmd_function_s
+struct cmd_function_t
 {
-	struct cmd_function_s	*next;
-	char					*name;
+	struct cmd_function_t	*next = NULL;
+	char					*name = "";
 	xcommand_t				function;
-} cmd_function_t;
+}; // Missi: changed from typedef struct cmd_function_s
 
 
 #define	MAX_ARGS		80
 
-static	int			cmd_argc;
-static	char		*cmd_argv[MAX_ARGS];
-static	char		*cmd_null_string = "";
-static	char		*cmd_args = NULL;
+int			cmd_argc;
+char		*cmd_argv[MAX_ARGS];
+char		*cmd_null_string = "";
+char		*cmd_args = NULL;
 
 cmd_source_t	cmd_source;
 
 
-static	cmd_function_t	*cmd_functions;		// possible commands to execute
+cmd_function_t*	cmd_functions;		// possible commands to execute
 
 /*
 ============
@@ -430,6 +430,9 @@ void Cmd_Init (void)
 //
 // register our commands
 //
+
+	//cmd_functions.AddToTail(new cmd_function_t);
+
 	Cmd_AddCommand ("stuffcmds",Cmd_StuffCmds_f);
 	Cmd_AddCommand ("exec",Cmd_Exec_f);
 	Cmd_AddCommand ("echo",Cmd_Echo_f);
@@ -531,9 +534,10 @@ Cmd_AddCommand
 */
 void	Cmd_AddCommand (char *cmd_name, xcommand_t function)
 {
-	cmd_function_t	*cmd;
-	
-	if (host_initialized)	// because hunk allocation would get stomped
+	cmd_function_t	*cmd = NULL;
+	int				i;
+
+	if (host->host_initialized)	// because hunk allocation would get stomped
 		Sys_Error ("Cmd_AddCommand after host_initialized");
 		
 // fail if the command is a variable name
@@ -567,9 +571,10 @@ Cmd_Exists
 */
 bool	Cmd_Exists (char *cmd_name)
 {
-	cmd_function_t	*cmd;
+	cmd_function_t	*cmd = NULL;
+	int	i;
 
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
+	for (i=0, cmd=cmd_functions; cmd; cmd = cmd->next, i++)
 	{
 		if (!Q_strcmp (cmd_name,cmd->name))
 			return true;
@@ -589,14 +594,15 @@ char *Cmd_CompleteCommand (char *partial)
 {
 	cmd_function_t	*cmd;
 	int				len;
-	
+	int				i;
+
 	len = Q_strlen(partial);
 	
 	if (!len)
 		return NULL;
 		
 // check functions
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
+	for (i=0, cmd=cmd_functions; cmd; cmd = cmd->next, i++)
 		if (!Q_strncmp (partial,cmd->name, len))
 			return cmd->name;
 

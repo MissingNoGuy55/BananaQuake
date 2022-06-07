@@ -50,7 +50,7 @@ SV_SetIdealPitch
 ===============
 */
 #define	MAX_FORWARD	6
-void SV_SetIdealPitch (void)
+void CQuakeServer::SV_SetIdealPitch (void)
 {
 	float	angleval, sinval, cosval;
 	trace_t	tr;
@@ -119,7 +119,7 @@ SV_UserFriction
 
 ==================
 */
-void SV_UserFriction (void)
+void CQuakeServer::SV_UserFriction (void)
 {
 	float	*vel;
 	float	speed, newspeed, control;
@@ -148,7 +148,7 @@ void SV_UserFriction (void)
 
 // apply friction	
 	control = speed < sv_stopspeed.value ? sv_stopspeed.value : speed;
-	newspeed = speed - host_frametime*control*friction;
+	newspeed = speed - host->host_frametime*control*friction;
 	
 	if (newspeed < 0)
 		newspeed = 0;
@@ -167,7 +167,7 @@ SV_Accelerate
 cvar_t	sv_maxspeed = {"sv_maxspeed", "320", false, true};
 cvar_t	sv_accelerate = {"sv_accelerate", "10"};
 #if 0
-void SV_Accelerate (vec3_t wishvel)
+void CQuakeServer::SV_Accelerate (vec3_t wishvel)
 {
 	int			i;
 	float		addspeed, accelspeed;
@@ -187,7 +187,7 @@ void SV_Accelerate (vec3_t wishvel)
 		velocity[i] += accelspeed*pushvec[i];	
 }
 #endif
-void SV_Accelerate (void)
+void CQuakeServer::SV_Accelerate (void)
 {
 	int			i;
 	float		addspeed, accelspeed, currentspeed;
@@ -196,7 +196,7 @@ void SV_Accelerate (void)
 	addspeed = wishspeed - currentspeed;
 	if (addspeed <= 0)
 		return;
-	accelspeed = sv_accelerate.value*host_frametime*wishspeed;
+	accelspeed = sv_accelerate.value* host->host_frametime*wishspeed;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 	
@@ -204,7 +204,7 @@ void SV_Accelerate (void)
 		velocity[i] += accelspeed*wishdir[i];	
 }
 
-void SV_AirAccelerate (vec3_t wishveloc)
+void CQuakeServer::SV_AirAccelerate (vec3_t wishveloc)
 {
 	int			i;
 	float		addspeed, wishspd, accelspeed, currentspeed;
@@ -217,7 +217,7 @@ void SV_AirAccelerate (vec3_t wishveloc)
 	if (addspeed <= 0)
 		return;
 //	accelspeed = sv_accelerate.value * host_frametime;
-	accelspeed = sv_accelerate.value*wishspeed * host_frametime;
+	accelspeed = sv_accelerate.value*wishspeed * host->host_frametime;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 	
@@ -232,7 +232,7 @@ void DropPunchAngle (void)
 	
 	len = VectorNormalize (sv_player->v.punchangle);
 	
-	len -= 10*host_frametime;
+	len -= 10*host->host_frametime;
 	if (len < 0)
 		len = 0;
 	VectorScale (sv_player->v.punchangle, len, sv_player->v.punchangle);
@@ -244,7 +244,7 @@ SV_WaterMove
 
 ===================
 */
-void SV_WaterMove (void)
+void CQuakeServer::SV_WaterMove (void)
 {
 	int		i;
 	vec3_t	wishvel;
@@ -277,7 +277,7 @@ void SV_WaterMove (void)
 	speed = Length (velocity);
 	if (speed)
 	{
-		newspeed = speed - host_frametime * speed * sv_friction.value;
+		newspeed = speed - host->host_frametime * speed * sv_friction.value;
 		if (newspeed < 0)
 			newspeed = 0;	
 		VectorScale (velocity, newspeed/speed, velocity);
@@ -296,7 +296,7 @@ void SV_WaterMove (void)
 		return;
 
 	VectorNormalize (wishvel);
-	accelspeed = sv_accelerate.value * wishspeed * host_frametime;
+	accelspeed = sv_accelerate.value * wishspeed * host->host_frametime;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 
@@ -304,7 +304,7 @@ void SV_WaterMove (void)
 		velocity[i] += accelspeed * wishvel[i];
 }
 
-void SV_WaterJump (void)
+void CQuakeServer::SV_WaterJump (void)
 {
 	if (sv.time > sv_player->v.teleport_time
 	|| !sv_player->v.waterlevel)
@@ -323,7 +323,7 @@ SV_AirMove
 
 ===================
 */
-void SV_AirMove (void)
+void CQuakeServer::SV_AirMove (void)
 {
 	int			i;
 	vec3_t		wishvel;
@@ -377,7 +377,7 @@ the move fields specify an intended velocity in pix/sec
 the angle fields specify an exact angular motion in degrees
 ===================
 */
-void SV_ClientThink (void)
+void CQuakeServer::SV_ClientThink (void)
 {
 	vec3_t		v_angle;
 
@@ -435,7 +435,7 @@ void SV_ClientThink (void)
 SV_ReadClientMove
 ===================
 */
-void SV_ReadClientMove (usercmd_t *move)
+void CQuakeServer::SV_ReadClientMove (usercmd_t *move)
 {
 	int		i;
 	vec3_t	angle;
@@ -479,7 +479,7 @@ SV_ReadClientMessage
 Returns false if the client should be killed
 ===================
 */
-bool SV_ReadClientMessage (void)
+bool CQuakeServer::SV_ReadClientMessage (void)
 {
 	int		ret;
 	int		cmd;
@@ -597,7 +597,7 @@ nextmsg:
 SV_RunClients
 ==================
 */
-void SV_RunClients (void)
+void CQuakeServer::SV_RunClients (void)
 {
 	int				i;
 	

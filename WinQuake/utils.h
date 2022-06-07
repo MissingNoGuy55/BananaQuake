@@ -1,17 +1,330 @@
 #pragma once
 
+#include <vector>
+
 #ifndef UTILS_H
 #define UTILS_H
 
 class CCoreRenderer;
 class CSoftwareRenderer;
 class CGLRenderer;
+class CGLTexture;
+
+// Missi: C++ library stuff
+
+#ifndef vector					
+
+template<class T, class A = CMemBlock< T >>
+class CQuakeVector
+{
+public:
+
+	explicit CQuakeVector();
+	explicit CQuakeVector(const T& src);
+
+	T* vector;
+	A mem;
+
+	typedef T Vector;
+
+	bool Empty() const;
+
+	const T& Front() const;
+
+	T& Front();
+
+	const T& Back() const;
+
+	T& Back();
+
+	const T& At(size_t index) const;
+
+	T& At(size_t index);
+
+	void ClearAll();
+
+	T* operator=(const T* src);
+	const T* operator=(const T* right) const;
+
+	T operator+(const int amt);
+
+	T& operator[](size_t index) { return vector[index]; }
+	const T& operator[](size_t index) const { return vector[index]; }
+
+	bool operator==(const T& in);
+	const bool operator==(const T& in) const;
+	bool operator!=(const T& in);
+	const bool operator!=(const T& in) const;
+
+	void* operator new(size_t sz);
+
+	T* Data();
+	const T* Data() const;
+
+	T& End();
+
+	const T& End() const;
+
+	/*void Push_Back(T* src);*/
+
+	int AddToFront();
+	int AddToBack();
+
+	void Push_Back(T& src);
+
+	void Reserve(size_t amount);
+
+	void Reallocate(size_t amount);
+	T* Allocate(size_t amount);
+
+	size_t Count();
+	size_t Size();
+
+
+private:
+
+	size_t size;
+	size_t count;
+	size_t max_size;
+
+};
+
+template<class T, class A>
+inline CQuakeVector<T, A>::CQuakeVector()
+{
+	vector = NULL;/*(T*)calloc(1, sizeof(T));*/
+	size = 0;
+	count = 0;
+	max_size = 0;
+	mem = (A)NULL;
+}
+
+template<class T, class A>
+inline CQuakeVector<T, A>::CQuakeVector(const T& src)
+{
+	vector = NULL;/*(T*)calloc(1, sizeof(T));*/
+	size = 0;
+	count = 0;
+	max_size = 0;
+	mem = (A)NULL;
+}
+
+template<class T, class A>
+inline bool CQuakeVector<T, A>::Empty() const
+{
+	return (size > 0);
+}
+
+template<class T, class A>
+inline const T& CQuakeVector<T, A>::Front() const
+{
+	return vector[count];
+}
+
+template<class T, class A>
+inline T& CQuakeVector<T, A>::Front()
+{
+	return vector[count];
+}
+
+template<class T, class A>
+inline const T& CQuakeVector<T, A>::Back() const
+{
+	return vector[0];// // O: insert return statement here
+}
+
+template<class T, class A>
+inline T& CQuakeVector<T, A>::Back()
+{
+	return vector[0];// // O: insert return statement here
+}
+
+template<class T, class A>
+inline T& CQuakeVector<T, A>::At(size_t index)
+{
+	return vector[index];
+}
+
+template<class T, class A>
+inline void CQuakeVector<T, A>::ClearAll()
+{
+	for (int i = 0; i < count; i++)
+	{
+		vector[i] = NULL;
+	}
+}
+
+template<class T, class A>
+inline const T& CQuakeVector<T, A>::At(size_t index) const
+{
+	return vector[index];
+}
+
+template<class T, class A>
+inline T* CQuakeVector<T, A>::operator=(const T* src)
+{
+	if (src)
+	{
+		return (T*)memcpy(vector, src, sizeof(T));
+	}
+	else
+	{
+		printf("FUCK!!!\n");
+	}
+}
+
+template<class T, class A>
+inline const T* CQuakeVector<T, A>::operator=(const T* src) const
+{
+	return this->vector;
+}
+
+template<class T, class A>
+inline T CQuakeVector<T, A>::operator+(const int b)
+{
+	T bb;
+	vector = vector + b;
+	return (*vector);
+}
+
+template<class T, class A>
+inline bool CQuakeVector<T, A>::operator==(const T& in)
+{
+	return false;
+}
+
+template<class T, class A>
+inline const bool CQuakeVector<T, A>::operator==(const T& in) const
+{
+	return false;
+}
+
+template<class T, class A>
+inline bool CQuakeVector<T, A>::operator!=(const T& in)
+{
+	return false;
+}
+
+template<class T, class A>
+inline const bool CQuakeVector<T, A>::operator!=(const T& in) const
+{
+	return false;
+}
+
+template<class T, class A>
+inline void* CQuakeVector<T, A>::operator new(size_t sz)
+{
+	return ::new T;
+}
+
+template<class T, class A>
+inline T* CQuakeVector<T, A>::Data()
+{
+	if (Empty())
+		return nullptr;
+
+	return vector;
+}
+
+template<class T, class A>
+inline const T* CQuakeVector<T, A>::Data() const
+{
+	if (Empty())
+		return nullptr;
+
+	return vector;
+}
+
+template<class T, class A>
+inline T& CQuakeVector<T, A>::End()
+{
+	return vector[count];
+}
+
+template<class T, class A>
+inline const T& CQuakeVector<T, A>::End() const
+{
+	return vector[count];
+}
+
+template<class T, class A>
+inline void CQuakeVector<T, A>::Push_Back(T& src)
+{
+	vector[size+1] = src;
+}
+
+template<class T, class A>
+inline void CQuakeVector<T, A>::Reserve(size_t amount)
+{
+	if (size < count)
+	{	// something to do, check and reallocate
+		if (max_size < count)
+			count = Count();
+		Reallocate(amount);
+	}
+}
+
+template<class T, class A>
+inline void CQuakeVector<T, A>::Reallocate(size_t amount)
+{
+	T* test = this->Allocate(amount);
+}
+
+#define _BIG_ALLOCATION_THRESHOLD	4096
+#define _BIG_ALLOCATION_ALIGNMENT	32
+
+#define _NON_USER_SIZE (sizeof(void *) + _BIG_ALLOCATION_ALIGNMENT - 1)
+
+template<class T, class A>
+inline T* CQuakeVector<T, A>::Allocate(size_t amount)
+{
+
+	T* Ptr = 0;
+
+	Ptr = (T*)calloc(amount, sizeof(T));
+
+		if (!Ptr)
+			return NULL;
+
+		vector = Ptr;
+		size += amount;
+		count += amount;
+
+		return Ptr;
+
+}
+
+template<class T, class A>
+inline size_t CQuakeVector<T, A>::Count()
+{
+		size_t _Count = 0;
+	
+		for (size_t _Index = 0; _Index < Size(); _Index++)
+		{
+			if (&this[_Index] != nullptr)
+			{
+				_Count++;
+			}
+		}
+	
+		return _Count;
+}
+
+template<class T, class A>
+inline size_t CQuakeVector<T, A>::Size()
+{
+	return size;
+}
+
+#endif
+
 
 // Missi: CQVector -- copied CUtlVector from Source. (3/8/2022)
 // !!!
 // !!!WARNING!!! Elements are moved around in memory every time a new element is added. Never maintain pointers to any element of a CUtlVector object.
 // !!!
 // Instead, pass the element as an argument.
+// e.g. vector->Element(index)
 
 template<class T, class S = CMemBlock<T> >
 class CQVector
@@ -95,17 +408,17 @@ public:
 
 	CMemAllocator m_Memory;
 
-	T* m_pElements; // variable-sized
+	T* m_pElements;
 
 	int vecSize;
 
 private:
 
-	CQVector(CQVector const& vec);
+	CQVector(CQVector const& vector);
 
 };
 
-// template<typename T, class S> CQVector<byte>::CQVector(byte);
+// template<class T, class S> CQVector<byte>::CQVector(byte);
 
 template<class T, class S>
 CQVector<T, S>::CQVector(int growSize, int startSize) : m_Memory(growSize, startSize), vecSize(0)
@@ -155,7 +468,7 @@ void CQVector<T, S>::Destruct(T* element)
 	element->~T();
 }
 
-template<typename T, class S>
+template<class T, class S>
 inline T& CQVector<T, S>::operator[](int i)
 {
 //#ifdef _DEBUG
@@ -165,7 +478,7 @@ inline T& CQVector<T, S>::operator[](int i)
 	return m_Memory[i];
 }
 
-template<typename T, class S>
+template<class T, class S>
 inline const T& CQVector<T, S>::operator[](int i) const
 {
 //#ifdef _DEBUG

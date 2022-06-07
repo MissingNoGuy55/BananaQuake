@@ -509,7 +509,7 @@ void M_Load_Draw (void)
 		M_Print (16, 32 + 8*i, m_filenames[i]);
 
 // line cursor
-	M_DrawCharacter (8, 32 + load_cursor*8, 12+((int)(realtime*4)&1));
+	M_DrawCharacter (8, 32 + load_cursor*8, 12+((int)(host->realtime*4)&1));
 }
 
 
@@ -525,7 +525,7 @@ void M_Save_Draw (void)
 		M_Print (16, 32 + 8*i, m_filenames[i]);
 
 // line cursor
-	M_DrawCharacter (8, 32 + load_cursor*8, 12+((int)(realtime*4)&1));
+	M_DrawCharacter (8, 32 + load_cursor*8, 12+((int)(host->realtime*4)&1));
 }
 
 
@@ -734,13 +734,13 @@ void M_Setup_Draw (void)
 	M_BuildTranslationTable(setup_top*16, setup_bottom*16);
 	M_DrawTransPicTranslate (172, 72, p);
 
-	M_DrawCharacter (56, setup_cursor_table [setup_cursor], 12+((int)(realtime*4)&1));
+	M_DrawCharacter (56, setup_cursor_table [setup_cursor], 12+((int)(host->realtime*4)&1));
 
 	if (setup_cursor == 0)
-		M_DrawCharacter (168 + 8*strlen(setup_hostname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (168 + 8*strlen(setup_hostname), setup_cursor_table [setup_cursor], 10+((int)(host->realtime*4)&1));
 
 	if (setup_cursor == 1)
-		M_DrawCharacter (168 + 8*strlen(setup_myname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (168 + 8*strlen(setup_myname), setup_cursor_table [setup_cursor], 10+((int)(host->realtime*4)&1));
 }
 
 
@@ -1234,7 +1234,7 @@ void M_Options_Draw (void)
 #endif
 
 // cursor
-	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(realtime*4)&1));
+	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(host->realtime*4)&1));
 }
 
 
@@ -1441,7 +1441,7 @@ void M_Keys_Draw (void)
 	if (bind_grab)
 		M_DrawCharacter (130, 48 + keys_cursor*8, '=');
 	else
-		M_DrawCharacter (130, 48 + keys_cursor*8, 12+((int)(realtime*4)&1));
+		M_DrawCharacter (130, 48 + keys_cursor*8, 12+((int)(host->realtime*4)&1));
 }
 
 
@@ -1663,7 +1663,7 @@ void M_Quit_Key (int key)
 	case 'Y':
 	case 'y':
 		key_dest = key_console;
-		Host_Quit_f ();
+		host->Host_Quit_f ();
 		break;
 
 	default:
@@ -1832,10 +1832,10 @@ void M_SerialConfig_Draw (void)
 		M_Print (basex+8, serialConfig_cursor_table[5], "OK");
 	}
 
-	M_DrawCharacter (basex-8, serialConfig_cursor_table [serialConfig_cursor], 12+((int)(realtime*4)&1));
+	M_DrawCharacter (basex-8, serialConfig_cursor_table [serialConfig_cursor], 12+((int)(host->realtime*4)&1));
 
 	if (serialConfig_cursor == 4)
-		M_DrawCharacter (168 + 8*strlen(serialConfig_phone), serialConfig_cursor_table [serialConfig_cursor], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (168 + 8*strlen(serialConfig_phone), serialConfig_cursor_table [serialConfig_cursor], 10+((int)(host->realtime*4)&1));
 
 	if (*m_return_reason)
 		M_PrintWhite (basex, 148, m_return_reason);
@@ -2047,24 +2047,24 @@ void M_ModemConfig_Draw (void)
 	M_DrawTextBox (basex, modemConfig_cursor_table[1]+4, 16, 1);
 	M_Print (basex+8, modemConfig_cursor_table[1]+12, modemConfig_clear);
 	if (modemConfig_cursor == 1)
-		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_clear), modemConfig_cursor_table[1]+12, 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_clear), modemConfig_cursor_table[1]+12, 10+((int)(host->realtime*4)&1));
 
 	M_Print (basex, modemConfig_cursor_table[2], "Init");
 	M_DrawTextBox (basex, modemConfig_cursor_table[2]+4, 30, 1);
 	M_Print (basex+8, modemConfig_cursor_table[2]+12, modemConfig_init);
 	if (modemConfig_cursor == 2)
-		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_init), modemConfig_cursor_table[2]+12, 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_init), modemConfig_cursor_table[2]+12, 10+((int)(host->realtime*4)&1));
 
 	M_Print (basex, modemConfig_cursor_table[3], "Hangup");
 	M_DrawTextBox (basex, modemConfig_cursor_table[3]+4, 16, 1);
 	M_Print (basex+8, modemConfig_cursor_table[3]+12, modemConfig_hangup);
 	if (modemConfig_cursor == 3)
-		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_hangup), modemConfig_cursor_table[3]+12, 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_hangup), modemConfig_cursor_table[3]+12, 10+((int)(host->realtime*4)&1));
 
 	M_DrawTextBox (basex, modemConfig_cursor_table[4]-8, 2, 1);
 	M_Print (basex+8, modemConfig_cursor_table[4], "OK");
 
-	M_DrawCharacter (basex-8, modemConfig_cursor_table [modemConfig_cursor], 12+((int)(realtime*4)&1));
+	M_DrawCharacter (basex-8, modemConfig_cursor_table [modemConfig_cursor], 12+((int)(host->realtime*4)&1));
 }
 
 
@@ -2257,13 +2257,13 @@ void M_LanConfig_Draw (void)
 		M_Print (basex+8, lanConfig_cursor_table[1], "OK");
 	}
 
-	M_DrawCharacter (basex-8, lanConfig_cursor_table [lanConfig_cursor], 12+((int)(realtime*4)&1));
+	M_DrawCharacter (basex-8, lanConfig_cursor_table [lanConfig_cursor], 12+((int)(host->realtime*4)&1));
 
 	if (lanConfig_cursor == 0)
-		M_DrawCharacter (basex+9*8 + 8*strlen(lanConfig_portname), lanConfig_cursor_table [0], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+9*8 + 8*strlen(lanConfig_portname), lanConfig_cursor_table [0], 10+((int)(host->realtime*4)&1));
 
 	if (lanConfig_cursor == 2)
-		M_DrawCharacter (basex+16 + 8*strlen(lanConfig_joinname), lanConfig_cursor_table [2], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+16 + 8*strlen(lanConfig_joinname), lanConfig_cursor_table [2], 10+((int)(host->realtime*4)&1));
 
 	if (*m_return_reason)
 		M_PrintWhite (basex, 148, m_return_reason);
@@ -2652,11 +2652,11 @@ void M_GameOptions_Draw (void)
    }
 
 // line cursor
-	M_DrawCharacter (144, gameoptions_cursor_table[gameoptions_cursor], 12+((int)(realtime*4)&1));
+	M_DrawCharacter (144, gameoptions_cursor_table[gameoptions_cursor], 12+((int)(host->realtime*4)&1));
 
 	if (m_serverInfoMessage)
 	{
-		if ((realtime - m_serverInfoMessageTime) < 5.0)
+		if ((host->realtime - m_serverInfoMessageTime) < 5.0)
 		{
 			x = (320-26*8)/2;
 			M_DrawTextBox (x, 138, 24, 4);
@@ -2686,7 +2686,7 @@ void M_NetStart_Change (int dir)
 		{
 			maxplayers = svs.maxclientslimit;
 			m_serverInfoMessage = true;
-			m_serverInfoMessageTime = realtime;
+			m_serverInfoMessageTime = host->realtime;
 		}
 		if (maxplayers < 2)
 			maxplayers = 2;
@@ -2876,7 +2876,7 @@ void M_Search_Draw (void)
 	if (! searchComplete)
 	{
 		searchComplete = true;
-		searchCompleteTime = realtime;
+		searchCompleteTime = host->realtime;
 	}
 
 	if (hostCacheCount)
@@ -2886,7 +2886,7 @@ void M_Search_Draw (void)
 	}
 
 	M_PrintWhite ((320/2) - ((22*8)/2), 64, "No Quake servers found");
-	if ((realtime - searchCompleteTime) < 3.0)
+	if ((host->realtime - searchCompleteTime) < 3.0)
 		return;
 
 	M_Menu_LanConfig_f ();
@@ -2949,7 +2949,7 @@ void M_ServerList_Draw (void)
 			sprintf(string, "%-15.15s %-15.15s\n", hostcache[n].name, hostcache[n].map);
 		M_Print (16, 32 + 8*n, string);
 	}
-	M_DrawCharacter (0, 32 + slist_cursor*8, 12+((int)(realtime*4)&1));
+	M_DrawCharacter (0, 32 + slist_cursor*8, 12+((int)(host->realtime*4)&1));
 
 	if (*m_return_reason)
 		M_PrintWhite (16, 148, m_return_reason);

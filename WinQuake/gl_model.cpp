@@ -218,7 +218,7 @@ Mod_TouchModel
 */
 void Mod_TouchModel (char *name)
 {
-	model_t	*mod;
+	model_t*	mod;
 	
 	mod = Mod_FindName (name);
 	

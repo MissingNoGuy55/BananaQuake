@@ -549,7 +549,7 @@ void MSG_WriteChar (sizebuf_t *sb, int c)
 
 void MSG_WriteByte (sizebuf_t *sb, int c)
 {
-	byte    *buf;
+	byte    *buf = NULL;
 	
 #ifdef PARANOID
 	if (c < 0 || c > 255)
@@ -780,7 +780,7 @@ void SZ_Clear (sizebuf_t *buf)
 
 void *SZ_GetSpace (sizebuf_t *buf, int length)
 {
-	void    *data;
+	void    *data = 0;
 	
 	if (buf->cursize + length > buf->maxsize)
 	{
@@ -1264,17 +1264,17 @@ typedef struct
 
 #define MAX_FILES_IN_PACK       2048
 
-char    com_cachedir[MAX_OSPATH];
-char    com_gamedir[MAX_OSPATH];
+char    com_cachedir[MAX_OSPATH] = "";
+char    com_gamedir[MAX_OSPATH] = "";
 
-typedef struct searchpath_s
+struct searchpath_t
 {
-	char    filename[MAX_OSPATH];
-	pack_t  *pack;          // only one of filename / pack will be used
-	struct searchpath_s *next;
-} searchpath_t;
+	char    filename[MAX_OSPATH] = "";
+	pack_t  *pack = NULL;          // only one of filename / pack will be used
+	struct searchpath_t *next = NULL;
+};
 
-searchpath_t    *com_searchpaths;
+searchpath_t* com_searchpaths = NULL;
 
 /*
 ============
@@ -1391,10 +1391,10 @@ Sets com_filesize and one of handle or file
 */
 int COM_FindFile (const char *filename, int *handle, FILE **file)
 {
-	searchpath_t    *search;
-	char            netpath[MAX_OSPATH];
-	char            cachepath[MAX_OSPATH];
-	pack_t          *pak;
+	searchpath_t    *search = NULL;
+	char            netpath[MAX_OSPATH] = "";
+	char            cachepath[MAX_OSPATH] = "";
+	pack_t          *pak = NULL;
 	int                     i;
 	int                     findtime, cachetime;
 
@@ -1554,7 +1554,7 @@ Filename are reletive to the quake directory.
 Allways appends a 0 byte.
 ============
 */
-cache_user_t *loadcache;
+cache_user_t loadcache;
 byte    *loadbuf;
 int             loadsize;
 byte *COM_LoadFile (const char *path, int usehunk)
@@ -1574,28 +1574,41 @@ byte *COM_LoadFile (const char *path, int usehunk)
 // extract the filename base name for hunk tag
 	COM_FileBase (path, base);
 	
-	if (usehunk == 1)
-		buf = static_cast<byte*>(g_MemCache->Hunk_AllocName (len+1, base));
-	else if (usehunk == 2)
-		buf = static_cast<byte*>(g_MemCache->Hunk_TempAlloc (len+1));
-	else if (usehunk == 0)
-		buf = static_cast<byte*>(g_MemCache->mainzone->Z_Malloc (len+1));
-	else if (usehunk == 3)
-		buf = static_cast<byte*>(g_MemCache->Cache_Alloc (loadcache, len+1, base));
-	else if (usehunk == 4)
+	switch (usehunk)
 	{
-		if (len+1 > loadsize)
-			buf = static_cast<byte*>(g_MemCache->Hunk_TempAlloc (len+1));
+	case HUNK_FULL:
+		buf = static_cast<byte*>(g_MemCache->Hunk_AllocName(len + 1, base));
+		break;
+	case HUNK_TEMP:
+		buf = static_cast<byte*>(g_MemCache->Hunk_TempAlloc(len + 1));
+		break;
+	case HUNK_ZONE:
+		buf = static_cast<byte*>(g_MemCache->mainzone->Z_Malloc(len + 1));
+		break;
+	case HUNK_CACHE:
+		buf = static_cast<byte*>(g_MemCache->Cache_Alloc(&loadcache, len + 1, base));
+		break;
+	case HUNK_TEMP_FILL:
+		if (len + 1 > loadsize)
+		{
+			buf = static_cast<byte*>(g_MemCache->Hunk_TempAlloc(len + 1));
+			break;
+		}
 		else
+		{
 			buf = loadbuf;
+			break;
+		}
+
+	default:
+		Sys_Error("COM_LoadFile: bad usehunk");
+
 	}
-	else
-		Sys_Error ("COM_LoadFile: bad usehunk");
 
 	if (!buf)
 		Sys_Error ("COM_LoadFile: not enough space for %s", path);
 		
-	((byte *)buf)[len] = 0;
+	//((byte *)buf)[len] = 0;
 
 #ifndef GLQUAKE
 	g_SoftwareRenderer->Draw_BeginDisc ();
@@ -1617,18 +1630,18 @@ byte *COM_LoadFile (const char *path, int usehunk)
 
 byte *COM_LoadHunkFile (const char *path)
 {
-	return COM_LoadFile (path, 1);
+	return COM_LoadFile (path, HUNK_FULL);
 }
 
 byte *COM_LoadTempFile (const char *path)
 {
-	return COM_LoadFile (path, 2);
+	return COM_LoadFile (path, HUNK_TEMP);
 }
 
-void COM_LoadCacheFile (const char *path, cache_user_t *cu)
+void COM_LoadCacheFile (const char *path, cache_user_t cu)
 {
 	loadcache = cu;
-	COM_LoadFile (path, 3);
+	COM_LoadFile (path, HUNK_CACHE);
 }
 
 // uses temp hunk if larger than bufsize
@@ -1638,7 +1651,7 @@ byte *COM_LoadStackFile (const char *path, void *buffer, int bufsize)
 	
 	loadbuf = (byte *)buffer;
 	loadsize = bufsize;
-	buf = COM_LoadFile (path, 4);
+	buf = static_cast<byte*>(COM_LoadFile (path, HUNK_TEMP_FILL));
 	
 	return buf;
 }
@@ -1726,8 +1739,8 @@ then loads and adds pak1.pak pak2.pak ...
 void COM_AddGameDirectory (char *dir)
 {
 	int                             i;
-	searchpath_t    *search;
-	pack_t                  *pak;
+	searchpath_t			*search = NULL;
+	pack_t                  *pak = NULL;
 	char                    pakfile[MAX_OSPATH];
 
 	Q_strcpy (com_gamedir, dir);
@@ -1769,8 +1782,8 @@ COM_InitFilesystem
 void COM_InitFilesystem (void)
 {
 	int             i, j;
-	char    basedir[MAX_OSPATH];
-	searchpath_t    *search;
+	char    basedir[MAX_OSPATH] = "";
+	searchpath_t    *search = NULL;
 
 //
 // -basedir <path>
@@ -1780,7 +1793,7 @@ void COM_InitFilesystem (void)
 	if (i && i < com_argc-1)
 		Q_strcpy (basedir, com_argv[i+1]);
 	else
-		Q_strcpy (basedir, host_parms.basedir);
+		Q_strcpy (basedir, host->host_parms.basedir);
 
 	j = strlen (basedir);
 
@@ -1803,8 +1816,8 @@ void COM_InitFilesystem (void)
 		else
 			Q_strcpy (com_cachedir, com_argv[i+1]);
 	}
-	else if (host_parms.cachedir)
-		Q_strcpy (com_cachedir, host_parms.cachedir);
+	else if (host->host_parms.cachedir)
+		Q_strcpy (com_cachedir, host->host_parms.cachedir);
 	else
 		com_cachedir[0] = 0;
 

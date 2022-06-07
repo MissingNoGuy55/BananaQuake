@@ -71,7 +71,7 @@ void W_LoadWadFile (const char *filename)
 	unsigned		i;
 	int				infotableofs;
 	
-	wad_base = COM_LoadHunkFile (filename);
+	wad_base = static_cast<byte*>(COM_LoadHunkFile (filename));
 	if (!wad_base)
 		Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
 
@@ -156,16 +156,12 @@ void SwapPic (CQuakePic *pic)
 	pic->height = LittleLong(pic->height);
 }
 
-CQuakePic::CQuakePic()
+CQuakePic::CQuakePic() : height(0), width(0)
 {
+	//data.Allocate(sizeof(CQuakePic));
 }
 
-CQuakePic::CQuakePic(byte* mem)
+CQuakePic::CQuakePic(byte& mem) : height(0), width(0)
 {
-	int j = 0;
-	
-	while (data)
-	{
-		mem++[j] = data[j++];
-	}
+	//data.Allocate(sizeof(CQuakePic));
 }

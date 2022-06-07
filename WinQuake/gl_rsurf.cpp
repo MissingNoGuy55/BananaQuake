@@ -375,14 +375,14 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 	{
 		GL_DisableMultitexture();
 		GL_Bind (solidskytexture);
-		speedscale = realtime*8;
+		speedscale = host->realtime*8;
 		speedscale -= (int)speedscale & ~127;
 
 		EmitSkyPolys (s);
 
 		glEnable (GL_BLEND);
 		GL_Bind (alphaskytexture);
-		speedscale = realtime*16;
+		speedscale = host->realtime*16;
 		speedscale -= (int)speedscale & ~127;
 		EmitSkyPolys (s);
 
@@ -424,8 +424,8 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 			qglMTexCoord2fSGIS (TEXTURE0_SGIS, v[3], v[4]);
 			qglMTexCoord2fSGIS (TEXTURE1_SGIS, v[5], v[6]);
 
-			nv[0] = v[0] + 8*sin(v[1]*0.05+realtime)*sin(v[2]*0.05+realtime);
-			nv[1] = v[1] + 8*sin(v[0]*0.05+realtime)*sin(v[2]*0.05+realtime);
+			nv[0] = v[0] + 8*sin(v[1]*0.05+host->realtime)*sin(v[2]*0.05+host->realtime);
+			nv[1] = v[1] + 8*sin(v[0]*0.05+host->realtime)*sin(v[2]*0.05+host->realtime);
 			nv[2] = v[2];
 
 			glVertex3fv (nv);
@@ -468,8 +468,8 @@ void CGLRenderer::DrawGLWaterPoly (glpoly_t *p)
 	{
 		glTexCoord2f (v[3], v[4]);
 
-		nv[0] = v[0] + 8*sin(v[1]*0.05+realtime)*sin(v[2]*0.05+realtime);
-		nv[1] = v[1] + 8*sin(v[0]*0.05+realtime)*sin(v[2]*0.05+realtime);
+		nv[0] = v[0] + 8*sin(v[1]*0.05+host->realtime)*sin(v[2]*0.05+host->realtime);
+		nv[1] = v[1] + 8*sin(v[0]*0.05+host->realtime)*sin(v[2]*0.05+host->realtime);
 		nv[2] = v[2];
 
 		glVertex3fv (nv);
@@ -492,8 +492,8 @@ void CGLRenderer::DrawGLWaterPolyLightmap (glpoly_t *p)
 	{
 		glTexCoord2f (v[5], v[6]);
 
-		nv[0] = v[0] + 8*sin(v[1]*0.05+realtime)*sin(v[2]*0.05+realtime);
-		nv[1] = v[1] + 8*sin(v[0]*0.05+realtime)*sin(v[2]*0.05+realtime);
+		nv[0] = v[0] + 8*sin(v[1]*0.05+host->realtime)*sin(v[2]*0.05+host->realtime);
+		nv[1] = v[1] + 8*sin(v[0]*0.05+host->realtime)*sin(v[2]*0.05+host->realtime);
 		nv[2] = v[2];
 
 		glVertex3fv (nv);

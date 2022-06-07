@@ -45,11 +45,11 @@ class CQuakePic
 {
 public:
 
-	explicit CQuakePic();
-	explicit CQuakePic(byte* mem);
+	CQuakePic();
+	CQuakePic(byte& mem);
 
 	int			width, height;
-	byte		data[MAX_VARARRLEN];			// Missi: was a C variably-sized array. they are bugged in MSVC it seems, and it caused me months-worth of a headache (5/28/2022)
+	CQVector<byte*>	data;			// Missi: was a C variably-sized array. they are bugged in MSVC it seems, and it caused me months-worth of a headache (5/28/2022)
 
 };
 
@@ -84,3 +84,4 @@ void	*W_GetLumpNum (int num);
 void	SwapPic(CQuakePic* pic);
 
 #endif
+

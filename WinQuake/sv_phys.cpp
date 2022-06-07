@@ -58,7 +58,7 @@ void SV_Physics_Toss (edict_t *ent);
 SV_CheckAllEnts
 ================
 */
-void SV_CheckAllEnts (void)
+void CQuakeServer::SV_CheckAllEnts (void)
 {
 	int			e;
 	edict_t		*check;
@@ -87,7 +87,7 @@ void SV_CheckAllEnts (void)
 SV_CheckVelocity
 ================
 */
-void SV_CheckVelocity (edict_t *ent)
+void CQuakeServer::SV_CheckVelocity (edict_t *ent)
 {
 	int		i;
 
@@ -123,12 +123,12 @@ in a frame.  Not used for pushmove objects, because they must be exact.
 Returns false if the entity removed itself.
 =============
 */
-bool SV_RunThink (edict_t *ent)
+bool CQuakeServer::SV_RunThink (edict_t *ent)
 {
 	float	thinktime;
 
 	thinktime = ent->v.nextthink;
-	if (thinktime <= 0 || thinktime > sv.time + host_frametime)
+	if (thinktime <= 0 || thinktime > sv.time + host->host_frametime)
 		return true;
 		
 	if (thinktime < sv.time)
@@ -150,7 +150,7 @@ SV_Impact
 Two entities have touched, so run their touch functions
 ==================
 */
-void SV_Impact (edict_t *e1, edict_t *e2)
+void CQuakeServer::SV_Impact (edict_t *e1, edict_t *e2)
 {
 	int		old_self, old_other;
 	
@@ -226,7 +226,7 @@ If steptrace is not NULL, the trace of any vertical wall hit will be stored
 ============
 */
 #define	MAX_CLIP_PLANES	5
-int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
+int CQuakeServer::SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 {
 	int			bumpcount, numbumps;
 	vec3_t		dir;
@@ -386,7 +386,7 @@ void SV_AddGravity (edict_t *ent)
 	else
 		ent_gravity = 1.0;
 #endif
-	ent->v.velocity[2] -= ent_gravity * sv_gravity.value * host_frametime;
+	ent->v.velocity[2] -= ent_gravity * sv_gravity.value * host->host_frametime;
 }
 
 
@@ -405,7 +405,7 @@ SV_PushEntity
 Does not change the entities velocity at all
 ============
 */
-trace_t SV_PushEntity (edict_t *ent, vec3_t push)
+trace_t CQuakeServer::SV_PushEntity (edict_t *ent, vec3_t push)
 {
 	trace_t	trace;
 	vec3_t	end;
@@ -436,7 +436,7 @@ SV_PushMove
 
 ============
 */
-void SV_PushMove (edict_t *pusher, float movetime)
+void CQuakeServer::SV_PushMove (edict_t *pusher, float movetime)
 {
 	int			i, e;
 	edict_t		*check, *block;
@@ -701,7 +701,7 @@ SV_Physics_Pusher
 
 ================
 */
-void SV_Physics_Pusher (edict_t *ent)
+void CQuakeServer::SV_Physics_Pusher (edict_t *ent)
 {
 	float	thinktime;
 	float	oldltime;
@@ -710,14 +710,14 @@ void SV_Physics_Pusher (edict_t *ent)
 	oldltime = ent->v.ltime;
 	
 	thinktime = ent->v.nextthink;
-	if (thinktime < ent->v.ltime + host_frametime)
+	if (thinktime < ent->v.ltime + host->host_frametime)
 	{
 		movetime = thinktime - ent->v.ltime;
 		if (movetime < 0)
 			movetime = 0;
 	}
 	else
-		movetime = host_frametime;
+		movetime = host->host_frametime;
 
 	if (movetime)
 	{
@@ -759,7 +759,7 @@ This is a big hack to try and fix the rare case of getting stuck in the world
 clipping hull.
 =============
 */
-void SV_CheckStuck (edict_t *ent)
+void CQuakeServer::SV_CheckStuck (edict_t *ent)
 {
 	int		i, j;
 	int		z;
@@ -805,7 +805,7 @@ void SV_CheckStuck (edict_t *ent)
 SV_CheckWater
 =============
 */
-bool SV_CheckWater (edict_t *ent)
+bool CQuakeServer::SV_CheckWater (edict_t *ent)
 {
 	vec3_t	point;
 	int		cont;
@@ -864,7 +864,7 @@ SV_WallFriction
 
 ============
 */
-void SV_WallFriction (edict_t *ent, trace_t *trace)
+void CQuakeServer::SV_WallFriction (edict_t *ent, trace_t *trace)
 {
 	vec3_t		forward, right, up;
 	float		d, i;
@@ -898,7 +898,7 @@ Try fixing by pushing one pixel in each direction.
 This is a hack, but in the interest of good gameplay...
 ======================
 */
-int SV_TryUnstick (edict_t *ent, vec3_t oldvel)
+int CQuakeServer::SV_TryUnstick (edict_t *ent, vec3_t oldvel)
 {
 	int		i;
 	vec3_t	oldorg;
@@ -955,7 +955,7 @@ Only used by players
 ======================
 */
 #define	STEPSIZE	18
-void SV_WalkMove (edict_t *ent)
+void CQuakeServer::SV_WalkMove (edict_t *ent)
 {
 	vec3_t		upmove, downmove;
 	vec3_t		oldorg, oldvel;
@@ -973,7 +973,7 @@ void SV_WalkMove (edict_t *ent)
 	VectorCopy (ent->v.origin, oldorg);
 	VectorCopy (ent->v.velocity, oldvel);
 	
-	clip = SV_FlyMove (ent, host_frametime, &steptrace);
+	clip = SV_FlyMove (ent, host->host_frametime, &steptrace);
 
 	if ( !(clip & 2) )
 		return;		// move didn't block on a step
@@ -1001,7 +1001,7 @@ void SV_WalkMove (edict_t *ent)
 	VectorCopy (vec3_origin, upmove);
 	VectorCopy (vec3_origin, downmove);
 	upmove[2] = STEPSIZE;
-	downmove[2] = -STEPSIZE + oldvel[2]*host_frametime;
+	downmove[2] = -STEPSIZE + oldvel[2]* host->host_frametime;
 
 // move up
 	SV_PushEntity (ent, upmove);	// FIXME: don't link?
@@ -1010,7 +1010,7 @@ void SV_WalkMove (edict_t *ent)
 	ent->v.velocity[0] = oldvel[0];
 	ent->v. velocity[1] = oldvel[1];
 	ent->v. velocity[2] = 0;
-	clip = SV_FlyMove (ent, host_frametime, &steptrace);
+	clip = SV_FlyMove (ent, host->host_frametime, &steptrace);
 
 // check for stuckness, possibly due to the limited precision of floats
 // in the clipping hulls
@@ -1056,7 +1056,7 @@ SV_Physics_Client
 Player character actions
 ================
 */
-void SV_Physics_Client (edict_t	*ent, int num)
+void CQuakeServer::SV_Physics_Client (edict_t	*ent, int num)
 {
 	if ( ! svs.clients[num-1].active )
 		return;		// unconnected slot
@@ -1107,13 +1107,13 @@ void SV_Physics_Client (edict_t	*ent, int num)
 	case MOVETYPE_FLY:
 		if (!SV_RunThink (ent))
 			return;
-		SV_FlyMove (ent, host_frametime, NULL);
+		SV_FlyMove (ent, host->host_frametime, NULL);
 		break;
 		
 	case MOVETYPE_NOCLIP:
 		if (!SV_RunThink (ent))
 			return;
-		VectorMA (ent->v.origin, host_frametime, ent->v.velocity, ent->v.origin);
+		VectorMA (ent->v.origin, host->host_frametime, ent->v.velocity, ent->v.origin);
 		break;
 		
 	default:
@@ -1139,7 +1139,7 @@ SV_Physics_None
 Non moving objects can only think
 =============
 */
-void SV_Physics_None (edict_t *ent)
+void CQuakeServer::SV_Physics_None (edict_t *ent)
 {
 // regular thinking
 	SV_RunThink (ent);
@@ -1169,14 +1169,14 @@ SV_Physics_Noclip
 A moving object that doesn't obey physics
 =============
 */
-void SV_Physics_Noclip (edict_t *ent)
+void CQuakeServer::SV_Physics_Noclip (edict_t *ent)
 {
 // regular thinking
 	if (!SV_RunThink (ent))
 		return;
 	
-	VectorMA (ent->v.angles, host_frametime, ent->v.avelocity, ent->v.angles);
-	VectorMA (ent->v.origin, host_frametime, ent->v.velocity, ent->v.origin);
+	VectorMA (ent->v.angles, host->host_frametime, ent->v.avelocity, ent->v.angles);
+	VectorMA (ent->v.origin, host->host_frametime, ent->v.velocity, ent->v.origin);
 
 	SV_LinkEdict (ent, false);
 }
@@ -1195,7 +1195,7 @@ SV_CheckWaterTransition
 
 =============
 */
-void SV_CheckWaterTransition (edict_t *ent)
+void CQuakeServer::SV_CheckWaterTransition (edict_t *ent)
 {
 	int		cont;
 #ifdef QUAKE2
@@ -1242,7 +1242,7 @@ SV_Physics_Toss
 Toss, bounce, and fly movement.  When onground, do nothing.
 =============
 */
-void SV_Physics_Toss (edict_t *ent)
+void CQuakeServer::SV_Physics_Toss (edict_t *ent)
 {
 	trace_t	trace;
 	vec3_t	move;
@@ -1293,13 +1293,13 @@ void SV_Physics_Toss (edict_t *ent)
 #endif
 
 // move angles
-	VectorMA (ent->v.angles, host_frametime, ent->v.avelocity, ent->v.angles);
+	VectorMA (ent->v.angles, host->host_frametime, ent->v.avelocity, ent->v.angles);
 
 // move origin
 #ifdef QUAKE2
 	VectorAdd (ent->v.velocity, ent->v.basevelocity, ent->v.velocity);
 #endif
-	VectorScale (ent->v.velocity, host_frametime, move);
+	VectorScale (ent->v.velocity, host->host_frametime, move);
 	trace = SV_PushEntity (ent, move);
 #ifdef QUAKE2
 	VectorSubtract (ent->v.velocity, ent->v.basevelocity, ent->v.velocity);
@@ -1465,7 +1465,7 @@ void SV_Physics_Step (edict_t *ent)
 	SV_CheckWaterTransition (ent);
 }
 #else
-void SV_Physics_Step (edict_t *ent)
+void CQuakeServer::SV_Physics_Step (edict_t *ent)
 {
 	bool	hitsound;
 
@@ -1479,7 +1479,7 @@ void SV_Physics_Step (edict_t *ent)
 
 		SV_AddGravity (ent);
 		SV_CheckVelocity (ent);
-		SV_FlyMove (ent, host_frametime, NULL);
+		SV_FlyMove (ent, host->host_frametime, NULL);
 		SV_LinkEdict (ent, true);
 
 		if ( (int)ent->v.flags & FL_ONGROUND )	// just hit ground
@@ -1504,7 +1504,7 @@ SV_Physics
 
 ================
 */
-void SV_Physics (void)
+void CQuakeServer::SV_Physics (void)
 {
 	int		i;
 	edict_t	*ent;
@@ -1560,7 +1560,7 @@ void SV_Physics (void)
 	if (pr_global_struct->force_retouch)
 		pr_global_struct->force_retouch--;	
 
-	sv.time += host_frametime;
+	sv.time += host->host_frametime;
 }
 
 

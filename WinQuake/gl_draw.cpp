@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_vidnt.h"
 #include "gl_draw.h"
+#include <utility>
 
 #define GL_COLOR_INDEX8_EXT     0x80E5
 
@@ -32,6 +33,7 @@ extern unsigned char d_15to8table[65536];
 cvar_t		gl_nobind = {"gl_nobind", "0"};
 cvar_t		gl_max_size = {"gl_max_size", "1024"};
 cvar_t		gl_picmip = {"gl_picmip", "0"};
+static GLint	gl_hardware_maxsize;
 
 byte		*draw_chars;				// 8*8 graphic characters
 CQuakePic			*draw_disc;
@@ -40,7 +42,7 @@ CQuakePic			*draw_backtile;
 CGLTexture*			translate_texture;
 CGLTexture*			char_texture;
 
-byte		conback_buffer[sizeof(CQuakePic) + sizeof(COpenGLPic)];
+byte		conback_buffer[sizeof(CQuakePic) + sizeof(CGLTexture)];
 CQuakePic	*conback = (CQuakePic*)&conback_buffer;
 
 int		gl_lightmap_format = 4;
@@ -56,7 +58,7 @@ int		texels;
 CGLTexture CGLRenderer::gltextures[MAX_GLTEXTURES];
 int			numgltextures;
 
-CGLRenderer* g_GLRenderer;
+bool gl_texture_NPOT = false;
 
 COpenGLPic::COpenGLPic() : sh(0), sl(0), th(0), tl(0)
 {
@@ -134,7 +136,7 @@ void CGLRenderer::GL_Bind (CGLTexture* tex)
 
   scrap allocation
 
-  Allocate all the little status bar obejcts into a single texture
+  Allocate all the little status bar objects into a single texture
   to crutch up stupid hardware / drivers
 
 =============================================================================
@@ -220,7 +222,7 @@ void CGLRenderer::Scrap_Upload (void)
 typedef struct cachepic_s
 {
 	char		name[MAX_QPATH];
-	CQuakePic*		pic;
+	CQuakePic		pic;
 	byte		padding[32];	// for appended glpic
 } cachepic_t;
 
@@ -233,13 +235,77 @@ byte		menuplyr_pixels[4096];
 int		pic_texels;
 int		pic_count;
 
+/*
+================
+GL_Pad -- return smallest power of two greater than or equal to s
+================
+*/
+int CGLRenderer::GL_Pad(int s)
+{
+	int i;
+	for (i = 1; i < s; i <<= 1)
+		;
+	return i;
+}
+
+/*
+===============
+GL_SafeTextureSize -- return a size with hardware and user prefs in mind
+===============
+*/
+int CGLRenderer::GL_SafeTextureSize(int s)
+{
+	if (!gl_texture_NPOT)
+		s = GL_Pad(s);
+	if ((int)gl_max_size.value > 0)
+		s = q_min(GL_Pad((int)gl_max_size.value), s);
+	s = q_min(gl_hardware_maxsize, s);
+	return s;
+}
+
+/*
+================
+GL_PadConditional -- only pad if a texture of that size would be padded. (used for tex coords)
+================
+*/
+int CGLRenderer::GL_PadConditional(int s)
+{
+	if (s < GL_SafeTextureSize(s))
+		return GL_Pad(s);
+	else
+		return s;
+}
+
 CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 {
 	CQuakePic* p = NULL;
-	COpenGLPic	gl;
+	CGLTexture*	gl = NULL;
 	int offset = 0; //Missi -- copied from QuakeSpasm (5/28/2022)
+	int off = 0;
 
-	p = (CQuakePic*)W_GetLumpName(name);
+	//p = static_cast<CQuakePic*>(W_GetLumpName(name));
+//	memset(&p->data, 0, sizeof(CQVector<byte*>));
+
+	auto copy = static_cast<CQuakePic*>(W_GetLumpName(name));
+	byte* data = static_cast<byte*>(W_GetLumpName(name));
+
+	p = new CQuakePic();
+	p->width = copy->width;
+	p->height = copy->height;
+
+	while (p)
+	{
+		if (data[off])
+		{
+			p->data.AddToTail(data);
+		}
+		else
+		{
+			break;
+		}
+		off++;
+	}
+
 	if (!p) return NULL; //Missi -- copied from QuakeSpasm (5/28/2022)
 
 	// load little ones into the scrap
@@ -255,14 +321,14 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 		for (i = 0; i < p->height; i++)
 		{
 			for (j = 0; j < p->width; j++, k++)
-				scrap_texels[texnum][(y + i) * BLOCK_WIDTH + x + j] = p->data[k];
+				scrap_texels[texnum][(y + i) * BLOCK_WIDTH + x + j] = p->data.Head()[k];
 		}
-		gl.gltexture = scrap_textures[texnum]; //Missi -- copied from QuakeSpasm (5/28/2022) -- changed to an array
+		gl = scrap_textures[texnum]; //Missi -- copied from QuakeSpasm (5/28/2022) -- changed to an array
 		//Missi -- copied from QuakeSpasm (5/28/2022) -- no longer go from 0.01 to 0.99
-		gl.sl = x / (float)BLOCK_WIDTH;
-		gl.sh = (x + p->width) / (float)BLOCK_WIDTH;
-		gl.tl = y / (float)BLOCK_WIDTH;
-		gl.th = (y + p->height) / (float)BLOCK_WIDTH;
+		gl->sl = x / (float)BLOCK_WIDTH;
+		gl->sh = (x + p->width) / (float)BLOCK_WIDTH;
+		gl->tl = y / (float)BLOCK_WIDTH;
+		gl->th = (y + p->height) / (float)BLOCK_WIDTH;
 	}
 	else
 	{
@@ -271,14 +337,14 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 
 		offset = (int)p - (int)wad_base + sizeof(int) * 2; //Missi -- copied from QuakeSpasm (5/28/2022)
 
-		gl.gltexture = GL_LoadTexture(name, p->width, p->height, p->data, false, true); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
-		gl.sl = 0;
-		gl.sh = (float)p->width / 1; //Missi -- copied from QuakeSpasm (5/28/2022)
-		gl.tl = 0;
-		gl.th = (float)p->height / 1; //Missi -- copied from QuakeSpasm (5/28/2022)
+		gl = GL_LoadTexture(name, p->width, p->height, p->data.Head(), false, true); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
+		gl->sl = 0;
+		gl->sh = (float)p->width / (float)GL_PadConditional(p->width); //Missi -- copied from QuakeSpasm (5/28/2022)
+		gl->tl = 0;
+		gl->th = (float)p->height / (float)GL_PadConditional(p->height); //Missi -- copied from QuakeSpasm (5/28/2022)
 	}
 
-	//memcpy(p->data, &gl, sizeof(COpenGLPic));
+	//memcpy(p->data, &gl->pic.data, sizeof(COpenGLPic));
 
 	return p;
 }
@@ -294,11 +360,11 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	cachepic_t	*pic;
 	int			i;
 	CQuakePic		*dat;
-	COpenGLPic		*gl = new COpenGLPic;
+	CGLTexture		*gl;
 
 	for (pic=menu_cachepics, i=0 ; i<menu_numcachepics ; pic++, i++)
 		if (!strcmp (path, pic->name))
-			return pic->pic;
+			return &pic->pic;
 
 	if (menu_numcachepics == MAX_CACHED_PICS)
 		Sys_Error ("menu_numcachepics == MAX_CACHED_PICS");
@@ -317,19 +383,21 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	// the translatable player picture just for the menu
 	// configuration dialog
 	if (!strcmp (path, "gfx/menuplyr.lmp"))
-		memcpy (menuplyr_pixels, dat->data, dat->width*dat->height);
+		memcpy (menuplyr_pixels, &dat->data, dat->width * dat->height);
 
-	pic->pic = dat;
-	pic->pic->width = dat->width;
-	pic->pic->height = dat->height;
+	//pic->pic = *dat;
+	pic->pic.width = dat->width;
+	pic->pic.height = dat->height;
 
-	gl->gltexture = GL_LoadTexture(path, dat->width, dat->height, dat->data, false, false); // (COpenGLPic*)pic->pic->data;
+	gl = GL_LoadTexture(path, dat->width, dat->height, dat->data.Head(), false, false); // (COpenGLPic*)pic->pic->data;
 	gl->sl = 0;
 	gl->sh = 1;
 	gl->tl = 0;
 	gl->th = 1;
 
-	return pic->pic;
+	memcpy(&pic->pic.data, &gl->pic.data, Q_MAX_VARARRLEN);
+
+	return &pic->pic;
 }
 
 
@@ -420,6 +488,8 @@ void CGLRenderer::Draw_TextureMode_f (void)
 	}
 }
 
+#define TRANSFER_DATA(a, b) 
+
 /*
 ===============
 Draw_Init
@@ -429,7 +499,7 @@ void CGLRenderer::Draw_Init (void)
 {
 	int		i;
 	CQuakePic* cb;
-	byte	*dest, *src;
+	byte	*dest = 0, *src = 0;
 	int		x, y;
 	char	ver[40];
 	CGLTexture* gl = { NULL };
@@ -437,6 +507,7 @@ void CGLRenderer::Draw_Init (void)
 	byte	*ncdata = NULL;
 	int		f, fstep;
 	int		j = 0;
+	int		k = 0;
 
 	//gltexturevector.SetCount(0);
 
@@ -465,12 +536,32 @@ void CGLRenderer::Draw_Init (void)
 
 	start = g_MemCache->Hunk_LowMark();
 	
-	cb = (CQuakePic*)COM_LoadTempFile ("gfx/conback.lmp");
+	byte* picdata = (byte*)COM_LoadTempFile("gfx/conback.lmp");
+
+	auto copy = (CQuakePic*)COM_LoadTempFile("gfx/conback.lmp");
+
+	cb = new CQuakePic();
+	cb->width = copy->width;
+	cb->height = copy->height;
 
 	if (!cb)
 	{
 		Sys_Error("Couldn't load gfx/conback.lmp");
 		return;
+	}
+
+	while (picdata)
+	{
+
+		cb->data.AddToTail(picdata);
+		
+		if (picdata[k] == '\0')
+			break;
+		else
+			k++;
+
+		//picdata++;
+
 	}
 
 	SwapPic(cb);
@@ -484,7 +575,10 @@ void CGLRenderer::Draw_Init (void)
 
 	// memset(cb->data, 0, sizeof(cb->data));
 
-	dest = cb->data + 320*186 + 320 - 11 - 8*strlen(ver);
+	//byte* test = 0;
+	//memcpy(test, cb->data.Head(), cb->data.Count());
+
+	dest = cb->data.Head() + 320 * 186 + 320 - 11 - 8 * strlen(ver);
 
 	y = strlen(ver);
 	for (x=0 ; x<y ; x++)
@@ -492,18 +586,18 @@ void CGLRenderer::Draw_Init (void)
 
 	conback->width = cb->width;
 	conback->height = cb->height;
-	ncdata = cb->data;
+	ncdata = cb->data.Head();
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	auto gldata = (COpenGLPic *)conback->data;
+	auto gldata = (COpenGLPic *)&conback->data;
 	gl = GL_LoadTexture ("conback", conback->width, conback->height, ncdata, false, false);
-	gl->glpic = gldata;
 	gl->sl = 0;
 	gl->sh = 1;
 	gl->tl = 0;
 	gl->th = 1;
+	conback->data.AddToTail(ncdata);
 	conback->width = vid.width;
 	conback->height = vid.height;
 
@@ -515,7 +609,7 @@ void CGLRenderer::Draw_Init (void)
 	translate_texture->texnum = texture_extension_number++; // &gltextures[texture_extension_number++];
 
 	// save slots for scraps
-	// scrap_texnum = texture_extension_number;
+	//scrap_texnum = texture_extension_number;
 	texture_extension_number += MAX_SCRAPS;
 
 	memset(scrap_allocated, 0, sizeof(scrap_allocated));
@@ -621,7 +715,7 @@ void CGLRenderer::Draw_AlphaPic (int x, int y, CQuakePic *pic, float alpha)
 
 	if (scrap_dirty)
 		Scrap_Upload ();
-	gl = (CGLTexture*)pic->data;
+	gl = (CGLTexture*)&pic->data;
 	glDisable(GL_ALPHA_TEST);
 	glEnable (GL_BLEND);
 //	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -658,7 +752,8 @@ void CGLRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 
 	if (scrap_dirty)
 		Scrap_Upload ();
-	gl = (CGLTexture*)pic->data;
+
+	gl = (CGLTexture*)pic->data.Head();
 	glColor4f (1,1,1,1);
 	g_GLRenderer->GL_Bind (gl);
 	glBegin (GL_QUADS);
@@ -773,8 +868,9 @@ refresh window.
 */
 void CGLRenderer::Draw_TileClear (int x, int y, int w, int h)
 {
+
 	glColor3f (1,1,1);
-	g_GLRenderer->GL_Bind ((CGLTexture*)draw_backtile->data); // *(int*)draw_backtile->data;
+	g_GLRenderer->GL_Bind((CGLTexture*)draw_backtile->data.Head()); // *(int*)draw_backtile->data;
 	glBegin (GL_QUADS);
 	glTexCoord2f (x/64.0, y/64.0);
 	glVertex2f (x, y);
@@ -798,9 +894,9 @@ Fills a box of pixels with a single color
 void CGLRenderer::Draw_Fill (int x, int y, int w, int h, int c)
 {
 	glDisable (GL_TEXTURE_2D);
-	glColor3f (host_basepal[c*3]/255.0,
-		host_basepal[c*3+1]/255.0,
-		host_basepal[c*3+2]/255.0);
+	glColor3f (host->host_basepal[c*3]/255.0,
+		host->host_basepal[c*3+1]/255.0,
+		host->host_basepal[c*3+2]/255.0);
 
 	glBegin (GL_QUADS);
 
@@ -1282,7 +1378,7 @@ Loads an OpenGL texture via string ID or byte data. Can take an empty string or 
 */
 CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int height, byte *data, bool mipmap, bool alpha)
 {
-	int			i, p, s;
+	int			i = 0, p = 0, s = 0, l = 0; // -- Missi
 	CGLTexture* glt = NULL;
 
 // Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
@@ -1295,10 +1391,12 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	glt->width = width;
 	glt->height = height;
 	glt->mipmap = mipmap;
-	glt->pic = (CQuakePic*)data;
-	glt->pic->width = width;
-	glt->pic->height = height;
-	glt->glpic = (COpenGLPic*)data;
+
+	byte* test = data;
+	glt->pic.data.AddToTail(data);
+
+	glt->pic.width = width;
+	glt->pic.height = height;
 
 	g_GLRenderer->GL_Bind(glt);
 
@@ -1317,7 +1415,7 @@ GL_LoadPicTexture
 */
 CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic)
 {
-	return GL_LoadTexture("", pic->width, pic->height, pic->data, false, true);
+	return GL_LoadTexture("", pic->width, pic->height, pic->data.Head(), false, true);
 }
 
 /****************************************/
@@ -1336,17 +1434,17 @@ void CGLRenderer::GL_SelectTexture (GLenum target)
 	oldtarget = target;
 }
 
-CGLTexture::CGLTexture() : height(0), width(0), pic(NULL), glpic(NULL), mipmap(false), texnum(0), sh(0), sl(0), th(0), tl(0)
+CGLTexture::CGLTexture() : height(0), width(0), mipmap(false), texnum(0), sh(0), sl(0), th(0), tl(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
 
-CGLTexture::CGLTexture(CQuakePic* qpic, COpenGLPic* glpic) : height(qpic->height), width(qpic->width), pic(qpic), glpic(glpic), mipmap(false), texnum(0), sh(0), sl(0), th(0), tl(0)
+CGLTexture::CGLTexture(CQuakePic qpic, float des_sl, float des_tl, float des_sh, float des_th) : height(qpic.height), width(qpic.width), mipmap(false), texnum(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
 
-CGLTexture::CGLTexture(const CGLTexture& obj) : height(0), width(0), pic(NULL), glpic(NULL), mipmap(false), texnum(0), sh(0), sl(0), th(0), tl(0)
+CGLTexture::CGLTexture(const CGLTexture& obj) : height(0), width(0), mipmap(false), texnum(0), sh(0), sl(0), th(0), tl(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }

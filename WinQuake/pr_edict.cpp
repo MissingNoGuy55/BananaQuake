@@ -121,7 +121,7 @@ FIXME: walk all entities and NULL out references to this entity
 */
 void ED_Free (edict_t *ed)
 {
-	SV_UnlinkEdict (ed);		// unlink from world bsp
+	sv.SV_UnlinkEdict (ed);		// unlink from world bsp
 
 	ed->free = true;
 	ed->v.model = 0;
@@ -678,7 +678,7 @@ void ED_ParseGlobals (char *data)
 		}
 
 		if (!ED_ParseEpair ((void *)pr_globals, key, com_token))
-			Host_Error ("ED_ParseGlobals: parse error");
+			host->Host_Error ("ED_ParseGlobals: parse error");
 	}
 }
 
@@ -877,7 +877,7 @@ sprintf (com_token, "0 %s 0", temp);
 }
 
 		if (!ED_ParseEpair ((void *)&ent->v, key, com_token))
-			Host_Error ("ED_ParseEdict: parse error");
+			host->Host_Error ("ED_ParseEdict: parse error");
 	}
 
 	if (!init)
@@ -938,9 +938,9 @@ void ED_LoadFromFile (char *data)
 				continue;
 			}
 		}
-		else if ((current_skill == 0 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_EASY))
-				|| (current_skill == 1 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_MEDIUM))
-				|| (current_skill >= 2 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_HARD)) )
+		else if ((host->current_skill == 0 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_EASY))
+				|| (host->current_skill == 1 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_MEDIUM))
+				|| (host->current_skill >= 2 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_HARD)) )
 		{
 			ED_Free (ent);	
 			inhibit++;

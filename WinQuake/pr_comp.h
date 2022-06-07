@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef int	func_t;
 typedef int	string_t;
 
+#ifndef PRCOMP_H
+#define PRCOMP_H
+
 enum etype_t : int
 {
 	ev_void, ev_string, ev_float, ev_vector, ev_entity, ev_field, ev_function, ev_pointer
@@ -180,3 +183,4 @@ typedef struct
 	int		entityfields;
 } dprograms_t;
 
+#endif

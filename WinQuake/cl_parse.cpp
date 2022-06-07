@@ -81,7 +81,7 @@ entity_t	*CL_EntityNum (int num)
 	if (num >= cl.num_entities)
 	{
 		if (num >= MAX_EDICTS)
-			Host_Error ("CL_EntityNum: %i is an invalid number",num);
+			host->Host_Error ("CL_EntityNum: %i is an invalid number",num);
 		while (cl.num_entities<=num)
 		{
 			cl_entities[cl.num_entities].colormap = vid.colormap;
@@ -127,7 +127,7 @@ void CL_ParseStartSoundPacket(void)
 	channel &= 7;
 
 	if (ent > MAX_EDICTS)
-		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
+		host->Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
 	
 	for (i=0 ; i<3 ; i++)
 		pos[i] = MSG_ReadCoord ();
@@ -166,15 +166,15 @@ void CL_KeepaliveMessage (void)
 		switch (ret)
 		{
 		default:
-			Host_Error ("CL_KeepaliveMessage: CL_GetMessage failed");		
+			host->Host_Error ("CL_KeepaliveMessage: CL_GetMessage failed");
 		case 0:
 			break;	// nothing waiting
 		case 1:
-			Host_Error ("CL_KeepaliveMessage: received a message");
+			host->Host_Error ("CL_KeepaliveMessage: received a message");
 			break;
 		case 2:
 			if (MSG_ReadByte() != svc_nop)
-				Host_Error ("CL_KeepaliveMessage: datagram wasn't a nop");
+				host->Host_Error ("CL_KeepaliveMessage: datagram wasn't a nop");
 			break;
 		}
 	} while (ret);
@@ -375,7 +375,7 @@ if (bits&(1<<i))
 	{
 		modnum = MSG_ReadByte ();
 		if (modnum >= MAX_MODELS)
-			Host_Error ("CL_ParseModel: bad modnum");
+			host->Host_Error ("CL_ParseModel: bad modnum");
 	}
 	else
 		modnum = ent->baseline.modelindex;
@@ -676,7 +676,7 @@ void CL_ParseStatic (void)
 		
 	i = cl.num_statics;
 	if (i >= MAX_STATIC_ENTITIES)
-		Host_Error ("Too many static entities");
+		host->Host_Error ("Too many static entities");
 	ent = &cl_static_entities[i];
 	cl.num_statics++;
 	CL_ParseBaseline (ent);
@@ -747,7 +747,7 @@ void CL_ParseServerMessage (void)
 	while (1)
 	{
 		if (msg_badread)
-			Host_Error ("CL_ParseServerMessage: Bad server message");
+			host->Host_Error ("CL_ParseServerMessage: Bad server message");
 
 		cmd = MSG_ReadByte ();
 
@@ -771,7 +771,7 @@ void CL_ParseServerMessage (void)
 		switch (cmd)
 		{
 		default:
-			Host_Error ("CL_ParseServerMessage: Illegible server message\n");
+			host->Host_Error ("CL_ParseServerMessage: Illegible server message\n");
 			break;
 			
 		case svc_nop:
@@ -791,11 +791,11 @@ void CL_ParseServerMessage (void)
 		case svc_version:
 			i = MSG_ReadLong ();
 			if (i != PROTOCOL_VERSION)
-				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i\n", i, PROTOCOL_VERSION);
+				host->Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i\n", i, PROTOCOL_VERSION);
 			break;
 			
 		case svc_disconnect:
-			Host_EndGame ("Server disconnected\n");
+			host->Host_EndGame ("Server disconnected\n");
 
 		case svc_print:
 			Con_Printf ("%s", MSG_ReadString ());
@@ -848,7 +848,7 @@ void CL_ParseServerMessage (void)
 			Sbar_Changed ();
 			i = MSG_ReadByte ();
 			if (i >= cl.maxclients)
-				Host_Error ("CL_ParseServerMessage: svc_updatename > MAX_SCOREBOARD");
+				host->Host_Error ("CL_ParseServerMessage: svc_updatename > MAX_SCOREBOARD");
 			Q_strcpy (cl.scores[i].name, MSG_ReadString ());
 			break;
 			
@@ -856,7 +856,7 @@ void CL_ParseServerMessage (void)
 			Sbar_Changed ();
 			i = MSG_ReadByte ();
 			if (i >= cl.maxclients)
-				Host_Error ("CL_ParseServerMessage: svc_updatefrags > MAX_SCOREBOARD");
+				host->Host_Error ("CL_ParseServerMessage: svc_updatefrags > MAX_SCOREBOARD");
 			cl.scores[i].frags = MSG_ReadShort ();
 			break;			
 
@@ -864,7 +864,7 @@ void CL_ParseServerMessage (void)
 			Sbar_Changed ();
 			i = MSG_ReadByte ();
 			if (i >= cl.maxclients)
-				Host_Error ("CL_ParseServerMessage: svc_updatecolors > MAX_SCOREBOARD");
+				host->Host_Error ("CL_ParseServerMessage: svc_updatecolors > MAX_SCOREBOARD");
 			cl.scores[i].colors = MSG_ReadByte ();
 			CL_NewTranslation (i);
 			break;
@@ -909,7 +909,7 @@ void CL_ParseServerMessage (void)
 		case svc_signonnum:
 			i = MSG_ReadByte ();
 			if (i <= cls.signon)
-				Host_Error ("Received signon %i when at %i", i, cls.signon);
+				host->Host_Error ("Received signon %i when at %i", i, cls.signon);
 			cls.signon = i;
 			CL_SignonReply ();
 			break;

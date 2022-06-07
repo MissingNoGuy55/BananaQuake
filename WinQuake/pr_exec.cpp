@@ -273,7 +273,7 @@ void PR_RunError (char *error, ...)
 	
 	pr_depth = 0;		// dump the stack so host_error can shutdown functions
 
-	Host_Error ("Program error");
+	host->Host_Error ("Program error");
 }
 
 /*
@@ -374,7 +374,7 @@ void PR_ExecuteProgram (func_t fnum)
 	{
 		if (pr_global_struct->self)
 			ED_Print (PROG_TO_EDICT(pr_global_struct->self));
-		Host_Error ("PR_ExecuteProgram: NULL function");
+		host->Host_Error ("PR_ExecuteProgram: NULL function");
 	}
 	
 	f = &pr_functions[fnum];

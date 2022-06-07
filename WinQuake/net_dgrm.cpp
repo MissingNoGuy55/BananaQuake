@@ -106,7 +106,7 @@ void NET_Ban_f (void)
 {
 	char	addrStr [32];
 	char	maskStr [32];
-	void	(*print) (char *fmt, ...);
+	void	(*print) (const char *fmt, ...);
 
 	if (cmd_source == src_command)
 	{
@@ -121,7 +121,7 @@ void NET_Ban_f (void)
 	{
 		if (pr_global_struct->deathmatch && !host_client->privileged)
 			return;
-		print = SV_ClientPrintf;
+		print = CQuakeServer::SV_ClientPrintf;
 	}
 
 	switch (Cmd_Argc ())
@@ -937,7 +937,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 			var = var->next;
 		}
 		else
-			var = cvar_vars;
+			var = cvar_vars;	// Missi: might be broke
 
 		// search for the next server cvar
 		while (var)

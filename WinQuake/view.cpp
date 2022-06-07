@@ -196,7 +196,7 @@ void V_DriftPitch (void)
 		if ( fabs(cl.cmd.forwardmove) < cl_forwardspeed.value)
 			cl.driftmove = 0;
 		else
-			cl.driftmove += host_frametime;
+			cl.driftmove += host->host_frametime;
 	
 		if ( cl.driftmove > v_centermove.value)
 		{
@@ -213,8 +213,8 @@ void V_DriftPitch (void)
 		return;
 	}
 
-	move = host_frametime * cl.pitchvel;
-	cl.pitchvel += host_frametime * v_centerspeed.value;
+	move = host->host_frametime * cl.pitchvel;
+	cl.pitchvel += host->host_frametime * v_centerspeed.value;
 	
 //Con_Printf ("move: %f (%f)\n", move, host_frametime);
 
@@ -554,12 +554,12 @@ void V_UpdatePalette (void)
 	}
 	
 // drop the damage value
-	cl.cshifts[CSHIFT_DAMAGE].percent -= host_frametime*150;
+	cl.cshifts[CSHIFT_DAMAGE].percent -= host->host_frametime*150;
 	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0)
 		cl.cshifts[CSHIFT_DAMAGE].percent = 0;
 
 // drop the bonus value
-	cl.cshifts[CSHIFT_BONUS].percent -= host_frametime*100;
+	cl.cshifts[CSHIFT_BONUS].percent -= host->host_frametime*100;
 	if (cl.cshifts[CSHIFT_BONUS].percent <= 0)
 		cl.cshifts[CSHIFT_BONUS].percent = 0;
 
@@ -592,7 +592,7 @@ void V_UpdatePalette (void)
 		ramps[2][i] = gammatable[ib];
 	}
 
-	basepal = host_basepal;
+	basepal = host->host_basepal;
 	newpal = pal;
 	
 	for (i=0 ; i<256 ; i++)
@@ -721,7 +721,7 @@ void CalcGunAngle (void)
 		pitch = 10;
 	if (pitch < -10)
 		pitch = -10;
-	move = host_frametime*20;
+	move = host->host_frametime*20;
 	if (yaw > oldyaw)
 	{
 		if (oldyaw + move < yaw)
@@ -816,7 +816,7 @@ void V_CalcViewRoll (void)
 	{
 		r_refdef.viewangles[ROLL] += v_dmg_time/v_kicktime.value*v_dmg_roll;
 		r_refdef.viewangles[PITCH] += v_dmg_time/v_kicktime.value*v_dmg_pitch;
-		v_dmg_time -= host_frametime;
+		v_dmg_time -= host->host_frametime;
 	}
 
 	if (cl.stats[STAT_HEALTH] <= 0)

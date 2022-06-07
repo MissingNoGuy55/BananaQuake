@@ -34,7 +34,7 @@ is not a staircase.
 */
 int c_yes, c_no;
 
-bool SV_CheckBottom (edict_t *ent)
+bool CQuakeServer::SV_CheckBottom (edict_t *ent)
 {
 	vec3_t	mins, maxs, start, stop;
 	trace_t	trace;
@@ -107,7 +107,7 @@ possible, no move is done, false is returned, and
 pr_global_struct->trace_normal is set to the normal of the blocking wall
 =============
 */
-bool SV_movestep (edict_t *ent, vec3_t move, bool relink)
+bool CQuakeServer::SV_movestep (edict_t *ent, vec3_t move, bool relink)
 {
 	float		dz;
 	vec3_t		oldorg, neworg, end;
@@ -230,7 +230,7 @@ facing it.
 ======================
 */
 void PF_changeyaw (void);
-bool SV_StepDirection (edict_t *ent, float yaw, float dist)
+bool CQuakeServer::SV_StepDirection (edict_t *ent, float yaw, float dist)
 {
 	vec3_t		move, oldorigin;
 	float		delta;
@@ -265,7 +265,7 @@ SV_FixCheckBottom
 
 ======================
 */
-void SV_FixCheckBottom (edict_t *ent)
+void CQuakeServer::SV_FixCheckBottom (edict_t *ent)
 {
 //	Con_Printf ("SV_FixCheckBottom\n");
 	
@@ -281,7 +281,7 @@ SV_NewChaseDir
 ================
 */
 #define	DI_NODIR	-1
-void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
+void CQuakeServer::SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 {
 	float		deltax,deltay;
 	float			d[3];
@@ -370,7 +370,7 @@ SV_CloseEnough
 
 ======================
 */
-bool SV_CloseEnough (edict_t *ent, edict_t *goal, float dist)
+bool CQuakeServer::SV_CloseEnough (edict_t *ent, edict_t *goal, float dist)
 {
 	int		i;
 	
@@ -390,7 +390,7 @@ SV_MoveToGoal
 
 ======================
 */
-void SV_MoveToGoal (void)
+void CQuakeServer::SV_MoveToGoal (void)
 {
 	edict_t		*ent, *goal;
 	float		dist;
@@ -413,15 +413,15 @@ void SV_MoveToGoal (void)
 	enemy = PROG_TO_EDICT(ent->v.enemy);
 	if (enemy != sv.edicts &&  SV_CloseEnough (ent, enemy, dist) )
 #else
-	if ( PROG_TO_EDICT(ent->v.enemy) != sv.edicts &&  SV_CloseEnough (ent, goal, dist) )
+	if ( PROG_TO_EDICT(ent->v.enemy) != sv.edicts && sv.SV_CloseEnough (ent, goal, dist) )
 #endif
 		return;
 
 // bump around...
 	if ( (rand()&3)==1 ||
-	!SV_StepDirection (ent, ent->v.ideal_yaw, dist))
+	!sv.SV_StepDirection (ent, ent->v.ideal_yaw, dist))
 	{
-		SV_NewChaseDir (ent, goal, dist);
+		sv.SV_NewChaseDir (ent, goal, dist);
 	}
 }
 

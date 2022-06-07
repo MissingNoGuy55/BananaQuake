@@ -54,7 +54,7 @@ struct sfxcache_t
 	int 	speed = 0;
 	int 	width = 0;
 	int 	stereo = 0;
-	byte	data[MAX_VARARRLEN];		// variable sized
+	byte	data[Q_MAX_VARARRLEN];		// variable sized
 };
 
 typedef struct

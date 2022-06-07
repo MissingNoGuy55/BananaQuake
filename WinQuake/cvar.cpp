@@ -123,7 +123,7 @@ void Cvar_Set (char *var_name, char *value)
 	if (var->server && changed)
 	{
 		if (sv.active)
-			SV_BroadcastPrintf ("\"%s\" changed to \"%s\"\n", var->name, var->string);
+			sv.SV_BroadcastPrintf ("\"%s\" changed to \"%s\"\n", var->name, var->string);
 	}
 }
 

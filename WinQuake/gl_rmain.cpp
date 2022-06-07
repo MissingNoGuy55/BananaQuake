@@ -25,6 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_rsurf.h"
 #include "r_part.h"
 
+CGLRenderer* g_GLRenderer;
+
 entity_t	r_worldentity;
 
 bool	r_cache_thrash;		// compatability
@@ -100,13 +102,19 @@ cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","0"};
 cvar_t	gl_reporttjunctions = {"gl_reporttjunctions","0"};
 cvar_t	gl_doubleeyes = {"gl_doubleeys", "1"};
 
-CCoreRenderer* g_CoreRenderer;
-
 extern	cvar_t	gl_ztrick;
 
 int skytexturenum;
 
-CCoreRenderer::CCoreRenderer()
+CCoreRenderer::CCoreRenderer() : solidskytexture(NULL)
+{
+	solidskytexture = NULL;
+	alphaskytexture = NULL;
+	speedscale = 1.0f;
+	memset(blocklights, 0, sizeof(blocklights));
+}
+
+CCoreRenderer::CCoreRenderer(const CCoreRenderer& src)
 {
 	solidskytexture = NULL;
 	alphaskytexture = NULL;

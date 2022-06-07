@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //#define	GLTEST			// experimental stuff
 
+#pragma once
+
 #define	QUAKE_GAME			// as opposed to utilities
 
 #define	VERSION				1.09
@@ -30,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	LINUX_VERSION		1.30
 #define	X11_VERSION			1.10
 
-#define MAX_VARARRLEN		((int)0xFFFF)	// Missi: this is a replacement for variable-sized array lengths in C++ as they're buggy in MSVC and require a flag in GCC to enable
+#define Q_MAX_VARARRLEN		((int)0xFFFF)	// Missi: this is a replacement for variable-sized array lengths in C++ as they're buggy in MSVC and require a flag in GCC to enable
 
 //define	PARANOID			// speed sapping error checking
 
@@ -44,10 +46,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <cstdlib>
 #include <stdlib.h>
 #include <setjmp.h>
 // #include <dsound.h>
 #include <windows.h>
+#include <xmemory>
 #include "SDL.h"
 #include "utils.h"
 
@@ -263,6 +267,7 @@ typedef struct
 #include "menu.h"
 #include "crc.h"
 #include "cdaudio.h"
+#include "host.h"
 
 #ifdef GLQUAKE
 #include "glquake.h"
@@ -274,60 +279,12 @@ typedef struct
 // command line parms passed to the program, and the amount of memory
 // available for the program to use
 
-typedef struct
-{
-	char	*basedir;
-	char	*cachedir;		// for development over ISDN lines
-	int		argc;
-	char	**argv;
-	void	*membase;
-	int		memsize;
-} quakeparms_t;
-
 
 //=============================================================================
 
 extern bool noclip_anglehack;
 
-
-//
-// host
-//
-extern	quakeparms_t host_parms;
-
-extern	cvar_t		sys_ticrate;
-extern	cvar_t		sys_nostdout;
-extern	cvar_t		developer;
-
-extern	bool	host_initialized;		// true if into command execution
-extern	double		host_frametime;
-extern	byte		*host_basepal;
-extern	byte		*host_colormap;
-extern	int			host_framecount;	// incremented every frame, never reset
-extern	double		realtime;			// not bounded in any way, changed at
-										// start of every frame, never reset
-
-void Host_ClearMemory (void);
-void Host_ServerFrame (void);
-void Host_InitCommands (void);
-void Host_Init (quakeparms_t *parms);
-void Host_Shutdown(void);
-void Host_Error (char *error, ...);
-void Host_EndGame (char *message, ...);
-void Host_Frame (float time);
-void Host_Quit_f (void);
-void Host_ClientCommands (char *fmt, ...);
-void Host_ShutdownServer (bool crash);
-
-extern bool		msg_suppress_1;		// suppresses resolution and cache size console output
-										//  an fullscreen DIB focus gain/loss
-extern int			current_skill;		// skill level for currently loaded level (in case
-										//  the user changes the cvar while the level is
-										//  running, this reflects the level actually in use)
-
-extern bool		isDedicated;
-
-extern int			minimum_memory;
+extern CQuakeHost* host;
 
 //
 // chase

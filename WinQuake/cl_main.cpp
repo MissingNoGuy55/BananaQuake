@@ -64,7 +64,7 @@ void CL_ClearState (void)
 	int			i;
 
 	if (!sv.active)
-		Host_ClearMemory ();
+		host->Host_ClearMemory ();
 
 // wipe the entire cl structure
 	memset (&cl, 0, sizeof(cl));
@@ -121,7 +121,7 @@ void CL_Disconnect (void)
 
 		cls.state = ca_disconnected;
 		if (sv.active)
-			Host_ShutdownServer(false);
+			host->Host_ShutdownServer(false);
 	}
 
 	cls.demoplayback = cls.timedemo = false;
@@ -132,7 +132,7 @@ void CL_Disconnect_f (void)
 {
 	CL_Disconnect ();
 	if (sv.active)
-		Host_ShutdownServer (false);
+		host->Host_ShutdownServer (false);
 }
 
 
@@ -145,7 +145,7 @@ CL_EstablishConnection
 Host should be either "local" or a net address to be passed on
 =====================
 */
-void CL_EstablishConnection (char *host)
+void CL_EstablishConnection (char *inhost)
 {
 	if (cls.state == ca_dedicated)
 		return;
@@ -155,9 +155,9 @@ void CL_EstablishConnection (char *host)
 
 	CL_Disconnect ();
 
-	cls.netcon = NET_Connect (host);
+	cls.netcon = NET_Connect (inhost);
 	if (!cls.netcon)
-		Host_Error ("CL_Connect: connect failed\n");
+		host->Host_Error ("CL_Connect: connect failed\n");
 	Con_DPrintf ("CL_EstablishConnection: connected to %s\n", host);
 	
 	cls.demonum = -1;			// not in the demo loop now
@@ -636,17 +636,17 @@ int CL_ReadFromServer (void)
 	int		ret;
 
 	cl.oldtime = cl.time;
-	cl.time += host_frametime;
+	cl.time += host->host_frametime;
 	
 	do
 	{
 		ret = CL_GetMessage ();
 		if (ret == -1)
-			Host_Error ("CL_ReadFromServer: lost server connection");
+			host->Host_Error ("CL_ReadFromServer: lost server connection");
 		if (!ret)
 			break;
 		
-		cl.last_received_message = realtime;
+		cl.last_received_message = host->realtime;
 		CL_ParseServerMessage ();
 	} while (ret && cls.state == ca_connected);
 	
@@ -704,7 +704,7 @@ void CL_SendCmd (void)
 	}
 
 	if (NET_SendMessage (cls.netcon, &cls.message) == -1)
-		Host_Error ("CL_WriteToServer: lost server connection");
+		host->Host_Error ("CL_WriteToServer: lost server connection");
 
 	SZ_Clear (&cls.message);
 }

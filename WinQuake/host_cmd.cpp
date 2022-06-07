@@ -34,7 +34,7 @@ Host_Quit_f
 
 extern void M_Menu_Quit_f (void);
 
-void Host_Quit_f (void)
+void CQuakeHost::Host_Quit_f (void)
 {
 	if (key_dest != key_console && cls.state != ca_dedicated)
 	{
@@ -42,7 +42,7 @@ void Host_Quit_f (void)
 		return;
 	}
 	CL_Disconnect ();
-	Host_ShutdownServer(false);		
+	host->Host_ShutdownServer(false);		
 
 	Sys_Quit ();
 }
@@ -60,19 +60,19 @@ void Host_Status_f (void)
 	int			minutes;
 	int			hours = 0;
 	int			j;
-	void		(*print) (char *fmt, ...);
+	void		(*print) (const char *fmt, ...);
 	
 	if (cmd_source == src_command)
 	{
 		if (!sv.active)
 		{
-			Cmd_ForwardToServer ();
+			Cmd_ForwardToServer();
 			return;
 		}
 		print = Con_Printf;
 	}
 	else
-		print = SV_ClientPrintf;
+		print = sv.SV_ClientPrintf;
 
 	print ("host:    %s\n", Cvar_VariableString ("hostname"));
 	print ("version: %4.2f\n", VERSION);
@@ -123,9 +123,9 @@ void Host_God_f (void)
 
 	sv_player->v.flags = (int)sv_player->v.flags ^ FL_GODMODE;
 	if (!((int)sv_player->v.flags & FL_GODMODE) )
-		SV_ClientPrintf ("godmode OFF\n");
+		sv.SV_ClientPrintf ("godmode OFF\n");
 	else
-		SV_ClientPrintf ("godmode ON\n");
+		sv.SV_ClientPrintf ("godmode ON\n");
 }
 
 void Host_Notarget_f (void)
@@ -141,9 +141,9 @@ void Host_Notarget_f (void)
 
 	sv_player->v.flags = (int)sv_player->v.flags ^ FL_NOTARGET;
 	if (!((int)sv_player->v.flags & FL_NOTARGET) )
-		SV_ClientPrintf ("notarget OFF\n");
+		sv.SV_ClientPrintf ("notarget OFF\n");
 	else
-		SV_ClientPrintf ("notarget ON\n");
+		sv.SV_ClientPrintf ("notarget ON\n");
 }
 
 bool noclip_anglehack;
@@ -163,13 +163,13 @@ void Host_Noclip_f (void)
 	{
 		noclip_anglehack = true;
 		sv_player->v.movetype = MOVETYPE_NOCLIP;
-		SV_ClientPrintf ("noclip ON\n");
+		sv.SV_ClientPrintf ("noclip ON\n");
 	}
 	else
 	{
 		noclip_anglehack = false;
 		sv_player->v.movetype = MOVETYPE_WALK;
-		SV_ClientPrintf ("noclip OFF\n");
+		sv.SV_ClientPrintf ("noclip OFF\n");
 	}
 }
 
@@ -194,12 +194,12 @@ void Host_Fly_f (void)
 	if (sv_player->v.movetype != MOVETYPE_FLY)
 	{
 		sv_player->v.movetype = MOVETYPE_FLY;
-		SV_ClientPrintf ("flymode ON\n");
+		sv.SV_ClientPrintf ("flymode ON\n");
 	}
 	else
 	{
 		sv_player->v.movetype = MOVETYPE_WALK;
-		SV_ClientPrintf ("flymode OFF\n");
+		sv.SV_ClientPrintf ("flymode OFF\n");
 	}
 }
 
@@ -222,7 +222,7 @@ void Host_Ping_f (void)
 		return;
 	}
 
-	SV_ClientPrintf ("Client ping times:\n");
+	sv.SV_ClientPrintf ("Client ping times:\n");
 	for (i=0, client = svs.clients ; i<svs.maxclients ; i++, client++)
 	{
 		if (!client->active)
@@ -231,7 +231,7 @@ void Host_Ping_f (void)
 		for (j=0 ; j<NUM_PING_TIMES ; j++)
 			total+=client->ping_times[j];
 		total /= NUM_PING_TIMES;
-		SV_ClientPrintf ("%4i %s\n", (int)(total*1000), client->name);
+		sv.SV_ClientPrintf ("%4i %s\n", (int)(total*1000), client->name);
 	}
 }
 
@@ -264,7 +264,7 @@ void Host_Map_f (void)
 	cls.demonum = -1;		// stop demo loop in case this fails
 
 	CL_Disconnect ();
-	Host_ShutdownServer(false);		
+	host->Host_ShutdownServer(false);
 
 	key_dest = key_game;			// remove console or menu
 	SCR_BeginLoadingPlaque ();
@@ -282,7 +282,7 @@ void Host_Map_f (void)
 #ifdef QUAKE2
 	SV_SpawnServer (name, NULL);
 #else
-	SV_SpawnServer (name);
+	sv.SV_SpawnServer (name);
 #endif
 	if (!sv.active)
 		return;
@@ -350,9 +350,9 @@ void Host_Changelevel_f (void)
 		Con_Printf ("Only the server may changelevel\n");
 		return;
 	}
-	SV_SaveSpawnparms ();
+	sv.SV_SaveSpawnparms ();
 	Q_strcpy (level, Cmd_Argv(1));
-	SV_SpawnServer (level);
+	sv.SV_SpawnServer (level);
 #endif
 }
 
@@ -381,7 +381,7 @@ void Host_Restart_f (void)
 	Q_strcpy(startspot, sv.startspot);
 	SV_SpawnServer (mapname, startspot);
 #else
-	SV_SpawnServer (mapname);
+	sv.SV_SpawnServer (mapname);
 #endif
 }
 
@@ -624,9 +624,9 @@ void Host_Loadgame_f (void)
 	CL_Disconnect_f ();
 	
 #ifdef QUAKE2
-	SV_SpawnServer (mapname, NULL);
+	sv.SV_SpawnServer (mapname, NULL);
 #else
-	SV_SpawnServer (mapname);
+	sv.SV_SpawnServer (mapname);
 #endif
 	if (!sv.active)
 	{
@@ -685,7 +685,7 @@ void Host_Loadgame_f (void)
 	
 		// link it into the bsp tree
 			if (!ent->free)
-				SV_LinkEdict (ent, false);
+				sv.SV_LinkEdict (ent, false);
 		}
 
 		entnum++;
@@ -1061,7 +1061,7 @@ void Host_Say(bool teamonly)
 		if (teamplay.value && teamonly && client->edict->v.team != save->edict->v.team)
 			continue;
 		host_client = client;
-		SV_ClientPrintf("%s", text);
+		sv.SV_ClientPrintf("%s", text);
 	}
 	host_client = save;
 
@@ -1126,7 +1126,7 @@ void Host_Tell_f(void)
 		if (Q_strcasecmp(client->name, Cmd_Argv(1)))
 			continue;
 		host_client = client;
-		SV_ClientPrintf("%s", text);
+		sv.SV_ClientPrintf("%s", text);
 		break;
 	}
 	host_client = save;
@@ -1199,7 +1199,7 @@ void Host_Kill_f (void)
 
 	if (sv_player->v.health <= 0)
 	{
-		SV_ClientPrintf ("Can't suicide -- allready dead!\n");
+		sv.SV_ClientPrintf ("Can't suicide -- allready dead!\n");
 		return;
 	}
 	
@@ -1223,18 +1223,18 @@ void Host_Pause_f (void)
 		return;
 	}
 	if (!pausable.value)
-		SV_ClientPrintf ("Pause not allowed.\n");
+		sv.SV_ClientPrintf ("Pause not allowed.\n");
 	else
 	{
 		sv.paused ^= 1;
 
 		if (sv.paused)
 		{
-			SV_BroadcastPrintf ("%s paused the game\n", pr_strings + sv_player->v.netname);
+			sv.SV_BroadcastPrintf ("%s paused the game\n", pr_strings + sv_player->v.netname);
 		}
 		else
 		{
-			SV_BroadcastPrintf ("%s unpaused the game\n",pr_strings + sv_player->v.netname);
+			sv.SV_BroadcastPrintf ("%s unpaused the game\n",pr_strings + sv_player->v.netname);
 		}
 
 	// send notification to all clients
@@ -1388,7 +1388,7 @@ void Host_Spawn_f (void)
 		MSG_WriteAngle (&host_client->message, ent->v.angles[i] );
 	MSG_WriteAngle (&host_client->message, 0 );
 
-	SV_WriteClientdataToMessage (sv_player, &host_client->message);
+	sv.SV_WriteClientdataToMessage (sv_player, &host_client->message);
 
 	MSG_WriteByte (&host_client->message, svc_signonnum);
 	MSG_WriteByte (&host_client->message, 3);
@@ -1491,10 +1491,10 @@ void Host_Kick_f (void)
 				message++;
 		}
 		if (message)
-			SV_ClientPrintf ("Kicked by %s: %s\n", who, message);
+			sv.SV_ClientPrintf ("Kicked by %s: %s\n", who, message);
 		else
-			SV_ClientPrintf ("Kicked by %s\n", who);
-		SV_DropClient (false);
+			sv.SV_ClientPrintf ("Kicked by %s\n", who);
+		sv.SV_DropClient (false);
 	}
 
 	host_client = save;
@@ -1876,7 +1876,7 @@ void Host_Stopdemo_f (void)
 Host_InitCommands
 ==================
 */
-void Host_InitCommands (void)
+void CQuakeHost::Host_InitCommands (void)
 {
 	Cmd_AddCommand ("status", Host_Status_f);
 	Cmd_AddCommand ("quit", Host_Quit_f);
