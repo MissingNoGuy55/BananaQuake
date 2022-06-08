@@ -46,7 +46,7 @@ typedef struct sizebuf_s
 void SZ_Alloc (sizebuf_t *buf, int startsize);
 void SZ_Free (sizebuf_t *buf);
 void SZ_Clear (sizebuf_t *buf);
-void *SZ_GetSpace (sizebuf_t *buf, int length);
+byte *SZ_GetSpace (sizebuf_t *buf, int length);
 void SZ_Write (sizebuf_t *buf, void *data, int length);
 void SZ_Print (sizebuf_t *buf, char *data);	// strcats onto the sizebuf
 
@@ -197,9 +197,9 @@ int COM_OpenFile (const char *filename, int *hndl);
 int COM_FOpenFile (const char *filename, FILE **file);
 void COM_CloseFile (int h);
 
-byte *COM_LoadStackFile (const char *path, void *buffer, int bufsize);
-byte *COM_LoadTempFile (const char *path);
-byte *COM_LoadHunkFile (const char *path);
+void *COM_LoadStackFile (const char *path, void *buffer, int bufsize);
+void *COM_LoadTempFile (const char *path);
+void *COM_LoadHunkFile (const char *path);
 void COM_LoadCacheFile (const char *path, struct cache_user_s *cu);
 
 

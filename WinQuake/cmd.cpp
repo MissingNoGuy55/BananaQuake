@@ -95,7 +95,7 @@ void Cbuf_AddText (char *text)
 		return;
 	}
 
-	SZ_Write (&cmd_text, text, Q_strlen (text));
+	SZ_Write (&cmd_text, text, Q_strlen (text));	// something's going wrong here
 }
 
 

@@ -556,7 +556,7 @@ void MSG_WriteByte (sizebuf_t *sb, int c)
 		Sys_Error ("MSG_WriteByte: range error");
 #endif
 
-	buf = static_cast<byte*>(SZ_GetSpace (sb, 1));
+	buf = SZ_GetSpace (sb, 1);
 	buf[0] = c;
 }
 
@@ -569,7 +569,7 @@ void MSG_WriteShort (sizebuf_t *sb, int c)
 		Sys_Error ("MSG_WriteShort: range error");
 #endif
 
-	buf = static_cast<byte*>(SZ_GetSpace (sb, 2));
+	buf = SZ_GetSpace (sb, 2);
 	buf[0] = c&0xff;
 	buf[1] = c>>8;
 }
@@ -578,7 +578,7 @@ void MSG_WriteLong (sizebuf_t *sb, int c)
 {
 	byte    *buf;
 	
-	buf = static_cast<byte*>(SZ_GetSpace (sb, 4));
+	buf = SZ_GetSpace(sb, 4);
 	buf[0] = c&0xff;
 	buf[1] = (c>>8)&0xff;
 	buf[2] = (c>>16)&0xff;
@@ -778,9 +778,9 @@ void SZ_Clear (sizebuf_t *buf)
 	buf->cursize = 0;
 }
 
-void *SZ_GetSpace (sizebuf_t *buf, int length)
+byte *SZ_GetSpace (sizebuf_t *buf, int length)
 {
-	void    *data = 0;
+	byte    *data = 0;
 	
 	if (buf->cursize + length > buf->maxsize)
 	{
@@ -1602,13 +1602,14 @@ byte *COM_LoadFile (const char *path, int usehunk)
 
 	default:
 		Sys_Error("COM_LoadFile: bad usehunk");
+		break;
 
 	}
 
 	if (!buf)
 		Sys_Error ("COM_LoadFile: not enough space for %s", path);
 		
-	//((byte *)buf)[len] = 0;
+	((byte *)buf)[len] = 0;
 
 #ifndef GLQUAKE
 	g_SoftwareRenderer->Draw_BeginDisc ();
@@ -1628,12 +1629,12 @@ byte *COM_LoadFile (const char *path, int usehunk)
 	return buf;
 }
 
-byte *COM_LoadHunkFile (const char *path)
+void *COM_LoadHunkFile (const char *path)
 {
 	return COM_LoadFile (path, HUNK_FULL);
 }
 
-byte *COM_LoadTempFile (const char *path)
+void *COM_LoadTempFile (const char *path)
 {
 	return COM_LoadFile (path, HUNK_TEMP);
 }
@@ -1645,7 +1646,7 @@ void COM_LoadCacheFile (const char *path, cache_user_t cu)
 }
 
 // uses temp hunk if larger than bufsize
-byte *COM_LoadStackFile (const char *path, void *buffer, int bufsize)
+void *COM_LoadStackFile (const char *path, void *buffer, int bufsize)
 {
 	byte    *buf;
 	

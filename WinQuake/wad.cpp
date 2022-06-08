@@ -156,12 +156,10 @@ void SwapPic (CQuakePic *pic)
 	pic->height = LittleLong(pic->height);
 }
 
-CQuakePic::CQuakePic() : height(0), width(0)
+CQuakePic::CQuakePic() : height(0), width(0), data(NULL)
 {
-	//data.Allocate(sizeof(CQuakePic));
 }
 
-CQuakePic::CQuakePic(byte& mem) : height(0), width(0)
+CQuakePic::CQuakePic(byte& mem) : height(0), width(0), data(NULL)
 {
-	//data.Allocate(sizeof(CQuakePic));
 }

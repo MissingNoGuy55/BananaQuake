@@ -101,11 +101,11 @@ public:
 	CMemBlock(const T* memory, int numelements);
 	~CMemBlock();
 
-	int		size = 0;           // including the header and possibly tiny fragments
-	int     tag = 0;            // a tag of 0 is a free block
-	int     id = ZONEID;        		// should be ZONEID
-	CMemBlock<unsigned char>* next, *prev = NULL;
-	int		pad = 0;			// pad to 64 bit boundary
+	int		size;           // including the header and possibly tiny fragments
+	int     tag;            // a tag of 0 is a free block
+	int     id;        		// should be ZONEID
+	CMemBlock<unsigned char>* next, *prev;
+	int		pad;			// pad to 64 bit boundary
 
 	T* Base();
 	const T* Base() const;
@@ -128,6 +128,8 @@ public:
 	bool IsExternallyAllocated();
 
 	int CalcNewAllocationCount(int nAllocationCount, int nGrowSize, int nNewSize, int nBytesItem);
+
+	void Init();
 
 private:
 
@@ -272,10 +274,10 @@ CMemBlock<T, I>::CMemBlock(int growSize, int allocationCount) : m_pMemory(0), si
 	{
 		m_pMemory = (T*)calloc(size, sizeof(T));	// Missi: allocate if we specified a size (3/3/2022)
 	}
-	//else
-	//{
-	//	m_pMemory = (T*)calloc(1, sizeof(T));	// Missi: allocate anyway even if a size wasn't specified (3/3/2022)
-	//}
+	else
+	{
+		m_pMemory = (T*)calloc(1, sizeof(T));	// Missi: allocate anyway even if a size wasn't specified (3/3/2022)
+	}
 }
 
 template<class T, class I>
@@ -288,6 +290,17 @@ template<class T, class I>
 CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory(memory), size(numelements)
 {
 	m_growSize = -2;
+}
+
+template<class T, class I>
+inline void CMemBlock<T, I>::Init()
+{
+	m_pMemory = (T*)malloc(sizeof(T));
+	size = 0;
+	tag = 0;
+	id = ZONEID;
+	next = prev = NULL;
+	pad = 0;
 }
 
 template<class T, class I>

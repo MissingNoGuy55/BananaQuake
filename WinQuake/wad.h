@@ -49,6 +49,7 @@ public:
 	CQuakePic(byte& mem);
 
 	int			width, height;
+	byte*		realdata;
 	CQVector<byte*>	data;			// Missi: was a C variably-sized array. they are bugged in MSVC it seems, and it caused me months-worth of a headache (5/28/2022)
 
 };

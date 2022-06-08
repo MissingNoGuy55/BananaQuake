@@ -12,15 +12,15 @@ class CGLTexture;
 
 // Missi: C++ library stuff
 
-#ifndef vector					
+#if 0					
 
 template<class T, class A = CMemBlock< T >>
 class CQuakeVector
 {
 public:
 
-	explicit CQuakeVector();
-	explicit CQuakeVector(const T& src);
+	CQuakeVector();
+	CQuakeVector(const T& src);
 
 	T* vector;
 	A mem;
@@ -339,6 +339,7 @@ public:
 	~CQVector();
 
 	CQVector<T, S>& operator=(const CQVector<T, S>& other);
+	CQVector<T, S>& operator=(CQVector<T, S>& other);
 
 	void Construct(T* element);
 	void CopyConstruct(T* element, const T& src);
@@ -362,6 +363,7 @@ public:
 	void ShiftElementsLeft(int elem, int num = 1);
 
 	void PrintContents();
+	void Init();
 
 	int AddToHead();
 	int AddToTail();
@@ -406,13 +408,13 @@ public:
 
 //	const CMemCacheSystem* m_Cache;
 
+private:
+
 	CMemAllocator m_Memory;
 
 	T* m_pElements;
 
 	int vecSize;
-
-private:
 
 	CQVector(CQVector const& vector);
 
@@ -440,6 +442,18 @@ CQVector<T, S>::~CQVector()
 
 template<class T, class S>
 inline CQVector<T, S>& CQVector<T, S>::operator=(const CQVector<T, S>& other)
+{
+	int nCount = other.Count();
+	vecSize = nCount;
+	for (int i = 0; i < nCount; i++)
+	{
+		(*this)[i] = other[i];
+	}
+	return *this;
+}
+
+template<class T, class S>
+inline CQVector<T, S>& CQVector<T, S>::operator=(CQVector<T, S>& other)
 {
 	int nCount = other.Count();
 	vecSize = nCount;
@@ -592,6 +606,16 @@ inline void CQVector<T, S>::PrintContents()
 	{
 		Con_Printf("Element %d is %c\n", i, Element(i));
 	}
+}
+
+template<class T, class S>
+inline void CQVector<T, S>::Init()
+{
+	m_pElements = NULL;
+	vecSize = 0;
+
+	m_Memory.Init();
+	m_Memory.Grow(sizeof(T));
 }
 
 template<class T, class S>

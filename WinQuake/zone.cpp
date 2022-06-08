@@ -120,7 +120,7 @@ Z_Malloc
 */
 void* CMemZone::Z_Malloc (int size)
 {
-	void	*buf;
+	void	*buf = 0;
 	
 	Z_CheckHeap ();	// DEBUG
 	buf = Z_TagMalloc (size, 1);
@@ -138,10 +138,8 @@ void* CMemZone::Z_Malloc (int size)
 
 void* CMemZone::Z_TagMalloc (int size, int tag)
 {
-	int		extra;
+	int		extra = 0;
 	CMemBlock<byte> *start, *rover, *m_new, *base;
-
-	start = rover = m_new = base = NULL;
 
 	// start = rover = m_new = base = new CMemBlock<byte>(size);
 
@@ -164,9 +162,9 @@ void* CMemZone::Z_TagMalloc (int size, int tag)
 		if (this->rover == start)	// scaned all the way around the list
 			return NULL;
 		if (this->rover->tag)
-			base = rover = rover->next;
+			base = this->rover = this->rover->next;
 		else
-			rover = this->rover->next;
+			this->rover = this->rover->next;
 	} while (base->tag || base->size < size);
 	
 //
@@ -188,14 +186,16 @@ void* CMemZone::Z_TagMalloc (int size, int tag)
 	
 	base->tag = tag;				// no longer a free block
 	
-	this->rover = base->next;	// next allocation will start looking here
+	rover = base->next;	// next allocation will start looking here
 	
 	base->id = ZONEID;
 
 // marker for memory trash testing
 	*(int *)((byte *)base + base->size - 4) = ZONEID;
 
-	return (void *) ((byte *)base + sizeof(CMemBlock<byte>));
+	auto test = ((byte *)base + sizeof(CMemBlock<byte>));
+
+	return (void*)((byte*)base + sizeof(CMemBlock<byte>));
 }
 
 
@@ -515,7 +515,7 @@ Return space from the top of the hunk
 */
 void* CMemCache::Hunk_TempAlloc (int size)
 {
-	void	*buf;
+	void	*buf = 0;
 
 	size = (size+15)&~15;
 	
@@ -888,11 +888,15 @@ void* CMemCache::Cache_Alloc (cache_user_t *c, int size, char *name)
 
 //============================================================================
 
-CMemCache::CMemCache()
+CMemCache::CMemCache() : mainzone(NULL), m_CacheSystem(NULL)
 {
 	if (!m_CacheSystem)
 	{
 		m_CacheSystem = new CMemCacheSystem;
+	}
+	if (!mainzone)
+	{
+		mainzone = new CMemZone;
 	}
 }
 

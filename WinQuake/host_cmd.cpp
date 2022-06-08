@@ -1060,7 +1060,8 @@ void Host_Say(bool teamonly)
 			continue;
 		if (teamplay.value && teamonly && client->edict->v.team != save->edict->v.team)
 			continue;
-		host_client = client;
+		
+		client;
 		sv.SV_ClientPrintf("%s", text);
 	}
 	host_client = save;

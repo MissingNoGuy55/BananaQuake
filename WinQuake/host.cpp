@@ -286,7 +286,7 @@ Send text over to the client to be executed
 */
 void CQuakeHost::Host_ClientCommands (const char *fmt, ...)
 {
-	va_list		argptr = "";
+	va_list		argptr;
 	char		string[1024] = "";
 	
 	va_start (argptr,fmt);
@@ -349,13 +349,13 @@ void CQuakeServer::SV_DropClient (bool crash)
 		if (!client->active)
 			continue;
 		MSG_WriteByte (&client->message, svc_updatename);
-		MSG_WriteByte (&client->message, host->host_client - svs.clients);
+		MSG_WriteByte (&client->message, host_client - svs.clients);
 		MSG_WriteString (&client->message, "");
 		MSG_WriteByte (&client->message, svc_updatefrags);
-		MSG_WriteByte (&client->message, host->host_client - svs.clients);
+		MSG_WriteByte (&client->message, host_client - svs.clients);
 		MSG_WriteShort (&client->message, 0);
 		MSG_WriteByte (&client->message, svc_updatecolors);
-		MSG_WriteByte (&client->message, host->host_client - svs.clients);
+		MSG_WriteByte (&client->message, host_client - svs.clients);
 		MSG_WriteByte (&client->message, 0);
 	}
 }
@@ -389,7 +389,7 @@ void CQuakeHost::Host_ShutdownServer(bool crash)
 	do
 	{
 		count = 0;
-		for (i=0, host->host_client = svs.clients ; i<svs.maxclients ; i++, host_client++)
+		for (i=0, host_client = svs.clients ; i<svs.maxclients ; i++, host_client++)
 		{
 			if (host_client->active && host_client->message.cursize)
 			{
@@ -419,7 +419,7 @@ void CQuakeHost::Host_ShutdownServer(bool crash)
 	if (count)
 		Con_Printf("Host_ShutdownServer: NET_SendToAll failed for %u clients\n", count);
 
-	for (i=0, host->host_client = svs.clients ; i<svs.maxclients ; i++, host_client++)
+	for (i=0, host_client = svs.clients ; i<svs.maxclients ; i++, host_client++)
 		if (host_client->active)
 			sv.SV_DropClient(crash);
 
@@ -452,8 +452,7 @@ CQuakeHost::CQuakeHost(quakeparms_t<byte*> parms) :
 	current_skill(0),
 	isDedicated(false),
 	oldrealtime(0),
-	host_hunklevel(0),
-	host_client(NULL)
+	host_hunklevel(0)
 {
 	host_parms.basedir = parms.basedir ? parms.basedir : "";
 	host_parms.cachedir = parms.cachedir ? parms.cachedir : "";
@@ -864,7 +863,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 
 	if (cls.state != ca_dedicated)
 	{
-		host_basepal = COM_LoadHunkFile ("gfx/palette.lmp");
+		host_basepal = static_cast<byte*>(COM_LoadHunkFile ("gfx/palette.lmp"));
 		if (!host_basepal)
 			Sys_Error ("Couldn't load gfx/palette.lmp");
 		host_colormap = (byte *)COM_LoadHunkFile ("gfx/colormap.lmp");

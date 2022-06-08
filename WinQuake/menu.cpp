@@ -292,8 +292,8 @@ void M_Menu_Main_f (void)
 
 void M_Main_Draw (void)
 {
-	int		f;
-	CQuakePic	*p;
+	int		f = 0;
+	CQuakePic	*p = NULL;
 
 	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
 	p = g_GLRenderer->Draw_CachePic ("gfx/ttl_main.lmp");

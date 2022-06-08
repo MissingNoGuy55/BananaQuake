@@ -357,10 +357,13 @@ Draw_CachePic
 */
 CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 {
-	cachepic_t	*pic;
-	int			i;
-	CQuakePic		*dat;
-	CGLTexture		*gl;
+	cachepic_t	*pic = NULL;
+	int			i = 0;
+	CQuakePic		*qpic = NULL;
+	byte			*qpictemp = NULL;
+	byte			*qpicdata = NULL;
+	CGLTexture		*gl = NULL;
+	size_t			qpictemp_len = 0;
 
 	for (pic=menu_cachepics, i=0 ; i<menu_numcachepics ; pic++, i++)
 		if (!strcmp (path, pic->name))
@@ -374,28 +377,43 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 //
 // load the pic from disk
 //
-	dat = (CQuakePic *)COM_LoadTempFile (path);	
-	if (!dat)
+	qpicdata = static_cast<byte*>(COM_LoadTempFile (path));
+	if (!qpicdata)
 		Sys_Error ("Draw_CachePic: failed to load %s", path);
-	SwapPic (dat);
+
+	qpic = (CQuakePic*)qpicdata;
+	
+	if (!qpic)
+	{
+		Sys_Error("CGLRenderer::Draw_CachePic: failed to allocate qpic data\n");
+		return 0;
+	}
+
+	qpic->realdata = qpicdata;
+	qpictemp = qpicdata;
+	//memset(&qpic->data, 0, sizeof(qpic->data));
+	qpic->data.Init();
+	qpic->data.AddToTail(qpictemp);
+
+	SwapPic (qpic);
 
 	// HACK HACK HACK --- we need to keep the bytes for
 	// the translatable player picture just for the menu
 	// configuration dialog
 	if (!strcmp (path, "gfx/menuplyr.lmp"))
-		memcpy (menuplyr_pixels, &dat->data, dat->width * dat->height);
+		memcpy (menuplyr_pixels, &qpic->data, qpic->width * qpic->height);
 
-	//pic->pic = *dat;
-	pic->pic.width = dat->width;
-	pic->pic.height = dat->height;
+	pic->pic.data.AddToTail(qpic->data.Head());
+	pic->pic.width = qpic->width;
+	pic->pic.height = qpic->height;
 
-	gl = GL_LoadTexture(path, dat->width, dat->height, dat->data.Head(), false, false); // (COpenGLPic*)pic->pic->data;
+	gl = GL_LoadTexture(path, qpic->width, qpic->height, qpic->data.Head(), false, false); // (COpenGLPic*)pic->pic->data;
 	gl->sl = 0;
 	gl->sh = 1;
 	gl->tl = 0;
 	gl->th = 1;
 
-	memcpy(&pic->pic.data, &gl->pic.data, Q_MAX_VARARRLEN);
+	pic->pic.realdata = qpictemp;
 
 	return &pic->pic;
 }
