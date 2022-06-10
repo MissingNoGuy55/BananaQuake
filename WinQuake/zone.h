@@ -301,6 +301,7 @@ inline void CMemBlock<T, I>::Init()
 	id = ZONEID;
 	next = prev = NULL;
 	pad = 0;
+	m_growSize = 0;
 }
 
 template<class T, class I>
