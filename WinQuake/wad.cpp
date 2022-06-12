@@ -156,10 +156,28 @@ void SwapPic (CQuakePic *pic)
 	pic->height = LittleLong(pic->height);
 }
 
-CQuakePic::CQuakePic() : height(0), width(0), data(NULL)
+CQuakePic::CQuakePic() : height(0), width(0)
 {
+	memset(&data, 0, sizeof(CQuakePic));
 }
 
-CQuakePic::CQuakePic(byte& mem) : height(0), width(0), data(NULL)
+CQuakePic::CQuakePic(byte& mem) : height(0), width(0)
 {
+	memset(&data, 0, sizeof(CQuakePic));
+}
+
+void CQuakePic::TransferData(quakepicbuffer_t& buf, CQuakePic* pic)
+{
+	if (!pic || !buf.data)
+		return;
+
+	int i = 0;
+
+	while (buf.data[i])
+	{
+		pic->data[i] = buf.data[i];
+		i++;
+	}
+
+	i = 0;
 }

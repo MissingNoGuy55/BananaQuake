@@ -55,6 +55,8 @@ public:
 	CQuakePic();
 	CQuakePic(byte& mem);
 
+	void TransferData(quakepicbuffer_t& buf, CQuakePic* pic);
+
 	int			width, height;
 	byte*		realdata;
 	CQArray<byte, Q_QPIC_BUFLEN>	data;			// Missi: was a C variably-sized array. they are bugged in MSVC it seems, and it caused me months-worth of a headache (5/28/2022)
