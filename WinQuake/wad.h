@@ -39,7 +39,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	TYP_SOUND		67
 #define	TYP_MIPTEX		68
 
+#define Q_QPIC_BUFLEN	(size_t)0x10000
+
 class CGLTexture;
+
+typedef struct
+{
+	byte data[1];
+} quakepicbuffer_t;
 
 class CQuakePic
 {
@@ -50,7 +57,7 @@ public:
 
 	int			width, height;
 	byte*		realdata;
-	CQVector<byte*>	data;			// Missi: was a C variably-sized array. they are bugged in MSVC it seems, and it caused me months-worth of a headache (5/28/2022)
+	CQArray<byte, Q_QPIC_BUFLEN>	data;			// Missi: was a C variably-sized array. they are bugged in MSVC it seems, and it caused me months-worth of a headache (5/28/2022)
 
 };
 
