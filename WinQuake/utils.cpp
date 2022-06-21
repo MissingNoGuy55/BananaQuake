@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "quakedef.h"
 
 size_t q_strlcpy(char* dst, const char* src, size_t siz)
 {

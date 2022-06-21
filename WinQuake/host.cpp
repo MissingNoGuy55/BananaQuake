@@ -20,8 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // host.c -- coordinates spawning and killing of local servers
 
 #include "quakedef.h"
-#include "gl_rmain.h"
-#include "host.h"
 
 /*
 
@@ -39,6 +37,12 @@ CCoreRenderer* g_CoreRenderer;
 client_t* host_client;
 double		host_time;
 
+#ifdef GLQUAKE
+CGLRenderer* g_GLRenderer;
+#else
+CSoftwareRenderer* g_SoftwareRenderer;
+#endif
+
 cvar_t	teamplay;
 cvar_t	skill;
 cvar_t	deathmatch;
@@ -46,6 +50,13 @@ cvar_t	coop;
 cvar_t	fraglimit;
 cvar_t	timelimit;
 cvar_t	pausable;
+
+//extern CCoreRenderer* g_CoreRenderer;
+//#ifdef GLQUAKE
+//extern CGLRenderer* g_GLRenderer;
+//#else
+//extern CSoftwareRenderer* g_SoftwareRenderer;
+//#endif
 
 /*
 ================
@@ -439,6 +450,22 @@ This clears all the memory used by both the client and server, but does
 not reinitialize anything.
 ================
 */
+
+CQuakeHost::CQuakeHost() :
+	host_initialized(false),
+	host_frametime(0),
+	host_basepal(NULL),
+	host_colormap(NULL),
+	host_framecount(0),
+	realtime(0),
+	msg_suppress_1(false),
+	current_skill(0),
+	isDedicated(false),
+	oldrealtime(0),
+	host_hunklevel(0)
+{
+	memset(&host_parms, 0, sizeof(host_parms));
+}
 
 CQuakeHost::CQuakeHost(quakeparms_t<byte*> parms) :
 	host_parms(parms),

@@ -2,13 +2,6 @@
 #ifndef HOST_H
 #define HOST_H
 
-extern CCoreRenderer* g_CoreRenderer;
-#ifdef GLQUAKE
-extern CGLRenderer* g_GLRenderer;
-#else
-extern CSoftwareRenderer* g_SoftwareRenderer;
-#endif
-
 template<typename T = byte>
 struct quakeparms_t
 {
@@ -23,6 +16,7 @@ struct quakeparms_t
 class CQuakeHost
 {
 public:
+	CQuakeHost();
 	CQuakeHost(quakeparms_t<byte*> parms);
 	//
 	// host

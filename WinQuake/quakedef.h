@@ -53,7 +53,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <windows.h>
 #include <xmemory>
 #include "SDL.h"
-#include "utils.h"
 
 #if defined(_WIN32) && !defined(WINDED)
 
@@ -219,6 +218,7 @@ void	VID_UnlockBuffer (void);
 // Use for multiplayer testing only - VERY dangerous!!!
 // #define IDGODS
 
+#include "utils.h"
 #include "common.h"
 #include "bspfile.h"
 #include "vid.h"

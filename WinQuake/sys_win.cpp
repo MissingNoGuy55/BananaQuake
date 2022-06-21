@@ -494,7 +494,7 @@ void Sys_Error (char *error, ...)
 	if (!in_sys_error2)
 	{
 		in_sys_error2 = 1;
-		DeinitConProc ();
+		g_ConProc->DeinitConProc ();
 	}
 
 	exit (1);
@@ -530,7 +530,7 @@ void Sys_Quit (void)
 		FreeConsole ();
 
 // shut down QHOST hooks if necessary
-	DeinitConProc ();
+	g_ConProc->DeinitConProc ();
 
 	exit (0);
 }
@@ -787,7 +787,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	int				t;
 	RECT			rect;
 
-	host = new CQuakeHost(parms);
+	host = new CQuakeHost;
 
     /* previous instances do not exist in Win32 */
     if (hPrevInstance)
@@ -844,6 +844,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	if (!isDedicated)
 	{
+
 		hwnd_dialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_DIALOG1), NULL, NULL);
 
 		if (hwnd_dialog)
@@ -928,7 +929,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 				heventChild = (HANDLE)Q_atoi (com_argv[t+1]);
 		}
 
-		InitConProc (hFile, heventParent, heventChild);
+		g_ConProc->InitConProc (hFile, heventParent, heventChild);
 	}
 
 	// Sys_Init ();

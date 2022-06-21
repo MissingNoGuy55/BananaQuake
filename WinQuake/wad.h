@@ -41,10 +41,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define Q_QPIC_BUFLEN	(size_t)0x10000
 
-class CGLTexture;
-
 typedef struct
 {
+	int width, height;
 	byte data[1];
 } quakepicbuffer_t;
 
@@ -54,12 +53,10 @@ public:
 
 	CQuakePic();
 	CQuakePic(byte& mem);
-
-	void TransferData(quakepicbuffer_t& buf, CQuakePic* pic);
+	CQuakePic(const CQuakePic& src);
 
 	int			width, height;
-	byte*		realdata;
-	CQArray<byte, Q_QPIC_BUFLEN>	data;			// Missi: was a C variably-sized array. they are bugged in MSVC it seems, and it caused me months-worth of a headache (5/28/2022)
+	CQVector<byte>		data;
 
 };
 

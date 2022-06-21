@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include "resource.h"
 #include <commctrl.h>
+#include <memory> // Missi: for std::shared_ptr (6/18/2022)
 //#include <GL/glew.h>
 
 #define MAX_MODE_LIST	30
@@ -61,6 +62,9 @@ lmode_t	lowresmodes[] = {
 	{400, 300},
 	{512, 384},
 };
+
+cvar_t  vid_width = {"vid_width", "640", true};
+cvar_t  vid_height = { "vid_height", "640", true};
 
 const char *gl_vendor;
 const char *gl_renderer;
@@ -502,44 +506,45 @@ BINDTEXFUNCPTR bindTexFunc;
 /*
 ===============
 GL_ParseExtensionList
-
-Missi: copied from QuakeSpasm (4/11/2022)
 ===============
 */
-
-static bool GL_ParseExtensionList(const char* list, const char* name)
-{
-	const char* start;
-	const char* where, * terminator;
-
-	if (!list || !name || !*name)
-		return false;
-	if (strchr(name, ' ') != NULL)
-		return false;	// extension names must not have spaces
-
-	start = list;
-	while (1) {
-		where = strstr(start, name);
-		if (!where)
-			break;
-		terminator = where + strlen(name);
-		if (where == start || where[-1] == ' ')
-			if (*terminator == ' ' || *terminator == '\0')
-				return true;
-		start = terminator;
-	}
-	return false;
-}
-
 void CheckTextureExtensions (void)
 {
+	char		*tmp;
+	bool	texture_ext;
+	HINSTANCE	hInstGL;
+
+	texture_ext = FALSE;
+	/* check for texture extension */
+	tmp = (char *)glGetString(GL_EXTENSIONS);
+	while (*tmp)
+	{
+		if (strncmp((const char*)tmp, TEXTURE_EXT_STRING, strlen(TEXTURE_EXT_STRING)) == 0)
+			texture_ext = TRUE;
+		tmp++;
+	}
+
+	if (!texture_ext || COM_CheckParm ("-gl11") )
+	{
+		hInstGL = LoadLibrary("opengl32.dll");
+		
+		if (hInstGL == NULL)
+			Sys_Error ("Couldn't load opengl32.dll\n");
+
+		bindTexFunc = (BINDTEXFUNCPTR)GetProcAddress(hInstGL,"glBindTexture");
+
+		if (!bindTexFunc)
+			Sys_Error ("No texture objects!");
+		return;
+	}
 
 /* load library and get procedure adresses for texture extension API */
-	/*if ((bindTexFunc = (BINDTEXFUNCPTR)SDL_GL_GetProcAddress("glBindTexture")) == NULL)
+	if ((bindTexFunc = (BINDTEXFUNCPTR)
+		wglGetProcAddress((LPCSTR) "glBindTextureEXT")) == NULL)
 	{
 		Sys_Error ("GetProcAddress for BindTextureEXT failed");
 		return;
-	}*/
+	}
 }
 
 void CheckArrayExtensions (void)
@@ -705,62 +710,132 @@ void GL_EndRendering (void)
 
 void	VID_SetPalette (unsigned char *palette)
 {
-	byte	*pal;
-	unsigned r,g,b;
-	unsigned v;
-	int     r1,g1,b1;
-	int		j,k,l,m;
-	unsigned short i;
-	unsigned	*table;
-	FILE *f;
-	char s[255];
+	byte	*pal = NULL, *src = NULL, *dst = NULL;
+	unsigned r = 0 ,g = 0, b = 0;
+	unsigned v = 0;
+	int     r1 = 0, g1 = 0, b1 = 0;
+	int		j = 0, k = 0, l = 0, m = 0;
+	int		mark = 0;
+	unsigned short i = 0;
+	unsigned	*table = NULL;
+	FILE *f = NULL;
+	char s[255] = "";
 	HWND hDlg, hProgress;
-	float gamma;
+	float gamma = 0.f;
 
 //
 // 8 8 8 encoding
 //
-	pal = palette;
-	table = d_8to24table;
-	for (i=0 ; i<256 ; i++)
-	{
-		r = pal[0];
-		g = pal[1];
-		b = pal[2];
-		pal += 3;
-		
-//		v = (255<<24) + (r<<16) + (g<<8) + (b<<0);
-//		v = (255<<0) + (r<<8) + (g<<16) + (b<<24);
-		v = (255<<24) + (r<<0) + (g<<8) + (b<<16);
-		*table++ = v;
-	}
-	d_8to24table[255] &= 0xffffff;	// 255 is transparent
+//	pal = palette;
+//	table = d_8to24table;
+//	for (i=0 ; i<256 ; i++)
+//	{
+//		r = pal[0];
+//		g = pal[1];
+//		b = pal[2];
+//		pal += 3;
+//		
+////		v = (255<<24) + (r<<16) + (g<<8) + (b<<0);
+////		v = (255<<0) + (r<<8) + (g<<16) + (b<<24);
+//		v = (255<<24) + (r<<0) + (g<<8) + (b<<16);
+//		*table++ = v;
+//	}
+//	d_8to24table[255] &= 0xffffff;	// 255 is transparent
+//
+//	// JACK: 3D distance calcs - k is last closest, l is the distance.
+//	// FIXME: Precalculate this and cache to disk.
+//	for (i=0; i < (1<<15); i++) {
+//		/* Maps
+//			000000000000000
+//			000000000011111 = Red  = 0x1F
+//			000001111100000 = Blue = 0x03E0
+//			111110000000000 = Grn  = 0x7C00
+//		*/
+//		r = ((i & 0x1F) << 3)+4;
+//		g = ((i & 0x03E0) >> 2)+4;
+//		b = ((i & 0x7C00) >> 7)+4;
+//		pal = (unsigned char *)d_8to24table;
+//		for (v=0,k=0,l=10000*10000; v<256; v++,pal+=4) {
+//			r1 = r-pal[0];
+//			g1 = g-pal[1];
+//			b1 = b-pal[2];
+//			j = (r1*r1)+(g1*g1)+(b1*b1);
+//			if (j<l) {
+//				k=v;
+//				l=j;
+//			}
+//		}
+//		d_15to8table[i]=k;
+//	}
 
-	// JACK: 3D distance calcs - k is last closest, l is the distance.
-	// FIXME: Precalculate this and cache to disk.
-	for (i=0; i < (1<<15); i++) {
-		/* Maps
-			000000000000000
-			000000000011111 = Red  = 0x1F
-			000001111100000 = Blue = 0x03E0
-			111110000000000 = Grn  = 0x7C00
-		*/
-		r = ((i & 0x1F) << 3)+4;
-		g = ((i & 0x03E0) >> 2)+4;
-		b = ((i & 0x7C00) >> 7)+4;
-		pal = (unsigned char *)d_8to24table;
-		for (v=0,k=0,l=10000*10000; v<256; v++,pal+=4) {
-			r1 = r-pal[0];
-			g1 = g-pal[1];
-			b1 = b-pal[2];
-			j = (r1*r1)+(g1*g1)+(b1*b1);
-			if (j<l) {
-				k=v;
-				l=j;
-			}
-		}
-		d_15to8table[i]=k;
+	COM_FOpenFile("gfx/palette.lmp", &f);
+	if (!f)
+		Sys_Error("Couldn't load gfx/palette.lmp");
+
+	mark = g_MemCache->Hunk_LowMark();
+	pal = (byte*)g_MemCache->Hunk_Alloc(768);
+	fread(pal, 1, 768, f);
+	fclose(f);
+
+	//standard palette, 255 is transparent
+	dst = (byte*)d_8to24table;
+	src = pal;
+	for (i = 0; i < 256; i++)
+	{
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = 255;
 	}
+	((byte*)&d_8to24table[255])[3] = 0;
+
+	//fullbright palette, 0-223 are black (for additive blending)
+	src = pal + 224 * 3;
+	dst = (byte*)&d_8to24table_fbright[224];
+	for (i = 224; i < 256; i++)
+	{
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = 255;
+	}
+	for (i = 0; i < 224; i++)
+	{
+		dst = (byte*)&d_8to24table_fbright[i];
+		dst[3] = 255;
+		dst[2] = dst[1] = dst[0] = 0;
+	}
+
+	//nobright palette, 224-255 are black (for additive blending)
+	dst = (byte*)d_8to24table_nobright;
+	src = pal;
+	for (i = 0; i < 256; i++)
+	{
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = 255;
+	}
+	for (i = 224; i < 256; i++)
+	{
+		dst = (byte*)&d_8to24table_nobright[i];
+		dst[3] = 255;
+		dst[2] = dst[1] = dst[0] = 0;
+	}
+
+	//fullbright palette, for fence textures
+	memcpy(d_8to24table_fbright_fence, d_8to24table_fbright, 256 * 4);
+	d_8to24table_fbright_fence[255] = 0; // Alpha of zero.
+
+	//nobright palette, for fence textures
+	memcpy(d_8to24table_nobright_fence, d_8to24table_nobright, 256 * 4);
+	d_8to24table_nobright_fence[255] = 0; // Alpha of zero.
+
+	//conchars palette, 0 and 255 are transparent
+	memcpy(d_8to24table_conchars, d_8to24table, 256 * 4);
+	((byte*)&d_8to24table_conchars[0])[3] = 0;
+
+	g_MemCache->Hunk_FreeToLowMark(mark);
 }
 
 BOOL	gammaworks;
@@ -1576,7 +1651,7 @@ VID_Init
 void	VID_Init (unsigned char *palette)
 {
 	int		i, existingmode;
-	int		basenummodes, width, height, bpp, findbpp, done;
+	int		basenummodes = 0, width = 0, height = 0, bpp = 0, findbpp = 0, done = 0;
 	byte	*ptmp;
 	char	gldir[MAX_OSPATH];
 	HDC		hdc;
@@ -1796,6 +1871,8 @@ void	VID_Init (unsigned char *palette)
 	vid.maxwarpheight = WARP_HEIGHT;
 	vid.colormap = host->host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
+	
+	//DestroyWindow (hwnd_dialog);
 
 	DestroyWindow (hwnd_dialog);
 

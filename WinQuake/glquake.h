@@ -159,6 +159,32 @@ typedef struct glRect_s {
 	unsigned char l, t, w, h;
 } glRect_t;
 
+#define TEXPREF_NONE			0x0000
+#define TEXPREF_MIPMAP			0x0001	// generate mipmaps
+// TEXPREF_NEAREST and TEXPREF_LINEAR aren't supposed to be ORed with TEX_MIPMAP
+#define TEXPREF_LINEAR			0x0002	// force linear
+#define TEXPREF_NEAREST			0x0004	// force nearest
+#define TEXPREF_ALPHA			0x0008	// allow alpha
+#define TEXPREF_PAD			0x0010	// allow padding
+#define TEXPREF_PERSIST			0x0020	// never free
+#define TEXPREF_OVERWRITE		0x0040	// overwrite existing same-name texture
+#define TEXPREF_NOPICMIP		0x0080	// always load full-sized
+#define TEXPREF_FULLBRIGHT		0x0100	// use fullbright mask palette
+#define TEXPREF_NOBRIGHT		0x0200	// use nobright mask palette
+#define TEXPREF_CONCHARS		0x0400	// use conchars palette
+#define TEXPREF_WARPIMAGE		0x0800	// resize this texture when warpimagesize changes
+
+extern unsigned short	d_8to16table[256];
+extern unsigned int	d_8to24table[256];
+extern unsigned int d_8to24table_fbright[256];
+extern unsigned int d_8to24table_fbright_fence[256];
+extern unsigned int d_8to24table_nobright[256];
+extern unsigned int d_8to24table_nobright_fence[256];
+extern unsigned int d_8to24table_conchars[256];
+extern unsigned int d_8to24table_shirt[256];
+extern unsigned int d_8to24table_pants[256];
+extern unsigned char d_15to8table[65536];
+
 class CGLRenderer
 {
 public:
@@ -175,6 +201,8 @@ public:
 	int GL_Pad(int s);
 
 	int GL_SafeTextureSize(int s);
+
+	static unsigned* GL_8to32(byte* in, int pixels, unsigned int* usepal);
 
 	int GL_PadConditional(int s);
 
@@ -212,7 +240,7 @@ public:
 	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
 	CGLTexture* GL_LoadPicTexture(CQuakePic* pic);
-	CGLTexture* GL_LoadTexture(const char* identifier, int width, int height, byte* data, bool mipmap, bool alpha);
+	CGLTexture* GL_LoadTexture(const char* identifier, int width, int height, byte* data, bool mipmap, int flags = TEXPREF_NONE);
 
 	void BuildSurfaceDisplayList(msurface_t* fa);
 
@@ -288,6 +316,8 @@ public:
 	void GL_DisableMultitexture(void);
 	void GL_EnableMultitexture(void);
 
+	void GL_SetFrustum(float fovx, float fovy);
+
 	void R_MirrorChain(msurface_t* s);
 	mspriteframe_t* R_GetSpriteFrame(entity_t* currententity);
 	void R_DrawSpriteModel(entity_t* e);
@@ -355,6 +385,9 @@ private:
 	unsigned		blocklights[18 * 18];
 	int			active_lightmaps;
 
+	static CGLTexture* translate_texture;
+	static CGLTexture* char_texture;
+
 };
 
 class COpenGLPic
@@ -388,6 +421,9 @@ public:
 	char	identifier[64];
 	unsigned int	width, height;
 	bool	mipmap;
+
+	int		checksum;
+	int		flags;
 
 };
 
@@ -441,6 +477,7 @@ extern	cvar_t	r_mirroralpha;
 extern	cvar_t	r_wateralpha;
 extern	cvar_t	r_dynamic;
 extern	cvar_t	r_novis;
+extern	cvar_t	r_scale;
 
 extern	cvar_t	gl_clear;
 extern	cvar_t	gl_cull;

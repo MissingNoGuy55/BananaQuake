@@ -113,7 +113,11 @@ Draws one solid graphics character
 */
 void M_DrawCharacter (int cx, int line, int num)
 {
+#ifdef GLQUAKE
 	g_GLRenderer->Draw_Character ( cx + ((vid.width - 320)>>1), line, num);
+#else
+	g_SoftwareRenderer->Draw_Character(cx + ((vid.width - 320) >> 1), line, num);
+#endif
 }
 
 void M_Print (int cx, int cy, char *str)
@@ -295,12 +299,26 @@ void M_Main_Draw (void)
 	int		f = 0;
 	CQuakePic	*p = NULL;
 
+
+#ifdef GLQUAKE
 	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
 	p = g_GLRenderer->Draw_CachePic ("gfx/ttl_main.lmp");
-	M_DrawPic ( (320-p->width)/2, 4, p);
-	M_DrawTransPic (72, 32, g_GLRenderer->Draw_CachePic ("gfx/mainmenu.lmp") );
+#else
+	M_DrawTransPic(16, 4, g_SoftwareRenderer->Draw_CachePic("gfx/qplaque.lmp"));
+	p = g_SoftwareRenderer->Draw_CachePic("gfx/ttl_main.lmp");
+#endif
 
+
+	M_DrawPic ( (320-p->width)/2, 4, p);
+
+
+#ifdef GLQUAKE
+	M_DrawTransPic (72, 32, g_GLRenderer->Draw_CachePic ("gfx/mainmenu.lmp") );
+#else
+	M_DrawTransPic(72, 32, g_SoftwareRenderer->Draw_CachePic("gfx/mainmenu.lmp"));
+#endif
 	f = (int)(host_time * 10)%6;
+
 
 	M_DrawTransPic (54, 32 + m_main_cursor * 20,g_GLRenderer->Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
 }

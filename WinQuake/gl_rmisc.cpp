@@ -81,7 +81,7 @@ void CGLRenderer::R_InitParticleTexture (void)
 	// particle texture
 	//
 	particletexture = static_cast<CGLTexture*>(g_MemCache->Hunk_Alloc(sizeof(CGLTexture)));
-	particletexture->texnum = texture_extension_number++; //++;
+	particletexture->texnum = texture_extension_number++;
     g_GLRenderer->GL_Bind(particletexture);
 
 	for (x=0 ; x<8 ; x++)

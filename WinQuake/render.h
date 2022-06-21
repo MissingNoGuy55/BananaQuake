@@ -119,6 +119,12 @@ extern vec3_t	r_origin, vpn, vright, vup;
 
 extern	struct texture_s	*r_notexture_mip;
 
+#ifdef GLQUAKE
+class CGLTexture;
+#else
+class CTexture;
+#endif
+
 class CCoreRenderer
 {
 public:
@@ -169,9 +175,13 @@ public:
 	void R_InitParticles(void);
 	void R_ClearParticles(void);
 	void R_PushDlights(void);
-
+#ifdef GLQUAKE
 	CGLTexture* solidskytexture;
 	CGLTexture* alphaskytexture;
+#else
+	CTexture* solidskytexture;
+	CTexture* alphaskytexture;
+#endif
 	float	speedscale;		// for top sky and bottom sky
 
 	void R_SplitEntityOnNode(mnode_s* node);
@@ -216,6 +226,6 @@ void D_FlushCaches (void);
 void D_DeleteSurfaceCache (void);
 void D_InitCaches (void *buffer, int size);
 
-extern ERenderContext R_ResolveRenderer();		// Missi: nasty! gross! horrid! i hate myself! (3/15/2022)
+//extern ERenderContext R_ResolveRenderer();		// Missi: nasty! gross! horrid! i hate myself! (3/15/2022)
 
-
+extern CCoreRenderer* g_CoreRenderer;

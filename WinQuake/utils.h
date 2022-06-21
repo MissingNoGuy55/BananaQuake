@@ -1,14 +1,5 @@
-#pragma once
-
-#include <vector>
-
 #ifndef UTILS_H
 #define UTILS_H
-
-class CCoreRenderer;
-class CSoftwareRenderer;
-class CGLRenderer;
-class CGLTexture;
 
 // Missi: CQVector -- copied CUtlVector from Source. (3/8/2022)
 // !!!
@@ -121,6 +112,12 @@ CQVector<T, S>::CQVector(int growSize, int startSize) : m_Memory(growSize, start
 
 template<class T, class S>
 CQVector<T, S>::CQVector(T* memory, int allocationCount, int numElements) : m_Memory(memory, allocationCount), vecSize(numElements)
+{
+	RefreshElements();
+}
+
+template<class T, class S>
+inline CQVector<T, S>::CQVector(CQVector const& vector) : m_Memory(memory, allocationCount), vecSize(numElements)
 {
 	RefreshElements();
 }
@@ -433,8 +430,8 @@ inline bool CQVector<T, S>::IsValidElement(int i)
 	return (i >= 0) && (i < vecSize);
 }
 
-template< typename T, class A >
-void CQVector<T, A>::SetCount(int count)
+template< typename T, class S >
+void CQVector<T, S>::SetCount(int count)
 {
 	RemoveAll();
 	AddMultipleToTail(count);
@@ -501,8 +498,6 @@ protected:
 	T m_Memory[MAX_SIZE];
 };
 
-#endif
-
 template<class T, size_t MAX_SIZE>
 inline CQArray<T, MAX_SIZE>::CQArray()
 {
@@ -521,7 +516,14 @@ inline CQArray<T, MAX_SIZE>::~CQArray()
 template<class T, size_t MAX_SIZE>
 inline CQArray<T, MAX_SIZE>& CQArray<T, MAX_SIZE>::operator=(const CQArray<T, MAX_SIZE>& other)
 {
-	// // O: insert return statement here
+	if (this != &other)
+	{
+		for (size_t n = 0; n < MAX_SIZE; ++n)
+		{
+			m_Memory[n] = other.m_Memory[n];
+		}
+	}
+	return *this;
 }
 
 template<class T, size_t MAX_SIZE>
@@ -645,3 +647,5 @@ template<class T, size_t MAX_SIZE>
 inline void CQArray<T, MAX_SIZE>::DeleteElements()
 {
 }
+
+#endif
