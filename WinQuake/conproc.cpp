@@ -40,8 +40,13 @@ BOOL WriteText (LPCTSTR szText);
 int CharToCode (char c);
 BOOL SetConsoleCXCY(HANDLE hStdout, int cx, int cy);
 
+CConProc* g_ConProc;
 
-void InitConProc (HANDLE hFile, HANDLE heventParent, HANDLE heventChild)
+CConProc::CConProc()
+{
+}
+
+void CConProc::InitConProc (HANDLE hFile, HANDLE heventParent, HANDLE heventChild)
 {
 	DWORD	dwID;
 	CONSOLE_SCREEN_BUFFER_INFO	info;
@@ -85,7 +90,7 @@ void InitConProc (HANDLE hFile, HANDLE heventParent, HANDLE heventChild)
 }
 
 
-void DeinitConProc (void)
+void CConProc::DeinitConProc (void)
 {
 	if (heventDone)
 		SetEvent (heventDone);
