@@ -144,6 +144,18 @@ void CGLRenderer::GL_Bind (CGLTexture* tex)
 //#endif
 }
 
+CGLTexture* CGLRenderer::GL_NewTexture()
+{
+	CGLTexture* glt;
+
+	glt = &gltextures[numgltextures];
+	numgltextures++;
+
+	glGenTextures(1, &glt->texnum);
+
+	return glt;
+}
+
 /*
 =============================================================================
 
@@ -307,6 +319,7 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 		p->data.AddToTail(qbuf->data[off++]);
 	}
 	p->data.AddToTail('\0');
+	p->data.Compact();
 
 	// load little ones into the scrap
 	if (p->width < 64 && p->height < 64)
@@ -397,6 +410,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 		//qpictemp_len++;
 	}
 	qpic->data.AddToTail('\0');
+	qpic->data.Compact();
 
 	//qpictemp = qpicdata;
 	//memset(&qpic->data, 0, sizeof(qpic->data));
@@ -519,7 +533,7 @@ Draw_Init
 void CGLRenderer::Draw_Init (void)
 {
 	int		i = 0;
-	CQuakePic* cb = NULL;
+	CQuakePic* cb =	NULL;
 	quakepicbuffer_t* cbbuf = NULL;
 	byte	*dest = NULL, *src = NULL;
 	int		x = 0, y = 0;
@@ -579,6 +593,7 @@ void CGLRenderer::Draw_Init (void)
 		m++;
 	}
 	cb->data.AddToTail('\0');
+	cb->data.Compact();
 	conback->width = cb->width;
 	conback->height = cb->height;
 	ncdata = cb->data.Base();
@@ -1010,7 +1025,7 @@ void CGLRenderer::GL_Set2D (void)
 GL_FindTexture
 ================
 */
-int CGLRenderer::GL_FindTexture (char *identifier)
+CGLTexture* CGLRenderer::GL_FindTexture (const char *identifier)
 {
 	int		i;
 	CGLTexture* glt;
@@ -1018,10 +1033,10 @@ int CGLRenderer::GL_FindTexture (char *identifier)
 	for (i=0, glt=gltextures; i<numgltextures ; i++)
 	{
 		if (!strcmp (identifier, glt->identifier))
-			return gltextures[i].texnum;
+			return &gltextures[i];
 	}
 
-	return -1;
+	return NULL;
 }
 
 /*
@@ -1238,28 +1253,15 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	int			CRCBlock1 = 0, CRCBlock2 = 0;
 	byte padbyte;
 	unsigned int* usepal;
+	char id[64];
+	int len = 0;
 
 // Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
 
-	glt = &gltextures[numgltextures];
-	numgltextures++;
-
-	/*CRCBlock1 = g_CRCManager->CRC_Block(data, l);
-
-	if (CRCBlock1)
-	{
-		auto len = 0;
-		while (glt->pic.data[len])
-			len++;
-		CRCBlock2 = g_CRCManager->CRC_Block(glt->pic.data.Base(), len);
-	}
-
-	if (CRCBlock1 == CRCBlock2 && !(CRCBlock2 == CRC_INIT_VALUE))
-		return glt;*/
-
-	char id[64];
-
-	int len = 0;
+	if ((glt = GL_FindTexture(identifier)) && (glt->flags & TEXPREF_OVERWRITE))
+		return glt;
+	else
+		glt = GL_NewTexture();
 
 	while (data[len])	// Missi: do not touch this logic at all! (6/16/2022)
 	{
@@ -1267,8 +1269,10 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 		len++;
 	}
 	glt->pic.data.AddToTail('\0');
+	glt->pic.data.Compact();
 	glt->pic.width = width;
 	glt->pic.height = height;
+	glt->pic.size = len;
 
 	Q_strncpy(glt->identifier, identifier, sizeof(glt->identifier));	// Missi: this was Q_strcpy at one point. Caused heap corruption. (4/11/2022)
 	glt->texnum = texture_extension_number;
@@ -1355,4 +1359,9 @@ CGLTexture::CGLTexture(CQuakePic qpic, float des_sl, float des_tl, float des_sh,
 CGLTexture::CGLTexture(const CGLTexture& obj) : height(0), width(0), mipmap(false), texnum(0), sh(0), sl(0), th(0), tl(0), checksum(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
+}
+
+CGLTexture::~CGLTexture()
+{
+	memset(&pic.data, 0, sizeof(CQuakePic) + pic.size);
 }
