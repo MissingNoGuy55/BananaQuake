@@ -230,9 +230,9 @@ void CGLRenderer::Scrap_Upload (void)
 
 	for (i=0 ; i<MAX_SCRAPS ; i++) {
 		sprintf(name, "scrap%i", i);
-		scrap_textures[i] = GL_LoadTexture(name, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], false, false);
-		g_GLRenderer->GL_Bind(scrap_textures[i]);
-		GL_Upload8 (scrap_texels[i], BLOCK_WIDTH, BLOCK_HEIGHT, false, true);
+		scrap_textures[i] = GL_LoadTexture(name, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
+		/*g_GLRenderer->GL_Bind(scrap_textures[i]);
+		GL_Upload8 (scrap_texels[i], BLOCK_WIDTH, BLOCK_HEIGHT, false, true);*/
 	}
 	scrap_dirty = false;
 }
@@ -348,7 +348,7 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 
 		offset = (int)p - (int)wad_base + sizeof(int) * 2; //Missi -- copied from QuakeSpasm (5/28/2022)
 
-		gl = GL_LoadTexture(name, p->width, p->height, p->data.Base(), false, true); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
+		gl = GL_LoadTexture(name, p->width, p->height, p->data.Base(), TEXPREF_ALPHA); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
 		gl->sl = 0;
 		gl->sh = (float)p->width / (float)GL_PadConditional(p->width); //Missi -- copied from QuakeSpasm (5/28/2022)
 		gl->tl = 0;
@@ -423,7 +423,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	qpic->width = qpicbuf->width;
 	qpic->height = qpicbuf->height;
 
-	gl = GL_LoadTexture(path, qpic->width, qpic->height, qpic->data.Base(), false, false); // (COpenGLPic*)pic->pic->data;
+	gl = GL_LoadTexture(path, qpic->width, qpic->height, qpic->data.Base()); // (COpenGLPic*)pic->pic->data;
 	gl->sl = 0;
 	gl->sh = 1;
 	gl->tl = 0;
@@ -567,7 +567,7 @@ void CGLRenderer::Draw_Init (void)
 			draw_chars[i] = 255;*/	// proper transparent color
 
 	// now turn them into textures
-	char_texture = GL_LoadTexture ("charset", 128, 128, draw_chars, false, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
+	char_texture = GL_LoadTexture ("charset", 128, 128, draw_chars, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
 
 	start = g_MemCache->Hunk_LowMark();
 
@@ -597,7 +597,7 @@ void CGLRenderer::Draw_Init (void)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	gl = GL_LoadTexture ("conback", conback->width, conback->height, ncdata, false, TEXPREF_NOPICMIP | TEXPREF_ALPHA);
+	gl = GL_LoadTexture ("conback", conback->width, conback->height, ncdata, TEXPREF_NOPICMIP | TEXPREF_ALPHA);
 	gl->sl = 0;
 	gl->sh = 1;
 	gl->tl = 0;
@@ -1162,15 +1162,16 @@ void CGLRenderer::GL_MipMap8Bit (byte *in, int width, int height)
 GL_Upload32
 ===============
 */
-void CGLRenderer::GL_Upload32 (unsigned *data, int width, int height,  bool mipmap, bool alpha)
+void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned* data)
 {
 	int			samples;
 static	unsigned	scaled[1024*512];	// [512*256];
 	int			scaled_width, scaled_height;
 
-	for (scaled_width = 1 ; scaled_width < width ; scaled_width<<=1)
+
+	for (scaled_width = 1 ; scaled_width < tex->width ; scaled_width<<=1)
 		;
-	for (scaled_height = 1 ; scaled_height < height ; scaled_height<<=1)
+	for (scaled_height = 1 ; scaled_height < tex->height ; scaled_height<<=1)
 		;
 
 	scaled_width >>= (int)gl_picmip.value;
@@ -1184,24 +1185,24 @@ static	unsigned	scaled[1024*512];	// [512*256];
 	if (scaled_width * scaled_height > sizeof(scaled)/4)
 		Sys_Error ("GL_LoadTexture: too big");
 
-	samples = alpha ? gl_alpha_format : gl_solid_format;
+	samples = (tex->flags & TEXPREF_ALPHA) ? gl_alpha_format : gl_solid_format;
 
 	texels += scaled_width * scaled_height;
 
-	if (scaled_width == width && scaled_height == height)
+	if (scaled_width == tex->width && scaled_height == tex->height)
 	{
-		if (!mipmap)
+		if (!tex->mipmap)
 		{
 			glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 			goto done;
 		}
-		memcpy (scaled, data, width*height*4);
+		memcpy (scaled, data, tex->width* tex->height*4);
 	}
 	else
-		GL_ResampleTexture (data, width, height, scaled, scaled_width, scaled_height);
+		GL_ResampleTexture (data, tex->width, tex->height, scaled, scaled_width, scaled_height);
 
 	glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-	if (mipmap)
+	if (tex->mipmap)
 	{
 		int		miplevel;
 
@@ -1221,7 +1222,7 @@ static	unsigned	scaled[1024*512];	// [512*256];
 	}
 done: ;
 
-	if (mipmap)
+	if (tex->mipmap)
 	{
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
@@ -1231,146 +1232,6 @@ done: ;
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 	}
-}
-
-void CGLRenderer::GL_Upload8_EXT (byte *data, int width, int height,  bool mipmap, bool alpha) 
-{
-	int			i, s;
-	bool	noalpha;
-	int			p;
-	static unsigned j;
-	int			samples;
-    static	unsigned char scaled[1024*512];	// [512*256];
-	int			scaled_width, scaled_height;
-
-	s = width*height;
-	// if there are no transparent pixels, make it a 3 component
-	// texture even if it was specified as otherwise
-	if (alpha)
-	{
-		noalpha = true;
-		for (i=0 ; i<s ; i++)
-		{
-			if (data[i] == 255)
-				noalpha = false;
-		}
-
-		if (alpha && noalpha)
-			alpha = false;
-	}
-	for (scaled_width = 1 ; scaled_width < width ; scaled_width<<=1)
-		;
-	for (scaled_height = 1 ; scaled_height < height ; scaled_height<<=1)
-		;
-
-	scaled_width >>= (int)gl_picmip.value;
-	scaled_height >>= (int)gl_picmip.value;
-
-	if (scaled_width > gl_max_size.value)
-		scaled_width = gl_max_size.value;
-	if (scaled_height > gl_max_size.value)
-		scaled_height = gl_max_size.value;
-
-	if (scaled_width * scaled_height > sizeof(scaled))
-		Sys_Error ("GL_LoadTexture: too big");
-
-	samples = 1; // alpha ? gl_alpha_format : gl_solid_format;
-
-	texels += scaled_width * scaled_height;
-
-	if (scaled_width == width && scaled_height == height)
-	{
-		if (!mipmap)
-		{
-			glTexImage2D (GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX , GL_UNSIGNED_BYTE, data);
-			goto done;
-		}
-		memcpy (scaled, data, width*height);
-	}
-	else
-		GL_Resample8BitTexture (data, width, height, scaled, scaled_width, scaled_height);
-
-	glTexImage2D (GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, scaled);
-	if (mipmap)
-	{
-		int		miplevel;
-
-		miplevel = 0;
-		while (scaled_width > 1 || scaled_height > 1)
-		{
-			GL_MipMap8Bit ((byte *)scaled, scaled_width, scaled_height);
-			scaled_width >>= 1;
-			scaled_height >>= 1;
-			if (scaled_width < 1)
-				scaled_width = 1;
-			if (scaled_height < 1)
-				scaled_height = 1;
-			miplevel++;
-			glTexImage2D (GL_TEXTURE_2D, miplevel, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, scaled);
-		}
-	}
-done: ;
-
-
-	if (mipmap)
-	{
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-	}
-	else
-	{
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-	}
-}
-
-/*
-===============
-GL_Upload8
-===============
-*/
-void CGLRenderer::GL_Upload8 (byte *data, int width, int height,  bool mipmap, bool alpha)
-{
-static	unsigned	trans[640*480];		// FIXME, temporary
-	int			i, s;
-	bool	noalpha;
-	int			p;
-
-	s = width*height;
-	// if there are no transparent pixels, make it a 3 component
-	// texture even if it was specified as otherwise
-	if (alpha)
-	{
-		noalpha = true;
-		for (i=0 ; i<s ; i++)
-		{
-			p = data[i];
-			if (p == 255)
-				noalpha = false;
-			trans[i] = d_8to24table[p];
-		}
-
-		if (alpha && noalpha)
-			alpha = false;
-	}
-	else
-	{
-		if (s&3)
-			Sys_Error ("GL_Upload8: s&3");
-		for (i=0 ; i<s ; i+=4)
-		{
-			trans[i] = d_8to24table[data[i]];
-			trans[i+1] = d_8to24table[data[i+1]];
-			trans[i+2] = d_8to24table[data[i+2]];
-			trans[i+3] = d_8to24table[data[i+3]];
-		}
-	}
-
- 	/*if (VID_Is8bit() && !alpha && (data!=scrap_texels[0])) {
- 		GL_Upload8_EXT (data, width, height, mipmap, alpha);
- 		return;
-	}*/
-	GL_Upload32 (trans, width, height, mipmap, alpha);
 }
 
 /*
@@ -1380,7 +1241,7 @@ GL_LoadTexture -- Missi: revised (3/18/2022)
 Loads an OpenGL texture via string ID or byte data. Can take an empty string or NULL if you don't need a name.
 ================
 */
-CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int height, byte *data, bool mipmap, int flags)
+CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int height, byte *data, int flags)
 {
 	int			i = 0, p = 0, s = 0, l = 0, m = 0; // -- Missi
 	CGLTexture* glt = NULL;
@@ -1424,7 +1285,6 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	glt->texnum = texture_extension_number;
 	glt->width = width;
 	glt->height = height;
-	glt->mipmap = mipmap;
 	glt->flags = flags;
 
 	// choose palette and padbyte
@@ -1455,17 +1315,11 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 		padbyte = 255;
 	}
 
-
-	//glt->pic.width = width;
-	//glt->pic.height = height;
-
 	g_GLRenderer->GL_Bind(glt);
-
-	//GL_Upload8(glt->pic.data.Base(), glt->width, glt->height, glt->mipmap, alpha);
 
 	data = (byte*)GL_8to32(data, glt->width * glt->height, usepal);
 
-	GL_Upload32((unsigned*)data, glt->width, glt->height, false, false);
+	GL_Upload32(glt, (unsigned*)data);
 
 	texture_extension_number++;
 
@@ -1480,7 +1334,7 @@ GL_LoadPicTexture
 */
 CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic)
 {
-	return GL_LoadTexture("", pic->width, pic->height, pic->data.Base(), false, true);
+	return GL_LoadTexture("", pic->width, pic->height, pic->data.Base(), TEXPREF_ALPHA);
 }
 
 /****************************************/

@@ -240,15 +240,13 @@ public:
 	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
 	CGLTexture* GL_LoadPicTexture(CQuakePic* pic);
-	CGLTexture* GL_LoadTexture(const char* identifier, int width, int height, byte* data, bool mipmap, int flags = TEXPREF_NONE);
+	CGLTexture* GL_LoadTexture(const char* identifier, int width, int height, byte* data, int flags = TEXPREF_NONE);
 
 	void BuildSurfaceDisplayList(msurface_t* fa);
 
 	void GL_MipMap(byte* in, int width, int height);
 	void GL_MipMap8Bit(byte* in, int width, int height);
-	void GL_Upload32(unsigned* data, int width, int height, bool mipmap, bool alpha);
-	void GL_Upload8_EXT(byte* data, int width, int height, bool mipmap, bool alpha);
-	void GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha);
+	void GL_Upload32(CGLTexture* tex, unsigned* data);
 	void GL_BuildLightmaps(void);
 	void GL_CreateSurfaceLightmap(msurface_t* surf);
 	void GL_SubdivideSurface(msurface_t* fa);
