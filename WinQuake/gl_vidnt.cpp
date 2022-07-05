@@ -881,6 +881,9 @@ void	VID_Shutdown (void)
 		if (maindc && dibwindow)
 			ReleaseDC (dibwindow, maindc);
 
+		if (g_GLRenderer)
+			delete g_GLRenderer;
+
 		AppActivate(false, false);
 	}
 }

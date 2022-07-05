@@ -191,6 +191,7 @@ public:
 
 	CGLRenderer();
 	CGLRenderer(const CGLRenderer& src);
+	~CGLRenderer();
 
 	static void GL_Bind(CGLTexture* tex);
 
@@ -235,7 +236,7 @@ public:
 
 	void GL_Set2D(void);
 
-	int GL_FindTexture(char* identifier);
+	CGLTexture* GL_FindTexture(const char* identifier);
 	void GL_ResampleTexture(unsigned* in, int inwidth, int inheight, unsigned* out, int outwidth, int outheight);
 	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
@@ -250,6 +251,8 @@ public:
 	void GL_BuildLightmaps(void);
 	void GL_CreateSurfaceLightmap(msurface_t* surf);
 	void GL_SubdivideSurface(msurface_t* fa);
+
+	CGLTexture* GL_NewTexture();
 
 	void EmitWaterPolys(msurface_t* fa);
 	void EmitSkyPolys(msurface_t* fa);
@@ -406,6 +409,7 @@ public:
 	CGLTexture();
 	CGLTexture(CQuakePic qpic, float sl = 0, float tl = 0, float sh = 0, float th = 0);
 	CGLTexture(const CGLTexture& obj);
+	~CGLTexture();
 
 	float	sl;
 	float	tl;

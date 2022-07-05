@@ -94,7 +94,8 @@ CGLRenderer::CGLRenderer()
 	lightmap_bytes = 0;
 
 	lightmap_textures = NULL;
-
+	translate_texture = NULL;
+	char_texture = NULL;
 }
 
 CGLRenderer::CGLRenderer(const CGLRenderer& src)
@@ -112,6 +113,27 @@ CGLRenderer::CGLRenderer(const CGLRenderer& src)
 	lightmap_bytes = 0;
 
 	lightmap_textures = NULL;
+	translate_texture = NULL;
+	char_texture = NULL;
+}
+
+CGLRenderer::~CGLRenderer()
+{
+	active_lightmaps = 0;
+
+	memset(allocated, 0, sizeof(allocated));
+	memset(blocklights, 0, sizeof(blocklights));
+	memset(lightmaps, 0, sizeof(lightmaps));
+	memset(lightmap_modified, 0, sizeof(lightmap_modified));
+	memset(lightmap_polys, 0, sizeof(lightmap_polys));
+	memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
+
+	skytexturenum = 0;
+	lightmap_bytes = 0;
+
+	lightmap_textures = NULL;
+	translate_texture = NULL;
+	char_texture = NULL;
 }
 
 unsigned* CGLRenderer::GL_8to32(byte* in, int pixels, unsigned int* usepal)
@@ -1237,6 +1259,14 @@ done: ;
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 	}
 }
+
+/*
+================
+GL_FreeTexture -- Missi (7/5/2022)
+
+Loads an OpenGL texture via string ID or byte data. Can take an empty string or NULL if you don't need a name.
+================
+*/
 
 /*
 ================
