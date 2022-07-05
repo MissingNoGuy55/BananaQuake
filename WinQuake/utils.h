@@ -1,5 +1,4 @@
-#ifndef UTILS_H
-#define UTILS_H
+#pragma once
 
 // Missi: CQVector -- copied CUtlVector from Source. (3/8/2022)
 // !!!
@@ -647,5 +646,3 @@ template<class T, size_t MAX_SIZE>
 inline void CQArray<T, MAX_SIZE>::DeleteElements()
 {
 }
-
-#endif
