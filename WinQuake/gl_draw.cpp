@@ -83,12 +83,12 @@ CGLRenderer::CGLRenderer()
 {
 	active_lightmaps = 0;
 
-	memset(&allocated, 0, sizeof(allocated));
-	memset(&blocklights, 0, sizeof(blocklights));
-	memset(&lightmaps, 0, sizeof(lightmaps));
-	memset(&lightmap_modified, 0, sizeof(lightmap_modified));
-	memset(&lightmap_polys, 0, sizeof(lightmap_polys));
-	memset(&lightmap_rectchange, 0, sizeof(lightmap_rectchange));
+	memset(allocated, 0, sizeof(allocated));
+	memset(blocklights, 0, sizeof(blocklights));
+	memset(lightmaps, 0, sizeof(lightmaps));
+	memset(lightmap_modified, 0, sizeof(lightmap_modified));
+	memset(lightmap_polys, 0, sizeof(lightmap_polys));
+	memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
 
 	skytexturenum = 0;
 	lightmap_bytes = 0;
@@ -101,26 +101,15 @@ CGLRenderer::CGLRenderer(const CGLRenderer& src)
 {
 	active_lightmaps = 0;
 
-	for (int i = 0, j = 0; j < 128; i++, j++)
-	{
-		allocated[i][j] = 0;
-	}
-	for (int k = 0; k < 323; k++)
-		blocklights[k] = 0;
-
-	for (int m = 0; m < sizeof(lightmaps); m++)
-		lightmaps[m] = 0;
+	memset(allocated, 0, sizeof(allocated));
+	memset(blocklights, 0, sizeof(blocklights));
+	memset(lightmaps, 0, sizeof(lightmaps));
+	memset(lightmap_modified, 0, sizeof(lightmap_modified));
+	memset(lightmap_polys, 0, sizeof(lightmap_polys));
+	memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
 
 	skytexturenum = 0;
 	lightmap_bytes = 0;
-
-	for (int n = 0; n < sizeof(lightmap_modified); n++)
-		lightmap_modified[n] = false;
-	for (int o = 0; o < 63; o++)
-		lightmap_polys[o] = 0;
-	for (int p = 0; p < 63; p++)
-		lightmap_rectchange[p] = { NULL };
-
 
 	lightmap_textures = NULL;
 }
