@@ -56,6 +56,7 @@ public:
 	CQuakePic(const CQuakePic& src);
 
 	int			width, height;
+	size_t		size;
 	CQVector<byte>		data;
 
 };
