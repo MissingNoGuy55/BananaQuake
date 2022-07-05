@@ -116,12 +116,6 @@ CQVector<T, S>::CQVector(T* memory, int allocationCount, int numElements) : m_Me
 }
 
 template<class T, class S>
-inline CQVector<T, S>::CQVector(CQVector const& vector) : m_Memory(memory, allocationCount), vecSize(numElements)
-{
-	RefreshElements();
-}
-
-template<class T, class S>
 CQVector<T, S>::~CQVector()
 {
 	Purge();
