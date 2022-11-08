@@ -73,7 +73,7 @@ void PR_Profile_f (void);
 edict_t *ED_Alloc (void);
 void ED_Free (edict_t *ed);
 
-char	*ED_NewString (char *string);
+string_t	ED_NewString (char *string);
 // returns a copy of the string allocated from the server's string heap
 
 void ED_Print (edict_t *ed);
@@ -88,6 +88,8 @@ void ED_LoadFromFile (const char *data);
 const char* PR_GetString(int num);
 int PR_SetEngineString(const char* s);
 void PR_AllocStringSlots();
+
+int PR_AllocString(int size, char** ptr);
 
 //define EDICT_NUM(n) ((edict_t *)(sv.edicts+ (n)*pr_edict_size))
 //define NUM_FOR_EDICT(e) (((byte *)(e) - sv.edicts)/pr_edict_size)
