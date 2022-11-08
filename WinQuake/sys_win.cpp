@@ -29,8 +29,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <time.h>
 
 #define MINIMUM_WIN_MEMORY		0x0880000
-#define MAXIMUM_WIN_MEMORY		0x1000000
-
+#ifndef WIN64
+	#define MAXIMUM_WIN_MEMORY		0x1000000
+#else
+	#define MAXIMUM_WIN_MEMORY		0x10000000 // Missi: 256MB (11/8/2022)
+#endif
 #define CONSOLE_ERROR_TIMEOUT	60.0	// # of seconds to wait on Sys_Error running
 										//  dedicated before exiting
 #define PAUSE_SLEEP		50				// sleep time on pause or minimization
@@ -283,6 +286,8 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
 
 // #ifndef _M_IX86
 
+#ifndef WIN64
+
 void Sys_LowFPPrecision(void)
 {
 	__asm fldcw single_cw
@@ -365,6 +370,8 @@ void UnmaskExceptions(void)
 }
 #endif
 
+#endif // WIN64
+
 // #endif
 
 /*
@@ -377,10 +384,10 @@ void Sys_Init (void)
 	LARGE_INTEGER	PerformanceFreq;
 	unsigned int	lowpart, highpart;
 	OSVERSIONINFO	vinfo;
-
+#ifndef WIN64
 	MaskExceptions ();
 	Sys_SetFPCW ();
-
+#endif
 	if (!QueryPerformanceFrequency (&PerformanceFreq))
 		Sys_Error ("No hardware timer available");
 
@@ -782,7 +789,11 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     MSG				msg;
 	quakeparms_t<byte*>	parms;
 	double			time, oldtime, newtime;
+#ifndef WIN64
 	MEMORYSTATUS	lpBuffer;
+#else
+	MEMORYSTATUSEX	lpBuffer;
+#endif
 	static	char	cwd[1024];
 	int				t;
 	RECT			rect;
@@ -795,9 +806,13 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	global_hInstance = hInstance;
 	global_nCmdShow = nCmdShow;
-
+#ifndef WIN64
 	lpBuffer.dwLength = sizeof(MEMORYSTATUS);
 	GlobalMemoryStatus(&lpBuffer);
+#else
+	lpBuffer.dwLength = sizeof(MEMORYSTATUSEX);
+	GlobalMemoryStatusEx(&lpBuffer);
+#endif
 
 	if (!GetCurrentDirectory (sizeof(cwd), cwd))
 		Sys_Error ("Couldn't determine current directory");
@@ -869,13 +884,21 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 // take the greater of all the available memory or half the total memory,
 // but at least 8 Mb and no more than 16 Mb, unless they explicitly
 // request otherwise
+#ifndef WIN64
 	parms.memsize = lpBuffer.dwAvailPhys;
-
+#else
+	parms.memsize = lpBuffer.ullAvailPhys;
+#endif
 	if (parms.memsize < MINIMUM_WIN_MEMORY)
 		parms.memsize = MINIMUM_WIN_MEMORY;
 
+#ifndef WIN64
 	if (parms.memsize < (lpBuffer.dwTotalPhys >> 1))
 		parms.memsize = lpBuffer.dwTotalPhys >> 1;
+#else
+	if (parms.memsize < (lpBuffer.ullTotalPhys >> 1))
+		parms.memsize = (lpBuffer.ullTotalPhys >> 1);
+#endif
 
 	if (parms.memsize > MAXIMUM_WIN_MEMORY)
 		parms.memsize = MAXIMUM_WIN_MEMORY;

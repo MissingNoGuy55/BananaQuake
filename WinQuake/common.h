@@ -47,8 +47,8 @@ void SZ_Alloc (sizebuf_t *buf, int startsize);
 void SZ_Free (sizebuf_t *buf);
 void SZ_Clear (sizebuf_t *buf);
 byte *SZ_GetSpace (sizebuf_t *buf, int length);
-void SZ_Write (sizebuf_t *buf, void *data, int length);
-void SZ_Print (sizebuf_t *buf, char *data);	// strcats onto the sizebuf
+void SZ_Write (sizebuf_t *buf, const void *data, int length);
+void SZ_Print (sizebuf_t *buf, const char *data);	// strcats onto the sizebuf
 
 //============================================================================
 
@@ -66,7 +66,7 @@ void InsertLinkAfter (link_t *l, link_t *after);
 // (type *)STRUCT_FROM_LINK(link_t *link, type, member)
 // ent = STRUCT_FROM_LINK(link,entity_t,order)
 // FIXME: remove this mess!
-#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (int)&(((t *)0)->m)))
+#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - offsetof(t,m)))
 
 //============================================================================
 
@@ -125,7 +125,7 @@ void MSG_WriteByte (sizebuf_t *sb, int c);
 void MSG_WriteShort (sizebuf_t *sb, int c);
 void MSG_WriteLong (sizebuf_t *sb, int c);
 void MSG_WriteFloat (sizebuf_t *sb, float f);
-void MSG_WriteString (sizebuf_t *sb, char *s);
+void MSG_WriteString (sizebuf_t *sb, const char *s);
 void MSG_WriteCoord (sizebuf_t *sb, float f);
 void MSG_WriteAngle (sizebuf_t *sb, float f);
 
@@ -146,7 +146,7 @@ float MSG_ReadAngle (void);
 //============================================================================
 
 void Q_memset (void *dest, int fill, int count);
-void Q_memcpy (void *dest, void *src, int count);
+void Q_memcpy (void *dest, const void *src, int count);
 int Q_memcmp (void *m1, void *m2, int count);
 void Q_strcpy (char *dest, const char *src);
 void Q_strncpy (char *dest, const char *src, int count);
@@ -166,7 +166,7 @@ int q_vsnprintf(char* str, size_t size, const char* format, va_list args);
 extern	char		com_token[1024];
 extern	bool	com_eof;
 
-char *COM_Parse (char *data);
+const char *COM_Parse (const char *data);
 
 
 extern	int		com_argc;

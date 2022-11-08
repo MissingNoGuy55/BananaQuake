@@ -23,9 +23,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 dprograms_t		*progs;
 dfunction_t		*pr_functions;
-char			*pr_strings;
-ddef_t			*pr_fielddefs;
-ddef_t			*pr_globaldefs;
+static char			*pr_strings;
+static	int		pr_stringssize;
+static	const char** pr_knownstrings;
+static	int		pr_maxknownstrings;
+static	int		pr_numknownstrings;
+static ddef_t			*pr_fielddefs;
+static ddef_t			*pr_globaldefs;
 dstatement_t	*pr_statements;
 globalvars_t	*pr_global_struct;
 float			*pr_globals;			// same as pr_global_struct
@@ -646,7 +650,7 @@ void ED_WriteGlobals (FILE *f)
 ED_ParseGlobals
 =============
 */
-void ED_ParseGlobals (char *data)
+void ED_ParseGlobals (const char *data)
 {
 	char	keyname[64];
 	ddef_t	*key;
@@ -799,7 +803,7 @@ ed should be a properly initialized empty edict.
 Used for initial level load and for savegames.
 ====================
 */
-char *ED_ParseEdict (char *data, edict_t *ent)
+const char *ED_ParseEdict (const char *data, edict_t *ent)
 {
 	ddef_t		*key;
 	bool	anglehack;
@@ -902,7 +906,7 @@ Used for both fresh maps and savegame loads.  A fresh map would also need
 to call ED_CallSpawnFunctions () to let the objects initialize themselves.
 ================
 */
-void ED_LoadFromFile (char *data)
+void ED_LoadFromFile (const char *data)
 {	
 	edict_t		*ent;
 	int			inhibit;
@@ -976,6 +980,59 @@ void ED_LoadFromFile (char *data)
 	Con_DPrintf ("%i entities inhibited\n", inhibit);
 }
 
+const char* PR_GetString(int num)
+{
+	if (num >= 0 && num < pr_stringssize)
+		return pr_strings + num;
+	else if (num < 0 && num >= -pr_numknownstrings)
+	{
+		if (!pr_knownstrings[-1 - num])
+		{
+			host->Host_Error("PR_GetString: attempt to get a non-existant string %d\n", num);
+			return "";
+		}
+		return pr_knownstrings[-1 - num];
+	}
+	else
+	{
+		host->Host_Error("PR_GetString: invalid string offset %d\n", num);
+		return "";
+	}
+}
+
+int PR_SetEngineString(const char* s)
+{
+	int		i;
+
+	if (!s)
+		return 0;
+
+	if (s >= pr_strings && s <= pr_strings + pr_stringssize - 2)
+		return (int)(s - pr_strings);
+
+	for (i = 0; i < pr_numknownstrings; i++)
+	{
+		if (pr_knownstrings[i] == s)
+			return -1 - i;
+	}
+	//	if (i >= pr_numknownstrings)
+	//	{
+	if (i >= pr_maxknownstrings)
+		PR_AllocStringSlots();
+	pr_numknownstrings++;
+	//	}
+	pr_knownstrings[i] = s;
+	return -1 - i;
+}
+
+#define	PR_STRING_ALLOCSLOTS	256
+
+static void PR_AllocStringSlots(void)
+{
+	pr_maxknownstrings += PR_STRING_ALLOCSLOTS;
+	Con_Printf("PR_AllocStringSlots: realloc'ing for %d slots\n", pr_maxknownstrings);
+	pr_knownstrings = (const char**)g_MemCache->mainzone->Z_Realloc((void*)pr_knownstrings, pr_maxknownstrings * sizeof(char*));
+}
 
 /*
 ===============

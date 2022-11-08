@@ -135,6 +135,43 @@ void* CMemZone::Z_Malloc (int size)
 	return buf;
 }
 
+/*
+========================
+Z_Realloc
+========================
+*/
+void* CMemZone::Z_Realloc(void* ptr, int size)
+{
+	int old_size;
+	void* old_ptr;
+	CMemBlock<byte*>* block;
+
+	if (!ptr)
+		return Z_Malloc(size);
+
+	block = (CMemBlock<byte*>*)((byte*)ptr - sizeof(CMemBlock<byte>));
+	if (block->id != ZONEID)
+		Sys_Error("Z_Realloc: realloced a pointer without ZONEID");
+	if (block->tag == 0)
+		Sys_Error("Z_Realloc: realloced a freed pointer");
+
+	old_size = block->size;
+	old_size -= (4 + (int)sizeof(CMemBlock<byte>));	/* see Z_TagMalloc() */
+	old_ptr = ptr;
+
+	Z_Free(ptr);
+	ptr = Z_TagMalloc(size, 1);
+	if (!ptr)
+		Sys_Error("Z_Realloc: failed on allocation of %i bytes", size);
+
+	if (ptr != old_ptr)
+		memmove(ptr, old_ptr, q_min(old_size, size));
+	if (old_size < size)
+		memset((byte*)ptr + old_size, 0, size - old_size);
+
+	return ptr;
+}
+
 void* CMemZone::Z_TagMalloc (int size, int tag)
 {
 	int		extra = 0;
@@ -374,6 +411,14 @@ void CMemCache::Hunk_Print (bool all)
 	Con_Printf ("-------------------------\n");
 	Con_Printf ("%8i total blocks\n", totalblocks);
 	
+}
+
+char* CMemCache::Hunk_Strdup(const char* s, const char* name)
+{
+	size_t sz = strlen(s) + 1;
+	char* ptr = (char*)Hunk_AllocName(sz, name);
+	memcpy(ptr, s, sz);
+	return ptr;
 }
 
 /*===================

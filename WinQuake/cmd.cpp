@@ -83,7 +83,7 @@ Cbuf_AddText
 Adds command text at the end of the buffer
 ============
 */
-void Cbuf_AddText (char *text)
+void Cbuf_AddText (const char *text)
 {
 	int		l;
 	
@@ -343,7 +343,7 @@ void Cmd_Alias_f (void)
 	cmdalias_t	*a;
 	char		cmd[1024];
 	int			i, c;
-	char		*s;
+	const char		*s;
 
 	if (Cmd_Argc() == 1)
 	{
@@ -413,7 +413,7 @@ struct cmd_function_t
 int			cmd_argc;
 char		*cmd_argv[MAX_ARGS];
 char		*cmd_null_string = "";
-char		*cmd_args = NULL;
+const char		*cmd_args = NULL;
 
 cmd_source_t	cmd_source;
 
@@ -456,7 +456,7 @@ int		Cmd_Argc (void)
 Cmd_Argv
 ============
 */
-char	*Cmd_Argv (int arg)
+const char *Cmd_Argv (int arg)
 {
 	if ( (unsigned)arg >= cmd_argc )
 		return cmd_null_string;
@@ -468,7 +468,7 @@ char	*Cmd_Argv (int arg)
 Cmd_Args
 ============
 */
-char		*Cmd_Args (void)
+const char		*Cmd_Args (void)
 {
 	return cmd_args;
 }
@@ -481,7 +481,7 @@ Cmd_TokenizeString
 Parses the given string into command line tokens.
 ============
 */
-void Cmd_TokenizeString (char *text)
+void Cmd_TokenizeString (const char *text)
 {
 	int		i;
 	
@@ -617,7 +617,7 @@ A complete command line has been parsed, so try to execute it
 FIXME: lookupnoadd the token to speed search?
 ============
 */
-void	Cmd_ExecuteString (char *text, cmd_source_t src)
+void	Cmd_ExecuteString (const char *text, cmd_source_t src)
 {	
 	cmd_function_t	*cmd;
 	cmdalias_t		*a;

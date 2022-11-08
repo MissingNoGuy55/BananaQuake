@@ -564,7 +564,8 @@ void Host_Loadgame_f (void)
 	FILE	*f;
 	char	mapname[MAX_QPATH];
 	float	time, tfloat;
-	char	str[32768], *start;
+	char	str[32768];
+	const char *start;
 	int		i, r;
 	edict_t	*ent;
 	int		entnum;
@@ -641,8 +642,7 @@ void Host_Loadgame_f (void)
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = static_cast<char*>(g_MemCache->Hunk_Alloc (strlen(str)+1));
-		Q_strcpy (sv.lightstyles[i], str);
+		sv.lightstyles[i] = (const char*)g_MemCache->Hunk_Strdup(com_token, "lightstyles");
 	}
 
 // load the edicts out of the savegame file
@@ -909,7 +909,7 @@ Host_Name_f
 */
 void Host_Name_f (void)
 {
-	char	*newName;
+	const char	*newName;
 
 	if (Cmd_Argc () == 1)
 	{
@@ -920,7 +920,7 @@ void Host_Name_f (void)
 		newName = Cmd_Argv(1);	
 	else
 		newName = Cmd_Args();
-	newName[15] = 0;
+	//newName[15] = 0;
 
 	if (cmd_source == src_command)
 	{
@@ -936,7 +936,7 @@ void Host_Name_f (void)
 		if (Q_strcmp(host_client->name, newName) != 0)
 			Con_Printf ("%s renamed to %s\n", host_client->name, newName);
 	Q_strcpy (host_client->name, newName);
-	host_client->edict->v.netname = host_client->name - pr_strings;
+	host_client->edict->v.netname = PR_SetEngineString(host_client->name);
 	
 // send notification to all clients
 	
@@ -1007,25 +1007,23 @@ void Host_Please_f (void)
 
 void Host_Say(bool teamonly)
 {
-	client_t *client;
-	client_t *save;
 	int		j;
-	char	*p;
-	char	text[64];
+	client_t	*client;
+	client_t	*save;
+	const char	*p;
+	char		text[Q_MAXCHAR], *p2;
+	bool	quoted;
 	bool	fromServer = false;
 
 	if (cmd_source == src_command)
 	{
-		if (cls.state == ca_dedicated)
-		{
-			fromServer = true;
-			teamonly = false;
-		}
-		else
+		if (cls.state != ca_dedicated)
 		{
 			Cmd_ForwardToServer ();
 			return;
 		}
+		fromServer = true;
+		teamonly = false;
 	}
 
 	if (Cmd_Argc () < 2)
@@ -1035,24 +1033,39 @@ void Host_Say(bool teamonly)
 
 	p = Cmd_Args();
 // remove quotes if present
-	if (*p == '"')
+	quoted = false;
+	if (*p == '\"')
 	{
 		p++;
-		p[Q_strlen(p)-1] = 0;
+		quoted = true;
 	}
-
 // turn on color set 1
 	if (!fromServer)
-		sprintf (text, "%c%s: ", 1, save->name);
+		snprintf (text, sizeof(text), "\001%s: %s", save->name, p);
 	else
-		sprintf (text, "%c<%s> ", 1, hostname.string);
+		snprintf (text, sizeof(text), "\001<%s> %s", hostname.string, p);
 
-	j = sizeof(text) - 2 - Q_strlen(text);  // -2 for /n and null terminator
-	if (Q_strlen(p) > j)
-		p[j] = 0;
-
-	Q_strcat (text, p);
-	Q_strcat (text, "\n");
+// check length & truncate if necessary
+	j = (int) strlen(text);
+	if (j >= (int) sizeof(text) - 1)
+	{
+		text[sizeof(text) - 2] = '\n';
+		text[sizeof(text) - 1] = '\0';
+	}
+	else
+	{
+		p2 = text + j;
+		while ((const char *)p2 > (const char *)text &&
+			(p2[-1] == '\r' || p2[-1] == '\n' || (p2[-1] == '\"' && quoted)) )
+		{
+			if (p2[-1] == '\"' && quoted)
+				quoted = false;
+			p2[-1] = '\0';
+			p2--;
+		}
+		p2[0] = '\n';
+		p2[1] = '\0';
+	}
 
 	for (j = 0, client = svs.clients; j < svs.maxclients; j++, client++)
 	{
@@ -1060,13 +1073,13 @@ void Host_Say(bool teamonly)
 			continue;
 		if (teamplay.value && teamonly && client->edict->v.team != save->edict->v.team)
 			continue;
-		
-		client;
+		host_client = client;
 		sv.SV_ClientPrintf("%s", text);
 	}
 	host_client = save;
 
-	Sys_Printf("%s", &text[1]);
+	if (cls.state == ca_dedicated)
+		Sys_Printf("%s", &text[1]);
 }
 
 
@@ -1084,40 +1097,53 @@ void Host_Say_Team_f(void)
 
 void Host_Tell_f(void)
 {
-	client_t *client;
-	client_t *save;
 	int		j;
-	char	*p;
-	char	text[64];
+	client_t* client;
+	client_t* save;
+	const char* p;
+	char		text[Q_MAXCHAR], * p2;
+	bool	quoted;
 
 	if (cmd_source == src_command)
 	{
-		Cmd_ForwardToServer ();
+		Cmd_ForwardToServer();
 		return;
 	}
 
-	if (Cmd_Argc () < 3)
+	if (Cmd_Argc() < 3)
 		return;
-
-	Q_strcpy(text, host_client->name);
-	Q_strcat(text, ": ");
 
 	p = Cmd_Args();
-
-// remove quotes if present
-	if (*p == '"')
+	// remove quotes if present
+	quoted = false;
+	if (*p == '\"')
 	{
 		p++;
-		p[Q_strlen(p)-1] = 0;
+		quoted = true;
 	}
+	snprintf(text, sizeof(text), "%s: %s", host_client->name, p);
 
-// check length & truncate if necessary
-	j = sizeof(text) - 2 - Q_strlen(text);  // -2 for /n and null terminator
-	if (Q_strlen(p) > j)
-		p[j] = 0;
-
-	Q_strcat (text, p);
-	Q_strcat (text, "\n");
+	// check length & truncate if necessary
+	j = (int)strlen(text);
+	if (j >= (int)sizeof(text) - 1)
+	{
+		text[sizeof(text) - 2] = '\n';
+		text[sizeof(text) - 1] = '\0';
+	}
+	else
+	{
+		p2 = text + j;
+		while ((const char*)p2 > (const char*)text &&
+			(p2[-1] == '\r' || p2[-1] == '\n' || (p2[-1] == '\"' && quoted)))
+		{
+			if (p2[-1] == '\"' && quoted)
+				quoted = false;
+			p2[-1] = '\0';
+			p2--;
+		}
+		p2[0] = '\n';
+		p2[1] = '\0';
+	}
 
 	save = host_client;
 	for (j = 0, client = svs.clients; j < svs.maxclients; j++, client++)
@@ -1231,11 +1257,11 @@ void Host_Pause_f (void)
 
 		if (sv.paused)
 		{
-			sv.SV_BroadcastPrintf ("%s paused the game\n", pr_strings + sv_player->v.netname);
+			sv.SV_BroadcastPrintf ("%s paused the game\n", PR_GetString(sv_player->v.netname));
 		}
 		else
 		{
-			sv.SV_BroadcastPrintf ("%s unpaused the game\n",pr_strings + sv_player->v.netname);
+			sv.SV_BroadcastPrintf ("%s unpaused the game\n", PR_GetString(sv_player->v.netname));
 		}
 
 	// send notification to all clients
@@ -1309,7 +1335,7 @@ void Host_Spawn_f (void)
 		memset (&ent->v, 0, progs->entityfields * 4);
 		ent->v.colormap = NUM_FOR_EDICT(ent);
 		ent->v.team = (host_client->colors & 15) + 1;
-		ent->v.netname = host_client->name - pr_strings;
+		ent->v.netname = PR_SetEngineString(host_client->name);
 
 		// copy spawn parms out of the client_t
 
@@ -1424,8 +1450,8 @@ Kicks a user off of the server
 */
 void Host_Kick_f (void)
 {
-	char		*who;
-	char		*message = NULL;
+	const char		*who;
+	const char		*message = NULL;
 	client_t	*save;
 	int			i;
 	bool	byNumber = false;
@@ -1516,7 +1542,7 @@ Host_Give_f
 */
 void Host_Give_f (void)
 {
-	char	*t;
+	const char	*t;
 	int		v, w;
 	eval_t	*val;
 
@@ -1676,7 +1702,7 @@ edict_t	*FindViewthing (void)
 	for (i=0 ; i<sv.num_edicts ; i++)
 	{
 		e = EDICT_NUM(i);
-		if ( !strcmp (pr_strings + e->v.classname, "viewthing") )
+		if ( !strcmp (PR_GetString(e->v.classname), "viewthing") )
 			return e;
 	}
 	Con_Printf ("No viewthing on map\n");
