@@ -328,21 +328,14 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 	int offset = 0; //Missi -- copied from QuakeSpasm (5/28/2022)
 	int off = 0;
 
-	qbuf = static_cast<quakepicbuffer_t*>(W_GetLumpName(name));
+	p = static_cast<CQuakePic*>(W_GetLumpName(name));
 
-	p = (CQuakePic*)g_MemCache->Hunk_Alloc(sizeof(CQuakePic));
+	//p = (CQuakePic*)g_MemCache->Hunk_Alloc(sizeof(CQuakePic));
 
 	if (!p) return NULL; //Missi -- copied from QuakeSpasm (5/28/2022)
 
 	//p->data.Init();
-
-	while (qbuf->data[off])
-	{
-		p->data.AddToTail(qbuf->data[off++]);
-	}
-	p->data.AddToTail('\0');
-	p->data.Compact();
-
+	// 
 	// load little ones into the scrap
 	if (p->width < 64 && p->height < 64)
 	{
@@ -370,9 +363,9 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 		//char texturename[64]; //Missi -- copied from QuakeSpasm (5/28/2022)
 		//snprintf(texturename, sizeof(texturename), "%s:%s", texturename, name); //Missi -- copied from QuakeSpasm (5/28/2022)
 
-		offset = (int)p - (int)wad_base + sizeof(int) * 2; //Missi -- copied from QuakeSpasm (5/28/2022)
+		offset = (size_t)p - (size_t)wad_base + sizeof(size_t) * 2; //Missi -- copied from QuakeSpasm (5/28/2022)
 
-		gl = GL_LoadTexture(name, p->width, p->height, p->data.Base(), TEXPREF_ALPHA); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
+		gl = GL_LoadTexture(name, p->width, p->height, p->data, TEXPREF_ALPHA); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
 		gl->sl = 0;
 		gl->sh = (float)p->width / (float)GL_PadConditional(p->width); //Missi -- copied from QuakeSpasm (5/28/2022)
 		gl->tl = 0;
@@ -426,14 +419,6 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 		return 0;
 	}
 
-	while (qpicbuf->data[qpictemp_len])
-	{
-		qpic->data.AddToTail(qpicbuf->data[qpictemp_len++]);
-		//qpictemp_len++;
-	}
-	qpic->data.AddToTail('\0');
-	qpic->data.Compact();
-
 	//qpictemp = qpicdata;
 	//memset(&qpic->data, 0, sizeof(qpic->data));
 
@@ -448,7 +433,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	qpic->width = qpicbuf->width;
 	qpic->height = qpicbuf->height;
 
-	gl = GL_LoadTexture(path, qpic->width, qpic->height, qpic->data.Base()); // (COpenGLPic*)pic->pic->data;
+	gl = GL_LoadTexture(path, qpic->width, qpic->height, qpic->data); // (COpenGLPic*)pic->pic->data;
 	gl->sl = 0;
 	gl->sh = 1;
 	gl->tl = 0;
@@ -609,16 +594,9 @@ void CGLRenderer::Draw_Init (void)
 	cb->height = cbbuf->height;
 	SwapPic(cb);
 
-	while (cbbuf->data[m])
-	{
-		cb->data.AddToTail(cbbuf->data[m]);
-		m++;
-	}
-	cb->data.AddToTail('\0');
-	cb->data.Compact();
 	conback->width = cb->width;
 	conback->height = cb->height;
-	ncdata = cb->data.Base();
+	ncdata = cb->data;
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -782,31 +760,27 @@ void CGLRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 	unsigned short	*pusdest = NULL;
 	int				v = 0, u = 0;
 	int				len = 0;
-	CGLTexture			*gl = NULL;
+	CGLTexture			*gl = new CGLTexture;
+	COpenGLPic* glpic = (COpenGLPic*)pic;
 
 	if (scrap_dirty)
 		Scrap_Upload ();
 
-	if (!gl)
-		gl = (CGLTexture*)g_MemCache->Hunk_Alloc(sizeof(CGLTexture));
-
-	memcpy(&gl->pic, pic, sizeof(pic));
-
-	do
-	{
-		len++;
-	} while (!pic->data.IsEmpty() && pic->data[len]);
+	gl->pic = *pic;
+	gl->width = pic->width;
+	gl->height = pic->height;
+	gl->texnum = texture_extension_number;
 
 	glColor4f (1,1,1,1);
 	g_GLRenderer->GL_Bind (gl);
 	glBegin (GL_QUADS);
-	glTexCoord2f (gl->sl, gl->tl);
+	glTexCoord2f (glpic->sl, glpic->tl);
 	glVertex2f (x, y);
-	glTexCoord2f (gl->sh, gl->tl);
+	glTexCoord2f (glpic->sh, glpic->tl);
 	glVertex2f (x+pic->width, y);
-	glTexCoord2f (gl->sh, gl->th);
+	glTexCoord2f (glpic->sh, glpic->th);
 	glVertex2f (x+pic->width, y+pic->height);
-	glTexCoord2f (gl->sl, gl->th);
+	glTexCoord2f (glpic->sl, glpic->th);
 	glVertex2f (x, y+pic->height);
 	glEnd ();
 
@@ -914,7 +888,7 @@ void CGLRenderer::Draw_TileClear (int x, int y, int w, int h)
 {
 
 	glColor3f (1,1,1);
-	g_GLRenderer->GL_Bind((CGLTexture*)draw_backtile->data.Base()); // *(int*)draw_backtile->data;
+	g_GLRenderer->GL_Bind((CGLTexture*)draw_backtile->data); // *(int*)draw_backtile->data;
 	glBegin (GL_QUADS);
 	glTexCoord2f (x/64.0, y/64.0);
 	glVertex2f (x, y);
@@ -1293,16 +1267,8 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	else
 		glt = GL_NewTexture();
 
-	while (data[len])	// Missi: do not touch this logic at all! (6/16/2022)
-	{
-		glt->pic.data.AddToTail(data[len]);
-		len++;
-	}
-	glt->pic.data.AddToTail('\0');
-	glt->pic.data.Compact();
 	glt->pic.width = width;
 	glt->pic.height = height;
-	glt->pic.size = len;
 
 	Q_strncpy(glt->identifier, identifier, sizeof(glt->identifier));	// Missi: this was Q_strcpy at one point. Caused heap corruption. (4/11/2022)
 	glt->texnum = texture_extension_number;
@@ -1357,7 +1323,7 @@ GL_LoadPicTexture
 */
 CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic)
 {
-	return GL_LoadTexture("", pic->width, pic->height, pic->data.Base(), TEXPREF_ALPHA);
+	return GL_LoadTexture("", pic->width, pic->height, pic->data, TEXPREF_ALPHA);
 }
 
 /****************************************/
@@ -1393,5 +1359,5 @@ CGLTexture::CGLTexture(const CGLTexture& obj) : height(0), width(0), mipmap(fals
 
 CGLTexture::~CGLTexture()
 {
-	memset(&pic.data, 0, sizeof(CQuakePic) + pic.size);
+	memset(&pic.data, 0, sizeof(CQuakePic));
 }
