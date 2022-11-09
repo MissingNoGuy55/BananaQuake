@@ -47,7 +47,7 @@ typedef struct
 	byte data[1];
 } quakepicbuffer_t;
 
-class CQuakePic
+struct CQuakePic
 {
 public:
 
@@ -55,9 +55,9 @@ public:
 	CQuakePic(byte& mem);
 	CQuakePic(const CQuakePic& src);
 
-	int			width, height;
-	size_t		size;
-	CQVector<byte>		data;
+	int			width;
+	int			height;
+	byte		data[1];
 
 };
 
