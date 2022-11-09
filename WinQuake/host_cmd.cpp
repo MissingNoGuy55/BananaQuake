@@ -1817,6 +1817,28 @@ void Host_Viewprev_f (void)
 }
 
 /*
+==================
+Host_Viewprev_f
+==================
+*/
+void Mod_GetPos(void)
+{
+	edict_t* e;
+	model_t* m;
+	const char* t;
+	int v;
+
+	t = Cmd_Argv(1);
+	v = atoi(Cmd_Argv(2));
+
+	e = EDICT_NUM(v);
+	if (!e)
+		return;
+
+	Con_Printf("%f %f %f", e->v.origin[0], e->v.origin[1], e->v.origin[2]);
+}
+
+/*
 ===============================================================================
 
 DEMO LOOP CONTROL
@@ -1949,4 +1971,6 @@ void CQuakeHost::Host_InitCommands (void)
 	Cmd_AddCommand ("viewprev", Host_Viewprev_f);
 
 	Cmd_AddCommand ("mcache", Mod_Print);
+
+	Cmd_AddCommand("getpos", Mod_GetPos);
 }
