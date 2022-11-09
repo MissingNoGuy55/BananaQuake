@@ -23,13 +23,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 dprograms_t		*progs;
 dfunction_t		*pr_functions;
-static char			*pr_strings;
-static	int		pr_stringssize;
-static	const char** pr_knownstrings;
-static	int		pr_maxknownstrings;
-static	int		pr_numknownstrings;
-static ddef_t			*pr_fielddefs;
-static ddef_t			*pr_globaldefs;
+char			*pr_strings;
+int		pr_stringssize;
+const char** pr_knownstrings;
+int		pr_maxknownstrings;
+int		pr_numknownstrings;
+ddef_t			*pr_fielddefs;
+ddef_t			*pr_globaldefs;
 dstatement_t	*pr_statements;
 globalvars_t	*pr_global_struct;
 float			*pr_globals;			// same as pr_global_struct
@@ -40,7 +40,7 @@ unsigned short		pr_crc;
 int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,sizeof(void *)/4};
 
 ddef_t *ED_FieldAtOfs (int ofs);
-bool	ED_ParseEpair (void *base, ddef_t *key, char *s);
+bool	ED_ParseEpair (void *base, ddef_t *key, const char *s);
 
 cvar_t	nomonsters = {"nomonsters", "0"};
 cvar_t	gamecfg = {"gamecfg", "0"};
@@ -187,7 +187,7 @@ ddef_t *ED_FieldAtOfs (int ofs)
 ED_FindField
 ============
 */
-ddef_t *ED_FindField (char *name)
+ddef_t *ED_FindField (const char *name)
 {
 	ddef_t		*def;
 	int			i;
@@ -242,7 +242,7 @@ dfunction_t *ED_FindFunction (const char *name)
 }
 
 
-eval_t *GetEdictFieldValue(edict_t *ed, char *field)
+eval_t *GetEdictFieldValue(edict_t *ed, const char *field)
 {
 	ddef_t			*def = NULL;
 	int				i;
@@ -694,7 +694,7 @@ void ED_ParseGlobals (const char *data)
 ED_NewString
 =============
 */
-string_t ED_NewString (char *string)
+string_t ED_NewString (const char *string)
 {
 	char* new_p;
 	int		num;
@@ -729,7 +729,7 @@ Can parse either fields or globals
 returns false if error
 =============
 */
-bool	ED_ParseEpair (void *base, ddef_t *key, char *s)
+bool	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 {
 	int		i;
 	char	string[128];
@@ -919,62 +919,65 @@ void ED_LoadFromFile (const char *data)
 // parse ents
 	while (1)
 	{
-// parse the opening brace	
-		data = COM_Parse (data);
+		// parse the opening brace	
+		data = COM_Parse(data);
 		if (!data)
 			break;
 		if (com_token[0] != '{')
-			Sys_Error ("ED_LoadFromFile: found %s when expecting {",com_token);
+			Sys_Error("ED_LoadFromFile: found %s when expecting {", com_token);
 
 		if (!ent)
 			ent = EDICT_NUM(0);
 		else
-			ent = ED_Alloc ();
-		data = ED_ParseEdict (data, ent);
+			ent = ED_Alloc();
+		data = ED_ParseEdict(data, ent);
 
-// remove things from different skill levels or deathmatch
+		// remove things from different skill levels or deathmatch
 		if (deathmatch.value)
 		{
 			if (((int)ent->v.spawnflags & SPAWNFLAG_NOT_DEATHMATCH))
 			{
-				ED_Free (ent);	
+				ED_Free(ent);
 				inhibit++;
 				continue;
 			}
 		}
 		else if ((host->current_skill == 0 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_EASY))
-				|| (host->current_skill == 1 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_MEDIUM))
-				|| (host->current_skill >= 2 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_HARD)) )
+			|| (host->current_skill == 1 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_MEDIUM))
+			|| (host->current_skill >= 2 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_HARD)))
 		{
-			ED_Free (ent);	
+			ED_Free(ent);
 			inhibit++;
 			continue;
 		}
 
-//
-// immediately call spawn function
-//
-		if (!ent->v.classname)
+		//
+		// immediately call spawn function
+		//
+		if (ent)
 		{
-			Con_Printf ("No classname for:\n");
-			ED_Print (ent);
-			ED_Free (ent);
-			continue;
+			if (!ent->v.classname)
+			{
+				Con_Printf("No classname for:\n");
+				ED_Print(ent);
+				ED_Free(ent);
+				continue;
+			}
+
+			// look for the spawn function
+			func = ED_FindFunction(PR_GetString(ent->v.classname));
+
+			if (!func)
+			{
+				Con_Printf("No spawn function for:\n");
+				ED_Print(ent);
+				ED_Free(ent);
+				continue;
+			}
+
+			pr_global_struct->self = EDICT_TO_PROG(ent);
+			PR_ExecuteProgram(func - pr_functions);
 		}
-
-	// look for the spawn function
-		func = ED_FindFunction ( PR_GetString(ent->v.classname) );
-
-		if (!func)
-		{
-			Con_Printf ("No spawn function for:\n");
-			ED_Print (ent);
-			ED_Free (ent);
-			continue;
-		}
-
-		pr_global_struct->self = EDICT_TO_PROG(ent);
-		PR_ExecuteProgram (func - pr_functions);
 	}	
 
 	Con_DPrintf ("%i entities inhibited\n", inhibit);
