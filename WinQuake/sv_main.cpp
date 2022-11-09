@@ -167,7 +167,7 @@ void CQuakeServer::SV_StartSound (edict_t *entity, int channel, const char *samp
 	MSG_WriteShort (&sv.datagram, channel);
 	MSG_WriteByte (&sv.datagram, sound_num);
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
+		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*sizeof(entity->v.mins[i]+entity->v.maxs[i]));
 }           
 
 /*
@@ -1156,7 +1156,7 @@ void CQuakeServer::SV_SpawnServer (const char *server)
 // load the rest of the entities
 //	
 	ent = EDICT_NUM(0);
-	memset (&ent->v, 0, progs->entityfields * 4);
+	memset (&ent->v, 0, sizeof(progs->entityfields * 4));
 	ent->free = false;
 	ent->v.model = PR_SetEngineString(sv.worldmodel->name);
 	ent->v.modelindex = 1;		// world model
