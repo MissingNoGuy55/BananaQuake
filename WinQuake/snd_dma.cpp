@@ -58,10 +58,10 @@ channel_t CSoundInternal::channels[128];
 int CSoundInternal::total_channels = 0;
 int CSoundInternal::num_sfx = 0;
 int CSoundInternal::sound_started = 0;
-vec3_t CSoundInternal::listener_origin = { 0.f, 0.f, 0.f };
-vec3_t CSoundInternal::listener_forward = { 0.f, 0.f, 0.f };
-vec3_t CSoundInternal::listener_right = { 0.f, 0.f, 0.f };
-vec3_t CSoundInternal::listener_up = { 0.f, 0.f, 0.f };
+vec3_t listener_origin = {};
+vec3_t listener_forward = {};
+vec3_t listener_right = {};
+vec3_t listener_up = {};
 sfx_t* CSoundInternal::known_sfx[MAX_SFX] = { (sfx_t*)calloc(1, sizeof(sfx_t)) };
 
 // ====================================================================
@@ -932,8 +932,9 @@ void CSoundInternal::S_SoundList(void)
 	int		size, total;
 
 	total = 0;
-	for (i=0, sfx = known_sfx[i]; i<num_sfx; i++, sfx++)
+	for (i=0; i<num_sfx; i++, sfx++)
 	{
+		sfx = known_sfx[i];
 		sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Check (&sfx->cache));
 		if (!sc)
 			continue;
