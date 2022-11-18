@@ -63,6 +63,7 @@
       <PrecompiledHeaderOutputFile>.\Debug\gas2masm.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\Debug\</ObjectFileName>
       <ProgramDataBaseFileName>.\Debug\</ProgramDataBaseFileName>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\Debug\gas2masm.tlb</TypeLibraryName>
@@ -97,6 +98,7 @@
       <PrecompiledHeaderOutputFile>.\Release\gas2masm.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\Release\</ObjectFileName>
       <ProgramDataBaseFileName>.\Release\</ProgramDataBaseFileName>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\Release\gas2masm.tlb</TypeLibraryName>
