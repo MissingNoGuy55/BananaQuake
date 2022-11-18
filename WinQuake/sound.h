@@ -54,7 +54,7 @@ struct sfxcache_t
 	int 	speed = 0;
 	int 	width = 0;
 	int 	stereo = 0;
-	byte	data[Q_MAX_VARARRLEN];		// variable sized
+	byte	data[1];		// variable sized
 };
 
 typedef struct
@@ -123,11 +123,6 @@ public:
 	// pointer should go away
 	static volatile dma_t* shm;
 	dma_t sn;
-
-	static vec3_t		listener_origin;
-	static vec3_t		listener_forward;
-	static vec3_t		listener_right;
-	static vec3_t		listener_up;
 	vec_t		sound_nominal_clip_dist;
 
 	int			soundtime;		// sample PAIRS
@@ -161,7 +156,6 @@ public:
 
 	// Global crap
 
-	channel_t   channels[MAX_CHANNELS];
 	unsigned long		gSndBufSize = 0;
 	int paintedtime = 0;
 
