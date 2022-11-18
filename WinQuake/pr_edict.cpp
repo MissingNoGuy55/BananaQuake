@@ -197,6 +197,36 @@ ddef_t *ED_FindField (char *name)
 	return NULL;
 }
 
+eval_t* GetEdictFieldValue(edict_t* ed, char* field)
+{
+	ddef_t* def = NULL;
+	int				i;
+	static int		rep = 0;
+
+	for (i = 0; i < GEFV_CACHESIZE; i++)
+	{
+		if (!strcmp(field, gefvCache[i].field))
+		{
+			def = gefvCache[i].pcache;
+			goto Done;
+		}
+	}
+
+	def = ED_FindField(field);
+
+	if (strlen(field) < MAX_FIELD_LEN)
+	{
+		gefvCache[rep].pcache = def;
+		Q_strcpy(gefvCache[rep].field, field);
+		rep ^= 1;
+	}
+
+Done:
+	if (!def)
+		return NULL;
+
+	return (eval_t*)((char*)&ed->v + def->ofs * 4);
+}
 
 /*
 ============
@@ -235,38 +265,6 @@ dfunction_t *ED_FindFunction (char *name)
 			return func;
 	}
 	return NULL;
-}
-
-
-eval_t *GetEdictFieldValue(edict_t *ed, char *field)
-{
-	ddef_t			*def = NULL;
-	int				i;
-	static int		rep = 0;
-
-	for (i=0 ; i<GEFV_CACHESIZE ; i++)
-	{
-		if (!strcmp(field, gefvCache[i].field))
-		{
-			def = gefvCache[i].pcache;
-			goto Done;
-		}
-	}
-
-	def = ED_FindField (field);
-
-	if (strlen(field) < MAX_FIELD_LEN)
-	{
-		gefvCache[rep].pcache = def;
-		Q_strcpy (gefvCache[rep].field, field);
-		rep ^= 1;
-	}
-
-Done:
-	if (!def)
-		return NULL;
-
-	return (eval_t *)((char *)&ed->v + def->ofs*4);
 }
 
 
