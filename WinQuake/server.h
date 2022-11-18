@@ -107,7 +107,7 @@ public:
 	void SV_Init(void);
 
 	void SV_StartParticle(vec3_t org, vec3_t dir, int color, int count);
-	void SV_StartSound(edict_t* entity, int channel, const char* sample, int volume,
+	void SV_StartSound(edict_t* entity, int channel, char* sample, int volume,
 		float attenuation);
 
 	void SV_SendServerinfo(client_t* client);
@@ -119,7 +119,7 @@ public:
 	void SV_SendClientMessages(void);
 	void SV_ClearDatagram(void);
 
-	int SV_ModelIndex(const char* name);
+	int SV_ModelIndex(char* name);
 
 	void SV_CreateBaseline(void);
 
@@ -188,7 +188,7 @@ public:
 #ifdef QUAKE2
 	void SV_SpawnServer(char* server, char* startspot);
 #else
-	void SV_SpawnServer(const char* server);
+	void SV_SpawnServer(char* server);
 #endif
 
 	void SV_CheckAllEnts(void);
@@ -295,10 +295,10 @@ public:
 #endif
 	char		modelname[64];		// maps/<name>.bsp, for model_precache[0]
 	struct model_s* worldmodel;
-	const char* model_precache[MAX_MODELS];	// NULL terminated
+	char* model_precache[MAX_MODELS];	// NULL terminated
 	struct model_s* models[MAX_MODELS];
-	const char* sound_precache[MAX_SOUNDS];	// NULL terminated
-	const char* lightstyles[MAX_LIGHTSTYLES];
+	char* sound_precache[MAX_SOUNDS];	// NULL terminated
+	char* lightstyles[MAX_LIGHTSTYLES];
 	int			num_edicts;
 	int			max_edicts;
 	edict_t* edicts;			// can NOT be array indexed, because

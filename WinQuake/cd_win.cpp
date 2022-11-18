@@ -242,7 +242,7 @@ void CDAudio_Resume(void)
 
 static void CD_f (void)
 {
-	const char	*command;
+	char	*command;
 	int		ret;
 	int		n;
 	int		startAddress;

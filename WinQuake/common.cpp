@@ -139,7 +139,7 @@ void Q_memset (void *dest, int fill, int count)
 {
 	int             i;
 	
-	if ( (((unsigned long long)dest | count) & 3) == 0)
+	if ( (((long)dest | count) & 3) == 0)
 	{
 		count >>= 2;
 		fill = fill | (fill<<8) | (fill<<16) | (fill<<24);
@@ -151,11 +151,11 @@ void Q_memset (void *dest, int fill, int count)
 			((byte *)dest)[i] = fill;
 }
 
-void Q_memcpy (void *dest, const void *src, int count)
+void Q_memcpy (void *dest, void *src, int count)
 {
 	int             i;
 	
-	if (( ( (unsigned long long)dest | (unsigned long long)src | count) & 3) == 0 )
+	if (( ( (long)dest | (long)src | count) & 3) == 0 )
 	{
 		count>>=2;
 		for (i=0 ; i<count ; i++)
@@ -600,7 +600,7 @@ void MSG_WriteFloat (sizebuf_t *sb, float f)
 	SZ_Write (sb, &dat.l, 4);
 }
 
-void MSG_WriteString (sizebuf_t *sb, const char *s)
+void MSG_WriteString (sizebuf_t *sb, char *s)
 {
 	if (!s)
 		SZ_Write (sb, "", 1);
@@ -801,12 +801,12 @@ byte *SZ_GetSpace (sizebuf_t *buf, int length)
 	return data;
 }
 
-void SZ_Write (sizebuf_t *buf, const void *data, int length)
+void SZ_Write (sizebuf_t *buf, void *data, int length)
 {
 	Q_memcpy (SZ_GetSpace(buf,length),data,length);         
 }
 
-void SZ_Print (sizebuf_t *buf, const char *data)
+void SZ_Print (sizebuf_t *buf, char *data)
 {
 	int             len;
 	
@@ -935,7 +935,7 @@ COM_Parse
 Parse a token out of a string
 ==============
 */
-const char *COM_Parse (const char *data)
+char *COM_Parse (char *data)
 {
 	int             c;
 	int             len;
