@@ -514,7 +514,7 @@ void CQuakeServer::SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 	//
 	// write the message
 	//
-		MSG_WriteByte (msg,bits | U_SIGNAL);
+		MSG_WriteByte (msg, bits | U_SIGNAL);
 		
 		if (bits & U_MOREBITS)
 			MSG_WriteByte (msg, bits>>8);
@@ -593,7 +593,7 @@ void CQuakeServer::SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 		MSG_WriteByte (msg, ent->v.dmg_save);
 		MSG_WriteByte (msg, ent->v.dmg_take);
 		for (i=0 ; i<3 ; i++)
-			MSG_WriteCoord (msg, other->v.origin[i] + 0.5*(other->v.mins[i] + other->v.maxs[i]));
+			MSG_WriteCoord (msg, other->v.origin[i] + 0.5f*(other->v.mins[i] + other->v.maxs[i]));
 	
 		ent->v.dmg_take = 0;
 		ent->v.dmg_save = 0;
