@@ -71,11 +71,14 @@ void W_LoadWadFile (const char *filename)
 	unsigned		i;
 	int				infotableofs;
 	
-	wad_base = static_cast<byte*>(COM_LoadHunkFile (filename));
+	wad_base = COM_LoadHunkFile<byte> (filename);
 	if (!wad_base)
 		Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
 
 	header = (wadinfo_t *)wad_base;
+
+	if (!header)
+		return;
 	
 	if (header->identification[0] != 'W'
 	|| header->identification[1] != 'A'
@@ -159,14 +162,20 @@ void SwapPic (CQuakePic *pic)
 CQuakePic::CQuakePic() : height(0), width(0)
 {
 	memset(&data, 0, sizeof(&data));
+	datavec = new CQVector<byte>;
+	datavec->Init();
 }
 
 CQuakePic::CQuakePic(byte& mem) : height(0), width(0)
 {
 	memset(&data, 0, sizeof(&data));
+	datavec = new CQVector<byte>;
+	datavec->Init();
 }
 
 CQuakePic::CQuakePic(const CQuakePic& src) : height(0), width(0)
 {
 	memset(&data, 0, sizeof(&data));
+	datavec = new CQVector<byte>;
+	datavec->Init();
 }

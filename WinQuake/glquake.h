@@ -411,13 +411,14 @@ public:
 	CGLTexture(const CGLTexture& obj);
 	~CGLTexture();
 
+	CQuakePic pic;
+	//COpenGLPic* glcoords;
+
 	float	sl;
 	float	tl;
 	float	sh;
 	float	th;
 
-	CQuakePic pic;
-	//COpenGLPic* glcoords;
 
 	unsigned int		texnum;
 	char	identifier[64];
@@ -462,7 +463,7 @@ extern	bool	envmap;
 extern	CGLTexture* currenttexture;
 extern	CGLTexture* cnttextures[2];
 extern	CGLTexture* particletexture;
-extern	CGLTexture* playertextures;
+extern	CGLTexture* playertextures[MAX_SCOREBOARD];
 
 extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
 

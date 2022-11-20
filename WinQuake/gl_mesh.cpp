@@ -306,10 +306,10 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 	// look for a cached version
 	//
 	Q_strcpy (cache, "glquake/");
-	COM_StripExtension (m->name+strlen("progs/"), cache+strlen("glquake/"));
+	common->COM_StripExtension (m->name+strlen("progs/"), cache+strlen("glquake/"));
 	Q_strcat (cache, ".ms2");
 
-	COM_FOpenFile (cache, &f);	
+	common->COM_FOpenFile (cache, &f);
 	if (f)
 	{
 		fread (&numcommands, 4, 1, f);
@@ -330,7 +330,7 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 		//
 		// save out the cached version
 		//
-		sprintf (fullpath, "%s/%s", com_gamedir, cache);
+		sprintf (fullpath, "%s/%s", common->com_gamedir, cache);
 		f = fopen (fullpath, "wb");
 		if (f)
 		{

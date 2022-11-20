@@ -42,7 +42,7 @@ typedef struct
 struct sfx_t
 {
 	char 	name[MAX_QPATH] = { NULL };
-	cache_user_t	cache = { NULL };
+	cache_user_t	cache;
 };
 
 // !!! if this is changed, it much be changed in asm_i386.h too !!!
@@ -85,7 +85,7 @@ struct channel_t
 		int		entnum = 0;			// to allow overriding a specific sound
 		int		entchannel = 0;		//
 		vec3_t	origin = { 0, 0, 0 };			// origin of sound effect
-		vec_t	dist_mult;		// distance multiplier (attenuation/clipK)
+		vec_t	dist_mult = 0.0f;		// distance multiplier (attenuation/clipK)
 		int		master_vol = 0;		// 0-255 master volume
 };
 

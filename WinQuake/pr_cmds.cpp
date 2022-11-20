@@ -562,7 +562,11 @@ void PF_sound (void)
 	edict_t		*entity;
 	int 		volume;
 	float attenuation;
-		
+	
+#ifdef _DEBUG
+	edict_t* ent = G_EDICT(OFS_PARM0);
+#endif
+
 	entity = G_EDICT(OFS_PARM0);
 	channel = G_FLOAT(OFS_PARM1);
 	sample = G_STRING(OFS_PARM2);
@@ -1658,7 +1662,7 @@ void PF_changelevel (void)
 	svs.changelevel_issued = true;
 	
 	s = G_STRING(OFS_PARM0);
-	Cbuf_AddText (va("changelevel %s\n",s));
+	Cbuf_AddText (common->va("changelevel %s\n",s));
 #endif
 }
 

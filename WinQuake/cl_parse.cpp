@@ -167,6 +167,7 @@ void CL_KeepaliveMessage (void)
 		{
 		default:
 			host->Host_Error ("CL_KeepaliveMessage: CL_GetMessage failed");
+			break;
 		case 0:
 			break;	// nothing waiting
 		case 1:
@@ -203,9 +204,9 @@ CL_ParseServerInfo
 */
 void CL_ParseServerInfo (void)
 {
-	char	*str;
-	int		i;
-	int		nummodels, numsounds;
+	char	*str = NULL;
+	int		i = 0;
+	int		nummodels = 0, numsounds = 0;
 	char	model_precache[MAX_MODELS][MAX_QPATH];
 	char	sound_precache[MAX_SOUNDS][MAX_QPATH];
 	
@@ -261,7 +262,7 @@ void CL_ParseServerInfo (void)
 			Con_Printf ("Server sent too many model precaches\n");
 			return;
 		}
-		Q_strcpy (model_precache[nummodels], str);
+		q_strlcpy (model_precache[nummodels], str, MAX_QPATH);
 		Mod_TouchModel (str);
 	}
 
@@ -277,7 +278,7 @@ void CL_ParseServerInfo (void)
 			Con_Printf ("Server sent too many sound precaches\n");
 			return;
 		}
-		Q_strcpy (sound_precache[numsounds], str);
+		q_strlcpy (sound_precache[numsounds], str, MAX_QPATH);
 		g_SoundSystem->S_TouchSound (str);
 	}
 
@@ -360,9 +361,9 @@ void CL_ParseUpdate (int bits)
 
 	ent = CL_EntityNum (num);
 
-for (i=0 ; i<16 ; i++)
-if (bits&(1<<i))
-	bitcounts[i]++;
+//for (i=0 ; i<16 ; i++)
+//if (bits&(1<<i))
+//	bitcounts[i]++;
 
 	if (ent->msgtime != cl.mtime[1])
 		forcelink = true;	// no previous frame to lerp from
@@ -796,6 +797,7 @@ void CL_ParseServerMessage (void)
 			
 		case svc_disconnect:
 			host->Host_EndGame ("Server disconnected\n");
+			[[fallthrough]];
 
 		case svc_print:
 			Con_Printf ("%s", MSG_ReadString ());
@@ -831,8 +833,11 @@ void CL_ParseServerMessage (void)
 			i = MSG_ReadByte ();
 			if (i >= MAX_LIGHTSTYLES)
 				Sys_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
-			Q_strcpy (cl_lightstyle[i].map,  MSG_ReadString());
-			cl_lightstyle[i].length = Q_strlen(cl_lightstyle[i].map);
+			else
+			{
+				q_strlcpy (cl_lightstyle[i].map,  MSG_ReadString(), MAX_STYLESTRING);
+				cl_lightstyle[i].length = Q_strlen(cl_lightstyle[i].map);
+			}
 			break;
 			
 		case svc_sound:
@@ -926,7 +931,8 @@ void CL_ParseServerMessage (void)
 			i = MSG_ReadByte ();
 			if (i < 0 || i >= MAX_CL_STATS)
 				Sys_Error ("svc_updatestat: %i is invalid", i);
-			cl.stats[i] = MSG_ReadLong ();;
+			else
+				cl.stats[i] = MSG_ReadLong ();
 			break;
 			
 		case svc_spawnstaticsound:

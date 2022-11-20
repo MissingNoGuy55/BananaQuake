@@ -91,7 +91,7 @@ int CL_GetMessage (void)
 {
 	int		r, i;
 	float	f;
-	
+
 	if	(cls.demoplayback)
 	{
 	// decide if it is time to grab the next message		
@@ -121,11 +121,19 @@ int CL_GetMessage (void)
 			r = fread (&f, 4, 1, cls.demofile);
 			cl.mviewangles[0][i] = LittleFloat (f);
 		}
-		
-		net_message.cursize = LittleLong (net_message.cursize);
+
+		size_t size = 0;
+
+		fread(net_message.data, size, 1, cls.demofile);
+
+		net_message.cursize = LittleLong (size);
+
 		if (net_message.cursize > MAX_MSGLEN)
 			Sys_Error ("Demo message > MAX_MSGLEN");
-		r = fread (net_message.data, net_message.cursize, 1, cls.demofile);
+		
+		if (net_message.cursize < size)
+			r = fread (net_message.data, size, 1, cls.demofile);
+
 		if (r != 1)
 		{
 			CL_StopPlayback ();
@@ -230,18 +238,18 @@ void CL_Record_f (void)
 	else
 		track = -1;	
 
-	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
+	sprintf (name, "%s/%s", common->com_gamedir, Cmd_Argv(1));
 	
 //
 // start the map up
 //
 	if (c > 2)
-		Cmd_ExecuteString ( va("map %s", Cmd_Argv(2)), src_command);
+		Cmd_ExecuteString (common->va("map %s", Cmd_Argv(2)), src_command);
 	
 //
 // open the demo file
 //
-	COM_DefaultExtension (name, ".dem");
+	common->COM_DefaultExtension (name, ".dem");
 
 	Con_Printf ("recording to %s.\n", name);
 	cls.demofile = fopen (name, "wb");
@@ -289,10 +297,10 @@ void CL_PlayDemo_f (void)
 // open the demo file
 //
 	Q_strcpy (name, Cmd_Argv(1));
-	COM_DefaultExtension (name, ".dem");
+	common->COM_DefaultExtension (name, ".dem");
 
 	Con_Printf ("Playing demo from %s.\n", name);
-	COM_FOpenFile (name, &cls.demofile);
+	common->COM_FOpenFile (name, &cls.demofile);
 	if (!cls.demofile)
 	{
 		Con_Printf ("ERROR: couldn't open.\n");

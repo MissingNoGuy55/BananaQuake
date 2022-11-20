@@ -36,7 +36,7 @@ int     D_SurfaceCacheForRes (int width, int height)
 {
 	int             size, pix;
 
-	if (COM_CheckParm ("-surfcachesize"))
+	if (common->COM_CheckParm ("-surfcachesize"))
 	{
 		size = Q_atoi(com_argv[COM_CheckParm("-surfcachesize")+1]) * 1024;
 		return size;

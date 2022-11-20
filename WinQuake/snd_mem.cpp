@@ -115,7 +115,7 @@ sfxcache_t * CSoundSystemWin::S_LoadSound (sfx_t *s)
 
 //	Con_Printf ("loading %s\n",namebuffer);
 
-	data = static_cast<byte*>(COM_LoadStackFile(namebuffer, stackbuf, sizeof(stackbuf)));
+	data = COM_LoadStackFile<byte>(namebuffer, stackbuf, sizeof(stackbuf));
 
 	if (!data)
 	{
@@ -123,7 +123,7 @@ sfxcache_t * CSoundSystemWin::S_LoadSound (sfx_t *s)
 		return NULL;
 	}
 
-	info = g_SoundSystem->GetWavinfo (s->name, data, com_filesize);
+	info = g_SoundSystem->GetWavinfo (s->name, data, common->com_filesize);
 	if (info.channels != 1)
 	{
 		Con_Printf ("%s is a stereo sample\n",s->name);

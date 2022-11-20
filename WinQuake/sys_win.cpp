@@ -623,11 +623,11 @@ void Sys_InitFloatTime (void)
 
 	Sys_DoubleTime ();
 
-	j = COM_CheckParm("-starttime");
+	j = common->COM_CheckParm("-starttime");
 
 	if (j)
 	{
-		curtime = (double) (Q_atof(com_argv[j+1]));
+		curtime = (double) (Q_atof(common->com_argv[j+1]));
 	}
 	else
 	{
@@ -640,14 +640,14 @@ void Sys_InitFloatTime (void)
 
 char *Sys_ConsoleInput (void)
 {
-	static char	text[256];
-	static int		len;
-	INPUT_RECORD	recs[1024];
-	int		count;
-	int		i;
-	LPDWORD dummy;
-	int		ch; 
-	LPDWORD numread, numevents;
+	static char	text[256] = {};
+	static int		len = 0;
+	INPUT_RECORD	recs[1024] = {};
+	int		count = 0;
+	int		i = 0;
+	LPDWORD dummy = {};
+	int		ch = 0; 
+	LPDWORD numread = {}, numevents = {};
 
 	if (!isDedicated)
 		return NULL;
@@ -787,6 +787,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	int				t;
 	RECT			rect;
 
+	common = new CCommon;
 	host = new CQuakeHost;
 
     /* previous instances do not exist in Win32 */
@@ -835,12 +836,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	parms.argv = argv;
 
-	COM_InitArgv (parms.argc, parms.argv);
+	common->COM_InitArgv (parms.argc, parms.argv);
 
-	parms.argc = com_argc;
-	parms.argv = com_argv;
+	parms.argc = common->com_argc;
+	parms.argv = common->com_argv;
 
-	isDedicated = (COM_CheckParm ("-dedicated") != 0);
+	isDedicated = (common->COM_CheckParm ("-dedicated") != 0);
 
 	if (!isDedicated)
 	{
@@ -880,12 +881,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	if (parms.memsize > MAXIMUM_WIN_MEMORY)
 		parms.memsize = MAXIMUM_WIN_MEMORY;
 
-	if (COM_CheckParm ("-heapsize"))
+	if (common->COM_CheckParm ("-heapsize"))
 	{
-		t = COM_CheckParm("-heapsize") + 1;
+		t = common->COM_CheckParm("-heapsize") + 1;
 
-		if (t < com_argc)
-			parms.memsize = Q_atoi (com_argv[t]) * 1024;
+		if (t < common->com_argc)
+			parms.memsize = Q_atoi (common->com_argv[t]) * 1024;
 	}
 
 	parms.membase = (byte*)malloc (parms.memsize);
@@ -911,28 +912,28 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
 
 	// give QHOST a chance to hook into the console
-		if ((t = COM_CheckParm ("-HFILE")) > 0)
+		if ((t = common->COM_CheckParm ("-HFILE")) > 0)
 		{
-			if (t < com_argc)
-				hFile = (HANDLE)Q_atoi (com_argv[t+1]);
+			if (t < common->com_argc)
+				hFile = (HANDLE)Q_atoi (common->com_argv[t+1]);
 		}
 			
-		if ((t = COM_CheckParm ("-HPARENT")) > 0)
+		if ((t = common->COM_CheckParm ("-HPARENT")) > 0)
 		{
-			if (t < com_argc)
-				heventParent = (HANDLE)Q_atoi (com_argv[t+1]);
+			if (t < common->com_argc)
+				heventParent = (HANDLE)Q_atoi (common->com_argv[t+1]);
 		}
 			
-		if ((t = COM_CheckParm ("-HCHILD")) > 0)
+		if ((t = common->COM_CheckParm ("-HCHILD")) > 0)
 		{
-			if (t < com_argc)
-				heventChild = (HANDLE)Q_atoi (com_argv[t+1]);
+			if (t < common->com_argc)
+				heventChild = (HANDLE)Q_atoi (common->com_argv[t+1]);
 		}
 
 		g_ConProc->InitConProc (hFile, heventParent, heventChild);
 	}
 
-	// Sys_Init ();
+	//Sys_Init ();
 
 // because sound is off until we become active
 	// g_SoundSystem->S_BlockSound ();

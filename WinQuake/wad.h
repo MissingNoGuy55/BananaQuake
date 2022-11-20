@@ -39,13 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	TYP_SOUND		67
 #define	TYP_MIPTEX		68
 
-#define Q_QPIC_BUFLEN	(size_t)0x10000
-
-typedef struct
-{
-	int width, height;
-	byte data[1];
-} quakepicbuffer_t;
+#define Q_QPIC_BUFLEN	(size_t)0xFFFFF
 
 struct CQuakePic
 {
@@ -55,9 +49,13 @@ public:
 	CQuakePic(byte& mem);
 	CQuakePic(const CQuakePic& src);
 
+	/*CQuakePic& operator=(void* src);
+	CQuakePic& operator=(const void* src);*/
+
 	int			width;
 	int			height;
 	byte		data[1];
+	CQVector<byte>*		datavec;
 
 };
 

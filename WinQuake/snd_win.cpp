@@ -138,7 +138,7 @@ bool CSoundSystemWin::SNDDMA_Init(dma_t* dma)
 	memset((void*)dma, 0, sizeof(dma_t));
 	shm = dma;
 
-	if (COM_CheckParm ("-wavonly"))
+	if (common->COM_CheckParm ("-wavonly"))
 		wavonly = true;
 
 	wav_init = 0;

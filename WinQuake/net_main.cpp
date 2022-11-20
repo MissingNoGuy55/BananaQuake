@@ -807,31 +807,31 @@ void NET_Init (void)
 	int			controlSocket;
 	qsocket_t	*s;
 
-	if (COM_CheckParm("-playback"))
+	if (common->COM_CheckParm("-playback"))
 	{
 		net_numdrivers = 1;
 		net_drivers[0].Init = VCR_Init;
 	}
 
-	if (COM_CheckParm("-record"))
+	if (common->COM_CheckParm("-record"))
 		recording = true;
 
-	i = COM_CheckParm ("-port");
+	i = common->COM_CheckParm ("-port");
 	if (!i)
-		i = COM_CheckParm ("-udpport");
+		i = common->COM_CheckParm ("-udpport");
 	if (!i)
-		i = COM_CheckParm ("-ipxport");
+		i = common->COM_CheckParm ("-ipxport");
 
 	if (i)
 	{
-		if (i < com_argc-1)
-			DEFAULTnet_hostport = Q_atoi (com_argv[i+1]);
+		if (i < common->com_argc-1)
+			DEFAULTnet_hostport = Q_atoi (common->com_argv[i+1]);
 		else
 			Sys_Error ("NET_Init: you must specify a number after -port");
 	}
 	net_hostport = DEFAULTnet_hostport;
 
-	if (COM_CheckParm("-listen") || cls.state == ca_dedicated)
+	if (common->COM_CheckParm("-listen") || cls.state == ca_dedicated)
 		listening = true;
 	net_numsockets = svs.maxclientslimit;
 	if (cls.state != ca_dedicated)

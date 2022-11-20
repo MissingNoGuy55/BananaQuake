@@ -46,7 +46,7 @@ CGLTexture* currenttexture = NULL;		// to avoid unnecessary texture sets
 CGLTexture* cnttextures[2] = {NULL, NULL};     // cached
 
 CGLTexture*			particletexture;	// little dot for particles
-CGLTexture*			playertextures;		// up to 16 color translated skins
+CGLTexture*			playertextures[MAX_SCOREBOARD];		// up to 16 color translated skins
 
 int			mirrortexturenum;	// quake texturenum, not gltexturenum
 bool	mirror;
@@ -590,7 +590,7 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 	{
 		i = currententity - cl_entities;
 		if (i >= 1 && i<=cl.maxclients /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
-		    g_GLRenderer->GL_Bind(playertextures - 1 + i);
+		    g_GLRenderer->GL_Bind(playertextures[i]);
 	}
 
 	if (gl_smoothmodels.value)

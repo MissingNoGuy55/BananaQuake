@@ -41,14 +41,14 @@ cvar_t	m_forward = {"m_forward","1", true};
 cvar_t	m_side = {"m_side","0.8", true};
 
 
-client_static_t	cls;
-client_state_t	cl;
+client_static_t	cls = {};
+client_state_t	cl = {};
 // FIXME: put these on hunk?
-efrag_t			cl_efrags[MAX_EFRAGS];
-entity_t		cl_entities[MAX_EDICTS];
-entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
-lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
-dlight_t		cl_dlights[MAX_DLIGHTS];
+efrag_t			cl_efrags[MAX_EFRAGS] = {};
+entity_t		cl_entities[MAX_EDICTS] = {};
+entity_t		cl_static_entities[MAX_STATIC_ENTITIES] = {};
+lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES] = {};
+dlight_t		cl_dlights[MAX_DLIGHTS] = {};
 
 int				cl_numvisedicts;
 entity_t		*cl_visedicts[MAX_VISEDICTS];
@@ -187,10 +187,10 @@ Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 		
 	case 2:		
 		MSG_WriteByte (&cls.message, clc_stringcmd);
-		MSG_WriteString (&cls.message, va("name \"%s\"\n", cl_name.string));
+		MSG_WriteString (&cls.message, common->va("name \"%s\"\n", cl_name.string));
 	
 		MSG_WriteByte (&cls.message, clc_stringcmd);
-		MSG_WriteString (&cls.message, va("color %i %i\n", ((int)cl_color.value)>>4, ((int)cl_color.value)&15));
+		MSG_WriteString (&cls.message, common->va("color %i %i\n", ((int)cl_color.value)>>4, ((int)cl_color.value)&15));
 	
 		MSG_WriteByte (&cls.message, clc_stringcmd);
 		sprintf (str, "spawn %s", cls.spawnparms);

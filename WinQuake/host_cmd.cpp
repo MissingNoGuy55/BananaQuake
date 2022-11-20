@@ -511,8 +511,8 @@ void Host_Savegame_f (void)
 		}
 	}
 
-	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
-	COM_DefaultExtension (name, ".sav");
+	sprintf (name, "%s/%s", common->com_gamedir, Cmd_Argv(1));
+	common->COM_DefaultExtension (name, ".sav");
 	
 	Con_Printf ("Saving game to %s...\n", name);
 	f = fopen (name, "w");
@@ -582,8 +582,8 @@ void Host_Loadgame_f (void)
 
 	cls.demonum = -1;		// stop demo loop in case this fails
 
-	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
-	COM_DefaultExtension (name, ".sav");
+	sprintf (name, "%s/%s", common->com_gamedir, Cmd_Argv(1));
+	common->COM_DefaultExtension (name, ".sav");
 	
 // we can't call SCR_BeginLoadingPlaque, because too much stack space has
 // been used.  The menu calls it before stuffing loadgame command
@@ -665,10 +665,10 @@ void Host_Loadgame_f (void)
 			Sys_Error ("Loadgame buffer overflow");
 		str[i] = 0;
 		start = str;
-		start = COM_Parse(str);
-		if (!com_token[0])
+		start = common->COM_Parse(str);
+		if (!common->com_token[0])
 			break;		// end of file
-		if (strcmp(com_token,"{"))
+		if (strcmp(common->com_token,"{"))
 			Sys_Error ("First token isn't a brace");
 			
 		if (entnum == -1)
@@ -1480,7 +1480,7 @@ void Host_Kick_f (void)
 
 		if (Cmd_Argc() > 2)
 		{
-			message = COM_Parse(Cmd_Args());
+			message = common->COM_Parse(Cmd_Args());
 			if (byNumber)
 			{
 				message++;							// skip the #

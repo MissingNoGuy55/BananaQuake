@@ -1429,15 +1429,15 @@ void CGLRenderer::GL_BuildLightmaps (void)
 	if (isPermedia)
 		gl_lightmap_format = GL_RGBA;
 
-	if (COM_CheckParm ("-lm_1"))
+	if (common->COM_CheckParm ("-lm_1"))
 		gl_lightmap_format = GL_LUMINANCE;
-	if (COM_CheckParm ("-lm_a"))
+	if (common->COM_CheckParm ("-lm_a"))
 		gl_lightmap_format = GL_ALPHA;
-	if (COM_CheckParm ("-lm_i"))
+	if (common->COM_CheckParm ("-lm_i"))
 		gl_lightmap_format = GL_INTENSITY;
-	if (COM_CheckParm ("-lm_2"))
+	if (common->COM_CheckParm ("-lm_2"))
 		gl_lightmap_format = GL_RGBA4;
-	if (COM_CheckParm ("-lm_4"))
+	if (common->COM_CheckParm ("-lm_4"))
 		gl_lightmap_format = GL_RGBA;
 
 	switch (gl_lightmap_format)

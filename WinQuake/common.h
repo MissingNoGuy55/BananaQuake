@@ -163,48 +163,236 @@ int q_vsnprintf(char* str, size_t size, const char* format, va_list args);
 
 //============================================================================
 
-extern	char		com_token[1024];
-extern	bool	com_eof;
+//
+// in memory
+//
 
-char *COM_Parse (char *data);
+typedef struct
+{
+	char    name[MAX_QPATH];
+	int             filepos, filelen;
+} packfile_t;
+
+typedef struct pack_s
+{
+	char    filename[MAX_OSPATH];
+	int             handle;
+	int             numfiles;
+	packfile_t* files;
+} pack_t;
+
+//
+// on disk
+//
+typedef struct
+{
+	char    name[56];
+	int             filepos, filelen;
+} dpackfile_t;
+
+typedef struct
+{
+	char    id[4];
+	int             dirofs;
+	int             dirlen;
+} dpackheader_t;
+
+void COM_Path_f();
+
+class CCommon
+{
+public:
+
+	char* COM_Parse(char* data);
+
+	int COM_CheckParm (const char *parm);
+	void COM_Init (const char *path);
+	void COM_CheckRegistered(void);
+	void COM_InitArgv (int argc, char **argv);
+
+	char* COM_SkipPath (char *pathname);
+	void COM_StripExtension (const char *in, char *out);
+	void COM_FileBase (const char *in, char *out);
+	void COM_DefaultExtension (char *path, const char *extension);
+
+	void COM_WriteFile (const char *filename, void *data, int len);
+	int COM_OpenFile (const char *filename, int *hndl);
+	int COM_FOpenFile (const char *filename, FILE **file);
+	void COM_CloseFile (int h);
+
+	void COM_AddGameDirectory(char* dir);
+
+	void COM_InitFilesystem();
+	int COM_FindFile(const char* filename, int* handle, FILE** file);
+	pack_t* COM_LoadPackFile(char* packfile);
+
+	static void COM_Path_f(void);
+
+	char	*va(char *format, ...);
+	// does a varargs printf into a temp buffer
+
+	static	char		com_token[1024];
+	static	bool	com_eof;
 
 
-extern	int		com_argc;
-extern	char	**com_argv;
+	static	int		com_argc;
+	static	char	**com_argv;
 
-int COM_CheckParm (const char *parm);
-void COM_Init (const char *path);
-void COM_InitArgv (int argc, char **argv);
+	static	int		com_filesize;
+	static	char	com_gamedir[MAX_OSPATH];
+	static	char	com_cachedir[MAX_OSPATH];
 
-char *COM_SkipPath (const char *pathname);
-void COM_StripExtension (const char *in, char *out);
-void COM_FileBase (const char *in, char *out);
-void COM_DefaultExtension (char *path, const char *extension);
-
-char	*va(char *format, ...);
-// does a varargs printf into a temp buffer
+};
 
 
 //============================================================================
 
-extern int com_filesize;
-struct cache_user_s;
 
-extern	char	com_gamedir[MAX_OSPATH];
+template<typename T>
+int             loadsize;
 
-void COM_WriteFile (const char *filename, void *data, int len);
-int COM_OpenFile (const char *filename, int *hndl);
-int COM_FOpenFile (const char *filename, FILE **file);
-void COM_CloseFile (int h);
+template<typename T>
+T* loadbuf;
 
-void *COM_LoadStackFile (const char *path, void *buffer, int bufsize);
-void *COM_LoadTempFile (const char *path);
-void *COM_LoadHunkFile (const char *path);
+typedef struct cache_user_s
+{
+	void* data;
+} cache_user_t;
+
+extern cache_user_s loadcache;
+
+template<typename T>
+T* COM_LoadStackFile (const char *path, void* buffer, int bufsize);
+
+template<typename T>
+T* COM_LoadTempFile (const char *path);
+template<typename T>
+T* COM_LoadHunkFile (const char *path);
+
+template<typename T>
 void COM_LoadCacheFile (const char *path, struct cache_user_s *cu);
 
 
 extern	struct cvar_s	registered;
 
 extern bool		standard_quake, rogue, hipnotic;
+
+
+/*
+============
+COM_LoadFile
+
+Filename are reletive to the quake directory.
+Allways appends a 0 byte.
+============
+*/
+
+template<typename T>
+inline T* COM_LoadFile(const char* path, int usehunk)
+{
+	int	 h;
+	T*	buf;
+	char	base[32];
+	int	len;
+
+	buf = NULL;     // quiet compiler warning
+
+	// look for it in the filesystem or pack files
+	len = common->COM_OpenFile(path, &h);
+	if (h == -1)
+		return NULL;
+
+	// extract the filename base name for hunk tag
+	common->COM_FileBase(path, base);
+
+	switch (usehunk)
+	{
+	case HUNK_FULL:
+		buf = static_cast<T*>(g_MemCache->Hunk_AllocName(len + 1, base));
+		break;
+	case HUNK_TEMP:
+		buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc(len + 1));
+		break;
+	case HUNK_ZONE:
+		buf = static_cast<T*>(g_MemCache->mainzone->Z_Malloc(len + 1));
+		break;
+	case HUNK_CACHE:
+		buf = static_cast<T*>(g_MemCache->Cache_Alloc(&loadcache, len + 1, base));
+		break;
+	case HUNK_TEMP_FILL:
+		if (len + 1 > loadsize<T>)
+		{
+			buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc(len + 1));
+			break;
+		}
+		else
+		{
+			buf = loadbuf<T>;
+			break;
+		}
+
+	default:
+		Sys_Error("COM_LoadFile: bad usehunk");
+		break;
+
+	}
+
+	if (!buf)
+		Sys_Error("COM_LoadFile: not enough space for %s", path);
+	else
+		((byte*)buf)[len] = 0;
+
+#ifndef GLQUAKE
+	g_SoftwareRenderer->Draw_BeginDisc();
+#else
+	g_GLRenderer->Draw_BeginDisc();
+#endif
+
+	Sys_FileRead(h, buf, len);
+	common->COM_CloseFile(h);
+
+#ifndef GLQUAKE
+	g_SoftwareRenderer->Draw_EndDisc();
+#else
+	g_GLRenderer->Draw_EndDisc();
+#endif
+
+	return buf;
+}
+
+template<typename T>
+T* COM_LoadHunkFile(const char* path)
+{
+	return COM_LoadFile<T>(path, HUNK_FULL);
+}
+
+
+template<typename T>
+T* COM_LoadTempFile(const char* path)
+{
+	return COM_LoadFile<T>(path, HUNK_TEMP);
+}
+
+template<typename T>
+void COM_LoadCacheFile(const char* path, struct cache_user_s* cu)
+{
+	loadcache = cu;
+	COM_LoadFile<T>(path, HUNK_CACHE);
+}
+
+// uses temp hunk if larger than bufsize
+template<typename T>
+T* COM_LoadStackFile(const char* path, void* buffer, int bufsize)
+{
+	T* buf;
+
+	loadbuf<T> = (T*)buffer;
+	loadsize<T> = bufsize;
+	buf = COM_LoadFile<T>(path, HUNK_TEMP_FILL);
+
+	return (T*)buf;
+}
+
+extern CCommon* common;
 
 #endif

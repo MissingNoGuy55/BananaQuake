@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+CCommon* common;
+
 #define NUM_SAFE_ARGVS  7
 
 static char     *largv[MAX_NUM_ARGVS + NUM_SAFE_ARGVS + 1];
@@ -46,9 +48,13 @@ void COM_InitFilesystem (void);
 #define PAK0_COUNT              339
 #define PAK0_CRC                32981
 
-char	com_token[1024];
-int		com_argc;
-char	**com_argv;
+char	CCommon::com_token[1024] = {};
+int		CCommon::com_argc = 0;
+char**	CCommon::com_argv = NULL;
+bool	CCommon::com_eof = false;
+int		CCommon::com_filesize = 0;
+char    CCommon::com_cachedir[MAX_OSPATH] = {};
+char    CCommon::com_gamedir[MAX_OSPATH] = {};
 
 #define CMDLINE_LENGTH	256
 char	com_cmdline[CMDLINE_LENGTH];
@@ -828,7 +834,7 @@ void SZ_Print (sizebuf_t *buf, char *data)
 COM_SkipPath
 ============
 */
-char *COM_SkipPath (char *pathname)
+char* CCommon::COM_SkipPath (char *pathname)
 {
 	char    *last;
 	
@@ -847,7 +853,7 @@ char *COM_SkipPath (char *pathname)
 COM_StripExtension
 ============
 */
-void COM_StripExtension (const char *in, char *out)
+void CCommon::COM_StripExtension (const char *in, char *out)
 {
 	while (*in && *in != '.')
 		*out++ = *in++;
@@ -880,7 +886,7 @@ char *COM_FileExtension (char *in)
 COM_FileBase
 ============
 */
-void COM_FileBase (const char *in, char *out)
+void CCommon::COM_FileBase (const char *in, char *out)
 {
 	const char *s, *s2;
 	
@@ -908,7 +914,7 @@ void COM_FileBase (const char *in, char *out)
 COM_DefaultExtension
 ==================
 */
-void COM_DefaultExtension (char *path, const char *extension)
+void CCommon::COM_DefaultExtension (char *path, const char *extension)
 {
 	char    *src;
 //
@@ -935,7 +941,7 @@ COM_Parse
 Parse a token out of a string
 ==============
 */
-char *COM_Parse (char *data)
+char * CCommon::COM_Parse (char *data)
 {
 	int             c;
 	int             len;
@@ -1014,7 +1020,7 @@ Returns the position (1 to argc-1) in the program's argument list
 where the given parameter apears, or 0 if not present
 ================
 */
-int COM_CheckParm (const char *parm)
+int CCommon::COM_CheckParm (const char *parm)
 {
 	int             i;
 	
@@ -1039,13 +1045,13 @@ Immediately exits out if an alternate game was attempted to be started without
 being registered.
 ================
 */
-void COM_CheckRegistered (void)
+void CCommon::COM_CheckRegistered (void)
 {
 	int             h;
 	unsigned short  check[128];
 	int                     i;
 
-	COM_OpenFile("gfx/pop.lmp", &h);
+	common->COM_OpenFile("gfx/pop.lmp", &h);
 	static_registered = 0;
 
 	if (h == -1)
@@ -1073,15 +1079,12 @@ void COM_CheckRegistered (void)
 }
 
 
-void COM_Path_f (void);
-
-
 /*
 ================
 COM_InitArgv
 ================
 */
-void COM_InitArgv (int argc, char **argv)
+void CCommon::COM_InitArgv (int argc, char **argv)
 {
 	bool        safe;
 	int             i, j, n;
@@ -1130,13 +1133,13 @@ void COM_InitArgv (int argc, char **argv)
 	largv[com_argc] = argvdummy;
 	com_argv = largv;
 
-	if (COM_CheckParm ("-rogue"))
+	if (common->COM_CheckParm ("-rogue"))
 	{
 		rogue = true;
 		standard_quake = false;
 	}
 
-	if (COM_CheckParm ("-hipnotic"))
+	if (common->COM_CheckParm ("-hipnotic"))
 	{
 		hipnotic = true;
 		standard_quake = false;
@@ -1149,7 +1152,7 @@ void COM_InitArgv (int argc, char **argv)
 COM_Init
 ================
 */
-void COM_Init (const char *basedir)
+void CCommon::COM_Init (const char *basedir)
 {
 	byte    swaptest[2] = {1,0};
 
@@ -1177,7 +1180,7 @@ void COM_Init (const char *basedir)
 
 	Cvar_RegisterVariable (&registered);
 	Cvar_RegisterVariable (&cmdline);
-	Cmd_AddCommand ("path", COM_Path_f);
+	Cmd_AddCommand ("path", CCommon::COM_Path_f);
 
 	COM_InitFilesystem ();
 	//COM_CheckRegistered ();
@@ -1193,7 +1196,7 @@ varargs versions of all text functions.
 FIXME: make this buffer size safe someday
 ============
 */
-char    *va(char *format, ...)
+char* CCommon::va(char *format, ...)
 {
 	va_list         argptr;
 	static char             string[1024];
@@ -1227,45 +1230,7 @@ QUAKE FILESYSTEM
 
 int     com_filesize;
 
-
-//
-// in memory
-//
-
-typedef struct
-{
-	char    name[MAX_QPATH];
-	int             filepos, filelen;
-} packfile_t;
-
-typedef struct pack_s
-{
-	char    filename[MAX_OSPATH];
-	int             handle;
-	int             numfiles;
-	packfile_t      *files;
-} pack_t;
-
-//
-// on disk
-//
-typedef struct
-{
-	char    name[56];
-	int             filepos, filelen;
-} dpackfile_t;
-
-typedef struct
-{
-	char    id[4];
-	int             dirofs;
-	int             dirlen;
-} dpackheader_t;
-
 #define MAX_FILES_IN_PACK       2048
-
-char    com_cachedir[MAX_OSPATH] = "";
-char    com_gamedir[MAX_OSPATH] = "";
 
 struct searchpath_t
 {
@@ -1282,7 +1247,7 @@ COM_Path_f
 
 ============
 */
-void COM_Path_f (void)
+void CCommon::COM_Path_f (void)
 {
 	searchpath_t    *s;
 	
@@ -1305,7 +1270,7 @@ COM_WriteFile
 The filename will be prefixed by the current game directory
 ============
 */
-void COM_WriteFile (const char *filename, void *data, int len)
+void CCommon::COM_WriteFile (const char *filename, void *data, int len)
 {
 	int             handle;
 	char    name[MAX_OSPATH];
@@ -1389,7 +1354,7 @@ Finds the file in the search path.
 Sets com_filesize and one of handle or file
 ===========
 */
-int COM_FindFile (const char *filename, int *handle, FILE **file)
+int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file)
 {
 	searchpath_t    *search = NULL;
 	char            netpath[MAX_OSPATH] = "";
@@ -1509,7 +1474,7 @@ returns a handle and a length
 it may actually be inside a pak file
 ===========
 */
-int COM_OpenFile (const char *filename, int *handle)
+int CCommon::COM_OpenFile (const char *filename, int *handle)
 {
 	return COM_FindFile (filename, handle, NULL);
 }
@@ -1522,7 +1487,7 @@ If the requested file is inside a packfile, a new FILE * will be opened
 into the file.
 ===========
 */
-int COM_FOpenFile (const char *filename, FILE **file)
+int CCommon::COM_FOpenFile (const char *filename, FILE **file)
 {
 	return COM_FindFile (filename, NULL, file);
 }
@@ -1534,7 +1499,7 @@ COM_CloseFile
 If it is a pak file handle, don't really close it
 ============
 */
-void COM_CloseFile (int h)
+void CCommon::COM_CloseFile (int h)
 {
 	searchpath_t    *s;
 	
@@ -1545,117 +1510,9 @@ void COM_CloseFile (int h)
 	Sys_FileClose (h);
 }
 
-
-/*
-============
-COM_LoadFile
-
-Filename are reletive to the quake directory.
-Allways appends a 0 byte.
-============
-*/
+//int             loadsize;
+//byte* loadbuf;
 cache_user_t loadcache;
-byte    *loadbuf;
-int             loadsize;
-byte *COM_LoadFile (const char *path, int usehunk)
-{
-	int             h;
-	byte    *buf;
-	char    base[32];
-	int             len;
-
-	buf = NULL;     // quiet compiler warning
-
-// look for it in the filesystem or pack files
-	len = COM_OpenFile (path, &h);
-	if (h == -1)
-		return NULL;
-	
-// extract the filename base name for hunk tag
-	COM_FileBase (path, base);
-	
-	switch (usehunk)
-	{
-	case HUNK_FULL:
-		buf = static_cast<byte*>(g_MemCache->Hunk_AllocName(len + 1, base));
-		break;
-	case HUNK_TEMP:
-		buf = static_cast<byte*>(g_MemCache->Hunk_TempAlloc(len + 1));
-		break;
-	case HUNK_ZONE:
-		buf = static_cast<byte*>(g_MemCache->mainzone->Z_Malloc(len + 1));
-		break;
-	case HUNK_CACHE:
-		buf = static_cast<byte*>(g_MemCache->Cache_Alloc(&loadcache, len + 1, base));
-		break;
-	case HUNK_TEMP_FILL:
-		if (len + 1 > loadsize)
-		{
-			buf = static_cast<byte*>(g_MemCache->Hunk_TempAlloc(len + 1));
-			break;
-		}
-		else
-		{
-			buf = loadbuf;
-			break;
-		}
-
-	default:
-		Sys_Error("COM_LoadFile: bad usehunk");
-		break;
-
-	}
-
-	if (!buf)
-		Sys_Error ("COM_LoadFile: not enough space for %s", path);
-	else
-		((byte *)buf)[len] = 0;
-
-#ifndef GLQUAKE
-	g_SoftwareRenderer->Draw_BeginDisc ();
-#else
-	g_GLRenderer->Draw_BeginDisc();
-#endif
-
-	Sys_FileRead (h, buf, len);                     
-	COM_CloseFile (h);
-
-#ifndef GLQUAKE
-	g_SoftwareRenderer->Draw_EndDisc ();
-#else
-	g_GLRenderer->Draw_EndDisc();
-#endif
-
-	return buf;
-}
-
-void *COM_LoadHunkFile (const char *path)
-{
-	return COM_LoadFile (path, HUNK_FULL);
-}
-
-void *COM_LoadTempFile (const char *path)
-{
-	return COM_LoadFile (path, HUNK_TEMP);
-}
-
-void COM_LoadCacheFile (const char *path, cache_user_t cu)
-{
-	loadcache = cu;
-	COM_LoadFile (path, HUNK_CACHE);
-}
-
-// uses temp hunk if larger than bufsize
-void *COM_LoadStackFile (const char *path, void *buffer, int bufsize)
-{
-	byte    *buf;
-	
-	loadbuf = (byte *)buffer;
-	loadsize = bufsize;
-	buf = static_cast<byte*>(COM_LoadFile (path, HUNK_TEMP_FILL));
-	
-	return buf;
-}
 
 /*
 =================
@@ -1667,7 +1524,7 @@ Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 =================
 */
-pack_t *COM_LoadPackFile (char *packfile)
+pack_t* CCommon::COM_LoadPackFile (char *packfile)
 {
 	dpackheader_t   header;
 	int                             i;
@@ -1737,7 +1594,7 @@ Sets com_gamedir, adds the directory to the head of the path,
 then loads and adds pak1.pak pak2.pak ... 
 ================
 */
-void COM_AddGameDirectory (char *dir)
+void CCommon::COM_AddGameDirectory (char *dir)
 {
 	int                             i;
 	searchpath_t			*search = NULL;
@@ -1780,7 +1637,7 @@ void COM_AddGameDirectory (char *dir)
 COM_InitFilesystem
 ================
 */
-void COM_InitFilesystem (void)
+void CCommon::COM_InitFilesystem (void)
 {
 	int             i, j;
 	char    basedir[MAX_OSPATH] = "";
@@ -1827,9 +1684,9 @@ void COM_InitFilesystem (void)
 //
 	COM_AddGameDirectory (va("%s/" GAMENAME, basedir) );
 
-	if (COM_CheckParm ("-rogue"))
+	if (common->COM_CheckParm ("-rogue"))
 		COM_AddGameDirectory (va("%s/rogue", basedir) );
-	if (COM_CheckParm ("-hipnotic"))
+	if (common->COM_CheckParm ("-hipnotic"))
 		COM_AddGameDirectory (va("%s/hipnotic", basedir) );
 
 //
@@ -1871,7 +1728,7 @@ void COM_InitFilesystem (void)
 		}
 	}
 
-	if (COM_CheckParm ("-proghack"))
+	if (common->COM_CheckParm ("-proghack"))
 		proghack = true;
 }
 

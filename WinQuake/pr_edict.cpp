@@ -652,20 +652,20 @@ void ED_ParseGlobals (char *data)
 	while (1)
 	{	
 	// parse key
-		data = COM_Parse (data);
-		if (com_token[0] == '}')
+		data = common->COM_Parse (data);
+		if (common->com_token[0] == '}')
 			break;
 		if (!data)
 			Sys_Error ("ED_ParseEntity: EOF without closing brace");
 
-		Q_strcpy (keyname, com_token);
+		Q_strcpy (keyname, common->com_token);
 
 	// parse value	
-		data = COM_Parse (data);
+		data = common->COM_Parse (data);
 		if (!data)
 			Sys_Error ("ED_ParseEntity: EOF without closing brace");
 
-		if (com_token[0] == '}')
+		if (common->com_token[0] == '}')
 			Sys_Error ("ED_ParseEntity: closing brace without data");
 
 		key = ED_FindGlobal (keyname);
@@ -675,7 +675,7 @@ void ED_ParseGlobals (char *data)
 			continue;
 		}
 
-		if (!ED_ParseEpair ((void *)pr_globals, key, com_token))
+		if (!ED_ParseEpair ((void *)pr_globals, key, common->com_token))
 			host->Host_Error ("ED_ParseGlobals: parse error");
 	}
 }
@@ -815,27 +815,27 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 	while (1)
 	{	
 	// parse key
-		data = COM_Parse (data);
-		if (com_token[0] == '}')
+		data = common->COM_Parse (data);
+		if (common->com_token[0] == '}')
 			break;
 		if (!data)
 			Sys_Error ("ED_ParseEntity: EOF without closing brace");
 		
 // anglehack is to allow QuakeEd to write single scalar angles
 // and allow them to be turned into vectors. (FIXME...)
-if (!strcmp(com_token, "angle"))
+if (!strcmp(common->com_token, "angle"))
 {
-	Q_strcpy (com_token, "angles");
+	Q_strcpy (common->com_token, "angles");
 	anglehack = true;
 }
 else
 	anglehack = false;
 
 // FIXME: change light to _light to get rid of this hack
-if (!strcmp(com_token, "light"))
-	Q_strcpy (com_token, "light_lev");	// hack for single light def
+if (!strcmp(common->com_token, "light"))
+	Q_strcpy (common->com_token, "light_lev");	// hack for single light def
 
-		Q_strcpy (keyname, com_token);
+		Q_strcpy (keyname, common->com_token);
 
 		// another hack to fix heynames with trailing spaces
 		n = strlen(keyname);
@@ -846,11 +846,11 @@ if (!strcmp(com_token, "light"))
 		}
 
 	// parse value	
-		data = COM_Parse (data);
+		data = common->COM_Parse (data);
 		if (!data)
 			Sys_Error ("ED_ParseEntity: EOF without closing brace");
 
-		if (com_token[0] == '}')
+		if (common->com_token[0] == '}')
 			Sys_Error ("ED_ParseEntity: closing brace without data");
 
 		init = true;	
@@ -870,11 +870,11 @@ if (!strcmp(com_token, "light"))
 if (anglehack)
 {
 char	temp[32];
-Q_strcpy (temp, com_token);
-sprintf (com_token, "0 %s 0", temp);
+Q_strcpy (temp, common->com_token);
+sprintf (common->com_token, "0 %s 0", temp);
 }
 
-		if (!ED_ParseEpair ((void *)&ent->v, key, com_token))
+		if (!ED_ParseEpair ((void *)&ent->v, key, common->com_token))
 			host->Host_Error ("ED_ParseEdict: parse error");
 	}
 
@@ -914,11 +914,11 @@ void ED_LoadFromFile (char *data)
 	while (1)
 	{
 // parse the opening brace	
-		data = COM_Parse (data);
+		data = common->COM_Parse (data);
 		if (!data)
 			break;
-		if (com_token[0] != '{')
-			Sys_Error ("ED_LoadFromFile: found %s when expecting {",com_token);
+		if (common->com_token[0] != '{')
+			Sys_Error ("ED_LoadFromFile: found %s when expecting {", common->com_token);
 
 		if (!ent)
 			ent = EDICT_NUM(0);
@@ -990,12 +990,12 @@ void PR_LoadProgs (void)
 
 	g_CRCManager->CRC_Init (&pr_crc);
 
-	progs = (dprograms_t *)COM_LoadHunkFile ("progs.dat");
+	progs = COM_LoadHunkFile<dprograms_t> ("progs.dat");
 	if (!progs)
 		Sys_Error ("PR_LoadProgs: couldn't load progs.dat");
-	Con_DPrintf ("Programs occupy %iK.\n", com_filesize/1024);
+	Con_DPrintf ("Programs occupy %iK.\n", common->com_filesize/1024);
 
-	for (i=0 ; i<com_filesize ; i++)
+	for (i=0 ; i< common->com_filesize ; i++)
 		g_CRCManager->CRC_ProcessByte (&pr_crc, ((byte *)progs)[i]);
 
 // byte swap the header

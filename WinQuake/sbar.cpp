@@ -115,8 +115,8 @@ void Sbar_Init (void)
 
 	for (i=0 ; i<10 ; i++)
 	{
-		sb_nums[0][i] = g_GLRenderer->Draw_PicFromWad (va("num_%i",i));
-		sb_nums[1][i] = g_GLRenderer->Draw_PicFromWad (va("anum_%i",i));
+		sb_nums[0][i] = g_GLRenderer->Draw_PicFromWad (common->va("num_%i",i));
+		sb_nums[1][i] = g_GLRenderer->Draw_PicFromWad (common->va("anum_%i",i));
 	}
 
 	sb_nums[0][10] = g_GLRenderer->Draw_PicFromWad ("num_minus");
@@ -143,13 +143,13 @@ void Sbar_Init (void)
 
 	for (i=0 ; i<5 ; i++)
 	{
-		sb_weapons[2+i][0] = g_GLRenderer->Draw_PicFromWad (va("inva%i_shotgun",i+1));
-		sb_weapons[2+i][1] = g_GLRenderer->Draw_PicFromWad (va("inva%i_sshotgun",i+1));
-		sb_weapons[2+i][2] = g_GLRenderer->Draw_PicFromWad (va("inva%i_nailgun",i+1));
-		sb_weapons[2+i][3] = g_GLRenderer->Draw_PicFromWad (va("inva%i_snailgun",i+1));
-		sb_weapons[2+i][4] = g_GLRenderer->Draw_PicFromWad (va("inva%i_rlaunch",i+1));
-		sb_weapons[2+i][5] = g_GLRenderer->Draw_PicFromWad (va("inva%i_srlaunch",i+1));
-		sb_weapons[2+i][6] = g_GLRenderer->Draw_PicFromWad (va("inva%i_lightng",i+1));
+		sb_weapons[2+i][0] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_shotgun",i+1));
+		sb_weapons[2+i][1] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_sshotgun",i+1));
+		sb_weapons[2+i][2] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_nailgun",i+1));
+		sb_weapons[2+i][3] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_snailgun",i+1));
+		sb_weapons[2+i][4] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_rlaunch",i+1));
+		sb_weapons[2+i][5] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_srlaunch",i+1));
+		sb_weapons[2+i][6] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_lightng",i+1));
 	}
 
 	sb_ammo[0] = g_GLRenderer->Draw_PicFromWad ("sb_shells");
@@ -213,11 +213,11 @@ void Sbar_Init (void)
 
 	  for (i=0 ; i<5 ; i++)
 	  {
-		 hsb_weapons[2+i][0] = g_GLRenderer->Draw_PicFromWad (va("inva%i_laser",i+1));
-		 hsb_weapons[2+i][1] = g_GLRenderer->Draw_PicFromWad (va("inva%i_mjolnir",i+1));
-		 hsb_weapons[2+i][2] = g_GLRenderer->Draw_PicFromWad (va("inva%i_gren_prox",i+1));
-		 hsb_weapons[2+i][3] = g_GLRenderer->Draw_PicFromWad (va("inva%i_prox_gren",i+1));
-		 hsb_weapons[2+i][4] = g_GLRenderer->Draw_PicFromWad (va("inva%i_prox",i+1));
+		 hsb_weapons[2+i][0] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_laser",i+1));
+		 hsb_weapons[2+i][1] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_mjolnir",i+1));
+		 hsb_weapons[2+i][2] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_gren_prox",i+1));
+		 hsb_weapons[2+i][3] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_prox_gren",i+1));
+		 hsb_weapons[2+i][4] = g_GLRenderer->Draw_PicFromWad (common->va("inva%i_prox",i+1));
 	  }
 
 	  hsb_items[0] = g_GLRenderer->Draw_PicFromWad ("sb_wsuit");
@@ -608,7 +608,7 @@ void Sbar_SoloScoreboard (void)
 
 // time
 	minutes = cl.time / 60;
-	seconds = cl.time - 60*minutes;
+	seconds = cl.time - (double)60*minutes; // Missi (11/19/2022)
 	tens = seconds / 10;
 	units = seconds - 10*tens;
 	sprintf (str,"Time :%3i:%i%i", minutes, tens, units);

@@ -155,11 +155,6 @@ private:
 //};
 //
 
-struct cache_user_t
-{
-	void* data = 0;
-};
-
 #define CACHENAME_LEN	32
 class CMemCacheSystem
 {
@@ -168,7 +163,7 @@ public:
 	CMemCacheSystem();
 
 	int			size;		// including this header
-	cache_user_t* user;
+	cache_user_s* user;
 	char			name[CACHENAME_LEN];
 	class CMemCacheSystem* prev, * next;
 	class CMemCacheSystem* lru_prev, * lru_next;	// for LRU flushing
@@ -244,15 +239,15 @@ public:
 	static flush_cache_callback Cache_Flush_Callback();
 	void Cache_Print(void);
 
-	void* Cache_Check(cache_user_t* c);
+	void* Cache_Check(cache_user_s* c);
 	// returns the cached data, and moves to the head of the LRU list
 	// if present, otherwise returns NULL
 
 	void Cache_Init(void);
 
-	void Cache_Free(cache_user_t* c);
+	void Cache_Free(cache_user_s* c);
 
-	void* Cache_Alloc(cache_user_t* c, int size, char* name);
+	void* Cache_Alloc(cache_user_s* c, int size, char* name);
 	// Returns NULL if all purgable data was tossed and there still
 	// wasn't enough room.
 

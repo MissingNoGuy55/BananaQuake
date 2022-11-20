@@ -872,7 +872,7 @@ void* CMemCache::Cache_Check (cache_user_t *c)
 Cache_Alloc
 ==============
 */
-void* CMemCache::Cache_Alloc (cache_user_t *c, int size, char *name)
+void* CMemCache::Cache_Alloc (cache_user_s *c, int size, char *name)
 {
 	CMemCacheSystem	*cs;
 
@@ -936,11 +936,11 @@ void CMemCache::Memory_Init (void *buf, int size)
 	hunk_high_used = 0;
 
 	g_MemCache->Cache_Init ();
-	p = COM_CheckParm ("-zone");
+	p = common->COM_CheckParm ("-zone");
 	if (p)
 	{
-		if (p < com_argc-1)
-			zonesize = Q_atoi (com_argv[p+1]) * 1024;
+		if (p < common->com_argc-1)
+			zonesize = Q_atoi (common->com_argv[p+1]) * 1024;
 		else
 			Sys_Error ("Memory_Init: you must specify a size in KB after -zone");
 	}

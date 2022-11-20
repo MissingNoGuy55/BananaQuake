@@ -391,7 +391,7 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 
 // FIXME: NT is checked for because MGL currently has a bug that causes it
 // to try to use WinDirect modes even on NT
-	if (COM_CheckParm("-nowindirect") ||
+	if (common->COM_CheckParm("-nowindirect") ||
 		COM_CheckParm("-nowd") ||
 		COM_CheckParm("-novesa") ||
 		WinNT)
@@ -399,7 +399,7 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 		useWinDirect = false;
 	}
 
-	if (COM_CheckParm("-nodirectdraw") || COM_CheckParm("-noddraw") || COM_CheckParm("-nodd"))
+	if (common->COM_CheckParm("-nodirectdraw") || COM_CheckParm("-noddraw") || COM_CheckParm("-nodd"))
 		useDirectDraw = false;
 
 	// Initialise the MGL
@@ -1223,7 +1223,7 @@ bool VID_SetWindowedMode (int modenum)
 
 	if (!windowed_mode_set)
 	{
-		if (COM_CheckParm ("-resetwinpos"))
+		if (common->COM_CheckParm ("-resetwinpos"))
 		{
 			Cvar_SetValue ("vid_window_x", 0.0);
 			Cvar_SetValue ("vid_window_y", 0.0);
@@ -2088,7 +2088,7 @@ void	VID_Init (unsigned char *palette)
 	Cmd_AddCommand ("vid_fullscreen", VID_Fullscreen_f);
 	Cmd_AddCommand ("vid_minimize", VID_Minimize_f);
 
-	if (COM_CheckParm ("-dibonly"))
+	if (common->COM_CheckParm ("-dibonly"))
 		dibonly = true;
 
 	VID_InitMGLDIB (global_hInstance);
@@ -2142,7 +2142,7 @@ void	VID_Init (unsigned char *palette)
 			*ptmp = bestmatch;
 	}
 
-	if (COM_CheckParm("-startwindowed"))
+	if (common->COM_CheckParm("-startwindowed"))
 	{
 		startwindowed = 1;
 		vid_default = windowed_default;
@@ -2328,7 +2328,7 @@ void	VID_Update (vrect_t *rects)
 			if ((trect.left != (int)vid_window_x.value) ||
 				(trect.top  != (int)vid_window_y.value))
 			{
-				if (COM_CheckParm ("-resetwinpos"))
+				if (common->COM_CheckParm ("-resetwinpos"))
 				{
 					Cvar_SetValue ("vid_window_x", 0.0);
 					Cvar_SetValue ("vid_window_y", 0.0);
@@ -2346,7 +2346,7 @@ void	VID_Update (vrect_t *rects)
 		{
 			firstupdate = 0;
 
-			if (COM_CheckParm ("-resetwinpos"))
+			if (common->COM_CheckParm ("-resetwinpos"))
 			{
 				Cvar_SetValue ("vid_window_x", 0.0);
 				Cvar_SetValue ("vid_window_y", 0.0);

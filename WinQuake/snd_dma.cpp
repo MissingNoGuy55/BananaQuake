@@ -148,10 +148,10 @@ void CSoundSystemWin::S_Init (void)
 
 	Con_Printf("\nSound Initialization\n");
 
-	if (COM_CheckParm("-nosound"))
+	if (common->COM_CheckParm("-nosound"))
 		return;
 
-	if (COM_CheckParm("-simsound"))
+	if (common->COM_CheckParm("-simsound"))
 		fakedma = true;
 
 	

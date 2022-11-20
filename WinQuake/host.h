@@ -51,7 +51,7 @@ public:
 	void Host_GetConsoleCommands(void);
 	void Host_ServerFrame(void);
 	void Host_InitCommands(void);
-	void Host_InitVCR(quakeparms_t<byte*> parms);
+	//void Host_InitVCR(quakeparms_t<byte*> parms);
 	void Host_Init(quakeparms_t<byte*> parms);
 	void Host_Shutdown(void);
 	void Host_Error(const char* error, ...);

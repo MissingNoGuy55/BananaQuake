@@ -136,13 +136,13 @@ void CQuakeHost::Host_FindMaxClients (void)
 
 	svs.maxclients = 1;
 		
-	i = COM_CheckParm ("-dedicated");
+	i = common->COM_CheckParm ("-dedicated");
 	if (i)
 	{
 		cls.state = ca_dedicated;
-		if (i != (com_argc - 1))
+		if (i != (common->com_argc - 1))
 		{
-			svs.maxclients = Q_atoi (com_argv[i+1]);
+			svs.maxclients = Q_atoi (common->com_argv[i+1]);
 		}
 		else
 			svs.maxclients = 8;
@@ -150,13 +150,13 @@ void CQuakeHost::Host_FindMaxClients (void)
 	else
 		cls.state = ca_disconnected;
 
-	i = COM_CheckParm ("-listen");
+	i = common->COM_CheckParm ("-listen");
 	if (i)
 	{
 		if (cls.state == ca_dedicated)
 			Sys_Error ("Only one of -dedicated or -listen can be specified");
-		if (i != (com_argc - 1))
-			svs.maxclients = Q_atoi (com_argv[i+1]);
+		if (i != (common->com_argc - 1))
+			svs.maxclients = Q_atoi (common->com_argv[i+1]);
 		else
 			svs.maxclients = 8;
 	}
@@ -227,7 +227,7 @@ void CQuakeHost::Host_WriteConfiguration (void)
 // config.cfg cvars
 	if (host_initialized & !isDedicated)
 	{
-		f = fopen (va("%s/config.cfg",com_gamedir), "w");
+		f = fopen (common->va("%s/config.cfg", common->com_gamedir), "w");
 		if (!f)
 		{
 			Con_Printf ("Couldn't write config.cfg.\n");
@@ -777,67 +777,67 @@ void CQuakeHost::Host_Frame (float time)
 //============================================================================
 
 
-extern int vcrFile;
-#define	VCR_SIGNATURE	0x56435231
-// "VCR1"
-
-void CQuakeHost::Host_InitVCR (quakeparms_t<byte*> parms)
-{
-	int		i, len, n;
-	char	*p;
-	
-	if (COM_CheckParm("-playback"))
-	{
-		if (com_argc != 2)
-			Sys_Error("No other parameters allowed with -playback\n");
-
-		Sys_FileOpenRead("quake.vcr", &vcrFile);
-		if (vcrFile == -1)
-			Sys_Error("playback file not found\n");
-
-		Sys_FileRead (vcrFile, &i, sizeof(int));
-		if (i != VCR_SIGNATURE)
-			Sys_Error("Invalid signature in vcr file\n");
-
-		Sys_FileRead (vcrFile, &com_argc, sizeof(int));
-		com_argv = static_cast<char**>(malloc(com_argc * sizeof(char *)));
-		com_argv[0] = parms.argv[0];
-		for (i = 0; i < com_argc; i++)
-		{
-			Sys_FileRead (vcrFile, &len, sizeof(int));
-			p = static_cast<char*>(malloc(len));
-			Sys_FileRead (vcrFile, p, len);
-			com_argv[i+1] = p;
-		}
-		com_argc++; /* add one for arg[0] */
-		parms.argc = com_argc;
-		parms.argv = com_argv;
-	}
-
-	if ( (n = COM_CheckParm("-record")) != 0)
-	{
-		vcrFile = Sys_FileOpenWrite("quake.vcr");
-
-		i = VCR_SIGNATURE;
-		Sys_FileWrite(vcrFile, &i, sizeof(int));
-		i = com_argc - 1;
-		Sys_FileWrite(vcrFile, &i, sizeof(int));
-		for (i = 1; i < com_argc; i++)
-		{
-			if (i == n)
-			{
-				len = 10;
-				Sys_FileWrite(vcrFile, &len, sizeof(int));
-				Sys_FileWrite(vcrFile, "-playback", len);
-				continue;
-			}
-			len = Q_strlen(com_argv[i]) + 1;
-			Sys_FileWrite(vcrFile, &len, sizeof(int));
-			Sys_FileWrite(vcrFile, com_argv[i], len);
-		}
-	}
-	
-}
+//extern int vcrFile;
+//#define	VCR_SIGNATURE	0x56435231
+//// "VCR1"
+//
+//void CQuakeHost::Host_InitVCR (quakeparms_t<byte*> parms)
+//{
+//	int		i, len, n;
+//	char	*p;
+//	
+//	if (common->COM_CheckParm("-playback"))
+//	{
+//		if (com_argc != 2)
+//			Sys_Error("No other parameters allowed with -playback\n");
+//
+//		Sys_FileOpenRead("quake.vcr", &vcrFile);
+//		if (vcrFile == -1)
+//			Sys_Error("playback file not found\n");
+//
+//		Sys_FileRead (vcrFile, &i, sizeof(int));
+//		if (i != VCR_SIGNATURE)
+//			Sys_Error("Invalid signature in vcr file\n");
+//
+//		Sys_FileRead (vcrFile, &com_argc, sizeof(int));
+//		com_argv = static_cast<char**>(malloc(com_argc * sizeof(char *)));
+//		com_argv[0] = parms.argv[0];
+//		for (i = 0; i < com_argc; i++)
+//		{
+//			Sys_FileRead (vcrFile, &len, sizeof(int));
+//			p = static_cast<char*>(malloc(len));
+//			Sys_FileRead (vcrFile, p, len);
+//			com_argv[i+1] = p;
+//		}
+//		com_argc++; /* add one for arg[0] */
+//		parms.argc = com_argc;
+//		parms.argv = com_argv;
+//	}
+//
+//	if ( (n = COM_CheckParm("-record")) != 0)
+//	{
+//		vcrFile = Sys_FileOpenWrite("quake.vcr");
+//
+//		i = VCR_SIGNATURE;
+//		Sys_FileWrite(vcrFile, &i, sizeof(int));
+//		i = com_argc - 1;
+//		Sys_FileWrite(vcrFile, &i, sizeof(int));
+//		for (i = 1; i < com_argc; i++)
+//		{
+//			if (i == n)
+//			{
+//				len = 10;
+//				Sys_FileWrite(vcrFile, &len, sizeof(int));
+//				Sys_FileWrite(vcrFile, "-playback", len);
+//				continue;
+//			}
+//			len = Q_strlen(com_argv[i]) + 1;
+//			Sys_FileWrite(vcrFile, &len, sizeof(int));
+//			Sys_FileWrite(vcrFile, com_argv[i], len);
+//		}
+//	}
+//	
+//}
 
 /*
 ====================
@@ -855,7 +855,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	else
 		minimum_memory = MINIMUM_MEMORY_LEVELPAK;
 
-	if (COM_CheckParm ("-minmemory"))
+	if (common->COM_CheckParm ("-minmemory"))
 		parms.memsize = minimum_memory;
 
 	host_parms = parms;
@@ -863,8 +863,8 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	if (parms.memsize < minimum_memory)
 		Sys_Error ("Only %4.1f megs of memory available, can't execute game", parms.memsize / (float)0x100000);
 
-	com_argc = parms.argc;
-	com_argv = parms.argv;
+	common->com_argc = parms.argc;
+	common->com_argv = parms.argv;
 
 	g_MemCache = new CMemCache;
 	g_MemCache->Memory_Init (host_parms.membase, host_parms.memsize);
@@ -873,8 +873,8 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	Cmd_Init ();	
 	V_Init ();
 	Chase_Init ();
-	Host_InitVCR (parms);
-	COM_Init (parms.basedir);
+	//Host_InitVCR (parms);
+	common->COM_Init (parms.basedir);
 	Host_InitLocal ();
 	W_LoadWadFile ("gfx.wad");
 	Key_Init ();
@@ -890,10 +890,10 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 
 	if (cls.state != ca_dedicated)
 	{
-		host_basepal = static_cast<byte*>(COM_LoadHunkFile ("gfx/palette.lmp"));
+		host_basepal = COM_LoadHunkFile<byte> ("gfx/palette.lmp");
 		if (!host_basepal)
 			Sys_Error ("Couldn't load gfx/palette.lmp");
-		host_colormap = (byte *)COM_LoadHunkFile ("gfx/colormap.lmp");
+		host_colormap = COM_LoadHunkFile<byte> ("gfx/colormap.lmp");
 		if (!host_colormap)
 			Sys_Error ("Couldn't load gfx/colormap.lmp");
 

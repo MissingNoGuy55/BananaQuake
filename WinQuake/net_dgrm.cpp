@@ -771,7 +771,7 @@ int Datagram_Init (void)
 	myDriverLevel = net_driverlevel;
 	Cmd_AddCommand ("net_stats", NET_Stats_f);
 
-	if (COM_CheckParm("-nolan"))
+	if (common->COM_CheckParm("-nolan"))
 		return -1;
 
 	for (i = 0; i < net_numlandrivers; i++)
