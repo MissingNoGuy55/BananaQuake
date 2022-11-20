@@ -183,6 +183,10 @@ typedef void (*flush_cache_callback)(void);
 class CMemZone
 {
 public:
+
+	CMemZone();
+	~CMemZone();
+
 	int		size;		// total bytes malloced, including header
 	CMemBlock<unsigned char>	blocklist;		// start / end cap for linked list
 	CMemBlock<unsigned char>* rover;
@@ -265,7 +269,7 @@ private:
 extern CMemCache* g_MemCache;
 
 template<class T, class I>
-CMemBlock<T, I>::CMemBlock(int growSize, int allocationCount) : m_pMemory(0), size(allocationCount), m_growSize(growSize)
+CMemBlock<T, I>::CMemBlock(int growSize, int allocationCount) : m_pMemory(0), size(allocationCount), m_growSize(growSize), id(ZONEID), tag(0), prev(NULL), next(NULL), pad(0)
 {
 	if (m_growSize < 0)
 		return;
@@ -281,13 +285,13 @@ CMemBlock<T, I>::CMemBlock(int growSize, int allocationCount) : m_pMemory(0), si
 }
 
 template<class T, class I>
-CMemBlock<T, I>::CMemBlock(T* memory, int numelements) : m_pMemory(memory), size(numelements)
+CMemBlock<T, I>::CMemBlock(T* memory, int numelements) : m_pMemory(memory), size(numelements), id(ZONEID), tag(0), prev(NULL), next(NULL), pad(0)
 {
 	m_growSize = -1;
 }
 
 template<class T, class I>
-CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory(memory), size(numelements)
+CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory(memory), size(numelements), id(ZONEID), tag(0), prev(NULL), next(NULL)
 {
 	m_growSize = -2;
 }

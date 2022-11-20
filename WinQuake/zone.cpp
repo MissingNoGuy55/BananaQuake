@@ -69,6 +69,16 @@ void CMemZone::Z_ClearZone (CMemZone *zone, int size)
 }
 
 
+CMemZone::CMemZone() : size(0), blocklist(NULL), rover(NULL)
+{
+}
+
+CMemZone::~CMemZone()
+{
+	memset(&blocklist, 0, sizeof(blocklist));
+	rover = NULL;
+}
+
 /*
 ========================
 Z_Free
@@ -601,35 +611,43 @@ Throw things out until the hunk can be expanded to the given point
 */
 void CMemCache::Cache_FreeHigh (int new_high_hunk)
 {
-	CMemCacheSystem	*c, *prev;
+	CMemCacheSystem	*c = NULL, *prev = NULL;
 	
-	prev = NULL;
 	while (1)
 	{
 		c = cache_head.prev;
-		if (c == &cache_head)
-			return;		// nothing in cache at all
-		if ( (byte *)c + c->size <= hunk_base + hunk_size - new_high_hunk)
-			return;		// there is space to grow the hunk
-		if (c == prev)
-			Cache_Free (c->user);	// didn't move out of the way
-		else
+		if (c)
 		{
-			Cache_Move (c);	// try to move it
-			prev = c;
+			if (c == &cache_head)
+				return;		// nothing in cache at all
+			if ((byte*)c + c->size <= hunk_base + hunk_size - new_high_hunk)
+				return;		// there is space to grow the hunk
+			if (c == prev)
+				Cache_Free(c->user);	// didn't move out of the way
+			else
+			{
+				Cache_Move(c);	// try to move it
+				prev = c;
+			}
 		}
 	}
 }
 
 void CMemCache::Cache_UnlinkLRU (CMemCacheSystem *cs)
 {
-	if (!cs->lru_next || !cs->lru_prev)
-		Sys_Error ("Cache_UnlinkLRU: NULL link");
+	if (cs)
+	{
+		if (!cs->lru_next || !cs->lru_prev)
+			Sys_Error("Cache_UnlinkLRU: NULL link");
 
-	cs->lru_next->lru_prev = cs->lru_prev;
-	cs->lru_prev->lru_next = cs->lru_next;
-	
-	cs->lru_prev = cs->lru_next = NULL;
+		if (cs->lru_next && cs->lru_prev)
+		{
+			cs->lru_next->lru_prev = cs->lru_prev;
+			cs->lru_prev->lru_next = cs->lru_next;
+		}
+
+		cs->lru_prev = cs->lru_next = NULL;
+	}
 }
 
 void CMemCache::Cache_MakeLRU (CMemCacheSystem *cs)
@@ -813,9 +831,12 @@ void CMemCache::Cache_Free (cache_user_t *c)
 
 	cs = ((CMemCacheSystem *)c->data) - 1;
 
-	cs->prev->next = cs->next;
-	cs->next->prev = cs->prev;
-	cs->next = cs->prev = NULL;
+	if (cs)
+	{
+		cs->prev->next = cs->next;
+		cs->next->prev = cs->prev;
+		cs->next = cs->prev = NULL;
+	}
 
 	c->data = NULL;
 
