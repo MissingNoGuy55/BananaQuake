@@ -1608,8 +1608,8 @@ byte *COM_LoadFile (const char *path, int usehunk)
 
 	if (!buf)
 		Sys_Error ("COM_LoadFile: not enough space for %s", path);
-		
-	((byte *)buf)[len] = 0;
+	else
+		((byte *)buf)[len] = 0;
 
 #ifndef GLQUAKE
 	g_SoftwareRenderer->Draw_BeginDisc ();
