@@ -142,7 +142,10 @@ hull_t * CQuakeServer::SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs,
 		model = sv.models[ (int)ent->v.modelindex ];
 
 		if (!model || model->type != mod_brush)
-			Sys_Error ("MOVETYPE_PUSH with a non bsp model");
+		{
+			Sys_Error("MOVETYPE_PUSH with a non bsp model");
+			return NULL;
+		}
 
 		VectorSubtract (maxs, mins, size);
 		if (size[0] < 3)
@@ -224,7 +227,7 @@ areanode_t *SV_CreateAreaNode (int depth, vec3_t mins, vec3_t maxs)
 	else
 		anode->axis = 1;
 	
-	anode->dist = 0.5 * (maxs[anode->axis] + mins[anode->axis]);
+	anode->dist = 0.5f * ((float)maxs[anode->axis] + (float)mins[anode->axis]);	// Missi (11/19/2022)
 	VectorCopy (mins, mins1);	
 	VectorCopy (mins, mins2);	
 	VectorCopy (maxs, maxs1);	
