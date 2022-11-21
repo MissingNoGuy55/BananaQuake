@@ -207,8 +207,8 @@ void CL_ParseServerInfo (void)
 	char	*str = NULL;
 	int		i = 0;
 	int		nummodels = 0, numsounds = 0;
-	char	model_precache[MAX_MODELS][MAX_QPATH];
-	char	sound_precache[MAX_SOUNDS][MAX_QPATH];
+	static char	model_precache[MAX_MODELS][MAX_QPATH] = {};
+	static char	sound_precache[MAX_SOUNDS][MAX_QPATH] = {};
 	
 	Con_DPrintf ("Serverinfo packet received.\n");
 //
