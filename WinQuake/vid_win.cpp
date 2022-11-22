@@ -288,7 +288,7 @@ bool VID_AllocBuffers (int width, int height)
 
 	VID_highhunkmark = g_MemCache->Hunk_HighMark ();
 
-	d_pzbuffer = static_cast<short*>(g_MemCache->Hunk_HighAllocName (tbuffersize, "video"));
+	d_pzbuffer = static_cast<short*>(g_MemCache->Hunk_HighAllocName<short>(tbuffersize, "video"));
 
 	vid_surfcache = (byte *)d_pzbuffer +
 			width * height * sizeof (*d_pzbuffer);

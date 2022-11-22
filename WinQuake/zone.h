@@ -226,6 +226,26 @@ T* CMemZone::Z_Malloc(int size)
 
 //CMemZone* mainzone;
 
+//============================================================================
+
+#define	HUNK_SENTINAL	0x1df001ed
+
+typedef struct
+{
+	int		sentinal;
+	int		size;		// including sizeof(hunk_t), -1 = not allocated
+	char	name[24];
+} hunk_t;
+
+extern byte* hunk_base;
+extern int		hunk_size;
+
+extern int		hunk_low_used;
+extern int		hunk_high_used;
+
+extern bool	hunk_tempactive;
+extern int		hunk_tempmark;
+
 class CMemCache
 {
 public:
@@ -241,7 +261,8 @@ public:
 	// returns 0 filled memory
 	void* Hunk_AllocName(int size, const char* name);
 
-	void* Hunk_HighAllocName(int size, const char* name);
+	template<typename T>
+	T* Hunk_HighAllocName(int size, const char* name);
 
 	int	Hunk_LowMark(void);
 	void Hunk_FreeToLowMark(int mark);
@@ -249,7 +270,8 @@ public:
 	int	Hunk_HighMark(void);
 	void Hunk_FreeToHighMark(int mark);
 
-	void* Hunk_TempAlloc(int size);
+	template<typename T>
+	T* Hunk_TempAlloc(int size);
 
 	void Cache_Move(CMemCacheSystem* c);
 
@@ -286,6 +308,79 @@ private:
 
 	CMemCacheSystem* m_CacheSystem;
 };
+
+/*
+=================
+Hunk_TempAlloc
+
+Return space from the top of the hunk
+=================
+*/
+template<typename T>
+T* CMemCache::Hunk_TempAlloc(int size)
+{
+	T* buf = 0;
+
+	size = (size + 15) & ~15;
+
+	if (hunk_tempactive)
+	{
+		Hunk_FreeToHighMark(hunk_tempmark);
+		hunk_tempactive = false;
+	}
+
+	hunk_tempmark = Hunk_HighMark();
+
+	buf = Hunk_HighAllocName<T>(size, "temp");
+
+	hunk_tempactive = true;
+
+	return buf;
+}
+
+/*
+===================
+Hunk_HighAllocName
+===================
+*/
+template<typename T>
+T* CMemCache::Hunk_HighAllocName(int size, const char* name)
+{
+	hunk_t* h;
+
+	if (size < 0)
+		Sys_Error("Hunk_HighAllocName: bad size: %i", size);
+
+	if (hunk_tempactive)
+	{
+		Hunk_FreeToHighMark(hunk_tempmark);
+		hunk_tempactive = false;
+	}
+
+#ifdef PARANOID
+	Hunk_Check();
+#endif
+
+	size = sizeof(hunk_t) + ((size + 15) & ~15);
+
+	if (hunk_size - hunk_low_used - hunk_high_used < size)
+	{
+		Con_Printf("Hunk_HighAlloc: failed on %i bytes\n", size);
+		return NULL;
+	}
+
+	hunk_high_used += size;
+	Cache_FreeHigh(hunk_high_used);
+
+	h = (hunk_t*)(hunk_base + hunk_size - hunk_high_used);
+
+	memset(h, 0, size);
+	h->size = size;
+	h->sentinal = HUNK_SENTINAL;
+	Q_strncpy(h->name, name, 8);
+
+	return (T*)(h + 1);
+}
 
 extern CMemCache* g_MemCache;
 

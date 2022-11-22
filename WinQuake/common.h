@@ -311,7 +311,7 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 		buf = static_cast<T*>(g_MemCache->Hunk_AllocName(len + 1, base));
 		break;
 	case HUNK_TEMP:
-		buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc(len + 1));
+		buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
 		break;
 	case HUNK_ZONE:
 		buf = static_cast<T*>(g_MemCache->mainzone->Z_Malloc<T>(len + 1));
@@ -322,7 +322,7 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 	case HUNK_TEMP_FILL:
 		if (len + 1 > loadsize<T>)
 		{
-			buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc(len + 1));
+			buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
 			break;
 		}
 		else

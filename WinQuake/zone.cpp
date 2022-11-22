@@ -44,6 +44,15 @@ all big things are allocated on the hunk.
 
 CMemCache* g_MemCache;
 
+byte* hunk_base;
+int		hunk_size;
+
+int		hunk_low_used;
+int		hunk_high_used;
+
+bool	hunk_tempactive;
+int		hunk_tempmark;
+
 /*
 ========================
 Z_ClearZone
@@ -236,24 +245,6 @@ void CMemZone::Z_CheckHeap(void)
 
 //============================================================================
 
-#define	HUNK_SENTINAL	0x1df001ed
-
-typedef struct
-{
-	int		sentinal;
-	int		size;		// including sizeof(hunk_t), -1 = not allocated
-	char	name[24];
-} hunk_t;
-
-byte	*hunk_base;
-int		hunk_size;
-
-int		hunk_low_used;
-int		hunk_high_used;
-
-bool	hunk_tempactive;
-int		hunk_tempmark;
-
 /*
 ==============
 Hunk_Check
@@ -444,79 +435,6 @@ void CMemCache::Hunk_FreeToHighMark (int mark)
 		Sys_Error ("Hunk_FreeToHighMark: bad mark %i", mark);
 	memset (hunk_base + hunk_size - hunk_high_used, 0, hunk_high_used - mark);
 	hunk_high_used = mark;
-}
-
-
-/*
-===================
-Hunk_HighAllocName
-===================
-*/
-void* CMemCache::Hunk_HighAllocName (int size, const char *name)
-{
-	hunk_t	*h;
-
-	if (size < 0)
-		Sys_Error ("Hunk_HighAllocName: bad size: %i", size);
-
-	if (hunk_tempactive)
-	{
-		Hunk_FreeToHighMark (hunk_tempmark);
-		hunk_tempactive = false;
-	}
-
-#ifdef PARANOID
-	Hunk_Check ();
-#endif
-
-	size = sizeof(hunk_t) + ((size+15)&~15);
-
-	if (hunk_size - hunk_low_used - hunk_high_used < size)
-	{
-		Con_Printf ("Hunk_HighAlloc: failed on %i bytes\n",size);
-		return NULL;
-	}
-
-	hunk_high_used += size;
-	Cache_FreeHigh (hunk_high_used);
-
-	h = (hunk_t *)(hunk_base + hunk_size - hunk_high_used);
-
-	memset (h, 0, size);
-	h->size = size;
-	h->sentinal = HUNK_SENTINAL;
-	Q_strncpy (h->name, name, 8);
-
-	return (void *)(h+1);
-}
-
-
-/*
-=================
-Hunk_TempAlloc
-
-Return space from the top of the hunk
-=================
-*/
-void* CMemCache::Hunk_TempAlloc (int size)
-{
-	void	*buf = 0;
-
-	size = (size+15)&~15;
-	
-	if (hunk_tempactive)
-	{
-		Hunk_FreeToHighMark (hunk_tempmark);
-		hunk_tempactive = false;
-	}
-	
-	hunk_tempmark = Hunk_HighMark ();
-
-	buf = Hunk_HighAllocName (size, "temp");
-
-	hunk_tempactive = true;
-
-	return buf;
 }
 
 /*
