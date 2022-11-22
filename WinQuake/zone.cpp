@@ -121,30 +121,6 @@ void CMemZone::Z_Free (void *ptr)
 	}
 }
 
-
-/*
-========================
-Z_Malloc
-========================
-*/
-void* CMemZone::Z_Malloc (int size)
-{
-	void	*buf = 0;
-	
-	Z_CheckHeap ();	// DEBUG
-	buf = Z_TagMalloc (size, 1);
-	if (!buf)
-		Sys_Error ("Z_Malloc: failed on allocation of %i bytes",size);
-	Q_memset (buf, 0, size);
-
-	if (zone_debug.value > 0)
-	{
-		Z_Print(this);
-	}
-
-	return buf;
-}
-
 void* CMemZone::Z_TagMalloc (int size, int tag)
 {
 	int		extra = 0;

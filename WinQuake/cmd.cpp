@@ -117,7 +117,7 @@ void Cbuf_InsertText (char *text)
 	templen = cmd_text.cursize;
 	if (templen)
 	{
-		temp = static_cast<char*>(g_MemCache->mainzone->Z_Malloc (templen));
+		temp = static_cast<char*>(g_MemCache->mainzone->Z_Malloc<char>(templen));
 		Q_memcpy (temp, cmd_text.data, templen);
 		SZ_Clear (&cmd_text);
 	}
@@ -233,7 +233,7 @@ void Cmd_StuffCmds_f (void)
 	if (!s)
 		return;
 		
-	text = static_cast<char*>(g_MemCache->mainzone->Z_Malloc (s+1));
+	text = static_cast<char*>(g_MemCache->mainzone->Z_Malloc<char>(s+1));
 	text[0] = 0;
 	for (i=1 ; i< common->com_argc ; i++)
 	{
@@ -245,7 +245,7 @@ void Cmd_StuffCmds_f (void)
 	}
 	
 // pull out the commands
-	build = static_cast<char*>(g_MemCache->mainzone->Z_Malloc (s+1));
+	build = static_cast<char*>(g_MemCache->mainzone->Z_Malloc<char>(s+1));
 	build[0] = 0;
 	
 	for (i=0 ; i<s-1 ; i++)
@@ -333,7 +333,7 @@ char *CopyString (char *in)
 {
 	char	*out;
 	
-	out = static_cast<char*>(g_MemCache->mainzone->Z_Malloc (strlen(in)+1));
+	out = static_cast<char*>(g_MemCache->mainzone->Z_Malloc<char>(strlen(in)+1));
 	Q_strcpy (out, in);
 	return out;
 }
@@ -372,7 +372,7 @@ void Cmd_Alias_f (void)
 
 	if (!a)
 	{
-		a = static_cast<cmdalias_t*>(g_MemCache->mainzone->Z_Malloc (sizeof(cmdalias_t)));
+		a = static_cast<cmdalias_t*>(g_MemCache->mainzone->Z_Malloc<cmdalias_t>(sizeof(cmdalias_t)));
 		a->next = cmd_alias;
 		cmd_alias = a;
 	}
@@ -518,7 +518,7 @@ void Cmd_TokenizeString (char *text)
 
 		if (cmd_argc < MAX_ARGS)
 		{
-			cmd_argv[cmd_argc] = static_cast<char*>(g_MemCache->mainzone->Z_Malloc (Q_strlen(common->com_token)+1));
+			cmd_argv[cmd_argc] = static_cast<char*>(g_MemCache->mainzone->Z_Malloc<char>(Q_strlen(common->com_token) + 1));
 			Q_strcpy (cmd_argv[cmd_argc], common->com_token);
 			cmd_argc++;
 		}

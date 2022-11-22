@@ -187,7 +187,9 @@ public:
 	CMemBlock<unsigned char>* rover;
 
 	void Z_Free(void* ptr);
-	void* Z_Malloc(int size);			// returns 0 filled memory
+
+	template<typename T>
+	T* Z_Malloc(int size);			// returns 0 filled memory
 	void* Z_TagMalloc(int size, int tag);
 
 	void Z_DumpHeap(void);
@@ -197,6 +199,30 @@ public:
 	void Z_ClearZone(CMemZone* zone, int size);
 	void Z_Print(CMemZone* zone);
 };
+
+/*
+========================
+Z_Malloc
+========================
+*/
+template<typename T>
+T* CMemZone::Z_Malloc(int size)
+{
+	T* buf = 0;
+
+	Z_CheckHeap();	// DEBUG
+	buf = (T*)Z_TagMalloc(size, 1);
+	if (!buf)
+		Sys_Error("Z_Malloc: failed on allocation of %i bytes", size);
+	Q_memset(buf, 0, size);
+
+	if (zone_debug.value > 0)
+	{
+		Z_Print(this);
+	}
+
+	return buf;
+}
 
 //CMemZone* mainzone;
 
