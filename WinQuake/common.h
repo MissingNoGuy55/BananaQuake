@@ -261,9 +261,6 @@ struct cache_user_s
 };
 
 template<typename T>
-extern cache_user_s<T> loadcache;
-
-template<typename T>
 cache_user_s<T> loadcache;
 
 template<typename T>

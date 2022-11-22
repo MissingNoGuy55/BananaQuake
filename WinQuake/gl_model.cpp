@@ -26,23 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_mesh.h"
 #include "gl_warp.h"
 
-model_t	*loadmodel;
-char	loadname[32];	// for hunk tags
-
-void Mod_LoadSpriteModel (model_t *mod, void *buffer);
-void Mod_LoadBrushModel (model_t *mod, void *buffer);
-void Mod_LoadAliasModel (model_t *mod, void *buffer);
-
-byte	mod_novis[MAX_MAP_LEAFS/8];
-
-#define	MAX_MOD_KNOWN	512
-model_t	mod_known[MAX_MOD_KNOWN];
-int		mod_numknown;
-
-cvar_t gl_subdivide_size = {"gl_subdivide_size", "128", true};
-
-template<typename T>
-extern cache_user_s<T> loadcache;
+model_t* loadmodel = {};
+char loadname[32] = {};
+byte mod_novis[MAX_MAP_LEAFS / 8] = {};
+model_t	mod_known[MAX_MOD_KNOWN] = {};
+int		mod_numknown = 0;
 
 /*
 ===============
