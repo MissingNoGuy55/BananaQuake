@@ -366,7 +366,7 @@ typedef struct model_s
 //
 // additional model data
 //
-	cache_user_t	cache;		// only access through Mod_Extradata
+	cache_user_s	cache;		// only access through Mod_Extradata
 
 } model_t;
 

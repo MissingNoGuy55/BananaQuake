@@ -773,7 +773,7 @@ void	VID_SetPalette (unsigned char *palette)
 		Sys_Error("Couldn't load gfx/palette.lmp");
 
 	mark = g_MemCache->Hunk_LowMark();
-	pal = (byte*)g_MemCache->Hunk_Alloc(768);
+	pal = (byte*)g_MemCache->Hunk_Alloc<byte>(768);
 	fread(pal, 1, 768, f);
 	fclose(f);
 

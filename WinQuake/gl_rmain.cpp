@@ -168,7 +168,7 @@ mspriteframe_t * CGLRenderer::R_GetSpriteFrame (entity_t *currententity)
 	int				i, numframes, frame;
 	float			*pintervals, fullinterval, targettime, time;
 
-	psprite = static_cast<msprite_t*>(currententity->model->cache.data);
+	psprite = static_cast<msprite_t*>(currententity->model->cache<msprite_t>.data);
 	frame = currententity->frame;
 
 	if ((frame >= psprite->numframes) || (frame < 0))
@@ -224,7 +224,7 @@ void CGLRenderer::R_DrawSpriteModel (entity_t *e)
 	// don't even bother culling, because it's just a single
 	// polygon without a surface cache
 	frame = R_GetSpriteFrame (e);
-	psprite = static_cast<msprite_t*>(currententity->model->cache.data);
+	psprite = static_cast<msprite_t*>(currententity->model->cache<msprite_t>.data);
 
 	if (psprite->type == SPR_ORIENTED)
 	{	// bullet marks on walls
@@ -559,7 +559,7 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 	//
 	// locate the proper data
 	//
-	paliashdr = (aliashdr_t *)Mod_Extradata (currententity->model);
+	paliashdr = (aliashdr_t *)Mod_Extradata<aliashdr_t>(currententity->model);
 
 	c_alias_polys += paliashdr->numtris;
 

@@ -42,7 +42,7 @@ typedef struct
 struct sfx_t
 {
 	char 	name[MAX_QPATH] = { NULL };
-	cache_user_t	cache;
+	cache_user_s<void>	cache;
 };
 
 // !!! if this is changed, it much be changed in asm_i386.h too !!!

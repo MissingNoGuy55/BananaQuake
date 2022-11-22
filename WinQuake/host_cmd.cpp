@@ -641,7 +641,7 @@ void Host_Loadgame_f (void)
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = static_cast<char*>(g_MemCache->Hunk_Alloc (strlen(str)+1));
+		sv.lightstyles[i] = static_cast<char*>(g_MemCache->Hunk_Alloc<char>(strlen(str) + 1));
 		Q_strcpy (sv.lightstyles[i], str);
 	}
 
@@ -1737,7 +1737,7 @@ void PrintFrameName (model_t *m, int frame)
 	aliashdr_t 			*hdr;
 	maliasframedesc_t	*pframedesc;
 
-	hdr = (aliashdr_t *)Mod_Extradata (m);
+	hdr = (aliashdr_t *)Mod_Extradata<aliashdr_t>(m);
 	if (!hdr)
 		return;
 	pframedesc = &hdr->frames[frame];
