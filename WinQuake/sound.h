@@ -42,8 +42,13 @@ typedef struct
 struct sfx_t
 {
 	char 	name[MAX_QPATH] = { NULL };
-	cache_user_s<void>	cache;
+	
+	template<typename T>
+	static cache_user_s<T>	cache;
 };
+
+template<typename T>
+cache_user_s<T>	sfx_t::cache;
 
 // !!! if this is changed, it much be changed in asm_i386.h too !!!
 // Missi: needs to be un-typedef'd to avoid cache issues

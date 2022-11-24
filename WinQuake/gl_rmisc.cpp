@@ -35,7 +35,6 @@ void	CGLRenderer::R_InitTextures (void)
 {
 	int		x,y, m;
 	byte	*dest;
-	CMemCacheSystem* c;
 
 // create a simple checkerboard texture for the default
 	r_notexture_mip = static_cast<texture_t*>(g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) + 16 * 16 + 8 * 8 + 4 * 4 + 2 * 2, "notexture"));

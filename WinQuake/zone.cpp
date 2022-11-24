@@ -23,10 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t	zone_debug = { "zone_debug", "0" };
 
-void Cache_FreeLow (int new_low_hunk);
-void Cache_FreeHigh (int new_high_hunk);
-
-
 /*
 ==============================================================================
 
@@ -43,6 +39,16 @@ all big things are allocated on the hunk.
 */
 
 CMemCache* g_MemCache;
+/*
+template<typename T>
+extern CMemCacheSystem<T>* test_head;
+
+template<typename T>
+CMemCacheSystem<T>* test_head = new CMemCacheSystem<T>;
+
+template<typename T>
+CMemCacheSystem<T>		cache_head = *test_head<T>;
+*/
 
 byte* hunk_base;
 int		hunk_size;
@@ -398,56 +404,6 @@ CACHE MEMORY
 ===============================================================================
 */
 
-void CMemCache::Cache_UnlinkLRU (CMemCacheSystem *cs)
-{
-	if (cs)
-	{
-		if (!cs->lru_next || !cs->lru_prev)
-			Sys_Error("Cache_UnlinkLRU: NULL link");
-
-		if (cs->lru_next && cs->lru_prev)
-		{
-			cs->lru_next->lru_prev = cs->lru_prev;
-			cs->lru_prev->lru_next = cs->lru_next;
-		}
-
-		cs->lru_prev = cs->lru_next = NULL;
-	}
-}
-
-void CMemCache::Cache_MakeLRU (CMemCacheSystem *cs)
-{
-	if (cs->lru_next || cs->lru_prev)
-		Sys_Error ("Cache_MakeLRU: active link");
-
-	cache_head.lru_next->lru_prev = cs;
-	cs->lru_next = cache_head.lru_next;
-	cs->lru_prev = &cache_head;
-	cache_head.lru_next = cs;
-}
-
-/*
-============
-Cache_Print
-
-============
-*/
-void CMemCache::Cache_Print (void)
-{
-	CMemCacheSystem	*cd;
-
-	for (cd = cache_head.next ; cd != &cache_head ; cd = cd->next)
-	{
-		Con_Printf ("%8i : %s\n", cd->size, cd->name);
-	}
-}
-
-flush_cache_callback CMemCache::Cache_Flush_Callback()
-{
-	Cache_Flush<flush_cache_callback>();
-	return 0;
-}
-
 /*
 ============
 Cache_Report
@@ -469,62 +425,12 @@ void CMemCache::Cache_Compact (void)
 {
 }
 
-/*
-============
-Cache_Init
-
-============
-*/
-void CMemCache::Cache_Init (void)
+CMemCache::CMemCache() : mainzone(NULL)
 {
-	cache_head.next = cache_head.prev = &cache_head;
-	cache_head.lru_next = cache_head.lru_prev = &cache_head;
-
-	Cmd_AddCommand ("flush", Cache_Flush_Callback());
-}
-
-//============================================================================
-
-CMemCache::CMemCache() : mainzone(NULL), m_CacheSystem(NULL)
-{
-	if (!m_CacheSystem)
-	{
-		m_CacheSystem = new CMemCacheSystem;
-	}
 	if (!mainzone)
 	{
 		mainzone = new CMemZone;
 	}
 }
 
-/*
-========================
-Memory_Init
-========================
-*/
-void CMemCache::Memory_Init (void *buf, int size)
-{
-	int p;
-	int zonesize = DYNAMIC_SIZE;
-
-	hunk_base = static_cast<byte*>(buf);
-	hunk_size = size;
-	hunk_low_used = 0;
-	hunk_high_used = 0;
-
-	g_MemCache->Cache_Init ();
-	p = common->COM_CheckParm ("-zone");
-	if (p)
-	{
-		if (p < common->com_argc-1)
-			zonesize = Q_atoi (common->com_argv[p+1]) * 1024;
-		else
-			Sys_Error ("Memory_Init: you must specify a size in KB after -zone");
-	}
-	mainzone = static_cast<CMemZone*>(Hunk_AllocName<CMemZone>(zonesize, "zone" ));
-	mainzone->Z_ClearZone (mainzone, zonesize);
-}
-
-CMemCacheSystem::CMemCacheSystem() : size(0), name(""), prev(NULL), next(NULL), lru_prev(NULL), lru_next(NULL)
-{
-}
+//============================================================================

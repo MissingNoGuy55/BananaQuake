@@ -254,11 +254,27 @@ int             loadsize;
 template<typename T>
 T* loadbuf;
 
-template<typename T>
+template<class T>
 struct cache_user_s
 {
+public:
+
+	cache_user_s();
+	void Init();
 	T* data;
 };
+
+template<class T>
+inline cache_user_s<T>::cache_user_s()
+{
+	Init();
+}
+
+template<class T>
+inline void cache_user_s<T>::Init()
+{
+	data = (T*)calloc(1, sizeof(T));
+}
 
 template<typename T>
 cache_user_s<T> loadcache;

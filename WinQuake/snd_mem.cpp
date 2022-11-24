@@ -39,7 +39,7 @@ void CSoundSystemWin::ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *da
 	int		sample, samplefrac, fracstep;
 	sfxcache_t	*sc;
 	
-	sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Check<>(&sfx->cache));
+	sc = g_MemCache->Cache_Check<sfxcache_t>(&sfx->cache<sfxcache_t>);
 	if (!sc)
 		return;
 
@@ -104,7 +104,7 @@ sfxcache_t * CSoundSystemWin::S_LoadSound (sfx_t *s)
 	byte	stackbuf[1*1024];		// avoid dirtying the cache heap
 
 // see if still in memory
-	sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Check<>(&s->cache));
+	sc = g_MemCache->Cache_Check<sfxcache_t>(&s->cache<sfxcache_t>);
 	if (sc)
 		return sc;
 
@@ -135,7 +135,7 @@ sfxcache_t * CSoundSystemWin::S_LoadSound (sfx_t *s)
 
 	len = len * info.width * info.channels;
 
-	sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Alloc<void>( &s->cache, len + sizeof(sfxcache_t), s->name));
+	sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Alloc<sfxcache_t>( &s->cache<sfxcache_t>, len + sizeof(sfxcache_t), s->name));
 	if (!sc)
 		return NULL;
 	

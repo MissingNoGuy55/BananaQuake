@@ -296,7 +296,7 @@ void CSoundSystemWin::S_TouchSound (char *name)
 		return;
 
 	sfx = S_FindName (name);
-	g_MemCache->Cache_Check<>(&sfx->cache);
+	g_MemCache->Cache_Check<sfx_t>(&sfx->cache<sfx_t>);
 }
 
 /*
@@ -935,7 +935,7 @@ void CSoundInternal::S_SoundList(void)
 	for (i=0; i<num_sfx; i++, sfx++)
 	{
 		sfx = known_sfx[i];
-		sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Check<>(&sfx->cache));
+		sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Check<sfxcache_t>(&sfx->cache<sfxcache_t>));
 		if (!sc)
 			continue;
 		size = sc->length*sc->width*(sc->stereo+1);
