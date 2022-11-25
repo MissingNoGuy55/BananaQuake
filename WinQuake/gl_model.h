@@ -47,7 +47,6 @@ BRUSH MODELS
 ==============================================================================
 */
 
-
 //
 // in memory representation
 //
@@ -404,19 +403,140 @@ typedef struct model_s
 //
 // additional model data
 //
-	cache_user_t	cache;		// only access through Mod_Extradata
+	cache_user_s	cache;		// only access through Mod_Extradata
 
 } model_t;
+
+extern model_t* loadmodel;
+extern char	loadname[32];	// for hunk tags
+
+extern byte	mod_novis[MAX_MAP_LEAFS / 8];
+
+#define	MAX_MOD_KNOWN	512
+extern model_t	mod_known[MAX_MOD_KNOWN];
+extern int		mod_numknown;
+
+extern cvar_t gl_subdivide_size;
 
 //============================================================================
 
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
 model_t *Mod_ForName (char *name, bool crash);
-void	*Mod_Extradata (model_t *mod);	// handles caching
+
+template<typename T>
+model_t* Mod_LoadModel(model_t* mod, bool crash);
+
+void Mod_LoadSpriteModel(model_t* mod, void* buffer);
+void Mod_LoadBrushModel(model_t* mod, void* buffer);
+void Mod_LoadAliasModel(model_t* mod, void* buffer);
+
+template<typename T>
+T*	Mod_Extradata (model_t *mod);	// handles caching
+
 void	Mod_TouchModel (char *name);
 
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
 byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
+
+/*
+==================
+Mod_LoadModel
+
+Loads a model into the cache
+==================
+*/
+template<typename T>
+model_t* Mod_LoadModel(model_t* mod, bool crash)
+{
+	T* d;
+	unsigned* buf;
+	byte	stackbuf[1024];		// avoid dirtying the cache heap
+
+	if (!mod->needload)
+	{
+		if (mod->type == mod_alias)
+		{
+			d = g_MemCache->Cache_Check<T>(&mod->cache);
+			if (d)
+				return mod;
+		}
+		else
+			return mod;		// not cached at all
+	}
+
+	//
+	// because the world is so huge, load it one piece at a time
+	//
+	if (!crash)
+	{
+
+	}
+
+	//
+	// load the file
+	//
+	buf = COM_LoadStackFile<unsigned>(mod->name, stackbuf, sizeof(stackbuf));
+	if (!buf)
+	{
+		if (crash)
+			Sys_Error("Mod_NumForName: %s not found", mod->name);
+		return NULL;
+	}
+
+	//
+	// allocate a new model
+	//
+	common->COM_FileBase(mod->name, loadname);
+
+	loadmodel = mod;
+
+	//
+	// fill it in
+	//
+
+	// call the apropriate loader
+	mod->needload = false;
+
+	switch (LittleLong(*(unsigned*)buf))
+	{
+	case IDPOLYHEADER:
+		Mod_LoadAliasModel(mod, buf);
+		break;
+
+	case IDSPRITEHEADER:
+		Mod_LoadSpriteModel(mod, buf);
+		break;
+
+	default:
+		Mod_LoadBrushModel(mod, buf);
+		break;
+	}
+
+	return mod;
+}
+
+/*
+===============
+Mod_Init
+
+Caches the data if needed
+===============
+*/
+template<typename T>
+T* Mod_Extradata(model_t* mod)
+{
+	T* r;
+
+	r = g_MemCache->Cache_Check<T>(&mod->cache);
+	if (r)
+		return r;
+
+	Mod_LoadModel<T>(mod, true);
+
+	if (!mod->cache.data)
+		Sys_Error("Mod_Extradata: caching failed");
+	return (T*)mod->cache.data;
+}
 
 #endif	// __MODEL__

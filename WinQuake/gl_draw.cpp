@@ -42,8 +42,8 @@ CQuakePic			*draw_backtile;
 CGLTexture*			translate_texture;
 CGLTexture*			char_texture;
 
-byte		conback_buffer[sizeof(CQuakePic) + sizeof(CGLTexture)];
-CQuakePic	*conback = (CQuakePic*)&conback_buffer;
+byte		conback_buffer[sizeof(CGLTexture)];
+CGLTexture	*conback = (CGLTexture*)&conback_buffer;
 
 int		gl_lightmap_format = 4;
 int		gl_solid_format = 3;
@@ -141,7 +141,7 @@ unsigned* CGLRenderer::GL_8to32(byte* in, int pixels, unsigned int* usepal)
 	int i;
 	unsigned* out, * data;
 
-	out = data = (unsigned*)g_MemCache->Hunk_Alloc(pixels * 4);
+	out = data = (unsigned*)g_MemCache->Hunk_Alloc<unsigned>(pixels * 4);
 
 	for (i = 0; i < pixels; i++)
 		*out++ = usepal[*in++];
@@ -331,6 +331,8 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 
 	if (!p) return NULL; //Missi -- copied from QuakeSpasm (5/28/2022)
 
+	p->datavec = NULL;
+	p->datavec = new CQVector<byte>;
 	p->datavec->AddMultipleToTail(p->width * p->height, p->data);
 
 
@@ -587,6 +589,8 @@ void CGLRenderer::Draw_Init (void)
 		return;
 	}
 
+	cb->datavec = NULL;
+	cb->datavec = new CQVector<byte>;
 	cb->datavec->AddMultipleToTail(cb->width * cb->height, cb->data);
 
 	//cb->data.Init();
@@ -607,16 +611,18 @@ void CGLRenderer::Draw_Init (void)
 	gl->tl = 0;
 	gl->th = 1;
 
-	conback = &gl->pic;
+	conback = gl;
 	conback->width = vid.width;
 	conback->height = vid.height;
 	/*conback = cb;*/
+
+	GL_Bind(conback);
 
 	// free loaded console
 	g_MemCache->Hunk_FreeToLowMark(start);
 
 	// save a texture slot for translated picture
-	translate_texture = (CGLTexture*)g_MemCache->Hunk_AllocName(sizeof(CGLTexture), "dummy");
+	translate_texture = (CGLTexture*)g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture), "dummy");
 	translate_texture->texnum = texture_extension_number++; // &gltextures[texture_extension_number++];
 
 	// save slots for scraps
@@ -869,9 +875,9 @@ void CGLRenderer::Draw_ConsoleBackground (int lines)
 	int y = (vid.height * 3) >> 2;
 
 	if (lines > y)
-		Draw_Pic(0, lines - vid.height, conback);
+		Draw_Pic(0, lines - vid.height, &conback->pic);
 	else
-		Draw_AlphaPic (0, lines - vid.height, conback, (float)(1.2 * lines)/y);
+		Draw_AlphaPic (0, lines - vid.height, &conback->pic, (float)(1.2 * lines)/y);
 }
 
 
@@ -1258,7 +1264,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	byte padbyte;
 	unsigned int* usepal;
 	char id[64];
-	size_t len = 0;
+	int len = 0;
 
 // Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
 
@@ -1267,11 +1273,11 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	else
 		glt = GL_NewTexture();
 
-	while (data[len])
-		len++;
+	/*while (data[len] != '\0')
+		len++;*/
 
-	glt->pic.datavec->AddMultipleToTail(len, data);
-	glt->pic.datavec->AddToTail('\0');
+	glt->pic.datavec->AddMultipleToTail(width * height, data);
+	//glt->pic.datavec->AddToTail('\0');
 	glt->pic.width = width;
 	glt->pic.height = height;
 

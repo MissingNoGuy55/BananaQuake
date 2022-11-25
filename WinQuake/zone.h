@@ -104,7 +104,7 @@ public:
 	int		size;           // including the header and possibly tiny fragments
 	int     tag;            // a tag of 0 is a free block
 	int     id;        		// should be ZONEID
-	CMemBlock<unsigned char>* next, *prev;
+	CMemBlock<byte>* next, *prev;
 	int		pad;			// pad to 64 bit boundary
 
 	T* Base();
@@ -160,18 +160,40 @@ class CMemCacheSystem
 {
 public:
 
-	CMemCacheSystem();
+	//explicit CMemCacheSystem();
+	//void ConstructList();
 
 	int			size;		// including this header
+
 	cache_user_s* user;
+
 	char			name[CACHENAME_LEN];
 	class CMemCacheSystem* prev, * next;
 	class CMemCacheSystem* lru_prev, * lru_next;	// for LRU flushing
+
+	template<typename M = CMemBlock<CMemCacheSystem>>
+	static M mem;
+
 };
 
-// CMemCache* g_MemCache;
+extern CMemCacheSystem		cache_head;
 
-static CMemCacheSystem	cache_head;
+//template<typename T>
+//cache_user_s* CMemCacheSystem::user = {};
+
+template<typename M>
+M CMemCacheSystem::mem = {};
+
+//template<typename T>
+//CMemCacheSystem cache_head = {};
+
+//template<typename T>
+//CMemCacheSystem		cache_head = {};
+
+//template<typename T>
+//CMemCacheSystem		cache_head = {};
+
+// CMemCache* g_MemCache;
 
 typedef void (*flush_cache_callback)(void);
 
@@ -250,16 +272,24 @@ class CMemCache
 {
 public:
 
+	explicit CMemCache();
+
+	template<typename T>
 	CMemCache();
 
 	CMemZone* mainzone;
 
-	void Memory_Init(void* buf, int size);
+	template<typename T>
+	void Memory_Init(T* buf, int size);
 
-	void* Hunk_Alloc(int size);
+	template<typename T>
+	T* Hunk_Alloc(int size);
+
 	void Hunk_Print(bool all);
 	// returns 0 filled memory
-	void* Hunk_AllocName(int size, const char* name);
+
+	template<typename T>
+	T* Hunk_AllocName(int size, const char* name);
 
 	template<typename T>
 	T* Hunk_HighAllocName(int size, const char* name);
@@ -273,32 +303,48 @@ public:
 	template<typename T>
 	T* Hunk_TempAlloc(int size);
 
+	template<typename T>
 	void Cache_Move(CMemCacheSystem* c);
 
 	void Hunk_Check(void);
 
+	template<typename T>
 	void Cache_FreeHigh(int new_high_hunk);
+
+	template<typename T>
 	void Cache_FreeLow(int new_low_hunk);
 
-	void Cache_MakeLRU(CMemCacheSystem* cs);
-	void Cache_UnlinkLRU(CMemCacheSystem* cs);
 
+	void Cache_MakeLRU(CMemCacheSystem* cs);
+
+	static void Cache_UnlinkLRU(CMemCacheSystem* cs);
+
+	template<typename T>
 	static void Cache_Flush(void);
+
+	template<typename T>
 	static flush_cache_callback Cache_Flush_Callback();
+
+	template<typename T>
 	void Cache_Print(void);
 
-	void* Cache_Check(cache_user_s* c);
+	template<typename T>
+	T* Cache_Check(cache_user_s* c);
 	// returns the cached data, and moves to the head of the LRU list
 	// if present, otherwise returns NULL
 
+	template<typename T = flush_cache_callback>
 	void Cache_Init(void);
 
-	void Cache_Free(cache_user_s* c);
+	template<typename T>
+	static void Cache_Free(cache_user_s* c);
 
-	void* Cache_Alloc(cache_user_s* c, int size, char* name);
+	template<typename T>
+	T* Cache_Alloc(cache_user_s* c, int size, char* name);
 	// Returns NULL if all purgable data was tossed and there still
 	// wasn't enough room.
 
+	template<typename T>
 	CMemCacheSystem* Cache_TryAlloc(int size, bool nobottom);
 
 	void Cache_Report(void);
@@ -306,8 +352,418 @@ public:
 
 private:
 
-	CMemCacheSystem* m_CacheSystem;
+	template<typename T>
+	static CMemCacheSystem* m_CacheSystem;
 };
+
+template<typename T>
+CMemCacheSystem* CMemCache::m_CacheSystem = {};
+
+/*
+============
+Cache_Init
+
+============
+*/
+template<typename T>
+void CMemCache::Cache_Init(void)
+{
+
+	cache_head.next = cache_head.prev = &cache_head;
+	cache_head.lru_next = cache_head.lru_prev = &cache_head;
+
+	Cmd_AddCommand("flush", Cache_Flush_Callback<T>());
+}
+
+/*
+============
+Cache_Print
+
+============
+*/
+template<typename T>
+void CMemCache::Cache_Print(void)
+{
+	CMemCacheSystem* cd;
+
+	for (cd = cache_head.next; cd != cache_head; cd = cd->next)
+	{
+		Con_Printf("%8i : %s\n", cd->size, cd->name);
+	}
+}
+
+/*
+==============
+Cache_Check
+==============
+*/
+template<typename T>
+T* CMemCache::Cache_Check(cache_user_s* c)
+{
+	CMemCacheSystem* cs;
+
+	if (!c->data)
+		return NULL;
+
+	cs = ((CMemCacheSystem*)c->data) - 1;
+
+	// move to head of LRU
+	Cache_UnlinkLRU(cs);
+	Cache_MakeLRU(cs);
+
+	return (T*)c->data;
+}
+
+/*
+==============
+Cache_Free
+
+Frees the memory and removes it from the LRU list
+==============
+*/
+template<typename T>
+void CMemCache::Cache_Free(cache_user_s* c)
+{
+	CMemCacheSystem* cs;
+
+	if (!c->data)
+		Sys_Error("Cache_Free: not allocated");
+
+	cs = ((CMemCacheSystem*)c->data) - 1;
+
+	if (cs)
+	{
+		cs->prev->next = cs->next;
+		cs->next->prev = cs->prev;
+		cs->next = cs->prev = NULL;
+	}
+
+	c->data = NULL;
+
+	Cache_UnlinkLRU(cs);
+}
+
+
+/*
+============
+Cache_FreeHigh
+
+Throw things out until the hunk can be expanded to the given point
+============
+*/
+template<typename T>
+void CMemCache::Cache_FreeHigh(int new_high_hunk)
+{
+	CMemCacheSystem* c = NULL, * prev = NULL;
+
+	while (1)
+	{
+
+		// Missi: so this is a tricky one. with templates, it's always gonna expect the type it was compiled with,
+		// not an arbitrary void pointer. we have to run Cache_Init again to get a variant of cache_head with the
+		// new type
+		c = cache_head.prev;
+		if (c)
+		{
+			if (c == &cache_head)
+				return;		// nothing in cache at all
+			if ((byte*)c + c->size <= hunk_base + hunk_size - new_high_hunk)
+				return;		// there is space to grow the hunk
+			if (c == prev)
+				Cache_Free<T>(c->user);	// didn't move out of the way
+			else
+			{
+				Cache_Move<T>(c);	// try to move it
+				prev = c;
+			}
+		}
+	}
+}
+
+template<typename T>
+flush_cache_callback CMemCache::Cache_Flush_Callback()
+{
+	Cache_Flush<T>();
+	return 0;
+}
+
+/*
+============
+Cache_FreeLow
+
+Throw things out until the hunk can be expanded to the given point
+============
+*/
+template<typename T>
+void CMemCache::Cache_FreeLow(int new_low_hunk)
+{
+	CMemCacheSystem* c = NULL;
+
+	while (1)
+	{
+
+		// Missi: so this is a tricky one. with templates, it's always gonna expect the type it was compiled with,
+		// not an arbitrary void pointer. we have to run Cache_Init again to get a variant of cache_head with the
+		// new type
+		c = cache_head.next;
+		if (c == &cache_head)
+			return;		// nothing in cache at all
+		if ((byte*)c >= hunk_base + new_low_hunk)
+			return;		// there is space to grow the hunk
+		Cache_Move<T>(c);	// reclaim the space
+	}
+}
+
+/*
+============
+Cache_TryAlloc
+
+Looks for a free block of memory between the high and low hunk marks
+Size should already include the header and padding
+============
+*/
+template<typename T>
+CMemCacheSystem* CMemCache::Cache_TryAlloc(int size, bool nobottom)
+{
+	CMemCacheSystem* cs, *c_new;
+
+	// is the cache completely empty?
+
+	if (!cache_head.prev)
+		cache_head.prev = {};
+
+	if (!nobottom && cache_head.prev == &cache_head)
+	{
+		if (hunk_size - hunk_high_used - hunk_low_used < size)
+			Sys_Error("Cache_TryAlloc: %i is greater then free hunk", size);
+
+		c_new = (CMemCacheSystem*)(hunk_base + hunk_low_used);
+		memset(c_new, 0, sizeof(*c_new));
+		c_new->size = size;
+
+		cache_head.prev = cache_head.next = c_new;
+		c_new->prev = c_new->next = &cache_head;
+
+		Cache_MakeLRU(c_new);
+		m_CacheSystem<T> = c_new;
+		return c_new;
+	}
+
+	// search from the bottom up for space
+
+	c_new = (CMemCacheSystem*)(hunk_base + hunk_low_used);
+	cs = cache_head.next;
+
+	do
+	{
+		if (!nobottom || cs != cache_head.next)
+		{
+			if ((byte*)cs - (byte*)c_new >= size)
+			{	// found space
+				memset(c_new, 0, sizeof(*c_new));
+				c_new->size = size;
+
+				c_new->next = cs;
+				c_new->prev = cs->prev;
+				cs->prev->next = c_new;
+				cs->prev = c_new;
+
+				Cache_MakeLRU(c_new);
+
+				m_CacheSystem<T> = c_new;
+				return c_new;
+			}
+		}
+
+		// continue looking		
+		c_new = (CMemCacheSystem*)((byte*)cs + cs->size);
+		cs = cs->next;
+
+	} while (cs != &cache_head);
+
+	// try to allocate one at the very end
+	if (hunk_base + hunk_size - hunk_high_used - (byte*)c_new >= size)
+	{
+		memset(c_new, 0, sizeof(*c_new));
+		c_new->size = size;
+
+		c_new->next = &cache_head;
+		c_new->prev = cache_head.prev;
+		cache_head.prev->next = c_new;
+		cache_head.prev = c_new;
+
+		Cache_MakeLRU(c_new);
+
+		m_CacheSystem<T> = c_new;
+		return c_new;
+	}
+
+	return NULL;		// couldn't allocate
+}
+
+/*
+========================
+Memory_Init
+========================
+*/
+template<typename T>
+void CMemCache::Memory_Init(T* buf, int size)
+{
+	int p;
+	int zonesize = DYNAMIC_SIZE;
+
+	hunk_base = static_cast<T*>(buf);
+	hunk_size = size;
+	hunk_low_used = 0;
+	hunk_high_used = 0;
+
+	Cache_Init();
+	p = common->COM_CheckParm("-zone");
+	if (p)
+	{
+		if (p < common->com_argc - 1)
+			zonesize = Q_atoi(common->com_argv[p + 1]) * 1024;
+		else
+			Sys_Error("Memory_Init: you must specify a size in KB after -zone");
+	}
+	mainzone = Hunk_AllocName<CMemZone>(zonesize, "zone");
+	mainzone->Z_ClearZone(mainzone, zonesize);
+}
+
+/*
+==============
+Cache_Alloc
+==============
+*/
+template<typename T>
+T* CMemCache::Cache_Alloc(cache_user_s* c, int size, char* name)
+{
+	CMemCacheSystem* cs;
+
+	if (c->data)
+		Sys_Error("Cache_Alloc: allready allocated");
+
+	if (size <= 0)
+		Sys_Error("Cache_Alloc: size %i", size);
+
+	size = (size + sizeof(CMemCacheSystem) + 15) & ~15;
+
+	// find memory for it	
+	while (1)
+	{
+		cs = Cache_TryAlloc<T>(size, false);
+		if (cs)
+		{
+			strncpy(cs->name, name, sizeof(cs->name) - 1);
+			c->data = (byte*)(cs + 1);
+			cs->user = c;
+			break;
+		}
+
+		// free the least recently used cahedat
+		if (cache_head.lru_prev == &cache_head)
+			Sys_Error("Cache_Alloc: out of memory");
+		// not enough memory at all
+		Cache_Free<T>(cache_head.lru_prev->user);
+	}
+
+	return Cache_Check<T>(c);
+}
+
+/*
+============
+Cache_Flush
+
+Throw everything out, so new data will be demand cached
+============
+*/
+template<typename T>
+void CMemCache::Cache_Flush(void)
+{
+	while (cache_head.next != &cache_head)
+		Cache_Free<T>(cache_head.next->user);	// reclaim the space
+}
+
+/*
+===========
+Cache_Move
+===========
+*/
+template<typename T>
+void CMemCache::Cache_Move(CMemCacheSystem* c)
+{
+	CMemCacheSystem* c_new;
+
+	// we are clearing up space at the bottom, so only allocate it late
+	c_new = Cache_TryAlloc<T>(c->size, true);
+	if (c_new)
+	{
+		//		Con_Printf ("cache_move ok\n");
+
+		const auto& user = c->user;
+
+		Q_memcpy(c_new + 1, c + 1, c->size - sizeof(CMemCacheSystem));
+		c_new->user = user;
+		Q_memcpy(c_new->name, c->name, sizeof(c_new->name));
+		Cache_Free<T>(user);
+		c_new->user->data = (byte*)(c_new + 1);
+	}
+	else
+	{
+		//		Con_Printf ("cache_move failed\n");
+
+		Cache_Free<T>(c->user);		// tough luck...
+	}
+}
+
+/*===================
+Hunk_Alloc
+
+Missi: Allocates a block of memory on the hunk. Usually used for things like textures and models. Use CMemZone if you need string or volatile memory allocation.
+
+This function exists just for brevity; it calls Hunk_AllocName with a const char parameter of "unknown" (3/8/2022)
+===================*/
+template<typename T>
+T* CMemCache::Hunk_Alloc(int size)
+{
+	return Hunk_AllocName<T>(size, "unknown");
+}
+
+/*===================
+Hunk_AllocName
+
+Missi: Allocates a named block of memory on the hunk. Castable to any type. Use only for things like models and textures. If you need small, possibly volatile memory, use CMemZone::Z_TagMalloc instead.
+===================*/
+template<typename T>
+T* CMemCache::Hunk_AllocName(int size, const char* name)
+{
+	hunk_t* h;
+
+#ifdef PARANOID
+	Hunk_Check();
+#endif
+
+	if (size < 0)
+		Sys_Error("Hunk_Alloc: bad size: %i", size);
+
+	size = sizeof(hunk_t) + ((size + 15) & ~15);
+
+	if (hunk_size - hunk_low_used - hunk_high_used < size)
+		Sys_Error("Hunk_Alloc: failed on %i bytes", size);
+
+	h = (hunk_t*)(hunk_base + hunk_low_used);
+	hunk_low_used += size;
+
+	Cache_FreeLow<T>(hunk_low_used);
+
+	memset(h, 0, size);
+
+	h->size = size;
+	h->sentinal = HUNK_SENTINAL;
+	q_strlcpy(h->name, name, 24);
+
+	return (T*)(h + 1);
+}
 
 /*
 =================
@@ -370,7 +826,7 @@ T* CMemCache::Hunk_HighAllocName(int size, const char* name)
 	}
 
 	hunk_high_used += size;
-	Cache_FreeHigh(hunk_high_used);
+	Cache_FreeHigh<T>(hunk_high_used);
 
 	h = (hunk_t*)(hunk_base + hunk_size - hunk_high_used);
 
@@ -459,11 +915,12 @@ inline void CMemBlock<T, I>::Purge()
 {
 	if (m_pMemory)
 	{
-		free(m_pMemory);
+		free((void*)m_pMemory);
 		m_pMemory = 0;
 	}
 	size = 0;
 }
+
 
 template<class T, class I>
 inline T& CMemBlock<T, I>::operator[](I i)

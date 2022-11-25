@@ -1283,7 +1283,7 @@ void CGLRenderer::BuildSurfaceDisplayList (msurface_t *fa)
 	//
 	// draw texture
 	//
-	poly = static_cast<glpoly_t*>(g_MemCache->Hunk_Alloc (sizeof(glpoly_t) + (lnumverts-4) * VERTEXSIZE*sizeof(float)));
+	poly = static_cast<glpoly_t*>(g_MemCache->Hunk_Alloc<glpoly_t>(sizeof(glpoly_t) + (lnumverts-4) * VERTEXSIZE*sizeof(float)));
 	poly->next = fa->polys;
 	poly->flags = fa->flags;
 	fa->polys = poly;
@@ -1419,7 +1419,7 @@ void CGLRenderer::GL_BuildLightmaps (void)
 
 	if (!lightmap_textures)
 	{
-		lightmap_textures = (CGLTexture*)g_MemCache->Hunk_AllocName(sizeof(CGLTexture), "lightmap");	// Missi: something's not right here, I'm getting padding with some lightmap textures... (3/10/2022)
+		lightmap_textures = (CGLTexture*)g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture), "lightmap");	// Missi: something's not right here, I'm getting padding with some lightmap textures... (3/10/2022)
 		lightmap_textures->texnum = texture_extension_number;
 		texture_extension_number += MAX_LIGHTMAPS;
 	}

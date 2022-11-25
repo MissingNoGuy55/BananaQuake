@@ -43,7 +43,7 @@ CQuakePic		*draw_backtile;
 typedef struct cachepic_s
 {
 	char		name[MAX_QPATH];
-	cache_user_t	cache;
+	cache_user_s	cache;
 } cachepic_t;
 
 #define	MAX_CACHED_PICS		128

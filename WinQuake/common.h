@@ -254,12 +254,13 @@ int             loadsize;
 template<typename T>
 T* loadbuf;
 
-typedef struct cache_user_s
+struct cache_user_s
 {
 	void* data;
-} cache_user_t;
+};
 
-extern cache_user_s loadcache;
+//template<typename T>
+//T* cache_user_s::data = new T;
 
 template<typename T>
 T* COM_LoadStackFile (const char *path, void* buffer, int bufsize);
@@ -276,6 +277,8 @@ void COM_LoadCacheFile (const char *path, struct cache_user_s *cu);
 extern	struct cvar_s	registered;
 
 extern bool		standard_quake, rogue, hipnotic;
+
+extern cache_user_s loadcache;
 
 
 /*
@@ -308,7 +311,7 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 	switch (usehunk)
 	{
 	case HUNK_FULL:
-		buf = static_cast<T*>(g_MemCache->Hunk_AllocName(len + 1, base));
+		buf = static_cast<T*>(g_MemCache->Hunk_AllocName<T>(len + 1, base));
 		break;
 	case HUNK_TEMP:
 		buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
@@ -317,7 +320,7 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 		buf = static_cast<T*>(g_MemCache->mainzone->Z_Malloc<T>(len + 1));
 		break;
 	case HUNK_CACHE:
-		buf = static_cast<T*>(g_MemCache->Cache_Alloc(&loadcache, len + 1, base));
+		buf = static_cast<T*>(g_MemCache->Cache_Alloc<T>(&loadcache, len + 1, base));
 		break;
 	case HUNK_TEMP_FILL:
 		if (len + 1 > loadsize<T>)

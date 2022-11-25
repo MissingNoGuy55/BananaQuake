@@ -559,7 +559,7 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 	//
 	// locate the proper data
 	//
-	paliashdr = (aliashdr_t *)Mod_Extradata (currententity->model);
+	paliashdr = (aliashdr_t *)Mod_Extradata<aliashdr_t>(currententity->model);
 
 	c_alias_polys += paliashdr->numtris;
 
