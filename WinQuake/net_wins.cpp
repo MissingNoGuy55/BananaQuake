@@ -97,7 +97,7 @@ void WINS_GetLocalAddress()
 		return;
 
 	blocktime = Sys_FloatTime();
-	WSASetBlockingHook(BlockingHook);
+	//WSASetBlockingHook(BlockingHook);
 	local = pgethostbyname(buff);
 	WSAUnhookBlockingHook();
 	if (local == NULL)

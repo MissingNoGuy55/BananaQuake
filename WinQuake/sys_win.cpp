@@ -269,6 +269,8 @@ Sys_MakeCodeWriteable
 ================
 */
 
+#ifndef WIN64
+
 #ifdef _WIN32
 
 void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
@@ -365,6 +367,8 @@ void UnmaskExceptions(void)
 }
 #endif
 
+#endif
+
 // #endif
 
 /*
@@ -377,10 +381,10 @@ void Sys_Init (void)
 	LARGE_INTEGER	PerformanceFreq;
 	unsigned int	lowpart, highpart;
 	OSVERSIONINFO	vinfo;
-
+#ifndef WIN64
 	MaskExceptions ();
 	Sys_SetFPCW ();
-
+#endif
 	if (!QueryPerformanceFrequency (&PerformanceFreq))
 		Sys_Error ("No hardware timer available");
 

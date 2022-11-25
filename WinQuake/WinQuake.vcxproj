@@ -158,9 +158,9 @@
     <TargetName>glquake</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
     <OutDir>.\debug_gl\</OutDir>
     <IntDir>.\debug_gl\</IntDir>
+    <TargetName>glquake</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>.\Debug\</OutDir>
@@ -274,7 +274,7 @@
       <PrecompiledHeaderOutputFile>.\debug_gl\WinQuake.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\debug_gl\</ObjectFileName>
       <ProgramDataBaseFileName>.\debug_gl\</ProgramDataBaseFileName>
-      <AdditionalIncludeDirectories>.\sdl2\include;.\glew\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\sdl2\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -310,14 +310,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <Optimization>Disabled</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\debug_gl\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\debug_gl\WinQuake.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\debug_gl\</ObjectFileName>
       <ProgramDataBaseFileName>.\debug_gl\</ProgramDataBaseFileName>
-      <AdditionalIncludeDirectories>.\sdl2\include;.\glew\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\sdl2\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -340,8 +340,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <OutputFile>.\debug_gl\glquake.exe</OutputFile>
-      <AdditionalDependencies>.\glew\lib\release\x64\glew32.lib;.\sdl2\lib\x64\SDL2.lib;comctl32.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>.\sdl2\lib\x64\SDL2.lib;comctl32.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -1046,7 +1045,7 @@ ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                             
 del $(OutDir)%(Filename).spp </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">cl /EP /DGLQUAKE &gt; $(OutDir)%(Filename).spp %(FullPath) 
 gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+ml64 /c /Cp /Fo$(OutDir)%(Filename).obj /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">mycoolbuild</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">mycoolbuild</Message>
@@ -1248,7 +1247,7 @@ ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                             
 del $(OutDir)%(Filename).spp </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">cl /EP /DGLQUAKE &gt; $(OutDir)%(Filename).spp %(FullPath) 
 gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+ml64 /c /Cp /Fo$(OutDir)%(Filename).obj /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">mycoolbuild</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">mycoolbuild</Message>
@@ -1358,7 +1357,7 @@ ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                             
 del $(OutDir)%(Filename).spp </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">cl /EP /DGLQUAKE &gt; $(OutDir)%(Filename).spp %(FullPath) 
 gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+ml64 /c /Cp /Fo$(OutDir)%(Filename).obj /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">mycoolbuild</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">mycoolbuild</Message>
@@ -1408,7 +1407,7 @@ ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                             
 del $(OutDir)%(Filename).spp </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">cl /EP /DGLQUAKE &gt; $(OutDir)%(Filename).spp %(FullPath) 
 gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+ml64 /c /Cp /Fo$(OutDir)%(Filename).obj /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">mycoolbuild</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">mycoolbuild</Message>

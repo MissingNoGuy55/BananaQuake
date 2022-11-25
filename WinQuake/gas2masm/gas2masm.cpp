@@ -29,6 +29,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_TOKEN_LENGTH	1024
 #define LF					0x0A
 
+#ifndef WIN64
+#define DSDWORD_PTR "ds:dword ptr"
+#define DSWORD_PTR "ds:word ptr"
+#else
+#define DSDWORD_PTR "dword ptr"
+#define DSWORD_PTR "word ptr"
+#endif
+
 enum class tokenstat {NOT_WHITESPACE, WHITESPACE, TOKEN_AVAILABLE, LINE_DONE, FILE_DONE, PARSED_OKAY};
 enum class segtype {NOSEG, DATASEG, TEXTSEG};
 
@@ -445,7 +453,7 @@ void emitoneoperandl (void)
 {
 
 	printf (" ");
-	emitanoperand (1, "ds:dword ptr", 1);
+	emitanoperand (1, DSDWORD_PTR, 1);
 }
 
 
@@ -461,7 +469,7 @@ void emitoneoperandw (void)
 {
 
 	printf (" ");
-	emitanoperand (1, "ds:word ptr", 1);
+	emitanoperand (1, DSWORD_PTR, 1);
 }
 
 
@@ -469,9 +477,9 @@ void emittwooperandsl (void)
 {
 
 	printf (" ");
-	emitanoperand (2, "ds:dword ptr", 1);
+	emitanoperand (2, DSDWORD_PTR, 1);
 	printf (",");
-	emitanoperand (1, "ds:dword ptr", 1);
+	emitanoperand (1, DSDWORD_PTR, 1);
 }
 
 
@@ -489,9 +497,9 @@ void emittwooperandsw (void)
 {
 
 	printf (" ");
-	emitanoperand (2, "ds:word ptr", 1);
+	emitanoperand (2, DSWORD_PTR, 1);
 	printf (",");
-	emitanoperand (1, "ds:word ptr", 1);
+	emitanoperand (1, DSWORD_PTR, 1);
 }
 
 
@@ -501,7 +509,7 @@ void emit_0_or_1_operandsl (void)
 	if (tokennum == 2)
 	{
 		printf (" ");
-		emitanoperand (1, "ds:dword ptr", 1);
+		emitanoperand (1, DSDWORD_PTR, 1);
 	}
 }
 
@@ -513,14 +521,14 @@ void emit_1_or_2_operandsl (void)
 	if (tokennum == 2)
 	{
 		printf (" ");
-		emitanoperand (1, "ds:dword ptr", 1);
+		emitanoperand (1, DSDWORD_PTR, 1);
 	}
 	else if (tokennum == 3)
 	{
 		printf (" ");
-		emitanoperand (2, "ds:dword ptr", 1);
+		emitanoperand (2, DSDWORD_PTR, 1);
 		printf (",");
-		emitanoperand (1, "ds:dword ptr", 1);
+		emitanoperand (1, DSDWORD_PTR, 1);
 	}
 	else
 	{
@@ -543,7 +551,7 @@ void emit_1_or_2_operandsl_vartext (char *str0, char *str1)
 	if (tokennum == 2)
 	{
 		printf (" %s ", str0);
-		emitanoperand (1, "ds:dword ptr", 1);
+		emitanoperand (1, DSDWORD_PTR, 1);
 	}
 	else if (tokennum == 3)
 	{
@@ -552,9 +560,9 @@ void emit_1_or_2_operandsl_vartext (char *str0, char *str1)
 		else
 			printf (" %s ", str1);
 
-		emitanoperand (2, "ds:dword ptr", 1);
+		emitanoperand (2, DSDWORD_PTR, 1);
 		printf (",");
-		emitanoperand (1, "ds:dword ptr", 1);
+		emitanoperand (1, DSDWORD_PTR, 1);
 	}
 	else
 	{
@@ -1022,9 +1030,10 @@ tokenstat parseline (void)
 void main (int argc, char **argv)
 {
 	tokenstat	stat;
-
+#ifndef WIN64
 	printf (" .386P\n"
             " .model FLAT\n");
+#endif
 	int_inline = 1;
 	int_outline = 3;
 
