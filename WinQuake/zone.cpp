@@ -39,15 +39,17 @@ all big things are allocated on the hunk.
 */
 
 CMemCache* g_MemCache;
+CMemCacheSystem		cache_head = {};
+
 /*
 template<typename T>
-extern CMemCacheSystem<T>* test_head;
+extern CMemCacheSystem* test_head;
 
 template<typename T>
-CMemCacheSystem<T>* test_head = new CMemCacheSystem<T>;
+CMemCacheSystem* test_head = new CMemCacheSystem;
 
 template<typename T>
-CMemCacheSystem<T>		cache_head = *test_head<T>;
+CMemCacheSystem		cache_head = *test_head<T>;
 */
 
 byte* hunk_base;
@@ -430,7 +432,65 @@ CMemCache::CMemCache() : mainzone(NULL)
 	if (!mainzone)
 	{
 		mainzone = new CMemZone;
+
+		// Cmd_AddCommand("flush", Cache_Flush_Callback<flush_cache_callback>());
 	}
+}
+/*
+CMemCacheSystem::CMemCacheSystem()
+{
+	size = 0;
+
+	//next = (class CMemCacheSystem*)calloc(1, sizeof(class CMemCacheSystem));
+	//prev = (class CMemCacheSystem*)calloc(1, sizeof(class CMemCacheSystem));
+	//lru_next = (class CMemCacheSystem*)calloc(1, sizeof(class CMemCacheSystem));
+	//lru_prev = (class CMemCacheSystem*)calloc(1, sizeof(class CMemCacheSystem));
+
+	//next = (class CMemCacheSystem*)calloc(1, sizeof(class CMemCacheSystem));
+	//prev = (class CMemCacheSystem*)calloc(1, sizeof(class CMemCacheSystem));
+	//lru_next = (class CMemCacheSystem*)calloc(1, sizeof(class CMemCacheSystem));
+	//lru_prev = (class CMemCacheSystem*)calloc(1, sizeof(class CMemCacheSystem));
+
+	ConstructList();
+
+}
+
+void CMemCacheSystem::ConstructList()
+{
+	next = NULL;
+	prev = NULL;
+	lru_next = NULL;
+	lru_prev = NULL;
+}
+
+*/
+
+void CMemCache::Cache_UnlinkLRU(CMemCacheSystem* cs)
+{
+	if (cs)
+	{
+		if (!cs->lru_next || !cs->lru_prev)
+			Sys_Error("Cache_UnlinkLRU: NULL link");
+
+		if (cs->lru_next && cs->lru_prev)
+		{
+			cs->lru_next->lru_prev = cs->lru_prev;
+			cs->lru_prev->lru_next = cs->lru_next;
+		}
+
+		cs->lru_prev = cs->lru_next = NULL;
+	}
+}
+
+void CMemCache::Cache_MakeLRU(CMemCacheSystem* cs)
+{
+	if (cs->lru_next || cs->lru_prev)
+		Sys_Error("Cache_MakeLRU: active link");
+
+	cache_head.lru_next->lru_prev = cs;
+	cs->lru_next = cache_head.lru_next;
+	cs->lru_prev = &cache_head;
+	cache_head.lru_next = cs;
 }
 
 //============================================================================

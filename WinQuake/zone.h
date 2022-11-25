@@ -104,7 +104,7 @@ public:
 	int		size;           // including the header and possibly tiny fragments
 	int     tag;            // a tag of 0 is a free block
 	int     id;        		// should be ZONEID
-	CMemBlock<unsigned char>* next, *prev;
+	CMemBlock<byte>* next, *prev;
 	int		pad;			// pad to 64 bit boundary
 
 	T* Base();
@@ -156,48 +156,42 @@ private:
 //
 
 #define CACHENAME_LEN	32
-template<typename T>
 class CMemCacheSystem
 {
 public:
 
-	explicit CMemCacheSystem();
-	void ConstructList();
+	//explicit CMemCacheSystem();
+	//void ConstructList();
 
 	int			size;		// including this header
 
-	cache_user_s<T>* user;
+	cache_user_s* user;
 
 	char			name[CACHENAME_LEN];
-	class CMemCacheSystem<T>* prev, * next;
-	class CMemCacheSystem<T>* lru_prev, * lru_next;	// for LRU flushing
+	class CMemCacheSystem* prev, * next;
+	class CMemCacheSystem* lru_prev, * lru_next;	// for LRU flushing
+
+	template<typename M = CMemBlock<CMemCacheSystem>>
+	static M mem;
 
 };
 
-template<typename T>
-extern CMemCacheSystem<T>*		cache_head;
-
-template<typename T>
-CMemCacheSystem<T>* cache_head = new CMemCacheSystem<T>;
+extern CMemCacheSystem		cache_head;
 
 //template<typename T>
-//CMemCacheSystem<T>		cache_head = {};
+//cache_user_s* CMemCacheSystem::user = {};
+
+template<typename M>
+M CMemCacheSystem::mem = {};
+
+//template<typename T>
+//CMemCacheSystem cache_head = {};
 
 //template<typename T>
 //CMemCacheSystem		cache_head = {};
 
-/*
-template<typename T>
-cache_user_s<T>*	CMemCacheSystem::user = {};
-template<typename T>
-CMemCacheSystem<T>*	CMemCacheSystem::next = {};
-template<typename T>
-CMemCacheSystem<T>*	CMemCacheSystem::prev = {};
-template<typename T>
-CMemCacheSystem<T>*	CMemCacheSystem::lru_prev = {};
-template<typename T>
-CMemCacheSystem<T>*	CMemCacheSystem::lru_next = {};
-*/
+//template<typename T>
+//CMemCacheSystem		cache_head = {};
 
 // CMemCache* g_MemCache;
 
@@ -310,7 +304,7 @@ public:
 	T* Hunk_TempAlloc(int size);
 
 	template<typename T>
-	void Cache_Move(CMemCacheSystem<T>* c);
+	void Cache_Move(CMemCacheSystem* c);
 
 	void Hunk_Check(void);
 
@@ -320,10 +314,10 @@ public:
 	template<typename T>
 	void Cache_FreeLow(int new_low_hunk);
 
-	template<typename T>
-	void Cache_MakeLRU(CMemCacheSystem<T>* cs);
-	template<typename T>
-	static void Cache_UnlinkLRU(CMemCacheSystem<T>* cs);
+
+	void Cache_MakeLRU(CMemCacheSystem* cs);
+
+	static void Cache_UnlinkLRU(CMemCacheSystem* cs);
 
 	template<typename T>
 	static void Cache_Flush(void);
@@ -335,23 +329,23 @@ public:
 	void Cache_Print(void);
 
 	template<typename T>
-	T* Cache_Check(cache_user_s<T>* c);
+	T* Cache_Check(cache_user_s* c);
 	// returns the cached data, and moves to the head of the LRU list
 	// if present, otherwise returns NULL
 
-	template<typename T>
+	template<typename T = flush_cache_callback>
 	void Cache_Init(void);
 
 	template<typename T>
-	static void Cache_Free(cache_user_s<T>* c);
+	static void Cache_Free(cache_user_s* c);
 
 	template<typename T>
-	T* Cache_Alloc(cache_user_s<T>* c, int size, char* name);
+	T* Cache_Alloc(cache_user_s* c, int size, char* name);
 	// Returns NULL if all purgable data was tossed and there still
 	// wasn't enough room.
 
 	template<typename T>
-	CMemCacheSystem<T>* Cache_TryAlloc(int size, bool nobottom);
+	CMemCacheSystem* Cache_TryAlloc(int size, bool nobottom);
 
 	void Cache_Report(void);
 	void Cache_Compact(void);
@@ -359,44 +353,11 @@ public:
 private:
 
 	template<typename T>
-	static CMemCacheSystem<T>* m_CacheSystem;
+	static CMemCacheSystem* m_CacheSystem;
 };
 
 template<typename T>
-CMemCacheSystem<T>* CMemCache::m_CacheSystem = {};
-
-
-template<typename T>
-CMemCacheSystem<T>::CMemCacheSystem()
-{
-	size = 0;
-
-	//next = (class CMemCacheSystem<T>*)calloc(1, sizeof(class CMemCacheSystem<T>));
-	//prev = (class CMemCacheSystem<T>*)calloc(1, sizeof(class CMemCacheSystem<T>));
-	//lru_next = (class CMemCacheSystem<T>*)calloc(1, sizeof(class CMemCacheSystem<T>));
-	//lru_prev = (class CMemCacheSystem<T>*)calloc(1, sizeof(class CMemCacheSystem<T>));
-
-	/*next = (class CMemCacheSystem<T>*)calloc(1, sizeof(class CMemCacheSystem));
-	prev = (class CMemCacheSystem<T>*)calloc(1, sizeof(class CMemCacheSystem));
-	lru_next = (class CMemCacheSystem<T>*)calloc(1, sizeof(class CMemCacheSystem));
-	lru_prev = (class CMemCacheSystem<T>*)calloc(1, sizeof(class CMemCacheSystem));*/
-
-	ConstructList();
-
-	user = (cache_user_s<T>*)calloc(1, sizeof(cache_user_s<T>));
-
-
-}
-
-template<typename T>
-void CMemCacheSystem<T>::ConstructList()
-{
-	next = NULL;
-	prev = NULL;
-	lru_next = NULL;
-	lru_prev = NULL;
-}
-
+CMemCacheSystem* CMemCache::m_CacheSystem = {};
 
 /*
 ============
@@ -408,43 +369,10 @@ template<typename T>
 void CMemCache::Cache_Init(void)
 {
 
-	//cache_head<T> = new CMemCacheSystem<T>;
-
-	const auto& test = cache_head<T>;
-
-	cache_head<T>->next = cache_head<T>->prev = cache_head<T>;
-	cache_head<T>->lru_next = cache_head<T>->lru_prev = cache_head<T>;
+	cache_head.next = cache_head.prev = &cache_head;
+	cache_head.lru_next = cache_head.lru_prev = &cache_head;
 
 	Cmd_AddCommand("flush", Cache_Flush_Callback<T>());
-}
-
-template<typename T>
-void CMemCache::Cache_UnlinkLRU(CMemCacheSystem<T>* cs)
-{
-	if (cs)
-	{
-		if (!cs->lru_next || !cs->lru_prev)
-			Sys_Error("Cache_UnlinkLRU: NULL link");
-
-		if (cs->lru_next && cs->lru_prev)
-		{
-			cs->lru_next->lru_prev = cs->lru_prev;
-			cs->lru_prev->lru_next = cs->lru_next;
-		}
-
-		cs->lru_prev = cs->lru_next = NULL;
-	}
-}
-template<typename T>
-void CMemCache::Cache_MakeLRU(CMemCacheSystem<T>* cs)
-{
-	if (cs->lru_next || cs->lru_prev)
-		Sys_Error("Cache_MakeLRU: active link");
-
-	cache_head<T>->lru_next->lru_prev = cs;
-	cs->lru_next = cache_head<T>->lru_next;
-	cs->lru_prev = cache_head<T>;
-	cache_head<T>->lru_next = cs;
 }
 
 /*
@@ -456,9 +384,9 @@ Cache_Print
 template<typename T>
 void CMemCache::Cache_Print(void)
 {
-	CMemCacheSystem<T>* cd;
+	CMemCacheSystem* cd;
 
-	for (cd = cache_head<T>->next; cd != cache_head<T>; cd = cd->next)
+	for (cd = cache_head.next; cd != cache_head; cd = cd->next)
 	{
 		Con_Printf("%8i : %s\n", cd->size, cd->name);
 	}
@@ -470,26 +398,20 @@ Cache_Check
 ==============
 */
 template<typename T>
-T* CMemCache::Cache_Check(cache_user_s<T>* c)
+T* CMemCache::Cache_Check(cache_user_s* c)
 {
-//	T* ca;
-	CMemCacheSystem<T>* cs;
+	CMemCacheSystem* cs;
 
 	if (!c->data)
 		return NULL;
 
-	// cs = ((CMemCacheSystem<T>*)c->data - sizeof(T)); // - sizeof(T); // - 1;
-
-	/*cs = ((CMemCacheSystem<T>*)c->data) - sizeof(T);
-
-	if (!cs)*/
-		cs = new (c) CMemCacheSystem<T>;
+	cs = ((CMemCacheSystem*)c->data) - 1;
 
 	// move to head of LRU
-	Cache_UnlinkLRU<T>(cs);
-	Cache_MakeLRU<T>(cs);
+	Cache_UnlinkLRU(cs);
+	Cache_MakeLRU(cs);
 
-	return c->data;
+	return (T*)c->data;
 }
 
 /*
@@ -500,14 +422,14 @@ Frees the memory and removes it from the LRU list
 ==============
 */
 template<typename T>
-void CMemCache::Cache_Free(cache_user_s<T>* c)
+void CMemCache::Cache_Free(cache_user_s* c)
 {
-	CMemCacheSystem<T>* cs;
+	CMemCacheSystem* cs;
 
 	if (!c->data)
 		Sys_Error("Cache_Free: not allocated");
 
-	cs = ((CMemCacheSystem<T>*)c->data) - 1;
+	cs = ((CMemCacheSystem*)c->data) - 1;
 
 	if (cs)
 	{
@@ -518,7 +440,7 @@ void CMemCache::Cache_Free(cache_user_s<T>* c)
 
 	c->data = NULL;
 
-	Cache_UnlinkLRU<T>(cs);
+	Cache_UnlinkLRU(cs);
 }
 
 
@@ -532,19 +454,23 @@ Throw things out until the hunk can be expanded to the given point
 template<typename T>
 void CMemCache::Cache_FreeHigh(int new_high_hunk)
 {
-	CMemCacheSystem<T>* c = NULL, * prev = NULL;
+	CMemCacheSystem* c = NULL, * prev = NULL;
 
 	while (1)
 	{
-		c = cache_head<T>->prev;
+
+		// Missi: so this is a tricky one. with templates, it's always gonna expect the type it was compiled with,
+		// not an arbitrary void pointer. we have to run Cache_Init again to get a variant of cache_head with the
+		// new type
+		c = cache_head.prev;
 		if (c)
 		{
-			if (c == cache_head<T>)
+			if (c == &cache_head)
 				return;		// nothing in cache at all
 			if ((byte*)c + c->size <= hunk_base + hunk_size - new_high_hunk)
 				return;		// there is space to grow the hunk
 			if (c == prev)
-				Cache_Free(c->user);	// didn't move out of the way
+				Cache_Free<T>(c->user);	// didn't move out of the way
 			else
 			{
 				Cache_Move<T>(c);	// try to move it
@@ -571,12 +497,16 @@ Throw things out until the hunk can be expanded to the given point
 template<typename T>
 void CMemCache::Cache_FreeLow(int new_low_hunk)
 {
-	CMemCacheSystem<T>* c;
+	CMemCacheSystem* c = NULL;
 
 	while (1)
 	{
-		c = cache_head<T>->next;
-		if (c == cache_head<T>)
+
+		// Missi: so this is a tricky one. with templates, it's always gonna expect the type it was compiled with,
+		// not an arbitrary void pointer. we have to run Cache_Init again to get a variant of cache_head with the
+		// new type
+		c = cache_head.next;
+		if (c == &cache_head)
 			return;		// nothing in cache at all
 		if ((byte*)c >= hunk_base + new_low_hunk)
 			return;		// there is space to grow the hunk
@@ -593,40 +523,40 @@ Size should already include the header and padding
 ============
 */
 template<typename T>
-CMemCacheSystem<T>* CMemCache::Cache_TryAlloc(int size, bool nobottom)
+CMemCacheSystem* CMemCache::Cache_TryAlloc(int size, bool nobottom)
 {
-	CMemCacheSystem<T>* cs, *c_new;
+	CMemCacheSystem* cs, *c_new;
 
 	// is the cache completely empty?
 
-	if (!nobottom && cache_head<T>->prev == cache_head<T>)
+	if (!cache_head.prev)
+		cache_head.prev = {};
+
+	if (!nobottom && cache_head.prev == &cache_head)
 	{
 		if (hunk_size - hunk_high_used - hunk_low_used < size)
 			Sys_Error("Cache_TryAlloc: %i is greater then free hunk", size);
 
-		c_new = (CMemCacheSystem<T>*)(hunk_base + hunk_low_used);
+		c_new = (CMemCacheSystem*)(hunk_base + hunk_low_used);
 		memset(c_new, 0, sizeof(*c_new));
 		c_new->size = size;
 
-		cache_head<T>->prev = cache_head<T>->next = c_new;
-		c_new->prev = c_new->next = cache_head<T>;
+		cache_head.prev = cache_head.next = c_new;
+		c_new->prev = c_new->next = &cache_head;
 
-		Cache_MakeLRU<T>(c_new);
+		Cache_MakeLRU(c_new);
 		m_CacheSystem<T> = c_new;
 		return c_new;
 	}
 
 	// search from the bottom up for space
 
-	c_new = (CMemCacheSystem<T>*)(hunk_base + hunk_low_used);
-
-	auto& head = cache_head<T>;
-
-	cs = cache_head<T>->next;
+	c_new = (CMemCacheSystem*)(hunk_base + hunk_low_used);
+	cs = cache_head.next;
 
 	do
 	{
-		if (!nobottom || cs != cache_head<T>->next)
+		if (!nobottom || cs != cache_head.next)
 		{
 			if ((byte*)cs - (byte*)c_new >= size)
 			{	// found space
@@ -638,7 +568,7 @@ CMemCacheSystem<T>* CMemCache::Cache_TryAlloc(int size, bool nobottom)
 				cs->prev->next = c_new;
 				cs->prev = c_new;
 
-				Cache_MakeLRU<T>(c_new);
+				Cache_MakeLRU(c_new);
 
 				m_CacheSystem<T> = c_new;
 				return c_new;
@@ -646,10 +576,10 @@ CMemCacheSystem<T>* CMemCache::Cache_TryAlloc(int size, bool nobottom)
 		}
 
 		// continue looking		
-		c_new = (CMemCacheSystem<T>*)((byte*)cs + cs->size);
+		c_new = (CMemCacheSystem*)((byte*)cs + cs->size);
 		cs = cs->next;
 
-	} while (cs != cache_head<T>);
+	} while (cs != &cache_head);
 
 	// try to allocate one at the very end
 	if (hunk_base + hunk_size - hunk_high_used - (byte*)c_new >= size)
@@ -657,12 +587,12 @@ CMemCacheSystem<T>* CMemCache::Cache_TryAlloc(int size, bool nobottom)
 		memset(c_new, 0, sizeof(*c_new));
 		c_new->size = size;
 
-		c_new->next = cache_head<T>;
-		c_new->prev = cache_head<T>->prev;
-		cache_head<T>->prev->next = c_new;
-		cache_head<T>->prev = c_new;
+		c_new->next = &cache_head;
+		c_new->prev = cache_head.prev;
+		cache_head.prev->next = c_new;
+		cache_head.prev = c_new;
 
-		Cache_MakeLRU<T>(c_new);
+		Cache_MakeLRU(c_new);
 
 		m_CacheSystem<T> = c_new;
 		return c_new;
@@ -687,7 +617,7 @@ void CMemCache::Memory_Init(T* buf, int size)
 	hunk_low_used = 0;
 	hunk_high_used = 0;
 
-	Cache_Init<T>();
+	Cache_Init();
 	p = common->COM_CheckParm("-zone");
 	if (p)
 	{
@@ -706,9 +636,9 @@ Cache_Alloc
 ==============
 */
 template<typename T>
-T* CMemCache::Cache_Alloc(cache_user_s<T>* c, int size, char* name)
+T* CMemCache::Cache_Alloc(cache_user_s* c, int size, char* name)
 {
-	CMemCacheSystem<T>* cs;
+	CMemCacheSystem* cs;
 
 	if (c->data)
 		Sys_Error("Cache_Alloc: allready allocated");
@@ -716,7 +646,7 @@ T* CMemCache::Cache_Alloc(cache_user_s<T>* c, int size, char* name)
 	if (size <= 0)
 		Sys_Error("Cache_Alloc: size %i", size);
 
-	size = (size + sizeof(CMemCacheSystem<T>) + 15) & ~15;
+	size = (size + sizeof(CMemCacheSystem) + 15) & ~15;
 
 	// find memory for it	
 	while (1)
@@ -725,16 +655,16 @@ T* CMemCache::Cache_Alloc(cache_user_s<T>* c, int size, char* name)
 		if (cs)
 		{
 			strncpy(cs->name, name, sizeof(cs->name) - 1);
-			c->data = (T*)(cs + 1);
+			c->data = (byte*)(cs + 1);
 			cs->user = c;
 			break;
 		}
 
 		// free the least recently used cahedat
-		if (cache_head<T>->lru_prev == cache_head<T>)
+		if (cache_head.lru_prev == &cache_head)
 			Sys_Error("Cache_Alloc: out of memory");
 		// not enough memory at all
-		Cache_Free<T>(cache_head<T>->lru_prev->user);
+		Cache_Free<T>(cache_head.lru_prev->user);
 	}
 
 	return Cache_Check<T>(c);
@@ -750,8 +680,8 @@ Throw everything out, so new data will be demand cached
 template<typename T>
 void CMemCache::Cache_Flush(void)
 {
-	while (cache_head<T>->next != cache_head<T>)
-		Cache_Free<T>(cache_head<T>->next->user);	// reclaim the space
+	while (cache_head.next != &cache_head)
+		Cache_Free<T>(cache_head.next->user);	// reclaim the space
 }
 
 /*
@@ -760,9 +690,9 @@ Cache_Move
 ===========
 */
 template<typename T>
-void CMemCache::Cache_Move(CMemCacheSystem<T>* c)
+void CMemCache::Cache_Move(CMemCacheSystem* c)
 {
-	CMemCacheSystem<T>* c_new;
+	CMemCacheSystem* c_new;
 
 	// we are clearing up space at the bottom, so only allocate it late
 	c_new = Cache_TryAlloc<T>(c->size, true);
@@ -772,17 +702,17 @@ void CMemCache::Cache_Move(CMemCacheSystem<T>* c)
 
 		const auto& user = c->user;
 
-		Q_memcpy(c_new + 1, c + 1, c->size - sizeof(CMemCacheSystem<T>));
+		Q_memcpy(c_new + 1, c + 1, c->size - sizeof(CMemCacheSystem));
 		c_new->user = user;
 		Q_memcpy(c_new->name, c->name, sizeof(c_new->name));
-		Cache_Free(user);
-		c_new->user->data = (T*)(c_new + 1);
+		Cache_Free<T>(user);
+		c_new->user->data = (byte*)(c_new + 1);
 	}
 	else
 	{
 		//		Con_Printf ("cache_move failed\n");
 
-		Cache_Free(c->user);		// tough luck...
+		Cache_Free<T>(c->user);		// tough luck...
 	}
 }
 
@@ -985,7 +915,7 @@ inline void CMemBlock<T, I>::Purge()
 {
 	if (m_pMemory)
 	{
-		free(m_pMemory);
+		free((void*)m_pMemory);
 		m_pMemory = 0;
 	}
 	size = 0;

@@ -87,7 +87,7 @@ CQuakePic* CSoftwareRenderer::Draw_CachePic (char *path)
 //
 // load the pic from disk
 //
-	COM_LoadCacheFile (path, (cache_user_s<T>*)&pic->cache);
+	COM_LoadCacheFile (path, (cache_user_s*)&pic->cache);
 	
 	dat = (CQuakePic *)pic->cache.data;
 	if (!dat)

@@ -403,8 +403,7 @@ typedef struct model_s
 //
 // additional model data
 //
-	template<typename T>
-	static cache_user_s<T>	cache;		// only access through Mod_Extradata
+	cache_user_s	cache;		// only access through Mod_Extradata
 
 } model_t;
 
@@ -418,9 +417,6 @@ extern model_t	mod_known[MAX_MOD_KNOWN];
 extern int		mod_numknown;
 
 extern cvar_t gl_subdivide_size;
-
-template<typename T>
-cache_user_s<T> model_t::cache = {};
 
 //============================================================================
 
@@ -461,7 +457,7 @@ model_t* Mod_LoadModel(model_t* mod, bool crash)
 	{
 		if (mod->type == mod_alias)
 		{
-			d = g_MemCache->Cache_Check<T>(&mod->cache<T>);
+			d = g_MemCache->Cache_Check<T>(&mod->cache);
 			if (d)
 				return mod;
 		}
@@ -532,15 +528,15 @@ T* Mod_Extradata(model_t* mod)
 {
 	T* r;
 
-	r = g_MemCache->Cache_Check<T>(&mod->cache<T>);
+	r = g_MemCache->Cache_Check<T>(&mod->cache);
 	if (r)
 		return r;
 
 	Mod_LoadModel<T>(mod, true);
 
-	if (!mod->cache<T>.data)
+	if (!mod->cache.data)
 		Sys_Error("Mod_Extradata: caching failed");
-	return mod->cache<T>.data;
+	return (T*)mod->cache.data;
 }
 
 #endif	// __MODEL__

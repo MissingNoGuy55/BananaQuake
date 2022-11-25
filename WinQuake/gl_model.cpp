@@ -193,7 +193,7 @@ void Mod_TouchModel (char *name)
 	if (!mod->needload)
 	{
 		if (mod->type == mod_alias)
-			g_MemCache->Cache_Check<model_t>(&mod->cache<model_t>); // Missi: come back to this later (11/22/2022)
+			g_MemCache->Cache_Check<model_t>(&mod->cache); // Missi: come back to this later (11/22/2022)
 	}
 }
 
@@ -1542,10 +1542,10 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	end = g_MemCache->Hunk_LowMark ();
 	total = end - start;
 	
-	g_MemCache->Cache_Alloc<byte>(&mod->cache<byte>, total, loadname);
-	if (!mod->cache<byte>.data)
+	g_MemCache->Cache_Alloc<byte>(&mod->cache, total, loadname);
+	if (!mod->cache.data)
 		return;
-	memcpy (mod->cache<byte>.data, pheader, total);
+	memcpy (mod->cache.data, pheader, total);
 
 	g_MemCache->Hunk_FreeToLowMark (start);
 }
@@ -1675,7 +1675,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 
 	psprite = static_cast<msprite_t*>(g_MemCache->Hunk_AllocName<msprite_t>(size, loadname));
 
-	mod->cache<msprite_t>.data = psprite;
+	mod->cache.data = (byte*)psprite;
 
 	psprite->type = LittleLong (pin->type);
 	psprite->maxwidth = LittleLong (pin->width);
@@ -1738,7 +1738,7 @@ void Mod_Print (void)
 	Con_Printf ("Cached models:\n");
 	for (i=0, mod=mod_known ; i < mod_numknown ; i++, mod++)
 	{
-		Con_Printf ("%8p : %s\n",mod->cache<model_t>.data, mod->name);
+		Con_Printf ("%8p : %s\n",mod->cache.data, mod->name);
 	}
 }
 
