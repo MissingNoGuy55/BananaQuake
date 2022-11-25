@@ -21,15 +21,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-dprograms_t		*progs;
-dfunction_t		*pr_functions;
+dprograms_t		*progs = {};
+dfunction_t* pr_functions = {};
 char			*pr_strings;
-ddef_t			*pr_fielddefs;
-ddef_t			*pr_globaldefs;
-dstatement_t	*pr_statements;
-globalvars_t	*pr_global_struct;
-float			*pr_globals;			// same as pr_global_struct
-int				pr_edict_size;	// in bytes
+int				pr_stringsize;
+ddef_t			*pr_fielddefs = {};
+ddef_t			*pr_globaldefs = {};
+dstatement_t	*pr_statements = {};
+globalvars_t	*pr_global_struct = {};
+float			*pr_globals = {};			// same as pr_global_struct
+int				pr_edict_size = 0;	// in bytes
 
 unsigned short		pr_crc;
 
@@ -253,7 +254,7 @@ ddef_t *ED_FindGlobal (char *name)
 ED_FindFunction
 ============
 */
-dfunction_t *ED_FindFunction (char *name)
+dfunction_t *ED_FindFunction (const char *name)
 {
 	dfunction_t		*func;
 	int				i;
@@ -261,7 +262,7 @@ dfunction_t *ED_FindFunction (char *name)
 	for (i=0 ; i<progs->numfunctions ; i++)
 	{
 		func = &pr_functions[i];
-		if (!strcmp(pr_strings + func->s_name,name) )
+		if (!strcmp(PR_GetString(func->s_name), name))
 			return func;
 	}
 	return NULL;
@@ -957,7 +958,7 @@ void ED_LoadFromFile (char *data)
 		}
 
 	// look for the spawn function
-		func = ED_FindFunction ( pr_strings + ent->v.classname );
+		func = ED_FindFunction ( PR_GetString(ent->v.classname));
 
 		if (!func)
 		{
@@ -1012,6 +1013,8 @@ void PR_LoadProgs (void)
 	pr_globaldefs = (ddef_t *)((byte *)progs + progs->ofs_globaldefs);
 	pr_fielddefs = (ddef_t *)((byte *)progs + progs->ofs_fielddefs);
 	pr_statements = (dstatement_t *)((byte *)progs + progs->ofs_statements);
+
+	pr_stringsize = progs->numstrings;
 
 	pr_global_struct = (globalvars_t *)((byte *)progs + progs->ofs_globals);
 	pr_globals = (float *)pr_global_struct;

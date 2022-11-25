@@ -10,7 +10,11 @@ struct quakeparms_t
 	int		argc;
 	char** argv;
 	T		membase;
+#ifndef WIN64
 	int		memsize;
+#else
+	size_t	memsize;
+#endif
 };	// Missi: had to be changed from a typedef struct. also moved this from quakedef.h (6/4/2022)
 
 class CQuakeHost

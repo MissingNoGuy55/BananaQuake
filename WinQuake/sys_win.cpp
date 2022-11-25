@@ -786,7 +786,11 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     MSG				msg;
 	quakeparms_t<byte*>	parms;
 	double			time, oldtime, newtime;
+#ifndef WIN64
 	MEMORYSTATUS	lpBuffer;
+#else
+	MEMORYSTATUSEX	lpBuffer;
+#endif
 	static	char	cwd[1024];
 	int				t;
 	RECT			rect;
@@ -800,10 +804,13 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	global_hInstance = hInstance;
 	global_nCmdShow = nCmdShow;
-
+#ifndef WIN64
 	lpBuffer.dwLength = sizeof(MEMORYSTATUS);
 	GlobalMemoryStatus(&lpBuffer);
-
+#else
+	lpBuffer.dwLength = sizeof(MEMORYSTATUSEX);
+	GlobalMemoryStatusEx(&lpBuffer);
+#endif
 	if (!GetCurrentDirectory (sizeof(cwd), cwd))
 		Sys_Error ("Couldn't determine current directory");
 
@@ -874,13 +881,23 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 // take the greater of all the available memory or half the total memory,
 // but at least 8 Mb and no more than 16 Mb, unless they explicitly
 // request otherwise
+
+#ifndef WIN64
 	parms.memsize = lpBuffer.dwAvailPhys;
+#else
+	parms.memsize = lpBuffer.ullAvailPhys;
+#endif
 
 	if (parms.memsize < MINIMUM_WIN_MEMORY)
 		parms.memsize = MINIMUM_WIN_MEMORY;
 
+#ifndef WIN64
 	if (parms.memsize < (lpBuffer.dwTotalPhys >> 1))
 		parms.memsize = lpBuffer.dwTotalPhys >> 1;
+#else
+	if (parms.memsize < (lpBuffer.ullTotalPhys >> 1))
+		parms.memsize = lpBuffer.ullTotalPhys >> 1;
+#endif
 
 	if (parms.memsize > MAXIMUM_WIN_MEMORY)
 		parms.memsize = MAXIMUM_WIN_MEMORY;
@@ -914,7 +931,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 		hinput = GetStdHandle (STD_INPUT_HANDLE);
 		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
-
+#ifndef WIN64
 	// give QHOST a chance to hook into the console
 		if ((t = common->COM_CheckParm ("-HFILE")) > 0)
 		{
@@ -933,7 +950,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			if (t < common->com_argc)
 				heventChild = (HANDLE)Q_atoi (common->com_argv[t+1]);
 		}
-
+#endif
 		g_ConProc->InitConProc (hFile, heventParent, heventChild);
 	}
 

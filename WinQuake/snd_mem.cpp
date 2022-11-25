@@ -234,7 +234,11 @@ void DumpChunks(void)
 		memcpy (str, data_p, 4);
 		data_p += 4;
 		iff_chunk_len = GetLittleLong();
+#ifndef WIN64
 		Con_Printf ("0x%x : %s (%d)\n", (int)(data_p - 4), str, iff_chunk_len);
+#else
+		Con_Printf("0x%x : %s (%d)\n", (long long)(data_p - 4), str, iff_chunk_len);
+#endif
 		data_p += (iff_chunk_len + 1) & ~1;
 	} while (data_p < iff_end);
 }

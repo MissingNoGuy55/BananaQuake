@@ -66,8 +66,11 @@ void InsertLinkAfter (link_t *l, link_t *after);
 // (type *)STRUCT_FROM_LINK(link_t *link, type, member)
 // ent = STRUCT_FROM_LINK(link,entity_t,order)
 // FIXME: remove this mess!
+#ifndef WIN64
 #define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (int)&(((t *)0)->m)))
-
+#else
+#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (long long)&(((t *)0)->m)))
+#endif
 //============================================================================
 
 #ifndef NULL

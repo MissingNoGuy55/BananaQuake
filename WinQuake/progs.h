@@ -53,6 +53,7 @@ typedef struct edict_s
 extern	dprograms_t		*progs;
 extern	dfunction_t		*pr_functions;
 extern	char			*pr_strings;
+extern	int				pr_stringsize;
 extern	ddef_t			*pr_globaldefs;
 extern	ddef_t			*pr_fielddefs;
 extern	dstatement_t	*pr_statements;
@@ -67,6 +68,8 @@ void PR_Init (void);
 
 void PR_ExecuteProgram (func_t fnum);
 void PR_LoadProgs (void);
+
+const char* PR_GetString(int num); // Missi: brevity function from QuakeSpasm (11/24/2022)
 
 void PR_Profile_f (void);
 
