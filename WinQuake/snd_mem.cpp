@@ -135,7 +135,7 @@ sfxcache_t * CSoundSystemWin::S_LoadSound (sfx_t *s)
 
 	len = len * info.width * info.channels;
 
-	sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Alloc<sfxcache_t>( &s->cache, len + sizeof(sfxcache_t), s->name));
+	sc = g_MemCache->Cache_Alloc<sfxcache_t>( &s->cache, len + sizeof(sfxcache_t), s->name);
 	if (!sc)
 		return NULL;
 	

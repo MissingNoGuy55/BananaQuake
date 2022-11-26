@@ -207,7 +207,7 @@ void CSoundSystemWin::S_Init (void)
 		shm->soundalive = true;
 		shm->gamealive = true;
 		shm->submission_chunk = 1;
-		shm->buffer = g_MemCache->Hunk_AllocName<unsigned char>(1<<16, "shmbuf");
+		shm->buffer = g_MemCache->Hunk_AllocName<byte>(1<<16, "shmbuf");
 	}
 
 	Con_Printf ("Sound sampling rate: %i\n", shm->speed);
@@ -935,7 +935,7 @@ void CSoundInternal::S_SoundList(void)
 	for (i=0; i<num_sfx; i++, sfx++)
 	{
 		sfx = known_sfx[i];
-		sc = static_cast<sfxcache_t*>(g_MemCache->Cache_Check<sfxcache_t>(&sfx->cache));
+		sc = g_MemCache->Cache_Check<sfxcache_t>(&sfx->cache);
 		if (!sc)
 			continue;
 		size = sc->length*sc->width*(sc->stereo+1);

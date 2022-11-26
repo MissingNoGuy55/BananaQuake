@@ -234,7 +234,8 @@ setmodel(entity, model)
 void PF_setmodel (void)
 {
 	edict_t	*e;
-	char	*m, **check;
+	const char* m;
+	const char** check;
 	model_t	*mod;
 	int		i;
 
@@ -505,8 +506,8 @@ PF_ambientsound
 */
 void PF_ambientsound (void)
 {
-	char		**check;
-	char		*samp;
+	const char		**check;
+	const char		*samp;
 	float		*pos;
 	float 		vol, attenuation;
 	int			i, soundnum;
@@ -557,7 +558,7 @@ Larger attenuations will drop off.
 */
 void PF_sound (void)
 {
-	char		*sample;
+	const char		*sample;
 	int			channel;
 	edict_t		*entity;
 	int 		volume;
@@ -808,7 +809,7 @@ stuffcmd (clientent, value)
 void PF_stuffcmd (void)
 {
 	int		entnum;
-	char	*str = "";
+	const char	*str = "";
 	client_t	*old = NULL;
 	
 	entnum = G_EDICTNUM(OFS_PARM0);
@@ -833,7 +834,7 @@ localcmd (string)
 */
 void PF_localcmd (void)
 {
-	char	*str;
+	const char	*str;
 	
 	str = G_STRING(OFS_PARM0);	
 	Cbuf_AddText (str);
@@ -848,7 +849,7 @@ float cvar (string)
 */
 void PF_cvar (void)
 {
-	char	*str;
+	const char	*str;
 	
 	str = G_STRING(OFS_PARM0);
 	
@@ -864,7 +865,7 @@ float cvar (string)
 */
 void PF_cvar_set (void)
 {
-	char	*var, *val;
+	const char	*var, *val;
 	
 	var = G_STRING(OFS_PARM0);
 	val = G_STRING(OFS_PARM1);
@@ -1029,7 +1030,7 @@ void PF_Find (void)
 {
 	int		e;	
 	int		f;
-	char	*s, *t;
+	const char	*s, *t;
 	edict_t	*ed;
 
 	e = G_EDICTNUM(OFS_PARM0);
@@ -1057,7 +1058,7 @@ void PF_Find (void)
 }
 #endif
 
-void PR_CheckEmptyString (char *s)
+void PR_CheckEmptyString (const char *s)
 {
 	if (s[0] <= ' ')
 		PR_RunError ("Bad string");
@@ -1070,7 +1071,7 @@ void PF_precache_file (void)
 
 void PF_precache_sound (void)
 {
-	char	*s;
+	const char	*s;
 	int		i;
 	
 	if (sv.state != ss_loading)
@@ -1095,7 +1096,7 @@ void PF_precache_sound (void)
 
 void PF_precache_model (void)
 {
-	char	*s;
+	const char	*s;
 	int		i;
 	
 	if (sv.state != ss_loading)
@@ -1225,7 +1226,7 @@ void(float style, string value) lightstyle
 void PF_lightstyle (void)
 {
 	int		style;
-	char	*val;
+	const char	*val;
 	client_t	*client;
 	int			j;
 	
@@ -1654,7 +1655,7 @@ void PF_changelevel (void)
 	else
 		Cbuf_AddText (va("changelevel2 %s %s\n",s1, s2));
 #else
-	char	*s;
+	const char	*s;
 
 // make sure we don't issue two changelevels
 	if (svs.changelevel_issued)

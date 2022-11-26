@@ -32,6 +32,10 @@ globalvars_t	*pr_global_struct = {};
 float			*pr_globals = {};			// same as pr_global_struct
 int				pr_edict_size = 0;	// in bytes
 
+int		pr_maxknownstrings;
+int		pr_numknownstrings;
+const char** pr_knownstrings = {};
+
 unsigned short		pr_crc;
 
 int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,sizeof(void *)/4};
@@ -645,7 +649,7 @@ void ED_WriteGlobals (FILE *f)
 ED_ParseGlobals
 =============
 */
-void ED_ParseGlobals (char *data)
+void ED_ParseGlobals (const char *data)
 {
 	char	keyname[64];
 	ddef_t	*key;
@@ -695,7 +699,7 @@ char *ED_NewString (char *string)
 	int		i,l;
 	
 	l = strlen(string) + 1;
-	cnew = static_cast<char*>(g_MemCache->Hunk_Alloc<char>(l));
+	cnew = g_MemCache->Hunk_Alloc<char>(l);
 	cnew_p = cnew;
 
 	for (i=0 ; i< l ; i++)
@@ -798,7 +802,7 @@ ed should be a properly initialized empty edict.
 Used for initial level load and for savegames.
 ====================
 */
-char *ED_ParseEdict (char *data, edict_t *ent)
+const char *ED_ParseEdict (const char *data, edict_t *ent)
 {
 	ddef_t		*key;
 	bool	anglehack;
@@ -901,7 +905,7 @@ Used for both fresh maps and savegame loads.  A fresh map would also need
 to call ED_CallSpawnFunctions () to let the objects initialize themselves.
 ================
 */
-void ED_LoadFromFile (char *data)
+void ED_LoadFromFile (const char *data)
 {	
 	edict_t		*ent;
 	int			inhibit;
@@ -1015,6 +1019,10 @@ void PR_LoadProgs (void)
 	pr_statements = (dstatement_t *)((byte *)progs + progs->ofs_statements);
 
 	pr_stringsize = progs->numstrings;
+
+	pr_numknownstrings = 0;
+	pr_maxknownstrings = 0;
+	PR_SetEngineString("");
 
 	pr_global_struct = (globalvars_t *)((byte *)progs + progs->ofs_globals);
 	pr_globals = (float *)pr_global_struct;

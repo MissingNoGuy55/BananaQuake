@@ -119,7 +119,7 @@ void CGLRenderer::SubdividePolygon (int numverts, float *verts)
 		return;
 	}
 
-	poly = static_cast<glpoly_t*>(g_MemCache->Hunk_Alloc<glpoly_t>(sizeof(glpoly_t) + (numverts-4) * VERTEXSIZE*sizeof(float)));
+	poly = g_MemCache->Hunk_Alloc<glpoly_t>(sizeof(glpoly_t) + (numverts-4) * VERTEXSIZE*sizeof(float));
 	poly->next = warpface->polys;
 	warpface->polys = poly;
 	poly->numverts = numverts;

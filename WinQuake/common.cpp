@@ -145,8 +145,11 @@ void InsertLinkAfter (link_t *l, link_t *after)
 void Q_memset (void *dest, int fill, int count)
 {
 	int             i;
-	
+#ifndef WIN64	
 	if ( (((long)dest | count) & 3) == 0)
+#else
+	if ( (((long long)dest | count) & 3) == 0)
+#endif
 	{
 		count >>= 2;
 		fill = fill | (fill<<8) | (fill<<16) | (fill<<24);
@@ -161,8 +164,11 @@ void Q_memset (void *dest, int fill, int count)
 void Q_memcpy (void *dest, void *src, int count)
 {
 	int             i;
-	
-	if (( ( (long)dest | (long)src | count) & 3) == 0 )
+#ifndef WIN64	
+	if ((((long)dest | (long)src | count) & 3) == 0 )
+#else
+	if ((((long long)dest | (long long)src | count) & 3) == 0)
+#endif
 	{
 		count>>=2;
 		for (i=0 ; i<count ; i++)
@@ -607,12 +613,12 @@ void MSG_WriteFloat (sizebuf_t *sb, float f)
 	SZ_Write (sb, &dat.l, 4);
 }
 
-void MSG_WriteString (sizebuf_t *sb, char *s)
+void MSG_WriteString (sizebuf_t *sb, const char *s)
 {
 	if (!s)
 		SZ_Write (sb, "", 1);
 	else
-		SZ_Write (sb, s, Q_strlen(s)+1);
+		SZ_Write (sb, (char*)s, Q_strlen(s)+1);
 }
 
 void MSG_WriteCoord (sizebuf_t *sb, float f)
@@ -766,7 +772,7 @@ void SZ_Alloc (sizebuf_t *buf, int startsize)
 {
 	if (startsize < 256)
 		startsize = 256;
-	buf->data = static_cast<byte*>(g_MemCache->Hunk_AllocName<byte>(startsize, "sizebuf"));
+	buf->data = g_MemCache->Hunk_AllocName<byte>(startsize, "sizebuf");
 	buf->maxsize = startsize;
 	buf->cursize = 0;
 }
@@ -813,7 +819,7 @@ void SZ_Write (sizebuf_t *buf, void *data, int length)
 	Q_memcpy (SZ_GetSpace(buf,length),data,length);         
 }
 
-void SZ_Print (sizebuf_t *buf, char *data)
+void SZ_Print (sizebuf_t *buf, const char *data)
 {
 	int             len;
 	
@@ -821,9 +827,9 @@ void SZ_Print (sizebuf_t *buf, char *data)
 
 // byte * cast to keep VC++ happy
 	if (buf->data[buf->cursize-1])
-		Q_memcpy ((byte *)SZ_GetSpace(buf, len),data,len); // no trailing 0
+		Q_memcpy ((byte *)SZ_GetSpace(buf, len),(void*)data,len); // no trailing 0
 	else
-		Q_memcpy ((byte *)SZ_GetSpace(buf, len-1)-1,data,len); // write over trailing 0
+		Q_memcpy ((byte *)SZ_GetSpace(buf, len-1)-1,(void*)data,len); // write over trailing 0
 }
 
 
@@ -942,7 +948,7 @@ COM_Parse
 Parse a token out of a string
 ==============
 */
-char * CCommon::COM_Parse (char *data)
+const char * CCommon::COM_Parse (const char *data)
 {
 	int             c;
 	int             len;
@@ -1555,7 +1561,7 @@ pack_t* CCommon::COM_LoadPackFile (char *packfile)
 	if (numpackfiles != PAK0_COUNT)
 		com_modified = true;    // not the original file
 
-	newfiles = static_cast<packfile_t*>(g_MemCache->Hunk_AllocName<packfile_t>(numpackfiles * sizeof(packfile_t), "packfile"));
+	newfiles = g_MemCache->Hunk_AllocName<packfile_t>(numpackfiles * sizeof(packfile_t), "packfile");
 
 	Sys_FileSeek (packhandle, header.dirofs);
 	Sys_FileRead (packhandle, (void *)info, header.dirlen);
@@ -1575,7 +1581,7 @@ pack_t* CCommon::COM_LoadPackFile (char *packfile)
 		newfiles[i].filelen = LittleLong(info[i].filelen);
 	}
 
-	pack = static_cast<pack_t*>(g_MemCache->Hunk_Alloc<pack_t>(sizeof (pack_t)));
+	pack = g_MemCache->Hunk_Alloc<pack_t>(sizeof (pack_t));
 	Q_strcpy (pack->filename, packfile);
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
@@ -1606,7 +1612,7 @@ void CCommon::COM_AddGameDirectory (char *dir)
 //
 // add the directory to the search path
 //
-	search = static_cast<searchpath_t*>(g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t)));
+	search = g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t));
 	Q_strcpy (search->filename, dir);
 	search->next = com_searchpaths;
 	com_searchpaths = search;
@@ -1620,7 +1626,7 @@ void CCommon::COM_AddGameDirectory (char *dir)
 		pak = COM_LoadPackFile (pakfile);
 		if (!pak)
 			break;
-		search = static_cast<searchpath_t*>(g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t)));
+		search = g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t));
 		search->pack = pak;
 		search->next = com_searchpaths;
 		com_searchpaths = search;               
@@ -1714,7 +1720,7 @@ void CCommon::COM_InitFilesystem (void)
 			if (!com_argv[i] || com_argv[i][0] == '+' || com_argv[i][0] == '-')
 				break;
 			
-			search = static_cast<searchpath_t*>(g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t)));
+			search = g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t));
 			if ( !strcmp(COM_FileExtension(com_argv[i]), "pak") )
 			{
 				search->pack = COM_LoadPackFile (com_argv[i]);

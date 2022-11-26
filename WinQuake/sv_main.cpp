@@ -115,7 +115,7 @@ Larger attenuations will drop off.  (max 4 attenuation)
 
 ==================
 */  
-void CQuakeServer::SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
+void CQuakeServer::SV_StartSound (edict_t *entity, int channel, const char *sample, int volume,
     float attenuation)
 {       
     int         sound_num;
@@ -188,7 +188,7 @@ This will be sent on the initial connection and upon each server load.
 */
 void CQuakeServer::SV_SendServerinfo (client_t *client)
 {
-	char			**s;
+	const char			**s;
 	char			message[2048];
 
 	MSG_WriteByte (&client->message, svc_print);
@@ -1098,7 +1098,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 // allocate server memory
 	sv.max_edicts = MAX_EDICTS;
 	
-	sv.edicts = static_cast<edict_t*>(g_MemCache->Hunk_AllocName<edict_t>(sv.max_edicts * pr_edict_size, "edicts"));
+	sv.edicts = g_MemCache->Hunk_AllocName<edict_t>(sv.max_edicts * pr_edict_size, "edicts");
 
 	sv.datagram.maxsize = sizeof(sv.datagram_buf);
 	sv.datagram.cursize = 0;
@@ -1157,7 +1157,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 	ent = EDICT_NUM(0);
 	memset (&ent->v, 0, sizeof(progs->entityfields * 4));
 	ent->free = false;
-	ent->v.model = sv.worldmodel->name - pr_strings;
+	ent->v.model = PR_SetEngineString(sv.worldmodel->name);
 	ent->v.modelindex = 1;		// world model
 	ent->v.solid = SOLID_BSP;
 	ent->v.movetype = MOVETYPE_PUSH;

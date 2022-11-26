@@ -141,7 +141,7 @@ unsigned* CGLRenderer::GL_8to32(byte* in, int pixels, unsigned int* usepal)
 	int i;
 	unsigned* out, * data;
 
-	out = data = (unsigned*)g_MemCache->Hunk_Alloc<unsigned>(pixels * 4);
+	out = data = g_MemCache->Hunk_Alloc<unsigned>(pixels * 4);
 
 	for (i = 0; i < pixels; i++)
 		*out++ = usepal[*in++];
@@ -622,7 +622,7 @@ void CGLRenderer::Draw_Init (void)
 	g_MemCache->Hunk_FreeToLowMark(start);
 
 	// save a texture slot for translated picture
-	translate_texture = (CGLTexture*)g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture), "dummy");
+	translate_texture = g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture), "dummy");
 	translate_texture->texnum = texture_extension_number++; // &gltextures[texture_extension_number++];
 
 	// save slots for scraps

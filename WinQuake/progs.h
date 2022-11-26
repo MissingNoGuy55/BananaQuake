@@ -60,6 +60,10 @@ extern	dstatement_t	*pr_statements;
 extern	globalvars_t	*pr_global_struct;
 extern	float			*pr_globals;			// same as pr_global_struct
 
+extern int		pr_maxknownstrings;
+extern int		pr_numknownstrings;
+extern const char** pr_knownstrings;
+
 extern	int				pr_edict_size;	// in bytes
 
 //============================================================================
@@ -70,6 +74,7 @@ void PR_ExecuteProgram (func_t fnum);
 void PR_LoadProgs (void);
 
 const char* PR_GetString(int num); // Missi: brevity function from QuakeSpasm (11/24/2022)
+int PR_SetEngineString(const char* s);
 
 void PR_Profile_f (void);
 
@@ -81,12 +86,12 @@ string_t	ED_NewString (const char *string);
 
 void ED_Print (edict_t *ed);
 void ED_Write (FILE *f, edict_t *ed);
-char *ED_ParseEdict (char *data, edict_t *ent);
+const char *ED_ParseEdict (const char *data, edict_t *ent);
 
 void ED_WriteGlobals (FILE *f);
-void ED_ParseGlobals (char *data);
+void ED_ParseGlobals (const char *data);
 
-void ED_LoadFromFile (char *data);
+void ED_LoadFromFile (const char *data);
 
 int PR_AllocString(int size, char** ptr);
 
@@ -108,13 +113,13 @@ int NUM_FOR_EDICT(edict_t *e);
 #define	G_EDICT(o) ((edict_t *)((byte *)sv.edicts+ *(int *)&pr_globals[o]))
 #define G_EDICTNUM(o) NUM_FOR_EDICT(G_EDICT(o))
 #define	G_VECTOR(o) (&pr_globals[o])
-#define	G_STRING(o) (pr_strings + *(string_t *)&pr_globals[o])
+#define	G_STRING(o) (PR_GetString(*(string_t *)&pr_globals[o]))
 #define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
 
 #define	E_FLOAT(e,o) (((float*)&e->v)[o])
 #define	E_INT(e,o) (*(int *)&((float*)&e->v)[o])
 #define	E_VECTOR(e,o) (&((float*)&e->v)[o])
-#define	E_STRING(e,o) (pr_strings + *(string_t *)&((float*)&e->v)[o])
+#define	E_STRING(e,o) (PR_GetString(*(string_t *)&((float*)&e->v)[o]))
 
 extern	int		type_size[8];
 

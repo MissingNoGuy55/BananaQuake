@@ -332,73 +332,73 @@ typedef enum {mod_brush, mod_sprite, mod_alias} modtype_t;
 
 typedef struct model_s
 {
-	char		name[MAX_QPATH] = {};
-	bool	needload = false;		// bmodels and sprites don't cache normally
+	char		name[MAX_QPATH];
+	bool	needload;		// bmodels and sprites don't cache normally
 
-	modtype_t	type = {};
-	int			numframes = 0;
-	synctype_t	synctype = {};
+	modtype_t	type;
+	int			numframes;
+	synctype_t	synctype;
 	
-	int			flags = 0;
+	int			flags;
 
 //
 // volume occupied by the model graphics
 //		
-	vec3_t		mins = {}, maxs = {};
-	float		radius = 0.0f;
+	vec3_t		mins, maxs;
+	float		radius;
 
 //
 // solid volume for clipping 
 //
-	bool	clipbox = false;
-	vec3_t		clipmins = {}, clipmaxs = {};
+	bool	clipbox;
+	vec3_t		clipmins, clipmaxs;
 
 //
 // brush model
 //
-	int			firstmodelsurface = 0, nummodelsurfaces = 0;
+	int			firstmodelsurface, nummodelsurfaces;
 
-	int			numsubmodels = 0;
-	dmodel_t* submodels = {};
+	int			numsubmodels;
+	dmodel_t* submodels;
 
-	int			numplanes = 0;
-	mplane_t* planes = {};
+	int			numplanes;
+	mplane_t* planes;
 
-	int			numleafs = 0;		// number of visible leafs, not counting 0
-	mleaf_t* leafs = {};
+	int			numleafs;		// number of visible leafs, not counting 0
+	mleaf_t* leafs;
 
-	int			numvertexes = 0;
-	mvertex_t	*vertexes = {};
+	int			numvertexes;
+	mvertex_t* vertexes;
 
-	int			numedges = 0;
-	medge_t		*edges = {};
+	int			numedges;
+	medge_t* edges;
 
-	int			numnodes = 0;
-	mnode_t		*nodes = {};
+	int			numnodes;
+	mnode_t* nodes;
 
-	int			numtexinfo = 0;
-	mtexinfo_t	*texinfo = {};
+	int			numtexinfo;
+	mtexinfo_t* texinfo;
 
-	int			numsurfaces = 0;
-	msurface_t	*surfaces = {};
+	int			numsurfaces;
+	msurface_t* surfaces;
 
-	int			numsurfedges = 0;
-	int			*surfedges = {};
+	int			numsurfedges;
+	int* surfedges;
 
-	int			numclipnodes = 0;
-	dclipnode_t	*clipnodes = {};
+	int			numclipnodes;
+	dclipnode_t* clipnodes;
 
 	int			nummarksurfaces;
-	msurface_t	**marksurfaces = {};
+	msurface_t** marksurfaces;
 
-	hull_t		hulls[MAX_MAP_HULLS] = {};
+	hull_t		hulls[MAX_MAP_HULLS];
 
-	int			numtextures = 0;
-	texture_t	**textures = {};
+	int			numtextures;
+	texture_t** textures;
 
-	byte		*visdata = {};
-	byte		*lightdata = {};
-	char		*entities = {};
+	byte* visdata;
+	byte* lightdata;
+	char* entities;
 
 //
 // additional model data
@@ -422,7 +422,7 @@ extern cvar_t gl_subdivide_size;
 
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
-model_t *Mod_ForName (char *name, bool crash);
+model_t *Mod_ForName (const char *name, bool crash);
 
 template<typename T>
 model_t* Mod_LoadModel(model_t* mod, bool crash);

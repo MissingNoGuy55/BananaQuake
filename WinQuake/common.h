@@ -48,7 +48,7 @@ void SZ_Free (sizebuf_t *buf);
 void SZ_Clear (sizebuf_t *buf);
 byte *SZ_GetSpace (sizebuf_t *buf, int length);
 void SZ_Write (sizebuf_t *buf, void *data, int length);
-void SZ_Print (sizebuf_t *buf, char *data);	// strcats onto the sizebuf
+void SZ_Print (sizebuf_t *buf, const char *data);	// strcats onto the sizebuf
 
 //============================================================================
 
@@ -128,7 +128,7 @@ void MSG_WriteByte (sizebuf_t *sb, int c);
 void MSG_WriteShort (sizebuf_t *sb, int c);
 void MSG_WriteLong (sizebuf_t *sb, int c);
 void MSG_WriteFloat (sizebuf_t *sb, float f);
-void MSG_WriteString (sizebuf_t *sb, char *s);
+void MSG_WriteString (sizebuf_t *sb, const char *s);
 void MSG_WriteCoord (sizebuf_t *sb, float f);
 void MSG_WriteAngle (sizebuf_t *sb, float f);
 
@@ -206,7 +206,7 @@ class CCommon
 {
 public:
 
-	char* COM_Parse(char* data);
+	const char* COM_Parse(const char* data);
 
 	int COM_CheckParm (const char *parm);
 	void COM_Init (const char *path);

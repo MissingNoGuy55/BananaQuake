@@ -564,7 +564,8 @@ void Host_Loadgame_f (void)
 	FILE	*f;
 	char	mapname[MAX_QPATH];
 	float	time, tfloat;
-	char	str[32768], *start;
+	char	str[32768];
+	const char *start;
 	int		i, r;
 	edict_t	*ent;
 	int		entnum;
@@ -641,8 +642,8 @@ void Host_Loadgame_f (void)
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = static_cast<char*>(g_MemCache->Hunk_Alloc<char>(strlen(str) + 1));
-		Q_strcpy (sv.lightstyles[i], str);
+		sv.lightstyles[i] = g_MemCache->Hunk_Alloc<char>(strlen(str) + 1);
+		sv.lightstyles[i] = str;
 	}
 
 // load the edicts out of the savegame file
@@ -919,7 +920,7 @@ void Host_Name_f (void)
 	if (Cmd_Argc () == 2)
 		newName = Cmd_Argv(1);	
 	else
-		newName = Cmd_Args();
+		strcat(newName, Cmd_Args());
 	newName[15] = 0;
 
 	if (cmd_source == src_command)
@@ -1033,7 +1034,7 @@ void Host_Say(bool teamonly)
 
 	save = host_client;
 
-	p = Cmd_Args();
+	strcat(p, Cmd_Args());
 // remove quotes if present
 	if (*p == '"')
 	{
@@ -1102,7 +1103,7 @@ void Host_Tell_f(void)
 	Q_strcpy(text, host_client->name);
 	Q_strcat(text, ": ");
 
-	p = Cmd_Args();
+	strcat(p, Cmd_Args());
 
 // remove quotes if present
 	if (*p == '"')
@@ -1425,7 +1426,7 @@ Kicks a user off of the server
 void Host_Kick_f (void)
 {
 	char		*who;
-	char		*message = NULL;
+	const char		*message;
 	client_t	*save;
 	int			i;
 	bool	byNumber = false;
@@ -1676,7 +1677,7 @@ edict_t	*FindViewthing (void)
 	for (i=0 ; i<sv.num_edicts ; i++)
 	{
 		e = EDICT_NUM(i);
-		if ( !strcmp (pr_strings + e->v.classname, "viewthing") )
+		if ( !strcmp (PR_GetString(e->v.classname), "viewthing") )
 			return e;
 	}
 	Con_Printf ("No viewthing on map\n");

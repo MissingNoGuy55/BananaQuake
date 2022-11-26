@@ -139,27 +139,70 @@ char *pr_opnames[] =
 char *PR_GlobalString (int ofs);
 char *PR_GlobalStringNoContents (int ofs);
 
+#define	PR_STRING_ALLOCSLOTS	256
+
+static void PR_AllocStringSlots(void)
+{
+	pr_maxknownstrings += PR_STRING_ALLOCSLOTS;
+	Con_Printf("PR_AllocStringSlots: realloc'ing for %d slots\n", pr_maxknownstrings);
+	pr_knownstrings = (const char**)realloc((void*)pr_knownstrings, pr_maxknownstrings * sizeof(char*));
+}
+
 const char* PR_GetString(int num)
 {
 	if (num >= 0 && num < pr_stringsize)
 		return pr_strings + num;
-	/*
+	
 	else if (num < 0 && num >= -pr_numknownstrings)
 	{
 		if (!pr_knownstrings[-1 - num])
 		{
-			Host_Error("PR_GetString: attempt to get a non-existant string %d\n", num);
+			host->Host_Error("PR_GetString: attempt to get a non-existant string %d\n", num);
 			return "";
 		}
 		return pr_knownstrings[-1 - num];
 	}
 	else
 	{
-		Host_Error("PR_GetString: invalid string offset %d\n", num);
+		host->Host_Error("PR_GetString: invalid string offset %d\n", num);
 		return "";
 	}
-	*/
+	
 	return NULL;
+}
+
+int PR_SetEngineString(const char* s)
+{
+	int		i;
+
+	if (!s)
+		return 0;
+
+	if (s >= pr_strings && s <= pr_strings + pr_stringsize - 2)
+		return (int)(s - pr_strings);
+
+	for (i = 0; i < pr_numknownstrings; i++)
+	{
+		if (pr_knownstrings[i] == s)
+			return -1 - i;
+	}
+	// new unknown engine string
+	//Con_DPrintf ("PR_SetEngineString: new engine string %p\n", s);
+#if 0
+	for (i = 0; i < pr_numknownstrings; i++)
+	{
+		if (!pr_knownstrings[i])
+			break;
+	}
+#endif
+	//	if (i >= pr_numknownstrings)
+	//	{
+	if (i >= pr_maxknownstrings)
+		PR_AllocStringSlots();
+	pr_numknownstrings++;
+	//	}
+	pr_knownstrings[i] = s;
+	return -1 - i;
 }
 
 

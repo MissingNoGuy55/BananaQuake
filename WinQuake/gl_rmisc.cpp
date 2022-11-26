@@ -37,7 +37,7 @@ void	CGLRenderer::R_InitTextures (void)
 	byte	*dest;
 
 // create a simple checkerboard texture for the default
-	r_notexture_mip = static_cast<texture_t*>(g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) + 16 * 16 + 8 * 8 + 4 * 4 + 2 * 2, "notexture"));
+	r_notexture_mip = g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) + 16 * 16 + 8 * 8 + 4 * 4 + 2 * 2, "notexture");
 	Q_strcpy(r_notexture_mip->name, "notexture");
 
 	r_notexture_mip->width = r_notexture_mip->height = 16;
@@ -79,7 +79,7 @@ void CGLRenderer::R_InitParticleTexture (void)
 	//
 	// particle texture
 	//
-	particletexture = static_cast<CGLTexture*>(g_MemCache->Hunk_Alloc<CGLTexture>(sizeof(CGLTexture)));
+	particletexture = g_MemCache->Hunk_Alloc<CGLTexture>(sizeof(CGLTexture));
 	particletexture->texnum = texture_extension_number++;
     g_GLRenderer->GL_Bind(particletexture);
 
@@ -110,7 +110,7 @@ Grab six views for environment mapping tests
 */
 void CGLRenderer::R_Envmap_f (void)
 {
-	byte*	buffer = (byte*)g_MemCache->Hunk_Alloc<byte>(256*256*4);	// Missi (3/8/2022)
+	byte*	buffer = g_MemCache->Hunk_Alloc<byte>(256*256*4);	// Missi (3/8/2022)
 	char	name[1024];
 
 	glDrawBuffer  (GL_FRONT);
@@ -242,7 +242,7 @@ void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 	model_t	*model;
 	aliashdr_t *paliashdr;
 	byte	*original;
-	unsigned	*pixels = (unsigned*)g_MemCache->Hunk_Alloc<unsigned>(512 * 256);	// Missi (3/8/2022) TWO MINS BEFORE MIDNIGHT BAYBEEEEEEEEE
+	unsigned	*pixels = g_MemCache->Hunk_Alloc<unsigned>(512 * 256);	// Missi (3/8/2022) TWO MINS BEFORE MIDNIGHT BAYBEEEEEEEEE
 	unsigned	*out;
 	unsigned	scaled_width, scaled_height;
 	int			inwidth, inheight;

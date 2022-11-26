@@ -231,7 +231,7 @@ void CL_ParseServerInfo (void)
 		Con_Printf("Bad maxclients (%u) from server\n", cl.maxclients);
 		return;
 	}
-	cl.scores = static_cast<scoreboard_t*>(g_MemCache->Hunk_AllocName<scoreboard_t>(cl.maxclients*sizeof(*cl.scores), "scores"));
+	cl.scores = g_MemCache->Hunk_AllocName<scoreboard_t>(cl.maxclients*sizeof(*cl.scores), "scores");
 
 // parse gametype
 	cl.gametype = MSG_ReadByte ();
