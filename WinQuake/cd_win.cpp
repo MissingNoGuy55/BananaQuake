@@ -185,7 +185,7 @@ void CDAudio_Stop(void)
 	if (!playing)
 		return;
 
-    if (dwReturn = mciSendCommand(wDeviceID, MCI_STOP, 0, (DWORD_PTR)NULL))
+    if (dwReturn = mciSendCommand(wDeviceID, MCI_STOP, 0, (DWORD_PTR)NULL) != NULL)
 		Con_DPrintf("MCI_STOP failed (%i)", dwReturn);
 
 	wasPlaying = false;
@@ -245,7 +245,6 @@ static void CD_f (void)
 	char	*command;
 	int		ret;
 	int		n;
-	int		startAddress;
 
 	if (Cmd_Argc() < 2)
 		return;
@@ -423,7 +422,6 @@ int CDAudio_Init(void)
 	DWORD_PTR	dwReturn;
 	MCI_OPEN_PARMS	mciOpenParms;
     MCI_SET_PARMS	mciSetParms;
-	MCIERROR		err;
 	int				n;
 
 	if (cls.state == ca_dedicated)
