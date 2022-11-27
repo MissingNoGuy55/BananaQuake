@@ -122,7 +122,7 @@ int CL_GetMessage (void)
 			cl.mviewangles[0][i] = LittleFloat (f);
 		}
 
-		size_t size = 0;
+		int size = 0;
 
 		fread(net_message.data, size, 1, cls.demofile);
 
