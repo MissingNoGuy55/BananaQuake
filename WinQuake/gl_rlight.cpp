@@ -311,16 +311,23 @@ int CGLRenderer::RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 		r = 0;
 		if (lightmap)
 		{
-
+#ifndef WIN64
 			lightmap += dt * ((surf->extents[0]>>4)+1) + ds;
-
+#else
+			lightmap += dt * ((long long)(surf->extents[0] >> 4) + 1) + ds;
+#endif
 			for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ;
 					maps++)
 			{
 				scale = d_lightstylevalue[surf->styles[maps]];
 				r += *lightmap * scale;
+#ifndef WIN64
 				lightmap += ((surf->extents[0]>>4)+1) *
 						((surf->extents[1]>>4)+1);
+#else
+				lightmap += ((long long)(surf->extents[0] >> 4) + 1) *
+					((long long)(surf->extents[1] >> 4) + 1);
+#endif
 			}
 			
 			r >>= 8;

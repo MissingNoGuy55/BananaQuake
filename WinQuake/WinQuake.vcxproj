@@ -803,6 +803,7 @@
     <ClCompile Include="sv_phys.cpp" />
     <ClCompile Include="sv_user.cpp" />
     <ClCompile Include="sys_win.cpp" />
+    <ClCompile Include="tracy\TracyClient.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="vid_win.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>

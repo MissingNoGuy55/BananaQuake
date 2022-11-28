@@ -163,6 +163,7 @@ int Q_strncasecmp (const char *s1, const char *s2, int n);
 int	Q_atoi (const char *str);
 float Q_atof (const char *str);
 int q_vsnprintf(char* str, size_t size, const char* format, va_list args);
+int q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
 
 //============================================================================
 
@@ -215,7 +216,7 @@ public:
 
 	char* COM_SkipPath (char *pathname);
 	void COM_StripExtension (const char *in, char *out);
-	void COM_FileBase (const char *in, char *out);
+	void COM_FileBase(const char* in, char* out, size_t outsize);
 	void COM_DefaultExtension (char *path, const char *extension);
 
 	void COM_WriteFile (const char *filename, void *data, int len);
@@ -309,7 +310,7 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 		return NULL;
 
 	// extract the filename base name for hunk tag
-	common->COM_FileBase(path, base);
+	common->COM_FileBase(path, base, len);
 
 	switch (usehunk)
 	{

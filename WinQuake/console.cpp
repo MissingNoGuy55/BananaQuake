@@ -383,7 +383,7 @@ void Con_Printf (const char *fmt, ...)
 	static bool	inupdate;
 	
 	va_start (argptr,fmt);
-	q_vsnprintf(msg,sizeof(msg),fmt,argptr);
+	q_vsnprintf_s(msg,sizeof(msg), MAXPRINTMSG, fmt,argptr);
 	va_end (argptr);
 	
 // also echo to debugging console

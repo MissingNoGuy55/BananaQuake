@@ -61,194 +61,9 @@ int		hunk_high_used;
 bool	hunk_tempactive;
 int		hunk_tempmark;
 
-/*
-========================
-Z_ClearZone
-========================
-*/
-void CMemZone::Z_ClearZone (CMemZone *zone, int size)
-{
-	CMemBlock<byte>	*block;
-	
-// set the entire zone to one free block
-
-	zone->blocklist.next = zone->blocklist.prev = block =
-		(CMemBlock<byte> *)( (byte *)zone + sizeof(CMemZone) );
-	zone->blocklist.tag = 1;	// in use block
-	zone->blocklist.id = 0;
-	zone->blocklist.size = 0;
-	zone->rover = block;
-	
-	block->prev = block->next = &zone->blocklist;
-	block->tag = 0;			// free block
-	block->id = ZONEID;
-	block->size = size - sizeof(CMemZone);
-}
-
-
-CMemZone::CMemZone() : size(0), blocklist(NULL), rover(NULL)
-{
-}
 
 CMemZone::~CMemZone()
 {
-	memset(&blocklist, 0, sizeof(blocklist));
-	rover = NULL;
-}
-
-/*
-========================
-Z_Free
-========================
-*/
-void CMemZone::Z_Free (void *ptr)
-{
-	CMemBlock<byte>	*block, *other;
-	
-	if (!ptr)
-		Sys_Error ("Z_Free: NULL pointer");
-
-	block = (CMemBlock<byte> *) ( (byte *)ptr - sizeof(CMemBlock<byte>));
-	if (block->id != ZONEID)
-		Sys_Error ("Z_Free: freed a pointer without ZONEID");
-	if (block->tag == 0)
-		Sys_Error ("Z_Free: freed a freed pointer");
-
-	block->tag = 0;		// mark as free
-	
-	other = block->prev;
-	if (!other->tag)
-	{	// merge with previous free block
-		other->size += block->size;
-		other->next = block->next;
-		other->next->prev = other;
-		if (block == rover)
-			rover = other;
-		block = other;
-	}
-	
-	other = block->next;
-	if (!other->tag)
-	{	// merge the next free block onto the end
-		block->size += other->size;
-		block->next = other->next;
-		block->next->prev = block;
-		if (other == rover)
-			rover = block;
-	}
-}
-
-void* CMemZone::Z_TagMalloc (int size, int tag)
-{
-	int		extra = 0;
-	CMemBlock<byte> *start, *rover, *m_new, *base;
-
-	// start = rover = m_new = base = new CMemBlock<byte>(size);
-
-	if (!tag)
-		Sys_Error ("Z_TagMalloc: tried to use a 0 tag");
-
-//
-// scan through the block list looking for the first free block
-// of sufficient size
-//
-	size += sizeof(CMemBlock<byte>);	// account for size of block header
-	size += 4;					// space for memory trash tester
-	size = (size + 7) & ~7;		// align to 8-byte boundary
-	
-	base = g_MemCache->mainzone->rover; // = mainzone->rover;
-	start = base->prev;
-	
-	do
-	{
-		if (this->rover == start)	// scaned all the way around the list
-			return NULL;
-		if (this->rover->tag)
-			base = this->rover = this->rover->next;
-		else
-			this->rover = this->rover->next;
-	} while (base->tag || base->size < size);
-	
-//
-// found a block big enough
-//
-	extra = base->size - size;
-	if (extra >  MINFRAGMENT)
-	{	// there will be a free fragment after the allocated block
-		m_new = (CMemBlock<byte> *) ((byte *)base + size );
-		m_new->size = extra;
-		m_new->tag = 0;			// free block
-		m_new->prev = base;
-		m_new->id = ZONEID;
-		m_new->next = base->next;
-		m_new->next->prev = m_new;
-		base->next = m_new;
-		base->size = size;
-	}
-	
-	base->tag = tag;				// no longer a free block
-	
-	rover = base->next;	// next allocation will start looking here
-	
-	base->id = ZONEID;
-
-// marker for memory trash testing
-	*(int *)((byte *)base + base->size - 4) = ZONEID;
-
-	auto test = ((byte *)base + sizeof(CMemBlock<byte>));
-
-	return (void*)((byte*)base + sizeof(CMemBlock<byte>));
-}
-
-
-/*
-========================
-Z_Print
-========================
-*/
-void CMemZone::Z_Print (CMemZone *zone)
-{
-	CMemBlock<byte>	*block;
-	
-	Con_Printf ("zone size: %i  location: %p\n",size,this);
-	
-	for (block = zone->blocklist.next ; ; block = block->next)
-	{
-		Con_Printf ("block:%p    size:%7i    tag:%3i\n",
-			block, block->size, block->tag);
-		
-		if (block->next == &zone->blocklist)
-			break;			// all blocks have been hit	
-		if ( (byte *)block + block->size != (byte *)block->next)
-			Con_Printf ("ERROR: block size does not touch the next block\n");
-		if ( block->next->prev != block)
-			Con_Printf ("ERROR: next block doesn't have proper back link\n");
-		if (!block->tag && !block->next->tag)
-			Con_Printf ("ERROR: two consecutive free blocks\n");
-	}
-}
-
-
-/*
-========================
-Z_CheckHeap
-========================
-*/
-void CMemZone::Z_CheckHeap(void)
-{
-	CMemBlock<byte>	*block;
-	
-	for (block = blocklist.next ; ; block = block->next)
-	{
-		if (block->next == &blocklist)
-			break;			// all blocks have been hit	
-		if ( (byte *)block + block->size != (byte *)block->next)
-			Sys_Error ("Z_CheckHeap: block size does not touch the next block\n");
-		if ( block->next->prev != block)
-			Sys_Error ("Z_CheckHeap: next block doesn't have proper back link\n");
-		if (!block->tag && !block->next->tag)
-			Sys_Error ("Z_CheckHeap: two consecutive free blocks\n");
-	}
 }
 
 //============================================================================
@@ -424,6 +239,10 @@ Cache_Compact
 ============
 */
 void CMemCache::Cache_Compact (void)
+{
+}
+
+CMemZone::CMemZone() : size(0)
 {
 }
 

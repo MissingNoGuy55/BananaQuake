@@ -207,7 +207,7 @@ void CSoundSystemWin::S_Init (void)
 		shm->soundalive = true;
 		shm->gamealive = true;
 		shm->submission_chunk = 1;
-		shm->buffer = g_MemCache->Hunk_AllocName<byte>(1<<16, "shmbuf");
+		shm->buffer = g_MemCache->Hunk_AllocName<unsigned char>(1<<16, "shmbuf");
 	}
 
 	Con_Printf ("Sound sampling rate: %i\n", shm->speed);

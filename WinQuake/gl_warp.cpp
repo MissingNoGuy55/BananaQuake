@@ -1034,7 +1034,7 @@ void CGLRenderer::R_InitSky (texture_t *mt)
 {
 	int			i, j, p;
 	byte		*src;
-	unsigned	trans[128*128];
+	static unsigned	trans[128*128];
 	unsigned	transpix;
 	int			r, g, b;
 	unsigned	*rgba;

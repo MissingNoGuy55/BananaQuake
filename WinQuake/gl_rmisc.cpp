@@ -237,17 +237,27 @@ void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 {
 	int		top, bottom;
 	byte	translate[256];
+#ifndef WIN64
 	unsigned	translate32[256];
-	int		i, j, s;
-	model_t	*model;
-	aliashdr_t *paliashdr;
-	byte	*original;
 	unsigned	*pixels = g_MemCache->Hunk_Alloc<unsigned>(512 * 256);	// Missi (3/8/2022) TWO MINS BEFORE MIDNIGHT BAYBEEEEEEEEE
 	unsigned	*out;
 	unsigned	scaled_width, scaled_height;
 	int			inwidth, inheight;
-	byte		*inrow;
+	int		i, j, s;
 	unsigned	frac, fracstep;
+#else
+	unsigned long long	translate32[256];
+	unsigned long long* pixels = g_MemCache->Hunk_Alloc<unsigned long long>(512 * 256);	// Missi (3/8/2022) TWO MINS BEFORE MIDNIGHT BAYBEEEEEEEEE
+	unsigned long long* out;
+	unsigned long long	scaled_width, scaled_height;
+	long long			inwidth, inheight;
+	long long			i, j, s;
+	unsigned long long	frac, fracstep;
+#endif
+	model_t	*model;
+	aliashdr_t *paliashdr;
+	byte	*original;
+	byte		*inrow;
 	extern	byte		**player_8bit_texels_tbl;
 
 	GL_DisableMultitexture();
@@ -282,7 +292,13 @@ void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 		return; // only translate skins on alias models
 
 	paliashdr = (aliashdr_t *)Mod_Extradata<aliashdr_t>(model);
+
+#ifndef WIN64
 	s = paliashdr->skinwidth * paliashdr->skinheight;
+#else
+	s = (long long)paliashdr->skinwidth * (long long)paliashdr->skinheight;
+#endif
+
 	if (currententity->skinnum < 0 || currententity->skinnum >= paliashdr->numskins) {
 		Con_Printf("(%d): Invalid player skin #%d\n", playernum, currententity->skinnum);
 		original = (byte *)paliashdr + paliashdr->texels[0];

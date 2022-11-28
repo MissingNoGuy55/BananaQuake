@@ -103,19 +103,29 @@ Combine and scale multiple lightmaps into the 8.8 format in blocklights
 */
 void CGLRenderer::R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 {
+#ifndef WIN64
 	int			smax, tmax;
 	int			t;
 	int			i, j, size;
-	byte		*lightmap;
-	unsigned	scale;
 	int			maps;
+	unsigned	scale;
 	int			lightadj[4];
 	unsigned	*bl;
+#else
+	long long	smax, tmax;
+	long long	t;
+	long long	i, j, size;
+	long long	maps;
+	unsigned long long	scale;
+	//long long			lightadj[4];
+	unsigned long long* bl;
+#endif
+	byte		*lightmap;
 
 	surf->cached_dlight = (surf->dlightframe == r_framecount);
 
-	smax = (surf->extents[0]>>4)+1;
-	tmax = (surf->extents[1]>>4)+1;
+	smax = ((long long)surf->extents[0]>>4)+1;
+	tmax = ((long long)surf->extents[1]>>4)+1;
 	size = smax*tmax;
 	lightmap = surf->samples;
 
@@ -201,6 +211,9 @@ texture_t * CGLRenderer::R_TextureAnimation (texture_t *base)
 	int		reletive;
 	int		count;
 
+	if (!base)
+		return NULL;
+
 	if (currententity->frame)
 	{
 		if (base->alternate_anims)
@@ -213,7 +226,7 @@ texture_t * CGLRenderer::R_TextureAnimation (texture_t *base)
 	reletive = (int)(cl.time*10) % base->anim_total;
 
 	count = 0;	
-	while (base->anim_min > reletive || base->anim_max <= reletive)
+	while ((base) && (base->anim_min > reletive || base->anim_max <= reletive)) // Missi: shut up compiler (11/27/2022)
 	{
 		base = base->anim_next;
 		if (!base)
@@ -276,11 +289,17 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 {
 	glpoly_t	*p;
 	float		*v;
+#ifndef WIN64
 	int			i;
-	texture_t	*t;
-	vec3_t		nv, dir;
 	float		ss, ss2, length;
 	float		s1, t1;
+#else
+	long long	i;
+	long double	ss, ss2, length;
+	long double	s1, t1;
+#endif
+	texture_t	*t;
+	vec3_t		nv, dir;
 	glRect_t	*theRect;
 
 	//
@@ -529,7 +548,11 @@ R_BlendLightmaps
 */
 void CGLRenderer::R_BlendLightmaps (void)
 {
+#ifndef WIN64
 	int			i, j;
+#else
+	long long	i, j;
+#endif
 	glpoly_t	*p;
 	float		*v;
 	glRect_t	*theRect;
@@ -680,7 +703,11 @@ dynamic:
 			if ((theRect->h + theRect->t) < (fa->light_t + tmax))
 				theRect->h = (fa->light_t-theRect->t)+tmax;
 			base = lightmaps + fa->lightmaptexturenum*lightmap_bytes*BLOCK_WIDTH*BLOCK_HEIGHT;
+#ifndef WIN64
 			base += fa->light_t * BLOCK_WIDTH * lightmap_bytes + fa->light_s * lightmap_bytes;
+#else
+			base += (long long)fa->light_t * BLOCK_WIDTH * lightmap_bytes + (long long)fa->light_s * lightmap_bytes;
+#endif
 			R_BuildLightMap (fa, base, BLOCK_WIDTH*lightmap_bytes);
 		}
 	}
@@ -689,7 +716,7 @@ dynamic:
 /*
 ================
 R_RenderDynamicLightmaps
-Multitexture
+Multitexture 
 ================
 */
 void CGLRenderer::R_RenderDynamicLightmaps (msurface_t *fa)
@@ -739,7 +766,11 @@ dynamic:
 			if ((theRect->h + theRect->t) < (fa->light_t + tmax))
 				theRect->h = (fa->light_t-theRect->t)+tmax;
 			base = lightmaps + fa->lightmaptexturenum*lightmap_bytes*BLOCK_WIDTH*BLOCK_HEIGHT;
+#ifndef WIN64
 			base += fa->light_t * BLOCK_WIDTH * lightmap_bytes + fa->light_s * lightmap_bytes;
+#else
+			base += (long long)fa->light_t * BLOCK_WIDTH * lightmap_bytes + (long long)fa->light_s * lightmap_bytes;
+#endif
 			R_BuildLightMap (fa, base, BLOCK_WIDTH*lightmap_bytes);
 		}
 	}
@@ -1044,6 +1075,7 @@ void CGLRenderer::R_RecursiveWorldNode (mnode_t *node)
 
 	switch (plane->type)
 	{
+#ifndef WIN64
 	case PLANE_X:
 		dot = modelorg[0] - plane->dist;
 		break;
@@ -1056,6 +1088,20 @@ void CGLRenderer::R_RecursiveWorldNode (mnode_t *node)
 	default:
 		dot = DotProduct (modelorg, plane->normal) - plane->dist;
 		break;
+#else
+	case PLANE_X:
+		dot = modelorg[0] - (long double)plane->dist;
+		break;
+	case PLANE_Y:
+		dot = modelorg[1] - (long double)plane->dist;
+		break;
+	case PLANE_Z:
+		dot = modelorg[2] - (long double)plane->dist;
+		break;
+	default:
+		dot = DotProduct((long double)modelorg, (long double)plane->normal) - (long double)plane->dist;
+		break;
+#endif
 	}
 
 	if (dot >= 0)
@@ -1263,7 +1309,11 @@ BuildSurfaceDisplayList
 */
 void CGLRenderer::BuildSurfaceDisplayList (msurface_t *fa)
 {
+#ifndef WIN64
 	int			i, lindex, lnumverts, s_axis, t_axis;
+#else
+	long long	i, lindex, lnumverts, s_axis, t_axis;
+#endif
 	float		dist, lastdist, lzi, scale, u, v, frac;
 	unsigned	mask;
 	vec3_t		local, transformed;
@@ -1283,7 +1333,13 @@ void CGLRenderer::BuildSurfaceDisplayList (msurface_t *fa)
 	//
 	// draw texture
 	//
+	// Missi: do it right here or you risk messing up the entire renderer (11/27/2022)
+
+#ifndef WIN64
 	poly = g_MemCache->Hunk_Alloc<glpoly_t>(sizeof(glpoly_t) + (lnumverts-4) * VERTEXSIZE*sizeof(float));
+#else
+	poly = g_MemCache->Hunk_Alloc<glpoly_t>(sizeof(glpoly_t) + (lnumverts - 4) * VERTEXSIZE * sizeof(long double));
+#endif
 	poly->next = fa->polys;
 	poly->flags = fa->flags;
 	fa->polys = poly;
@@ -1340,7 +1396,11 @@ void CGLRenderer::BuildSurfaceDisplayList (msurface_t *fa)
 		for (i = 0 ; i < lnumverts ; ++i)
 		{
 			vec3_t v1, v2;
+#ifndef WIN64
 			float *prev, *fthis, *next;
+#else
+			float* prev, * fthis, * next;
+#endif
 			float f;
 
 			prev = poly->verts[(i + lnumverts - 1) % lnumverts];
@@ -1393,8 +1453,14 @@ void CGLRenderer::GL_CreateSurfaceLightmap (msurface_t *surf)
 	tmax = (surf->extents[1]>>4)+1;
 
 	surf->lightmaptexturenum = AllocBlock (smax, tmax, &surf->light_s, &surf->light_t);
+
+#ifndef WIN64
 	base = lightmaps + surf->lightmaptexturenum*lightmap_bytes*BLOCK_WIDTH*BLOCK_HEIGHT;
 	base += (surf->light_t * BLOCK_WIDTH + surf->light_s) * lightmap_bytes;
+#else
+	base = lightmaps + (long long)surf->lightmaptexturenum*lightmap_bytes*BLOCK_WIDTH*BLOCK_HEIGHT;
+	base += ((long long)surf->light_t * BLOCK_WIDTH + (long long)surf->light_s) * lightmap_bytes;
+#endif
 	R_BuildLightMap (surf, base, BLOCK_WIDTH*lightmap_bytes);
 }
 
@@ -1409,7 +1475,11 @@ with all the surfaces from all brush models
 */
 void CGLRenderer::GL_BuildLightmaps (void)
 {
+#ifndef WIN64
 	int		i, j;
+#else
+	long long	i, j;
+#endif
 	model_t	*m;
 	extern bool isPermedia;
 
@@ -1497,7 +1567,11 @@ void CGLRenderer::GL_BuildLightmaps (void)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexImage2D (GL_TEXTURE_2D, 0, lightmap_bytes
 		, BLOCK_WIDTH, BLOCK_HEIGHT, 0, 
+#ifndef WIN64
 		gl_lightmap_format, GL_UNSIGNED_BYTE, lightmaps+i*BLOCK_WIDTH*BLOCK_HEIGHT*lightmap_bytes);
+#else
+		gl_lightmap_format, GL_UNSIGNED_BYTE, lightmaps + i * BLOCK_WIDTH * BLOCK_HEIGHT * lightmap_bytes);
+#endif
 	}
 
  	if (!gl_texsort.value)

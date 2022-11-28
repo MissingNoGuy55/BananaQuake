@@ -204,7 +204,7 @@ void CQuakeServer::SV_SendServerinfo (client_t *client)
 	else
 		MSG_WriteByte (&client->message, GAME_COOP);
 
-	sprintf (message, pr_strings+sv.edicts->v.message);
+	sprintf (message, PR_GetString(sv.edicts->v.message));
 
 	MSG_WriteString (&client->message,message);
 
@@ -451,7 +451,7 @@ void CQuakeServer::SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 		if (ent != clent)	// clent is ALLWAYS sent
 		{
 // ignore ents without visible models
-			if (!ent->v.modelindex || !pr_strings[ent->v.model])
+			if (!ent->v.modelindex || !PR_GetString(ent->v.model))
 				continue;
 
 			for (i=0 ; i < ent->num_leafs ; i++)
@@ -686,7 +686,7 @@ void CQuakeServer::SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 	if (bits & SU_ARMOR)
 		MSG_WriteByte (msg, ent->v.armorvalue);
 	if (bits & SU_WEAPON)
-		MSG_WriteByte (msg, SV_ModelIndex(pr_strings+ent->v.weaponmodel));
+		MSG_WriteByte (msg, SV_ModelIndex(PR_GetString(ent->v.weaponmodel)));
 	
 	MSG_WriteShort (msg, ent->v.health);
 	MSG_WriteByte (msg, ent->v.currentammo);
@@ -719,7 +719,7 @@ SV_SendClientDatagram
 */
 bool CQuakeServer::SV_SendClientDatagram (client_t *client)
 {
-	byte		buf[MAX_DATAGRAM];
+	static byte		buf[MAX_DATAGRAM];
 	sizebuf_t	msg;
 	
 	msg.data = buf;
@@ -901,7 +901,7 @@ SV_ModelIndex
 
 ================
 */
-int CQuakeServer::SV_ModelIndex (char *name)
+int CQuakeServer::SV_ModelIndex (const char *name)
 {
 	int		i;
 	
@@ -953,7 +953,7 @@ void CQuakeServer::SV_CreateBaseline (void)
 		{
 			svent->baseline.colormap = 0;
 			svent->baseline.modelindex =
-				SV_ModelIndex(pr_strings + svent->v.model);
+				SV_ModelIndex(PR_GetString(svent->v.model));
 		}
 		
 	//
@@ -1049,6 +1049,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 {
 	edict_t		*ent;
 	int			i;
+	static char	dummy[8] = { 0,0,0,0,0,0,0,0 };
 
 	// let's not have any servers with no name
 	if (hostname.string[0] == 0)
@@ -1141,9 +1142,8 @@ void CQuakeServer::SV_SpawnServer (char *server)
 //
 	SV_ClearWorld ();
 	
-	sv.sound_precache[0] = pr_strings;
-
-	sv.model_precache[0] = pr_strings;
+	sv.sound_precache[0] = dummy;
+	sv.model_precache[0] = dummy;
 	sv.model_precache[1] = sv.modelname;
 	for (i=1 ; i<sv.worldmodel->numsubmodels ; i++)
 	{
@@ -1167,7 +1167,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 	else
 		pr_global_struct->deathmatch = deathmatch.value;
 
-	pr_global_struct->mapname = sv.name - pr_strings;
+	pr_global_struct->mapname = PR_SetEngineString(sv.name);
 #ifdef QUAKE2
 	pr_global_struct->startspot = sv.startspot - pr_strings;
 #endif

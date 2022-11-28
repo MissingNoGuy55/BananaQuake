@@ -103,7 +103,7 @@ void CL_ParseStartSoundPacket(void)
     vec3_t  pos;
     int 	channel, ent;
     int 	sound_num;
-    int 	volume;
+    int 	vol;
     int 	field_mask;
     float 	attenuation;  
  	int		i;
@@ -111,9 +111,9 @@ void CL_ParseStartSoundPacket(void)
     field_mask = MSG_ReadByte(); 
 
     if (field_mask & SND_VOLUME)
-		volume = MSG_ReadByte ();
+		vol = MSG_ReadByte ();
 	else
-		volume = DEFAULT_SOUND_PACKET_VOLUME;
+		vol = DEFAULT_SOUND_PACKET_VOLUME;
 	
     if (field_mask & SND_ATTENUATION)
 		attenuation = MSG_ReadByte () / 64.0;
@@ -132,7 +132,7 @@ void CL_ParseStartSoundPacket(void)
 	for (i=0 ; i<3 ; i++)
 		pos[i] = MSG_ReadCoord ();
  
-    g_SoundSystem->S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
+    g_SoundSystem->S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, vol/255.0, attenuation);
 }       
 
 /*

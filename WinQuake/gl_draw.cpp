@@ -409,7 +409,10 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 //
 	qpic = COM_LoadTempFile<CQuakePic> (path);
 	if (!qpic)
+	{
 		Sys_Error ("Draw_CachePic: failed to load %s", path);
+		return NULL;
+	}
 
 	//qpictemp = qpicdata;
 	//memset(&qpic->data, 0, sizeof(qpic->data));
@@ -430,8 +433,11 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	// the translatable player picture just for the menu
 	// configuration dialog
 	if (!strcmp (path, "gfx/menuplyr.lmp"))
+#ifndef WIN64
 		memcpy (menuplyr_pixels, &qpic->data, qpic->width * qpic->height);
-
+#else
+		memcpy(menuplyr_pixels, &qpic->data, (long long)qpic->width * (long long)qpic->height);
+#endif
 	/*qpic->width = qpicbuf->width;
 	qpic->height = qpicbuf->height;*/
 
@@ -449,7 +455,11 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 
 void CGLRenderer::Draw_CharToConback (int num, byte *dest)
 {
+#ifndef WIN64
 	int		row, col;
+#else
+	long long	row, col;
+#endif
 	byte	*source;
 	int		drawline;
 	int		x;
@@ -823,7 +833,8 @@ Only used for the player color selection menu
 void CGLRenderer::Draw_TransPicTranslate (int x, int y, CQuakePic *pic, byte *translation)
 {
 	int				v, u, c;
-	unsigned		trans[64*64], *dest;
+	static unsigned		trans[64 * 64];
+	unsigned	*dest;
 	byte			*src;
 	int				p;
 
@@ -1045,11 +1056,21 @@ CGLTexture* CGLRenderer::GL_FindTexture (const char *identifier)
 GL_ResampleTexture
 ================
 */
+#ifndef WIN64
 void CGLRenderer::GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,  int outwidth, int outheight)
+#else
+void CGLRenderer::GL_ResampleTexture (unsigned long long *in, int inwidth, int inheight, unsigned long long *out,  int outwidth, int outheight)
+#endif
 {
+#ifndef WIN64
 	int		i, j;
-	unsigned	*inrow;
+	unsigned* inrow;
 	unsigned	frac, fracstep;
+#else
+	long long	i, j;
+	unsigned long long	*inrow;
+	unsigned long long	frac, fracstep;
+#endif
 
 	fracstep = inwidth*0x10000/outwidth;
 	for (i=0 ; i<outheight ; i++, out += outwidth)
@@ -1077,7 +1098,11 @@ GL_Resample8BitTexture -- JACK
 */
 void CGLRenderer::GL_Resample8BitTexture (unsigned char *in, int inwidth, int inheight, unsigned char *out,  int outwidth, int outheight)
 {
+#ifndef WIN64
 	int		i, j;
+#else
+	long long	i, j;
+#endif
 	unsigned	char *inrow;
 	unsigned	frac, fracstep;
 
@@ -1167,21 +1192,32 @@ void CGLRenderer::GL_MipMap8Bit (byte *in, int width, int height)
 GL_Upload32
 ===============
 */
+#ifndef WIN64
 void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned* data)
+#else
+void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned long long* data)
+#endif
 {
 	int			samples;
-static	unsigned	scaled[1024*512];	// [512*256];
+#ifndef WIN64
+	static unsigned	scaled[1024*512];	// [512*256];
 	int			scaled_width, scaled_height;
-
+#else
+	static unsigned long long	scaled[1024 * 512];	// [512*256];
+	long long			scaled_width, scaled_height;
+#endif
 
 	for (scaled_width = 1 ; scaled_width < tex->width ; scaled_width<<=1)
 		;
 	for (scaled_height = 1 ; scaled_height < tex->height ; scaled_height<<=1)
 		;
-
+#ifndef WIN64
 	scaled_width >>= (int)gl_picmip.value;
 	scaled_height >>= (int)gl_picmip.value;
-
+#else
+	scaled_width >>= (long long)gl_picmip.value;
+	scaled_height >>= (long long)gl_picmip.value;
+#endif
 	if (scaled_width > gl_max_size.value)
 		scaled_width = gl_max_size.value;
 	if (scaled_height > gl_max_size.value)
@@ -1201,7 +1237,11 @@ static	unsigned	scaled[1024*512];	// [512*256];
 			glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 			goto done;
 		}
+#ifndef WIN64
 		memcpy (scaled, data, tex->width* tex->height*4);
+#else
+		memcpy (scaled, data, (unsigned long long)tex->width* (unsigned long long)tex->height*4);
+#endif
 	}
 	else
 		GL_ResampleTexture (data, tex->width, tex->height, scaled, scaled_width, scaled_height);
@@ -1319,8 +1359,11 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 
 	data = (byte*)GL_8to32(data, glt->width * glt->height, usepal);
 
+#ifndef WIN64
 	GL_Upload32(glt, (unsigned*)data);
-
+#else
+	GL_Upload32(glt, (unsigned long long*)data);
+#endif
 	texture_extension_number++;
 
 	return glt;

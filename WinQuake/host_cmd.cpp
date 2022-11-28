@@ -560,17 +560,17 @@ Host_Loadgame_f
 */
 void Host_Loadgame_f (void)
 {
-	char	name[MAX_OSPATH];
+	static char	name[MAX_OSPATH];
 	FILE	*f;
-	char	mapname[MAX_QPATH];
+	static char	mapname[MAX_QPATH];
 	float	time, tfloat;
-	char	str[32768];
+	static char	str[32768];
 	const char *start;
 	int		i, r;
 	edict_t	*ent;
 	int		entnum;
 	int		version;
-	float			spawn_parms[NUM_SPAWN_PARMS];
+	static float			spawn_parms[NUM_SPAWN_PARMS];
 
 	if (cmd_source != src_command)
 		return;
@@ -937,7 +937,7 @@ void Host_Name_f (void)
 		if (Q_strcmp(host_client->name, newName) != 0)
 			Con_Printf ("%s renamed to %s\n", host_client->name, newName);
 	Q_strcpy (host_client->name, newName);
-	host_client->edict->v.netname = host_client->name - pr_strings;
+	host_client->edict->v.netname = PR_SetEngineString(host_client->name);
 	
 // send notification to all clients
 	
@@ -1232,11 +1232,11 @@ void Host_Pause_f (void)
 
 		if (sv.paused)
 		{
-			sv.SV_BroadcastPrintf ("%s paused the game\n", pr_strings + sv_player->v.netname);
+			sv.SV_BroadcastPrintf ("%s paused the game\n", PR_GetString(sv_player->v.netname));
 		}
 		else
 		{
-			sv.SV_BroadcastPrintf ("%s unpaused the game\n",pr_strings + sv_player->v.netname);
+			sv.SV_BroadcastPrintf ("%s unpaused the game\n",PR_GetString(sv_player->v.netname));
 		}
 
 	// send notification to all clients
@@ -1310,7 +1310,7 @@ void Host_Spawn_f (void)
 		memset (&ent->v, 0, progs->entityfields * 4);
 		ent->v.colormap = NUM_FOR_EDICT(ent);
 		ent->v.team = (host_client->colors & 15) + 1;
-		ent->v.netname = host_client->name - pr_strings;
+		ent->v.netname = PR_SetEngineString(host_client->name);
 
 		// copy spawn parms out of the client_t
 

@@ -312,10 +312,13 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 	common->COM_FOpenFile (cache, &f);
 	if (f)
 	{
-		fread (&numcommands, 4, 1, f);
-		fread (&numorder, 4, 1, f);
-		fread (&commands, numcommands * sizeof(commands[0]), 1, f);
-		fread (&vertexorder, numorder * sizeof(vertexorder[0]), 1, f);
+		fread(&numcommands, 4, 1, f);
+		fread(&numorder, 4, 1, f);
+		if (numcommands > 0 && numorder > 0)
+		{
+			fread(&commands, numcommands * sizeof(commands[0]), 1, f);
+			fread(&vertexorder, numorder * sizeof(vertexorder[0]), 1, f);
+		}
 		fclose (f);
 	}
 	else
@@ -349,8 +352,11 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 
 	cmds = g_MemCache->Hunk_Alloc<int>(numcommands * 4);
 	paliashdr->commands = (byte *)cmds - (byte *)paliashdr;
+#ifndef WIN64
 	memcpy (cmds, commands, numcommands * 4);
-
+#else
+	memcpy (cmds, commands, numcommands * (long long)4);
+#endif
 	verts = g_MemCache->Hunk_Alloc<trivertx_t>(paliashdr->numposes * paliashdr->poseverts
 		* sizeof(trivertx_t));
 	paliashdr->posedata = (byte *)verts - (byte *)paliashdr;

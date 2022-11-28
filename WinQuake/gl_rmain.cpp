@@ -336,7 +336,11 @@ void CGLRenderer::GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 lastposenum = posenum;
 
 	verts = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+#ifndef WIN64
 	verts += posenum * paliashdr->poseverts;
+#else
+	verts += (long long)posenum * (long long)paliashdr->poseverts;
+#endif
 	order = (int *)((byte *)paliashdr + paliashdr->commands);
 
 	while (1)
@@ -394,8 +398,13 @@ void CGLRenderer::GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 	lheight = currententity->origin[2] - lightspot[2];
 
 	height = 0;
+#ifndef WIN64
 	verts = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 	verts += posenum * paliashdr->poseverts;
+#else
+	verts = (trivertx_t*)((byte*)paliashdr + (long long)paliashdr->posedata);
+	verts += (long long)posenum * (long long)paliashdr->poseverts;
+#endif
 	order = (int *)((byte *)paliashdr + paliashdr->commands);
 
 	height = -lheight + 1.0;
@@ -738,7 +747,13 @@ void CGLRenderer::R_DrawViewModel (void)
 	diffuse[0] = diffuse[1] = diffuse[2] = diffuse[3] = (float)shadelight / 128;
 
 	// hack the depth range to prevent view model from poking into walls
-	glDepthRange (gldepthmin, gldepthmin + 0.3*(gldepthmax-gldepthmin));
+
+#ifndef WIN64
+	glDepthRange (gldepthmin, gldepthmin + 0.3f * (gldepthmax-gldepthmin));
+#else
+	glDepthRange((long double)gldepthmin, (long double)gldepthmin + (long double)0.3 * ((long double)gldepthmax - (long double)gldepthmin));
+#endif
+
 	R_DrawAliasModel (currententity);
 	glDepthRange (gldepthmin, gldepthmax);
 }

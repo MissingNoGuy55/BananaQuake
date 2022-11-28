@@ -439,12 +439,14 @@ float Q_atof (const char *str)
 // Missi: copied from Quakespasm (5/22/22)
 
 /* platform dependant (v)snprintf function names: */
-#if defined(_WIN32)
-#define	snprintf_func		_snprintf
+#if defined(_WIN32) && defined(WIN64)
+#define	snprintf_func		_snprintf_s
 #define	vsnprintf_func		_vsnprintf
+#define	vsnprintf_s_func	_vsnprintf_s
 #else
 #define	snprintf_func		snprintf
 #define	vsnprintf_func		vsnprintf
+#define	vsnprintf_s_func	vsnprintf_s
 #endif
 
 int q_vsnprintf(char* str, size_t size, const char* format, va_list args)
@@ -452,6 +454,22 @@ int q_vsnprintf(char* str, size_t size, const char* format, va_list args)
 	int		ret;
 
 	ret = vsnprintf_func(str, size, format, args);
+	
+	if (ret < 0)
+		ret = (int)size;
+	if (size == 0)	/* no buffer */
+		return ret;
+	if ((size_t)ret >= size)
+		str[size - 1] = '\0';
+
+	return ret;
+}
+
+int q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args)
+{
+	int		ret;
+
+	ret = vsnprintf_s_func(str, size, len, format, args);
 
 	if (ret < 0)
 		ret = (int)size;
@@ -891,27 +909,36 @@ char *COM_FileExtension (char *in)
 /*
 ============
 COM_FileBase
+Missi: copied from QuakeSpasm. Original function was very haphazard
 ============
 */
-void CCommon::COM_FileBase (const char *in, char *out)
+void CCommon::COM_FileBase(const char* in, char* out, size_t outsize)
 {
-	const char *s, *s2;
-	
-	s = in + strlen(in) - 1;
-	
-	while (s != in && *s != '.')
-		s--;
-	
-	for (s2 = s ; *s2 && *s2 != '/' ; s2--)
-	;
-	
-	if (s-s2 < 2)
-		Q_strcpy (out,"?model?");
+	const char* dot, * slash, * s;
+
+	s = in;
+	slash = in;
+	dot = NULL;
+	while (*s)
+	{
+		if (*s == '/')
+			slash = s + 1;
+		if (*s == '.')
+			dot = s;
+		s++;
+	}
+	if (dot == NULL)
+		dot = s;
+
+	if (dot - slash < 2)
+		q_strlcpy(out, "?model?", outsize);
 	else
 	{
-		s--;
-		strncpy (out,s2+1, s-s2);
-		out[s-s2] = 0;
+		size_t	len = dot - slash;
+		if (len >= outsize)
+			len = outsize - 1;
+		memcpy(out, slash, len);
+		out[len] = '\0';
 	}
 }
 
@@ -1538,7 +1565,7 @@ pack_t* CCommon::COM_LoadPackFile (char *packfile)
 	int                             numpackfiles;
 	pack_t                  *pack;
 	int                             packhandle;
-	dpackfile_t             info[MAX_FILES_IN_PACK];
+	static dpackfile_t             info[MAX_FILES_IN_PACK];
 	unsigned short          crc;
 
 	if (Sys_FileOpenRead (packfile, &packhandle) == -1)

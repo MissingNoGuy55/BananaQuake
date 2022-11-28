@@ -646,7 +646,7 @@ char *Sys_ConsoleInput (void)
 {
 	static char	text[256] = {};
 	static int		len = 0;
-	INPUT_RECORD	recs[1024] = {};
+	static INPUT_RECORD	recs[1024] = {};
 	int		count = 0;
 	int		i = 0;
 	LPDWORD dummy = {};

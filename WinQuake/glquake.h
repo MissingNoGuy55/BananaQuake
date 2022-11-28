@@ -99,9 +99,16 @@ extern	PROC QglVertexPointerEXT;
 
 #define	MAX_GLTEXTURES	1024
 
+#ifndef WIN64
 #define	BLOCK_WIDTH		256
 #define	BLOCK_HEIGHT	256
-
+#else
+constexpr long long BLOCK_WIDTH = 256;
+constexpr long long BLOCK_HEIGHT = 256; // reason this is now a constexpr is because in R_DrawSequentialPoly in
+									// gl_rsurf.cpp, it expects an integer that is then converted to an unsigned char for OpenGL. 
+									// as 64-bit code requires "long long", the implicit conversion is not possible
+									// and it is not possible to cast the value of an #ifdef, so we have to do this
+#endif
 #define	MAX_LIGHTMAPS	64
 
 #ifndef GL_RGBA4
@@ -237,7 +244,11 @@ public:
 	void GL_Set2D(void);
 
 	CGLTexture* GL_FindTexture(const char* identifier);
+#ifndef WIN64
 	void GL_ResampleTexture(unsigned* in, int inwidth, int inheight, unsigned* out, int outwidth, int outheight);
+#else
+	void GL_ResampleTexture(unsigned long long* in, int inwidth, int inheight, unsigned long long* out, int outwidth, int outheight);
+#endif
 	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
 	CGLTexture* GL_LoadPicTexture(CQuakePic* pic);
@@ -247,7 +258,11 @@ public:
 
 	void GL_MipMap(byte* in, int width, int height);
 	void GL_MipMap8Bit(byte* in, int width, int height);
+#ifndef WIN64
 	void GL_Upload32(CGLTexture* tex, unsigned* data);
+#else
+	void GL_Upload32(CGLTexture* tex, unsigned long long* data);
+#endif
 	void GL_BuildLightmaps(void);
 	void GL_CreateSurfaceLightmap(msurface_t* surf);
 	void GL_SubdivideSurface(msurface_t* fa);
@@ -370,7 +385,11 @@ private:
 	bool	lightmap_modified[MAX_LIGHTMAPS];
 	glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
 
+#ifndef WIN64
 	int			allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
+#else
+	long long	allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
+#endif
 
 	// the lightmap texture data needs to be kept in
 	// main memory so texsubimage can update properly
@@ -380,11 +399,21 @@ private:
 	msurface_t* skychain = NULL;
 	msurface_t* waterchain = NULL;
 
+#ifndef WIN64
 	int		lightmap_bytes;		// 1, 2, or 4
+#else
+	long long		lightmap_bytes;		// 1, 2, or 4
+#endif
 
 	CGLTexture* lightmap_textures;
+
+#ifndef WIN64
 	unsigned		blocklights[18 * 18];
 	int			active_lightmaps;
+#else
+	unsigned long long		blocklights[18 * 18];
+	long long	active_lightmaps;
+#endif
 
 	static CGLTexture* translate_texture;
 	static CGLTexture* char_texture;
