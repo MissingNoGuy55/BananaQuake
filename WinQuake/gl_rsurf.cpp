@@ -1316,12 +1316,12 @@ void CGLRenderer::BuildSurfaceDisplayList (msurface_t *fa)
 #endif
 	float		dist, lastdist, lzi, scale, u, v, frac;
 	unsigned	mask;
+	float		*vec;
 	vec3_t		local, transformed;
 	medge_t		*pedges, *r_pedge;
 	mplane_t	*pplane;
 	int			vertpage, newverts, newpage, lastvert;
 	bool	visible;
-	float		*vec;
 	float		s, t;
 	glpoly_t	*poly;
 
@@ -1338,8 +1338,9 @@ void CGLRenderer::BuildSurfaceDisplayList (msurface_t *fa)
 #ifndef WIN64
 	poly = g_MemCache->Hunk_Alloc<glpoly_t>(sizeof(glpoly_t) + (lnumverts-4) * VERTEXSIZE*sizeof(float));
 #else
-	poly = g_MemCache->Hunk_Alloc<glpoly_t>(sizeof(glpoly_t) + (lnumverts - 4) * VERTEXSIZE * sizeof(long double));
+	poly = g_MemCache->Hunk_Alloc<glpoly_t>(sizeof(glpoly_t) + (lnumverts - 4) * VERTEXSIZE * sizeof(float));
 #endif
+
 	poly->next = fa->polys;
 	poly->flags = fa->flags;
 	fa->polys = poly;
