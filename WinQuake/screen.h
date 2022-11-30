@@ -52,6 +52,20 @@ extern cvar_t scr_viewsize;
 extern	int			scr_copytop;
 extern	int			scr_copyeverything;
 
+typedef enum {
+	CANVAS_NONE,
+	CANVAS_DEFAULT,
+	CANVAS_CONSOLE,
+	CANVAS_MENU,
+	CANVAS_SBAR,
+	CANVAS_WARPIMAGE,
+	CANVAS_CROSSHAIR,
+	CANVAS_BOTTOMLEFT,
+	CANVAS_BOTTOMRIGHT,
+	CANVAS_TOPRIGHT,
+	CANVAS_INVALID = -1
+} canvastype;
+
 extern bool		block_drawing;
 
 void SCR_UpdateWholeScreen (void);

@@ -25,8 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "errno.h"
 #include "resource.h"
 #include "conproc.h"
+#include "sys_win.h"
 #include <direct.h>	// Missi: for _mkdir
 #include <time.h>
+#include <VersionHelpers.h>
 
 #define MINIMUM_WIN_MEMORY		0x0880000
 #define MAXIMUM_WIN_MEMORY		0x1000000
@@ -72,10 +74,14 @@ volatile int					sys_checksum;
 Sys_PageIn
 ================
 */
+#ifndef WIN64
 void Sys_PageIn (void *ptr, int size)
+#else
+void Sys_PageIn(void* ptr, size_t size)
+#endif
 {
 	byte	*x;
-	int		j, m, n;
+	int		m, n;
 
 // touch all the memory to make sure it's there. The 16-page skip is to
 // keep Win 95 from thinking we're trying to page ourselves in (we are
@@ -101,8 +107,7 @@ FILE IO
 ===============================================================================
 */
 
-#define	MAX_HANDLES		10
-FILE	*sys_handles[MAX_HANDLES];
+FILE* sys_handles[MAX_HANDLES];
 
 int		findhandle (void)
 {
@@ -141,6 +146,7 @@ int filelength (FILE *f)
 int Sys_FileOpenRead (char *path, int *hndl)
 {
 	FILE	*f;
+	errno_t err;
 	int		i, retval;
 	int		t;
 
@@ -148,9 +154,9 @@ int Sys_FileOpenRead (char *path, int *hndl)
 
 	i = findhandle ();
 
-	f = fopen(path, "rb");
+	err = fopen_s(&f, path, "rb");
 
-	if (!f)
+	if (err != 0)
 	{
 		*hndl = -1;
 		retval = -1;
@@ -172,14 +178,15 @@ int Sys_FileOpenWrite (char *path)
 	FILE	*f;
 	int		i;
 	int		t;
+	errno_t err;
 
 	t = VID_ForceUnlockedAndReturnState ();
 	
 	i = findhandle ();
 
-	f = fopen(path, "wb");
-	if (!f)
-		Sys_Error ("Error opening %s: %s", path,strerror(errno));
+	err = fopen_s(&f, path, "wb");
+	if (!err)
+		Sys_Error ("Error opening %s: %s", path,strerror_s(path,strlen(path),errno));
 	sys_handles[i] = f;
 	
 	VID_ForceLockState (t);
@@ -206,16 +213,6 @@ void Sys_FileSeek (int handle, int position)
 	VID_ForceLockState (t);
 }
 
-int Sys_FileRead (int handle, void *dest, int count)
-{
-	int		t, x;
-
-	t = VID_ForceUnlockedAndReturnState ();
-	x = fread (dest, 1, count, sys_handles[handle]);
-	VID_ForceLockState (t);
-	return x;
-}
-
 int Sys_FileWrite (int handle, void *data, int count)
 {
 	int		t, x;
@@ -226,32 +223,11 @@ int Sys_FileWrite (int handle, void *data, int count)
 	return x;
 }
 
-int	Sys_FileTime (char *path)
-{
-	FILE	*f;
-	int		t, retval;
-
-	t = VID_ForceUnlockedAndReturnState ();
-	
-	f = fopen(path, "rb");
-
-	if (f)
-	{
-		fclose(f);
-		retval = 1;
-	}
-	else
-	{
-		retval = -1;
-	}
-	
-	VID_ForceLockState (t);
-	return retval;
-}
-
 void Sys_mkdir (char *path)
 {
-	_mkdir (path);
+	int shut_up = 0;
+
+	shut_up = _mkdir (path); // Missi: shut up compiler (11/28/2022)
 }
 
 
@@ -407,10 +383,13 @@ void Sys_Init (void)
 	Sys_InitFloatTime ();
 
 	vinfo.dwOSVersionInfoSize = sizeof(vinfo);
-
+#ifndef WIN64
 	if (!GetVersionEx (&vinfo))
 		Sys_Error ("Couldn't get OS info");
-
+#else
+	if (!IsWindowsXPOrGreater())
+		Sys_Error("Couldn't get OS info");
+#endif
 	if ((vinfo.dwMajorVersion < 4) ||
 		(vinfo.dwPlatformId == VER_PLATFORM_WIN32s))
 	{
@@ -513,7 +492,7 @@ void Sys_Printf (char *fmt, ...)
 	if (isDedicated)
 	{
 		va_start (argptr,fmt);
-		vsprintf (text, fmt, argptr);
+		 (text, fmt, argptr);
 		va_end (argptr);
 
 		WriteFile(houtput, text, strlen (text), &dummy, NULL);	
@@ -539,6 +518,29 @@ void Sys_Quit (void)
 	exit (0);
 }
 
+int	Sys_FileTime(char* path)
+{
+	FILE* f;
+	errno_t err;
+	int		t, retval;
+
+	t = VID_ForceUnlockedAndReturnState();
+
+	err = fopen_s(&f, path, "r+");
+
+	if (err == 0)
+	{
+		fclose(f);
+		retval = 1;
+	}
+	else
+	{
+		retval = -1;
+	}
+
+	VID_ForceLockState(t);
+	return retval;
+}
 
 /*
 ================
@@ -553,7 +555,7 @@ double Sys_FloatTime (void)
 	LARGE_INTEGER		PerformanceCount;
 	unsigned int		temp, t2;
 	double				time;
-	SYSTEMTIME st, lt;
+	SYSTEMTIME			st;
 
 	GetSystemTime(&st);
 
@@ -783,7 +785,6 @@ HWND		hwnd_dialog;
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    MSG				msg;
 	quakeparms_t<byte*>	parms;
 	double			time, oldtime, newtime;
 #ifndef WIN64

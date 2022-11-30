@@ -258,7 +258,7 @@ PR_RunError
 Aborts the currently executing function
 ============
 */
-void PR_RunError (char *error, ...)
+void PR_RunError (const char *error, ...)
 {
 	va_list		argptr;
 	char		string[1024];
@@ -283,7 +283,7 @@ PR_EnterFunction
 Returns the new program statement counter
 ====================
 */
-static int PR_EnterFunction(dfunction_t* f)
+int PR_EnterFunction(dfunction_t* f)
 {
 	int	i, j, c, o;
 

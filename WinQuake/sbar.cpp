@@ -400,7 +400,7 @@ Sbar_DrawPic
 void Sbar_DrawPic (int x, int y, CQuakePic *pic)
 {
 	if (cl.gametype == GAME_DEATHMATCH)
-		g_GLRenderer->Draw_Pic (x /* + ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
+		g_GLRenderer->Draw_Pic (x, y + (vid.height-SBAR_HEIGHT), pic);
 	else
 		g_GLRenderer->Draw_Pic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
 }
@@ -413,7 +413,7 @@ Sbar_DrawTransPic
 void Sbar_DrawTransPic (int x, int y, CQuakePic *pic)
 {
 	if (cl.gametype == GAME_DEATHMATCH)
-		g_GLRenderer->Draw_TransPic (x /*+ ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
+		g_GLRenderer->Draw_TransPic (x, y + (vid.height-SBAR_HEIGHT), pic);
 	else
 		g_GLRenderer->Draw_TransPic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
 }
@@ -507,7 +507,7 @@ void Sbar_DrawNum (int x, int y, int num, int digits, int color)
 		else
 			frame = *ptr -'0';
 
-		Sbar_DrawTransPic (x,y,sb_nums[color][frame]);
+		Sbar_DrawPic (x,y,sb_nums[color][frame]);
 		x += 24;
 		ptr++;
 	}
@@ -598,7 +598,11 @@ void Sbar_SoloScoreboard (void)
 {
 	char	str[80];
 	int		minutes, seconds, tens, units;
+#ifndef WIN64
 	int		l;
+#else
+	size_t	l;
+#endif
 
 	sprintf (str,"Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	Sbar_DrawString (8, 4, str);
@@ -1306,7 +1310,6 @@ Sbar_DeathmatchOverlay
 */
 void Sbar_MiniDeathmatchOverlay (void)
 {
-	CQuakePic			*pic;
 	int				i, k, l;
 	int				top, bottom;
 	int				x, y, f;
@@ -1346,7 +1349,7 @@ void Sbar_MiniDeathmatchOverlay (void)
             i = 0;
 
 	x = 324;
-	for (/* */; i < scoreboardlines && y < vid.height - 8 ; i++)
+	for (; i < scoreboardlines && (unsigned int)y < vid.height - 8 ; i++)
 	{
 		k = fragsort[i];
 		s = &cl.scores[k];

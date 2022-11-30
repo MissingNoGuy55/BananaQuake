@@ -145,11 +145,8 @@ void InsertLinkAfter (link_t *l, link_t *after)
 void Q_memset (void *dest, int fill, int count)
 {
 	int             i;
-#ifndef WIN64	
+
 	if ( (((long)dest | count) & 3) == 0)
-#else
-	if ( (((long long)dest | count) & 3) == 0)
-#endif
 	{
 		count >>= 2;
 		fill = fill | (fill<<8) | (fill<<16) | (fill<<24);
@@ -164,11 +161,8 @@ void Q_memset (void *dest, int fill, int count)
 void Q_memcpy (void *dest, void *src, int count)
 {
 	int             i;
-#ifndef WIN64	
+
 	if ((((long)dest | (long)src | count) & 3) == 0 )
-#else
-	if ((((long long)dest | (long long)src | count) & 3) == 0)
-#endif
 	{
 		count>>=2;
 		for (i=0 ; i<count ; i++)
@@ -448,22 +442,6 @@ float Q_atof (const char *str)
 #define	vsnprintf_func		vsnprintf
 #define	vsnprintf_s_func	vsnprintf_s
 #endif
-
-int q_vsnprintf(char* str, size_t size, const char* format, va_list args)
-{
-	int		ret;
-
-	ret = vsnprintf_func(str, size, format, args);
-	
-	if (ret < 0)
-		ret = (int)size;
-	if (size == 0)	/* no buffer */
-		return ret;
-	if ((size_t)ret >= size)
-		str[size - 1] = '\0';
-
-	return ret;
-}
 
 int q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args)
 {
@@ -1447,7 +1425,7 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file)
 					continue;
 			}
 			
-			sprintf (netpath, "%s/%s",search->filename, filename);
+			sprintf_s(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
 			
 			findtime = Sys_FileTime (netpath);
 			if (findtime == -1)
@@ -1460,11 +1438,11 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file)
 			{	
 #if defined(_WIN32)
 				if ((strlen(netpath) < 2) || (netpath[1] != ':'))
-					sprintf (cachepath,"%s%s", com_cachedir, netpath);
+					sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
 				else
-					sprintf (cachepath,"%s%s", com_cachedir, netpath+2);
+					sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath+2);
 #else
-				sprintf (cachepath,"%s%s", com_cachedir, netpath);
+				sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
 #endif
 
 				cachetime = Sys_FileTime (cachepath);
@@ -1481,7 +1459,10 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file)
 			else
 			{
 				Sys_FileClose (i);
-				*file = fopen (netpath, "rb");
+
+				errno_t err;
+
+				err = fopen_s(file, netpath, "rb");
 			}
 			return com_filesize;
 		}
@@ -1559,21 +1540,21 @@ of the list so they override previous pack files.
 */
 pack_t* CCommon::COM_LoadPackFile (char *packfile)
 {
-	dpackheader_t   header;
-	int                             i;
-	packfile_t              *newfiles;
-	int                             numpackfiles;
-	pack_t                  *pack;
-	int                             packhandle;
-	static dpackfile_t             info[MAX_FILES_IN_PACK];
-	unsigned short          crc;
+	dpackheader_t   header = {};
+	int                             i = 0;
+	packfile_t              *newfiles = NULL;
+	int                             numpackfiles = 0;
+	pack_t                  *pack = NULL;
+	int                             packhandle = 0;
+	static dpackfile_t             info[MAX_FILES_IN_PACK] = {};
+	unsigned short          crc = 0;
 
 	if (Sys_FileOpenRead (packfile, &packhandle) == -1)
 	{
 //              Con_Printf ("Couldn't open %s\n", packfile);
 		return NULL;
 	}
-	Sys_FileRead (packhandle, (void *)&header, sizeof(header));
+	Sys_FileRead (packhandle, &header, sizeof(header));
 	if (header.id[0] != 'P' || header.id[1] != 'A'
 	|| header.id[2] != 'C' || header.id[3] != 'K')
 		Sys_Error ("%s is not a packfile", packfile);
@@ -1591,7 +1572,7 @@ pack_t* CCommon::COM_LoadPackFile (char *packfile)
 	newfiles = g_MemCache->Hunk_AllocName<packfile_t>(numpackfiles * sizeof(packfile_t), "packfile");
 
 	Sys_FileSeek (packhandle, header.dirofs);
-	Sys_FileRead (packhandle, (void *)info, header.dirlen);
+	Sys_FileRead (packhandle, info, header.dirlen);
 
 // crc the directory to check for modifications
 	g_CRCManager->CRC_Init (&crc);
@@ -1629,10 +1610,10 @@ then loads and adds pak1.pak pak2.pak ...
 */
 void CCommon::COM_AddGameDirectory (char *dir)
 {
-	int                             i;
+	int                             i = 0;
 	searchpath_t			*search = NULL;
 	pack_t                  *pak = NULL;
-	char                    pakfile[MAX_OSPATH];
+	char                    pakfile[MAX_OSPATH] = {};
 
 	Q_strcpy (com_gamedir, dir);
 

@@ -694,7 +694,7 @@ bool CQuakeServer::SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, floa
 	while (SV_HullPointContents (hull, hull->firstclipnode, mid)
 	== CONTENTS_SOLID)
 	{ // shouldn't really happen, but does occasionally
-		frac -= 0.1;
+		frac -= 0.1f;
 		if (frac < 0)
 		{
 			trace->fraction = midf;

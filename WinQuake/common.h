@@ -69,7 +69,7 @@ void InsertLinkAfter (link_t *l, link_t *after);
 #ifndef WIN64
 #define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (int)&(((t *)0)->m)))
 #else
-#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (long long)&(((t *)0)->m)))
+#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (int)&(((t *)0)->m)))
 #endif
 //============================================================================
 
@@ -247,7 +247,6 @@ public:
 	static	char	com_cachedir[MAX_OSPATH];
 
 };
-
 
 //============================================================================
 

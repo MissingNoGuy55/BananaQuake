@@ -852,7 +852,7 @@ T* CMemCache::Cache_Alloc(cache_user_s* c, int size, char* name)
 		cs = Cache_TryAlloc<T>(size, false);
 		if (cs)
 		{
-			strncpy(cs->name, name, sizeof(cs->name) - 1);
+			q_strlcpy(cs->name, name, sizeof(cs->name) - 1);
 			c->data = (byte*)(cs + 1);
 			cs->user = c;
 			break;

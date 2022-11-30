@@ -254,6 +254,8 @@ public:
 	CGLTexture* GL_LoadPicTexture(CQuakePic* pic);
 	CGLTexture* GL_LoadTexture(const char* identifier, int width, int height, byte* data, int flags = TEXPREF_NONE);
 
+	void GL_SetCanvas(canvastype newcanvas);
+
 	void BuildSurfaceDisplayList(msurface_t* fa);
 
 	void GL_MipMap(byte* in, int width, int height);
@@ -423,10 +425,7 @@ private:
 class COpenGLPic
 {
 public:
-
-	COpenGLPic();
-	COpenGLPic(CGLTexture* mem);
-
+	CGLTexture* tex;
 	float	sl, tl, sh, th;
 };
 
@@ -440,24 +439,21 @@ public:
 	CGLTexture(const CGLTexture& obj);
 	~CGLTexture();
 
+	CGLTexture* next;
 	CQuakePic pic;
 	//COpenGLPic* glcoords;
 
-	float	sl;
-	float	tl;
-	float	sh;
-	float	th;
+	GLuint				texnum;
+	char				identifier[64];
+	unsigned int		width, height;
+	bool				mipmap;
 
-
-	unsigned int		texnum;
-	char	identifier[64];
-	unsigned int	width, height;
-	bool	mipmap;
-
-	int		checksum;
-	int		flags;
+	unsigned int		checksum;
+	unsigned int		flags;
 
 };
+
+constexpr size_t crap = sizeof(CGLTexture);
 
 //====================================================
 

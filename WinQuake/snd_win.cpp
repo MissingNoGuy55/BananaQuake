@@ -99,7 +99,6 @@ bool CSoundSystemWin::SNDDMA_Init(dma_t* dma)
 {
 	SDL_AudioSpec desired;
 	int		tmp, val;
-	char	drivername[128];
 
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
 	{

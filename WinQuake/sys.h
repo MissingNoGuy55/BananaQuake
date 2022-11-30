@@ -31,7 +31,19 @@ int Sys_FileOpenRead (char *path, int *hndl);
 int Sys_FileOpenWrite (char *path);
 void Sys_FileClose (int handle);
 void Sys_FileSeek (int handle, int position);
-int Sys_FileRead (int handle, void *dest, int count);
+/*
+#ifdef _WIN32
+template<typename T>
+int Sys_FileRead (int handle, T *dest, int count);
+#else
+int Sys_FileRead(int handle, void* dest, int count);
+#endif
+*/
+
+#ifdef _WIN32
+#include "sys_win.h"
+#endif
+
 int Sys_FileWrite (int handle, void *data, int count);
 int	Sys_FileTime (char *path);
 void Sys_mkdir (char *path);

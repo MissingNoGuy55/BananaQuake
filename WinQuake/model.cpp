@@ -326,7 +326,7 @@ Mod_ForName
 Loads in a model for the given name
 ==================
 */
-model_t *Mod_ForName (char *name, bool crash)
+model_t *Mod_ForName (const char *name, bool crash)
 {
 	model_t	*mod;
 

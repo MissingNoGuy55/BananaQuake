@@ -90,7 +90,7 @@ void W_LoadWadFile (const char *filename)
 	infotableofs = LittleLong(header->infotableofs);
 	wad_lumps = (lumpinfo_t *)(wad_base + infotableofs);
 	
-	for (i=0, lump_p = wad_lumps ; i<wad_numlumps ; i++,lump_p++)
+	for (i=0, lump_p = wad_lumps ; (int)i<wad_numlumps ; i++,lump_p++)
 	{
 		lump_p->filepos = LittleLong(lump_p->filepos);
 		lump_p->size = LittleLong(lump_p->size);
@@ -162,20 +162,20 @@ void SwapPic (CQuakePic *pic)
 CQuakePic::CQuakePic() : height(0), width(0)
 {
 	memset(&data, 0, sizeof(&data));
-	datavec = new CQVector<byte>;
-	datavec->Init();
+	/*datavec = new CQVector<byte>;
+	datavec->Init();*/
 }
 
 CQuakePic::CQuakePic(byte& mem) : height(0), width(0)
 {
 	memset(&data, 0, sizeof(&data));
-	datavec = new CQVector<byte>;
-	datavec->Init();
+	/*datavec = new CQVector<byte>;
+	datavec->Init();*/
 }
 
 CQuakePic::CQuakePic(const CQuakePic& src) : height(0), width(0)
 {
 	memset(&data, 0, sizeof(&data));
-	datavec = new CQVector<byte>;
-	datavec->Init();
+	/*datavec = new CQVector<byte>;
+	datavec->Init();*/
 }

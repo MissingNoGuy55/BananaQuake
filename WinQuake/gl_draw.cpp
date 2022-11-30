@@ -42,8 +42,8 @@ CQuakePic			*draw_backtile;
 CGLTexture*			translate_texture;
 CGLTexture*			char_texture;
 
-byte		conback_buffer[sizeof(CGLTexture)];
-CGLTexture	*conback = (CGLTexture*)&conback_buffer;
+byte		conback_buffer[sizeof(CQuakePic)];
+CQuakePic	*conback = (CQuakePic*)&conback_buffer;
 
 int		gl_lightmap_format = 4;
 int		gl_solid_format = 3;
@@ -67,14 +67,6 @@ unsigned int d_8to24table_shirt[256];
 unsigned int d_8to24table_pants[256];
 
 bool gl_texture_NPOT = false;
-
-COpenGLPic::COpenGLPic() : sh(0), sl(0), th(0), tl(0)
-{
-}
-
-COpenGLPic::COpenGLPic(CGLTexture* mem) : sh(0), sl(0), th(0), tl(0)
-{
-}
 
 CGLTexture* CGLRenderer::char_texture = NULL;
 CGLTexture* CGLRenderer::translate_texture = NULL;
@@ -323,17 +315,13 @@ int CGLRenderer::GL_PadConditional(int s)
 CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 {
 	CQuakePic* p = NULL;
-	CGLTexture*	gl = NULL;
+	COpenGLPic	gl;
 	int offset = 0; //Missi -- copied from QuakeSpasm (5/28/2022)
 	int off = 0;
 
 	p = static_cast<CQuakePic*>(W_GetLumpName(name));
 
 	if (!p) return NULL; //Missi -- copied from QuakeSpasm (5/28/2022)
-
-	p->datavec = NULL;
-	p->datavec = new CQVector<byte>;
-	p->datavec->AddMultipleToTail(p->width * p->height, p->data);
 
 
 	//p->data.Init();
@@ -353,12 +341,12 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 			for (j = 0; j < p->width; j++, k++)
 				scrap_texels[texnum][(y + i) * BLOCK_WIDTH + x + j] = p->data[k];
 		}
-		gl = scrap_textures[texnum]; //Missi -- copied from QuakeSpasm (5/28/2022) -- changed to an array
+		gl.tex = scrap_textures[texnum]; //Missi -- copied from QuakeSpasm (5/28/2022) -- changed to an array
 		//Missi -- copied from QuakeSpasm (5/28/2022) -- no longer go from 0.01 to 0.99
-		gl->sl = x / (float)BLOCK_WIDTH;	// FIXME: Missi -- broken here! (6/14/2022)
-		gl->sh = (x + p->width) / (float)BLOCK_WIDTH;
-		gl->tl = y / (float)BLOCK_WIDTH;
-		gl->th = (y + p->height) / (float)BLOCK_WIDTH;
+		gl.sl = x / (float)BLOCK_WIDTH;	// FIXME: Missi -- broken here! (6/14/2022)
+		gl.sh = (x + p->width) / (float)BLOCK_WIDTH;
+		gl.tl = y / (float)BLOCK_WIDTH;
+		gl.th = (y + p->height) / (float)BLOCK_WIDTH;
 	}
 	else
 	{
@@ -367,14 +355,14 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 
 		offset = (size_t)p - (size_t)wad_base + sizeof(size_t) * 2; //Missi -- copied from QuakeSpasm (5/28/2022)
 
-		gl = GL_LoadTexture(name, p->width, p->height, p->datavec->Base(), TEXPREF_ALPHA); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
-		gl->sl = 0;
-		gl->sh = (float)p->width / (float)GL_PadConditional(p->width); //Missi -- copied from QuakeSpasm (5/28/2022)
-		gl->tl = 0;
-		gl->th = (float)p->height / (float)GL_PadConditional(p->height); //Missi -- copied from QuakeSpasm (5/28/2022)
+		gl.tex = GL_LoadTexture(name, p->width, p->height, p->data, TEXPREF_ALPHA); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
+		gl.sl = 0;
+		gl.sh = (float)p->width / (float)GL_PadConditional(p->width); //Missi -- copied from QuakeSpasm (5/28/2022)
+		gl.tl = 0;
+		gl.th = (float)p->height / (float)GL_PadConditional(p->height); //Missi -- copied from QuakeSpasm (5/28/2022)
 	}
 
-	//memcpy(p->data, &gl->pic.data, sizeof(CGLTexture));
+	memcpy(p->data, &gl, sizeof(COpenGLPic));
 
 	return p;
 }
@@ -392,7 +380,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	CQuakePic		*qpic = NULL;
 	byte			*qpictemp = NULL;
 	byte			*qpicdata = NULL;
-	CGLTexture		*gl = NULL;
+	COpenGLPic		gl;
 	size_t			qpictemp_len = 0;
 
 	for (pic=menu_cachepics, i=0 ; i<menu_numcachepics ; pic++, i++)
@@ -414,16 +402,6 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 		return NULL;
 	}
 
-	//qpictemp = qpicdata;
-	//memset(&qpic->data, 0, sizeof(qpic->data));
-
-	size_t size = 0;
-
-	while (qpic->data[size])
-		size++;
-
-	qpic->datavec->AddMultipleToTail(size, qpic->data);
-
 	SwapPic (qpic);
 
 	pic->pic.width = qpic->width;
@@ -441,13 +419,13 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	/*qpic->width = qpicbuf->width;
 	qpic->height = qpicbuf->height;*/
 
-	gl = GL_LoadTexture(path, qpic->width, qpic->height, qpic->datavec->Base()); // (COpenGLPic*)pic->pic->data;
-	gl->sl = 0;
-	gl->sh = 1;
-	gl->tl = 0;
-	gl->th = 1;
+	gl.tex = GL_LoadTexture(path, qpic->width, qpic->height, qpic->data, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); // (COpenGLPic*)pic->pic->data;
+	gl.sl = 0;
+	gl.sh = 1;
+	gl.tl = 0;
+	gl.th = 1;
 
-	memcpy(pic->pic.data, gl->pic.datavec->Base(), gl->pic.datavec->Count());
+	memcpy(pic->pic.data, &gl, sizeof(COpenGLPic));
 
  	return &pic->pic;
 }
@@ -558,7 +536,7 @@ void CGLRenderer::Draw_Init (void)
 	byte	*dest = NULL, *src = NULL;
 	int		x = 0, y = 0;
 	char	ver[40] = "";
-	CGLTexture* gl = NULL;
+	COpenGLPic gl;
 	int		start = 0;
 	byte	*ncdata = NULL;
 	int		f = 0, fstep = 0;
@@ -577,56 +555,25 @@ void CGLRenderer::Draw_Init (void)
 
 	Cmd_AddCommand ("gl_texturemode", &CGLRenderer::Draw_TextureMode_f);
 
-	// load the console background and the charset
-	// by hand, because we need to write the version
-	// string into the background before turning
-	// it into a texture
 	draw_chars = static_cast<byte*>(W_GetLumpName ("conchars"));
-	/*for (i=0 ; i<256*64 ; i++)
-		if (draw_chars[i] == 0)
-			draw_chars[i] = 255;*/	// proper transparent color
-
+	
 	// now turn them into textures
 	char_texture = GL_LoadTexture ("charset", 128, 128, draw_chars, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
 
 	start = g_MemCache->Hunk_LowMark();
 
-	cb = COM_LoadTempFile<CQuakePic>("gfx/conback.lmp");
-
-	if (!cb)
-	{
-		Sys_Error("Couldn't load gfx/conback.lmp");
-		return;
-	}
-
-	cb->datavec = NULL;
-	cb->datavec = new CQVector<byte>;
-	cb->datavec->AddMultipleToTail(cb->width * cb->height, cb->data);
-
-	//cb->data.Init();
-	//cb->width = cbbuf->width;
-	//cb->height = cbbuf->height;
-	SwapPic(cb);
-
-	conback->width = cb->width;
-	conback->height = cb->height;
-	ncdata = cb->datavec->Base();
-
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	gl = GL_LoadTexture ("conback", conback->width, conback->height, ncdata, TEXPREF_NOPICMIP | TEXPREF_ALPHA);
-	gl->sl = 0;
-	gl->sh = 1;
-	gl->tl = 0;
-	gl->th = 1;
+	conback = Draw_CachePic("gfx/conback.lmp");
+	conback->width = vid.conwidth;
+	conback->height = vid.conheight;
 
-	conback = gl;
-	conback->width = vid.width;
-	conback->height = vid.height;
-	/*conback = cb;*/
-
-	GL_Bind(conback);
+	/*gl.tex = GL_LoadTexture ("conback", conback->width, conback->height, cb->data, TEXPREF_NOPICMIP | TEXPREF_ALPHA);
+	gl.sl = 0;
+	gl.sh = 1;
+	gl.tl = 0;
+	gl.th = 1;*/
 
 	// free loaded console
 	g_MemCache->Hunk_FreeToLowMark(start);
@@ -738,17 +685,17 @@ void CGLRenderer::Draw_AlphaPic (int x, int y, CQuakePic *pic, float alpha)
 	byte			*dest, *source;
 	unsigned short	*pusdest;
 	int				v, u;
-	CGLTexture		*gl;
+	COpenGLPic		*gl;
 
 	if (scrap_dirty)
 		Scrap_Upload ();
-	gl = (CGLTexture*)&pic->data;
+	gl = (COpenGLPic*)&pic->data;
 	glDisable(GL_ALPHA_TEST);
 	glEnable (GL_BLEND);
 //	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //	glCullFace(GL_FRONT);
 	glColor4f (1,1,1,alpha);
-	g_GLRenderer->GL_Bind (gl);
+	g_GLRenderer->GL_Bind (gl->tex);
 	glBegin (GL_QUADS);
 	glTexCoord2f (gl->sl, gl->tl);
 	glVertex2f (x, y);
@@ -772,32 +719,22 @@ Draw_Pic
 */
 void CGLRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 {
-	byte			*dest = NULL, *source = NULL;
-	unsigned short	*pusdest = NULL;
-	int				v = 0, u = 0;
-	int				len = 0;
-	CGLTexture*			gl = NULL;
+	COpenGLPic* gl;
 
 	if (scrap_dirty)
-		Scrap_Upload ();
-
-	gl = (CGLTexture*)pic;
-	gl->width = pic->width;
-	gl->height = pic->height;
-	gl->texnum = texture_extension_number;
-
-	glColor4f (1,1,1,1);
-	g_GLRenderer->GL_Bind (gl);
-	glBegin (GL_QUADS);
-	glTexCoord2f (gl->sl, gl->tl);
-	glVertex2f (x, y);
-	glTexCoord2f (gl->sh, gl->tl);
-	glVertex2f (x+pic->width, y);
-	glTexCoord2f (gl->sh, gl->th);
-	glVertex2f (x+pic->width, y+pic->height);
-	glTexCoord2f (gl->sl, gl->th);
-	glVertex2f (x, y+pic->height);
-	glEnd ();
+		Scrap_Upload();
+	gl = (COpenGLPic*)pic->data;
+	GL_Bind(gl->tex);
+	glBegin(GL_QUADS);
+	glTexCoord2f(gl->sl, gl->tl);
+	glVertex2f(x, y);
+	glTexCoord2f(gl->sh, gl->tl);
+	glVertex2f(x + pic->width, y);
+	glTexCoord2f(gl->sh, gl->th);
+	glVertex2f(x + pic->width, y + pic->height);
+	glTexCoord2f(gl->sl, gl->th);
+	glVertex2f(x, y + pic->height);
+	glEnd();
 
 }
 
@@ -886,9 +823,9 @@ void CGLRenderer::Draw_ConsoleBackground (int lines)
 	int y = (vid.height * 3) >> 2;
 
 	if (lines > y)
-		Draw_Pic(0, lines - vid.height, &conback->pic);
+		Draw_Pic(0, lines - vid.height, conback);
 	else
-		Draw_AlphaPic (0, lines - vid.height, &conback->pic, (float)(1.2 * lines)/y);
+		Draw_AlphaPic (0, lines - vid.height, conback, (float)(1.2 * lines)/y);
 }
 
 
@@ -902,9 +839,12 @@ refresh window.
 */
 void CGLRenderer::Draw_TileClear (int x, int y, int w, int h)
 {
+	COpenGLPic* gl;
+
+	gl = (COpenGLPic*)draw_backtile->data;
 
 	glColor3f (1,1,1);
-	g_GLRenderer->GL_Bind((CGLTexture*)draw_backtile->datavec->Base()); // *(int*)draw_backtile->data;
+	g_GLRenderer->GL_Bind(gl->tex); // *(int*)draw_backtile->data;
 	glBegin (GL_QUADS);
 	glTexCoord2f (x/64.0f, y/64.0f);
 	glVertex2f (x, y);
@@ -1239,8 +1179,10 @@ void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned long long* data)
 		}
 #ifndef WIN64
 		memcpy (scaled, data, tex->width* tex->height*4);
+		memcpy (tex->pic.data, data, tex->width* tex->height*4);
 #else
-		memcpy (scaled, data, (unsigned long long)tex->width* (unsigned long long)tex->height*4);
+		memcpy (scaled, data, (long long)tex->width* (long long)tex->height*4);
+		memcpy (tex->pic.data, data, (long long)tex->width* (long long)tex->height*4);
 #endif
 	}
 	else
@@ -1298,6 +1240,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 {
 	int			i = 0, p = 0, s = 0, l = 0, m = 0; // -- Missi
 	CGLTexture* glt = NULL;
+	COpenGLPic*	gl;
 	CQuakePic* qpic = NULL;
 	byte* out = data;
 	int			CRCBlock1 = 0, CRCBlock2 = 0;
@@ -1313,11 +1256,6 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	else
 		glt = GL_NewTexture();
 
-	/*while (data[len] != '\0')
-		len++;*/
-
-	glt->pic.datavec->AddMultipleToTail(width * height, data);
-	//glt->pic.datavec->AddToTail('\0');
 	glt->pic.width = width;
 	glt->pic.height = height;
 
@@ -1364,6 +1302,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 #else
 	GL_Upload32(glt, (unsigned long long*)data);
 #endif
+
 	texture_extension_number++;
 
 	return glt;
@@ -1377,7 +1316,7 @@ GL_LoadPicTexture
 */
 CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic)
 {
-	return GL_LoadTexture("", pic->width, pic->height, pic->datavec->Base(), TEXPREF_ALPHA);
+	return GL_LoadTexture("", pic->width, pic->height, pic->data, TEXPREF_ALPHA);
 }
 
 /****************************************/
@@ -1396,7 +1335,7 @@ void CGLRenderer::GL_SelectTexture (GLenum target)
 	oldtarget = target;
 }
 
-CGLTexture::CGLTexture() : height(0), width(0), mipmap(false), texnum(0), sh(0), sl(0), th(0), tl(0), checksum(0)
+CGLTexture::CGLTexture() : height(0), width(0), mipmap(false), texnum(0), checksum(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
@@ -1406,7 +1345,7 @@ CGLTexture::CGLTexture(CQuakePic qpic, float des_sl, float des_tl, float des_sh,
 	memset(identifier, 0x00, sizeof(identifier));
 }
 
-CGLTexture::CGLTexture(const CGLTexture& obj) : height(0), width(0), mipmap(false), texnum(0), sh(0), sl(0), th(0), tl(0), checksum(0)
+CGLTexture::CGLTexture(const CGLTexture& obj) : height(0), width(0), mipmap(false), texnum(0), checksum(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
