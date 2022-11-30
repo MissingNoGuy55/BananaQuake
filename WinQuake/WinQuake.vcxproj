@@ -1503,6 +1503,7 @@ del $(OutDir)%(Filename).spp </Command>
     <ClInclude Include="sound.h" />
     <ClInclude Include="spritegn.h" />
     <ClInclude Include="sys.h" />
+    <ClInclude Include="sys_win.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="vid.h" />
     <ClInclude Include="view.h" />
