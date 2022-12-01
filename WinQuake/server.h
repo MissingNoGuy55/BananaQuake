@@ -22,32 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef SERVER_H
 #define SERVER_H
 
+#include "model.h"
 #include "world.h"
-
-// Missi: copied from world.h (6/7/2022)
-
-typedef struct
-{
-	vec3_t	normal;
-	float	dist;
-} plane_t;
-
-typedef struct
-{
-	bool	allsolid;	// if true, plane is not valid
-	bool	startsolid;	// if true, the initial point was in a solid area
-	bool	inopen, inwater;
-	float	fraction;		// time completed, 1.0 = didn't hit anything
-	vec3_t	endpos;			// final position
-	plane_t	plane;			// surface normal at impact
-	edict_t* ent;			// entity the surface is on
-} trace_t;
-
-struct hull_t;
-
-#define	MOVE_NORMAL		0
-#define	MOVE_NOMONSTERS	1
-#define	MOVE_MISSILE	2
 
 typedef struct server_static_s
 {
@@ -98,11 +74,10 @@ typedef struct client_s
 	int				old_frags;
 } client_t;
 
-
 class CQuakeServer
 {
+
 public:
-	CQuakeServer();
 
 	void SV_Init(void);
 

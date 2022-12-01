@@ -195,7 +195,7 @@ void D_DrawSurfaces(void)
 			d_ziorigin = s->d_ziorigin;
 
 			D_DrawSolidSurface(s, (int)s->data & 0xFF);
-			D_DrawZSpans(s->spans);
+			g_SoftwareRenderer->D_DrawZSpans(s->spans);
 		}
 	}
 	else
@@ -218,8 +218,8 @@ void D_DrawSurfaces(void)
 					R_MakeSky();
 				}
 
-				D_DrawSkyScans8(s->spans);
-				D_DrawZSpans(s->spans);
+				g_SoftwareRenderer->D_DrawSkyScans8(s->spans);
+				g_SoftwareRenderer->D_DrawZSpans(s->spans);
 			}
 			else if (s->flags & SURF_DRAWBACKGROUND)
 			{
@@ -230,11 +230,11 @@ void D_DrawSurfaces(void)
 				d_ziorigin = -0.9;
 
 				D_DrawSolidSurface(s, (int)r_clearcolor.value & 0xFF);
-				D_DrawZSpans(s->spans);
+				g_SoftwareRenderer->D_DrawZSpans(s->spans);
 			}
 			else if (s->flags & SURF_DRAWTURB)
 			{
-				pface = s->data;
+				pface = (msurface_t*)s->data;	// Missi (12/1/2022)
 				miplevel = 0;
 				cacheblock = (pixel_t*)
 					((byte*)pface->texinfo->texture +
@@ -256,8 +256,8 @@ void D_DrawSurfaces(void)
 				}
 
 				D_CalcGradients(pface);
-				Turbulent8(s->spans);
-				D_DrawZSpans(s->spans);
+				g_SoftwareRenderer->Turbulent8(s->spans);
+				g_SoftwareRenderer->D_DrawZSpans(s->spans);
 
 				if (s->insubmodel)
 				{
@@ -291,7 +291,7 @@ void D_DrawSurfaces(void)
 										// make entity passed in
 				}
 
-				pface = s->data;
+				pface = (msurface_t*)s->data;
 				miplevel = D_MipLevelForScale(s->nearzi * scale_for_mip
 					* pface->texinfo->mipadjust);
 
@@ -305,7 +305,7 @@ void D_DrawSurfaces(void)
 
 				(*d_drawspans) (s->spans);
 
-				D_DrawZSpans(s->spans);
+				g_SoftwareRenderer->D_DrawZSpans(s->spans);
 
 				if (s->insubmodel)
 				{

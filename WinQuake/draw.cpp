@@ -61,7 +61,7 @@ CQuakePic* CSoftwareRenderer::Draw_PicFromWad (char *name)
 Draw_CachePic
 ================
 */
-CQuakePic* CSoftwareRenderer::Draw_CachePic (char *path)
+CQuakePic* CSoftwareRenderer::Draw_CachePic (const char *path)
 {
 	cachepic_t	*pic;
 	int			i;
@@ -79,7 +79,7 @@ CQuakePic* CSoftwareRenderer::Draw_CachePic (char *path)
 		Q_strcpy (pic->name, path);
 	}
 
-	dat = static_cast<CQuakePic*>(g_MemCache->Cache_Check (&pic->cache));
+	dat = g_MemCache->Cache_Check<CQuakePic>(&pic->cache);
 
 	if (dat)
 		return dat;
@@ -87,7 +87,7 @@ CQuakePic* CSoftwareRenderer::Draw_CachePic (char *path)
 //
 // load the pic from disk
 //
-	COM_LoadCacheFile (path, (cache_user_s*)&pic->cache);
+	COM_LoadCacheFile<cache_user_s>(path, (cache_user_s*)&pic->cache);
 	
 	dat = (CQuakePic *)pic->cache.data;
 	if (!dat)

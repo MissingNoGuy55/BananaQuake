@@ -118,7 +118,7 @@ void D_DrawTurbulent8Span (void)
 Turbulent8
 =============
 */
-void Turbulent8 (espan_t *pspan)
+void CSoftwareRenderer::Turbulent8 (espan_t *pspan)
 {
 	int				count;
 	fixed16_t		snext, tnext;
@@ -391,7 +391,7 @@ void D_DrawSpans8 (espan_t *pspan)
 D_DrawZSpans
 =============
 */
-void D_DrawZSpans (espan_t *pspan)
+void CSoftwareRenderer::D_DrawZSpans (espan_t *pspan)
 {
 	int				count, doublecount, izistep;
 	int				izi;

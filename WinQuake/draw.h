@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // draw.h -- these are the only functions outside the refresh allowed
 // to touch the vid buffer
 
+#pragma once
+
 extern	CQuakePic *draw_disc;	// also used on sbar
 
 class CSoftwareRenderer
@@ -43,7 +45,13 @@ public:
 	void Draw_FadeScreen(void);
 	void Draw_String(int x, int y, char* str);
 	CQuakePic* Draw_PicFromWad(char* name);
-	CQuakePic* Draw_CachePic(char* path);
+	CQuakePic* Draw_CachePic(const char* path);
+
+	void R_InitSky(texture_t* mt);
+	void D_DrawSkyScans8(struct espan_s* pspan);
+	void Turbulent8(struct espan_s* pspan);
+	void D_DrawZSpans(struct espan_s* pspan);
+
 };
 
 extern CSoftwareRenderer* g_SoftwareRenderer;

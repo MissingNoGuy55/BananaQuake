@@ -3105,7 +3105,7 @@ void VID_MenuDraw (void)
 	// we only have room for 15 fullscreen modes, so don't allow
 	// 360-wide modes, because if there are 5 320-wide modes and
 	// 5 360-wide modes, we'll run out of space
-		if (ptr && ((pv->width != 360) || COM_CheckParm("-allow360")))
+		if (ptr && ((pv->width != 360) || common->COM_CheckParm("-allow360")))
 		{
 			dup = 0;
 
@@ -3121,7 +3121,7 @@ void VID_MenuDraw (void)
 
 			if (dup || (vid_wmodes < MAX_MODEDESCS))       
 			{
-				if (!dup || !modedescs[dupmode].ismode13 || COM_CheckParm("-noforcevga"))
+				if (!dup || !modedescs[dupmode].ismode13 || common->COM_CheckParm("-noforcevga"))
 				{
 					if (dup)
 					{
@@ -3243,7 +3243,7 @@ void VID_MenuDraw (void)
 		if (vid_line >= 3)
 			row += 3*8;
 
-		M_DrawCharacter (column, row, 12+((int)(realtime*4)&1));
+		M_DrawCharacter (column, row, 12+((int)(host->realtime*4)&1));
 	}
 }
 

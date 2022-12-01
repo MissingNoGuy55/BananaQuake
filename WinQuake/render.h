@@ -184,8 +184,6 @@ public:
 #endif
 	float	speedscale;		// for top sky and bottom sky
 
-	void R_SplitEntityOnNode(mnode_s* node);
-
 	void R_StoreEfrags(efrag_t** ppefrag);
 
 #ifndef GLQUAKE
@@ -201,15 +199,16 @@ public:
 	struct msurface_s* warpface;
 
 	void R_BuildLightMap(void);
-	void R_EmitEdge(struct mvertex_s* pv0, mvertex_s* pv1);
-	void R_ClipEdge(struct mvertex_s* pv0, mvertex_s* pv1, struct clipplane_t* clip);
+	void R_EmitEdge(struct msurface_s* pv0, struct msurface_s* pv1);
+	void R_ClipEdge(struct msurface_s* pv0, struct msurface_s* pv1, clipplane_t* clip);
 	void R_SplitEntityOnNode2(struct mnode_s* node);
 	void R_MarkLights(struct dlight_s* light, int bit, struct mnode_s* node);
 	void R_SplitEntityOnNode(struct mnode_s* node);
 	int R_BmodelCheckBBox(struct model_s* clmodel, float* minmaxs);
 
-	void R_GenTile(msurface_t* psurf, void* pdest);
-
+	void R_GenTile(struct msurface_s* psurf, void* pdest);
+#else
+	void R_SplitEntityOnNode(mnode_s* node);
 #endif
 
 	void R_DrawSurface(void);

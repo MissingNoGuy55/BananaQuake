@@ -251,8 +251,8 @@ void Sbar_Init (void)
 
 	for (i = 0; i < 10; i++)
 	{
-		sb_nums[0][i] = g_SoftwareRenderer->Draw_PicFromWad(va("num_%i", i));
-		sb_nums[1][i] = g_SoftwareRenderer->Draw_PicFromWad(va("anum_%i", i));
+		sb_nums[0][i] = g_SoftwareRenderer->Draw_PicFromWad(common->va("num_%i", i));
+		sb_nums[1][i] = g_SoftwareRenderer->Draw_PicFromWad(common->va("anum_%i", i));
 	}
 
 	sb_nums[0][10] = g_SoftwareRenderer->Draw_PicFromWad("num_minus");
@@ -279,13 +279,13 @@ void Sbar_Init (void)
 
 	for (i = 0; i < 5; i++)
 	{
-		sb_weapons[2 + i][0] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_shotgun", i + 1));
-		sb_weapons[2 + i][1] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_sshotgun", i + 1));
-		sb_weapons[2 + i][2] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_nailgun", i + 1));
-		sb_weapons[2 + i][3] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_snailgun", i + 1));
-		sb_weapons[2 + i][4] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_rlaunch", i + 1));
-		sb_weapons[2 + i][5] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_srlaunch", i + 1));
-		sb_weapons[2 + i][6] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_lightng", i + 1));
+		sb_weapons[2 + i][0] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_shotgun", i + 1));
+		sb_weapons[2 + i][1] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_sshotgun", i + 1));
+		sb_weapons[2 + i][2] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_nailgun", i + 1));
+		sb_weapons[2 + i][3] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_snailgun", i + 1));
+		sb_weapons[2 + i][4] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_rlaunch", i + 1));
+		sb_weapons[2 + i][5] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_srlaunch", i + 1));
+		sb_weapons[2 + i][6] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_lightng", i + 1));
 	}
 
 	sb_ammo[0] = g_SoftwareRenderer->Draw_PicFromWad("sb_shells");
@@ -349,11 +349,11 @@ void Sbar_Init (void)
 
 		for (i = 0; i < 5; i++)
 		{
-			hsb_weapons[2 + i][0] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_laser", i + 1));
-			hsb_weapons[2 + i][1] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_mjolnir", i + 1));
-			hsb_weapons[2 + i][2] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_gren_prox", i + 1));
-			hsb_weapons[2 + i][3] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_prox_gren", i + 1));
-			hsb_weapons[2 + i][4] = g_SoftwareRenderer->Draw_PicFromWad(va("inva%i_prox", i + 1));
+			hsb_weapons[2 + i][0] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_laser", i + 1));
+			hsb_weapons[2 + i][1] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_mjolnir", i + 1));
+			hsb_weapons[2 + i][2] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_gren_prox", i + 1));
+			hsb_weapons[2 + i][3] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_prox_gren", i + 1));
+			hsb_weapons[2 + i][4] = g_SoftwareRenderer->Draw_PicFromWad(common->va("inva%i_prox", i + 1));
 		}
 
 		hsb_items[0] = g_SoftwareRenderer->Draw_PicFromWad("sb_wsuit");
@@ -382,6 +382,9 @@ void Sbar_Init (void)
 		rsb_ammo[1] = g_SoftwareRenderer->Draw_PicFromWad("r_ammomulti");
 		rsb_ammo[2] = g_SoftwareRenderer->Draw_PicFromWad("r_ammoplasma");
 
+
+	}
+
 #endif
 
 
@@ -399,10 +402,17 @@ Sbar_DrawPic
 */
 void Sbar_DrawPic (int x, int y, CQuakePic *pic)
 {
+#ifdef GLQUAKE
 	if (cl.gametype == GAME_DEATHMATCH)
 		g_GLRenderer->Draw_Pic (x, y + (vid.height-SBAR_HEIGHT), pic);
 	else
 		g_GLRenderer->Draw_Pic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
+#else
+	if (cl.gametype == GAME_DEATHMATCH)
+		g_SoftwareRenderer->Draw_Pic(x, y + (vid.height - SBAR_HEIGHT), pic);
+	else
+		g_SoftwareRenderer->Draw_Pic(x + ((vid.width - 320) >> 1), y + (vid.height - SBAR_HEIGHT), pic);
+#endif
 }
 
 /*
@@ -412,10 +422,17 @@ Sbar_DrawTransPic
 */
 void Sbar_DrawTransPic (int x, int y, CQuakePic *pic)
 {
+#ifdef GLQUAKE
 	if (cl.gametype == GAME_DEATHMATCH)
 		g_GLRenderer->Draw_TransPic (x, y + (vid.height-SBAR_HEIGHT), pic);
 	else
 		g_GLRenderer->Draw_TransPic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
+#else
+	if (cl.gametype == GAME_DEATHMATCH)
+		g_SoftwareRenderer->Draw_TransPic(x, y + (vid.height - SBAR_HEIGHT), pic);
+	else
+		g_SoftwareRenderer->Draw_TransPic(x + ((vid.width - 320) >> 1), y + (vid.height - SBAR_HEIGHT), pic);
+#endif
 }
 
 /*
@@ -427,10 +444,17 @@ Draws one solid graphics character
 */
 void Sbar_DrawCharacter (int x, int y, int num)
 {
+#ifdef GLQUAKE
 	if (cl.gametype == GAME_DEATHMATCH)
 		g_GLRenderer->Draw_Character ( x /*+ ((vid.width - 320)>>1) */ + 4 , y + vid.height-SBAR_HEIGHT, num);
 	else
 		g_GLRenderer->Draw_Character ( x + ((vid.width - 320)>>1) + 4 , y + vid.height-SBAR_HEIGHT, num);
+#else
+	if (cl.gametype == GAME_DEATHMATCH)
+		g_SoftwareRenderer->Draw_Character(x /*+ ((vid.width - 320)>>1) */ + 4, y + vid.height - SBAR_HEIGHT, num);
+	else
+		g_SoftwareRenderer->Draw_Character(x + ((vid.width - 320) >> 1) + 4, y + vid.height - SBAR_HEIGHT, num);
+#endif
 }
 
 /*
@@ -440,10 +464,17 @@ Sbar_DrawString
 */
 void Sbar_DrawString (int x, int y, char *str)
 {
+#ifdef GLQUAKE
 	if (cl.gametype == GAME_DEATHMATCH)
 		g_GLRenderer->Draw_String (x /*+ ((vid.width - 320)>>1)*/, y+ vid.height-SBAR_HEIGHT, str);
 	else
 		g_GLRenderer->Draw_String (x + ((vid.width - 320)>>1), y+ vid.height-SBAR_HEIGHT, str);
+#else
+	if (cl.gametype == GAME_DEATHMATCH)
+		g_SoftwareRenderer->Draw_String(x /*+ ((vid.width - 320)>>1)*/, y + vid.height - SBAR_HEIGHT, str);
+	else
+		g_SoftwareRenderer->Draw_String(x + ((vid.width - 320) >> 1), y + vid.height - SBAR_HEIGHT, str);
+#endif
 }
 
 /*
@@ -941,9 +972,13 @@ void Sbar_DrawFrags (void)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 
+#ifdef GLQUAKE
 		g_GLRenderer->Draw_Fill (xofs + x*8 + 10, y, 28, 4, top);
 		g_GLRenderer->Draw_Fill (xofs + x*8 + 10, y+4, 28, 3, bottom);
-
+#else
+		g_SoftwareRenderer->Draw_Fill(xofs + x * 8 + 10, y, 28, 4, top);
+		g_SoftwareRenderer->Draw_Fill(xofs + x * 8 + 10, y + 4, 28, 3, bottom);
+#endif
 	// draw number
 		f = s->frags;
 		sprintf (num, "%3i",f);
@@ -998,8 +1033,14 @@ void Sbar_DrawFace (void)
 			xofs = ((vid.width - 320)>>1) + 113;
 
 		Sbar_DrawPic (112, 0, rsb_teambord);
+
+#ifdef GLQUAKE
 		g_GLRenderer->Draw_Fill (xofs, vid.height-SBAR_HEIGHT+3, 22, 9, top);
 		g_GLRenderer->Draw_Fill (xofs, vid.height-SBAR_HEIGHT+12, 22, 9, bottom);
+#else
+		g_SoftwareRenderer->Draw_Fill(xofs, vid.height - SBAR_HEIGHT + 3, 22, 9, top);
+		g_SoftwareRenderer->Draw_Fill(xofs, vid.height - SBAR_HEIGHT + 12, 22, 9, bottom);
+#endif
 
 		// draw number
 		f = s->frags;
@@ -1080,7 +1121,11 @@ void Sbar_Draw (void)
 	sb_updates++;
 
 	if (sb_lines && vid.width > 320) 
+#ifdef GLQUAKE
 		g_GLRenderer->Draw_TileClear (0, vid.height - sb_lines, vid.width, sb_lines);
+#else
+		g_SoftwareRenderer->Draw_TileClear (0, vid.height - sb_lines, vid.width, sb_lines);
+#endif
 
 	if (sb_lines > 24)
 	{
@@ -1215,7 +1260,12 @@ void Sbar_IntermissionNumber (int x, int y, int num, int digits, int color)
 		else
 			frame = *ptr -'0';
 
+#ifdef GLQUAKE
 		g_GLRenderer->Draw_TransPic (x,y,sb_nums[color][frame]);
+#else
+		g_SoftwareRenderer->Draw_TransPic (x,y,sb_nums[color][frame]);
+#endif
+
 		x += 24;
 		ptr++;
 	}
@@ -1238,8 +1288,11 @@ void Sbar_DeathmatchOverlay (void)
 
 	scr_copyeverything = 1;
 	scr_fullupdate = 0;
-
+#ifdef GLQUAKE
 	pic = g_GLRenderer->Draw_CachePic ("gfx/ranking.lmp");
+#else
+	pic = g_SoftwareRenderer->Draw_CachePic("gfx/ranking.lmp");
+#endif
 	M_DrawPic ((320-pic->width)/2, 8, pic);
 
 // scores
@@ -1262,20 +1315,34 @@ void Sbar_DeathmatchOverlay (void)
 		bottom = (s->colors & 15)<<4;
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
-
+#ifdef GLQUAKE
 		g_GLRenderer->Draw_Fill ( x, y, 40, 4, top);
 		g_GLRenderer->Draw_Fill ( x, y+4, 40, 4, bottom);
-
+#else
+		g_SoftwareRenderer->Draw_Fill(x, y, 40, 4, top);
+		g_SoftwareRenderer->Draw_Fill(x, y + 4, 40, 4, bottom);
+#endif
 	// draw number
 		f = s->frags;
 		sprintf (num, "%3i",f);
 
+#ifdef GLQUAKE
 		g_GLRenderer->Draw_Character ( x+8 , y, num[0]);
 		g_GLRenderer->Draw_Character ( x+16 , y, num[1]);
 		g_GLRenderer->Draw_Character ( x+24 , y, num[2]);
+#else
+		g_SoftwareRenderer->Draw_Character(x + 8, y, num[0]);
+		g_SoftwareRenderer->Draw_Character(x + 16, y, num[1]);
+		g_SoftwareRenderer->Draw_Character(x + 24, y, num[2]);
+#endif
 
 		if (k == cl.viewentity - 1)
+#ifdef GLQUAKE
 			g_GLRenderer->Draw_Character ( x - 8, y, 12);
+#else
+			g_SoftwareRenderer->Draw_Character ( x - 8, y, 12);
+#endif
+
 
 #if 0
 {
@@ -1296,8 +1363,11 @@ void Sbar_DeathmatchOverlay (void)
 #endif
 
 	// draw name
-g_GLRenderer->Draw_String (x+64, y, s->name);
-
+#ifdef GLQUAKE
+		g_GLRenderer->Draw_String (x+64, y, s->name);
+#else
+		g_SoftwareRenderer->Draw_String (x+64, y, s->name);
+#endif
 		y += 10;
 	}
 }
@@ -1362,21 +1432,38 @@ void Sbar_MiniDeathmatchOverlay (void)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 
+#ifdef GLQUAKE
 		g_GLRenderer->Draw_Fill ( x, y+1, 40, 3, top);
 		g_GLRenderer->Draw_Fill ( x, y+4, 40, 4, bottom);
-
+#else
+		g_SoftwareRenderer->Draw_Fill(x, y + 1, 40, 3, top);
+		g_SoftwareRenderer->Draw_Fill(x, y + 4, 40, 4, bottom);
+#endif
 	// draw number
 		f = s->frags;
 		sprintf (num, "%3i",f);
 
+#ifdef GLQUAKE
 		g_GLRenderer->Draw_Character ( x+8 , y, num[0]);
 		g_GLRenderer->Draw_Character ( x+16 , y, num[1]);
 		g_GLRenderer->Draw_Character ( x+24 , y, num[2]);
+#else
+		g_SoftwareRenderer->Draw_Character(x + 8, y, num[0]);
+		g_SoftwareRenderer->Draw_Character(x + 16, y, num[1]);
+		g_SoftwareRenderer->Draw_Character(x + 24, y, num[2]);
+#endif
 
+#ifdef GLQUAKE
 		if (k == cl.viewentity - 1) {
 			g_GLRenderer->Draw_Character ( x, y, 16);
 			g_GLRenderer->Draw_Character ( x + 32, y, 17);
 		}
+#else
+		if (k == cl.viewentity - 1) {
+			g_SoftwareRenderer->Draw_Character(x, y, 16);
+			g_SoftwareRenderer->Draw_Character(x + 32, y, 17);
+		}
+#endif
 
 #if 0
 {
@@ -1397,8 +1484,11 @@ void Sbar_MiniDeathmatchOverlay (void)
 #endif
 
 	// draw name
+#ifdef GLQUAKE
 		g_GLRenderer->Draw_String (x+48, y, s->name);
-
+#else
+		g_SoftwareRenderer->Draw_String (x+48, y, s->name);
+#endif
 		y += 8;
 	}
 }
@@ -1423,27 +1513,49 @@ void Sbar_IntermissionOverlay (void)
 		Sbar_DeathmatchOverlay ();
 		return;
 	}
-
+#ifdef GLQUAKE
 	pic = g_GLRenderer->Draw_CachePic ("gfx/complete.lmp");
 	g_GLRenderer->Draw_Pic (64, 24, pic);
 
 	pic = g_GLRenderer->Draw_CachePic ("gfx/inter.lmp");
 	g_GLRenderer->Draw_TransPic (0, 56, pic);
+#else
+	pic = g_SoftwareRenderer->Draw_CachePic("gfx/complete.lmp");
+	g_SoftwareRenderer->Draw_Pic(64, 24, pic);
+
+	pic = g_SoftwareRenderer->Draw_CachePic("gfx/inter.lmp");
+	g_SoftwareRenderer->Draw_TransPic(0, 56, pic);
+#endif
 
 // time
 	dig = cl.completed_time/60;
 	Sbar_IntermissionNumber (160, 64, dig, 3, 0);
 	num = cl.completed_time - dig*60;
+
+#ifdef GLQUAKE
 	g_GLRenderer->Draw_TransPic (234,64,sb_colon);
 	g_GLRenderer->Draw_TransPic (246,64,sb_nums[0][num/10]);
 	g_GLRenderer->Draw_TransPic (266,64,sb_nums[0][num%10]);
+#else
+	g_SoftwareRenderer->Draw_TransPic(234, 64, sb_colon);
+	g_SoftwareRenderer->Draw_TransPic(246, 64, sb_nums[0][num / 10]);
+	g_SoftwareRenderer->Draw_TransPic(266, 64, sb_nums[0][num % 10]);
+#endif
 
 	Sbar_IntermissionNumber (160, 104, cl.stats[STAT_SECRETS], 3, 0);
+#ifdef GLQUAKE
 	g_GLRenderer->Draw_TransPic (232,104,sb_slash);
+#else
+	g_SoftwareRenderer->Draw_TransPic (232,104,sb_slash);
+#endif
 	Sbar_IntermissionNumber (240, 104, cl.stats[STAT_TOTALSECRETS], 3, 0);
 
 	Sbar_IntermissionNumber (160, 144, cl.stats[STAT_MONSTERS], 3, 0);
+#ifdef GLQUAKE
 	g_GLRenderer->Draw_TransPic (232,144,sb_slash);
+#else
+	g_SoftwareRenderer->Draw_TransPic (232,144,sb_slash);
+#endif
 	Sbar_IntermissionNumber (240, 144, cl.stats[STAT_TOTALMONSTERS], 3, 0);
 
 }
@@ -1460,7 +1572,11 @@ void Sbar_FinaleOverlay (void)
 	CQuakePic	*pic;
 
 	scr_copyeverything = 1;
-
+#ifdef GLQUAKE
 	pic = g_GLRenderer->Draw_CachePic ("gfx/finale.lmp");
 	g_GLRenderer->Draw_TransPic ( (vid.width-pic->width)/2, 16, pic);
+#else
+	pic = g_SoftwareRenderer->Draw_CachePic("gfx/finale.lmp");
+	g_SoftwareRenderer->Draw_TransPic((vid.width - pic->width) / 2, 16, pic);
+#endif
 }

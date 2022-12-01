@@ -53,7 +53,7 @@ R_InitSky
 A sky texture is 256*128, with the right side being a masked overlay
 ==============
 */
-void R_InitSky (texture_t *mt)
+void CSoftwareRenderer::R_InitSky (texture_t *mt)
 {
 	int			i, j;
 	byte		*src;
@@ -94,7 +94,7 @@ void R_InitSky (texture_t *mt)
 R_MakeSky
 =================
 */
-void R_MakeSky (void)
+void CSoftwareRenderer::R_MakeSky (void)
 {
 	int			x, y;
 	int			ofs, baseofs;

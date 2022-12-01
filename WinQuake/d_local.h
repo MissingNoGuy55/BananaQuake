@@ -102,5 +102,7 @@ pixel_t* d_viewbuffer;
 int		d_minmip;
 float	d_scalemip[3];
 
+void (*d_drawspans) (espan_t* pspan);
+
 //void (*d_drawspans) (espan_t* pspan);
 

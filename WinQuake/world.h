@@ -19,5 +19,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // world.h
 
+#pragma once
 
+typedef struct
+{
+	vec3_t	normal;
+	float	dist;
+} plane_t;
 
+typedef struct
+{
+	bool	allsolid;	// if true, plane is not valid
+	bool	startsolid;	// if true, the initial point was in a solid area
+	bool	inopen, inwater;
+	float	fraction;		// time completed, 1.0 = didn't hit anything
+	vec3_t	endpos;			// final position
+	plane_t	plane;			// surface normal at impact
+	edict_t* ent;			// entity the surface is on
+} trace_t;
+
+#define	MOVE_NORMAL		0
+#define	MOVE_NOMONSTERS	1
+#define	MOVE_MISSILE	2

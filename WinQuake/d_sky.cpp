@@ -62,7 +62,7 @@ void D_Sky_uv_To_st (int u, int v, fixed16_t *s, fixed16_t *t)
 D_DrawSkyScans8
 =================
 */
-void D_DrawSkyScans8 (espan_t *pspan)
+void CSoftwareRenderer::D_DrawSkyScans8 (espan_t *pspan)
 {
 	int				count, spancount, u, v;
 	unsigned char	*pdest;
