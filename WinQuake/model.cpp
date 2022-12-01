@@ -1252,7 +1252,7 @@ void * Mod_LoadAliasFrame (void * pin, int *pframeindex, int numv,
 	}
 
 	pinframe = (trivertx_t *)(pdaliasframe + 1);
-	pframe = static_cast<trivertx_t*>(g_MemCache->Hunk_AllocName (numv * sizeof(*pframe), loadname));
+	pframe = g_MemCache->Hunk_AllocName<trivertx_t>(numv * sizeof(*pframe), loadname);
 
 	*pframeindex = (byte *)pframe - (byte *)pheader;
 
@@ -1294,8 +1294,8 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 
 	numframes = LittleLong (pingroup->numframes);
 
-	paliasgroup = static_cast<maliasgroup_t*>(g_MemCache->Hunk_AllocName (sizeof (maliasgroup_t) +
-			(numframes - 1) * sizeof (paliasgroup->frames[0]), loadname));
+	paliasgroup = g_MemCache->Hunk_AllocName<maliasgroup_t>(sizeof (maliasgroup_t) +
+			(numframes - 1) * sizeof (paliasgroup->frames[0]), loadname);
 
 	paliasgroup->numframes = numframes;
 
@@ -1310,7 +1310,7 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 
 	pin_intervals = (daliasinterval_t *)(pingroup + 1);
 
-	poutintervals = static_cast<float*>(g_MemCache->Hunk_AllocName (numframes * sizeof (float), loadname));
+	poutintervals = g_MemCache->Hunk_AllocName<float>(numframes * sizeof(float), loadname);
 
 	paliasgroup->intervals = (byte *)poutintervals - (byte *)pheader;
 

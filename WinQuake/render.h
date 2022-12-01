@@ -207,7 +207,12 @@ public:
 	void R_MarkLights(struct dlight_s* light, int bit, struct mnode_s* node);
 	void R_SplitEntityOnNode(struct mnode_s* node);
 	int R_BmodelCheckBBox(struct model_s* clmodel, float* minmaxs);
+
+	void R_GenTile(msurface_t* psurf, void* pdest);
+
 #endif
+
+	void R_DrawSurface(void);
 
 	unsigned		blocklights[18 * 18];
 

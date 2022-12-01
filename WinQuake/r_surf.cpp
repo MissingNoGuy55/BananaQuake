@@ -54,7 +54,7 @@ static void	(*surfmiptable[4])(void) = {
 R_AddDynamicLights
 ===============
 */
-void R_AddDynamicLights (void)
+void CCoreRenderer::R_AddDynamicLights (void)
 {
 	msurface_t *surf;
 	int			lnum;
