@@ -244,6 +244,10 @@ bool R_AliasCheckBBox (void)
 	return true;
 }
 
+void R_SurfacePatch(void)
+{
+}
+
 
 /*
 ================

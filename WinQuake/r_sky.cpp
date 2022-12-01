@@ -252,6 +252,14 @@ void R_GenSkyTile16 (void *pdest)
 	}
 }
 
+void R_Surf8Patch(void)
+{
+}
+
+void R_Surf16Patch(void)
+{
+}
+
 
 /*
 =============

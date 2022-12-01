@@ -221,6 +221,30 @@ void R_RemoveEdges (edge_t *pedge)
 	} while ((pedge = pedge->nextremove) != NULL);
 }
 
+void R_Surf8Start(void)
+{
+}
+
+void R_Surf8End(void)
+{
+}
+
+void R_Surf16Start(void)
+{
+}
+
+void R_Surf16End(void)
+{
+}
+
+void R_EdgeCodeStart(void)
+{
+}
+
+void R_EdgeCodeEnd(void)
+{
+}
+
 //#endif	// !id386
 
 

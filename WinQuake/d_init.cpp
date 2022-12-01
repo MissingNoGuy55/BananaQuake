@@ -163,14 +163,14 @@ void D_SetupFrame (void)
 	for (i=0 ; i<(NUM_MIPS-1) ; i++)
 		d_scalemip[i] = basemip[i] * d_mipscale.value;
 
-#if	id386
-				if (d_subdiv16.value)
-					d_drawspans = D_DrawSpans16;
-				else
-					d_drawspans = D_DrawSpans8;
-#else
+//#if	id386
+//				if (d_subdiv16.value)
+//					d_drawspans = D_DrawSpans16;
+//				else
+//					d_drawspans = D_DrawSpans8;
+//#else
 				d_drawspans = D_DrawSpans8;
-#endif
+//#endif
 
 	d_aflatcolor = 0;
 }
