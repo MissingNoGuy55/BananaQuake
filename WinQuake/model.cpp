@@ -183,7 +183,7 @@ Mod_FindName
 
 ==================
 */
-model_t *Mod_FindName (char *name)
+model_t *Mod_FindName (const char *name)
 {
 	int		i;
 	model_t	*mod;
@@ -290,7 +290,7 @@ model_t *Mod_LoadModel (model_t *mod, bool crash)
 //
 // allocate a new model
 //
-	COM_FileBase (mod->name, loadname, sizeof(loadname));
+	common->COM_FileBase(mod->name, loadname, sizeof(loadname));
 	
 	loadmodel = mod;
 
@@ -371,7 +371,7 @@ void Mod_LoadTextures (lump_t *l)
 	m->nummiptex = LittleLong (m->nummiptex);
 	
 	loadmodel->numtextures = m->nummiptex;
-	loadmodel->textures = static_cast<texture_t**>(g_MemCache->Hunk_AllocName (m->nummiptex * sizeof(*loadmodel->textures) , loadname));
+	loadmodel->textures = g_MemCache->Hunk_AllocName<texture_t*>(m->nummiptex * sizeof(*loadmodel->textures) , loadname);
 
 	for (i=0 ; i<m->nummiptex ; i++)
 	{
@@ -387,7 +387,7 @@ void Mod_LoadTextures (lump_t *l)
 		if ( (mt->width & 15) || (mt->height & 15) )
 			Sys_Error ("Texture %s is not 16 aligned", mt->name);
 		pixels = mt->width*mt->height/64*85;
-		tx = static_cast<texture_t*>(g_MemCache->Hunk_AllocName (sizeof(texture_t) +pixels, loadname ));
+		tx = g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) +pixels, loadname );
 		loadmodel->textures[i] = tx;
 
 		memcpy (tx->name, mt->name, sizeof(tx->name));

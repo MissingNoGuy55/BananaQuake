@@ -38,7 +38,7 @@ int     D_SurfaceCacheForRes (int width, int height)
 
 	if (common->COM_CheckParm ("-surfcachesize"))
 	{
-		size = Q_atoi(com_argv[COM_CheckParm("-surfcachesize")+1]) * 1024;
+		size = Q_atoi(common->com_argv[common->COM_CheckParm("-surfcachesize")+1]) * 1024;
 		return size;
 	}
 	
@@ -83,7 +83,7 @@ D_InitCaches
 void D_InitCaches (void *buffer, int size)
 {
 
-	if (!msg_suppress_1)
+	if (!host->msg_suppress_1)
 		Con_Printf ("%ik surface cache\n", size/1024);
 
 	sc_size = size - GUARDSIZE;
@@ -327,7 +327,7 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 	r_drawsurf.surf = surface;
 
 	c_surf++;
-	R_DrawSurface ();
+	g_CoreRenderer->R_DrawSurface ();
 
 	return surface->cachespots[miplevel];
 }

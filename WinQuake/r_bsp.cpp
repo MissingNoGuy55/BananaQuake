@@ -518,7 +518,7 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags)
 	// deal with model fragments in this leaf
 		if (pleaf->efrags)
 		{
-			R_StoreEfrags (&pleaf->efrags);
+			g_CoreRenderer->R_StoreEfrags (&pleaf->efrags);
 		}
 
 		pleaf->key = r_currentkey;

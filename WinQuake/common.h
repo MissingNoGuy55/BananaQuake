@@ -224,7 +224,7 @@ public:
 	int COM_FOpenFile (const char *filename, FILE **file);
 	void COM_CloseFile (int h);
 
-	void COM_AddGameDirectory(char* dir);
+	void COM_AddGameDirectory(const char* dir);
 
 	void COM_InitFilesystem();
 	int COM_FindFile(const char* filename, int* handle, FILE** file);
@@ -232,7 +232,8 @@ public:
 
 	static void COM_Path_f(void);
 
-	char	*va(char *format, ...);
+	const char	*va(const char *format, ...);
+	char* va_unsafe(char* format, ...);
 	// does a varargs printf into a temp buffer
 
 	static	char		com_token[1024];
@@ -382,7 +383,7 @@ T* COM_LoadTempFile(const char* path)
 template<typename T>
 void COM_LoadCacheFile(const char* path, struct cache_user_s* cu)
 {
-	loadcache = cu;
+	memcpy(&loadcache, cu, sizeof(loadcache));
 	COM_LoadFile<T>(path, HUNK_CACHE);
 }
 

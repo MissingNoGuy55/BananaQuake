@@ -120,7 +120,7 @@ void M_DrawCharacter (int cx, int line, int num)
 #endif
 }
 
-void M_Print (int cx, int cy, char *str)
+void M_Print (int cx, int cy, const char *str)
 {
 	while (*str)
 	{
@@ -130,7 +130,7 @@ void M_Print (int cx, int cy, char *str)
 	}
 }
 
-void M_PrintWhite (int cx, int cy, char *str)
+void M_PrintWhite (int cx, int cy, const char *str)
 {
 	while (*str)
 	{
@@ -2301,7 +2301,7 @@ void M_ModemConfig_Key (int key)
 
 		if (modemConfig_cursor == 4)
 		{
-			(*SetModemConfig) (0, common->va ("%c", modemConfig_dialing), modemConfig_clear, modemConfig_init, modemConfig_hangup);
+			(*SetModemConfig) (0, common->va_unsafe("%c", modemConfig_dialing), modemConfig_clear, modemConfig_init, modemConfig_hangup);
 			m_entersound = true;
 			M_Menu_SerialConfig_f ();
 		}

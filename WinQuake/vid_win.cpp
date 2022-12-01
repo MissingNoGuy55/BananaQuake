@@ -243,8 +243,8 @@ bool VID_CheckAdequateMem (int width, int height)
 
 // see if there's enough memory, allowing for the normal mode 0x13 pixel,
 // z, and surface buffers
-	if ((host_parms.memsize - tbuffersize + SURFCACHE_SIZE_AT_320X200 +
-		 0x10000 * 3) < minimum_memory)
+	if ((host->host_parms.memsize - tbuffersize + SURFCACHE_SIZE_AT_320X200 +
+		 0x10000 * 3) < host->minimum_memory)
 	{
 		return false;		// not enough memory for mode
 	}
@@ -270,8 +270,8 @@ bool VID_AllocBuffers (int width, int height)
 
 // see if there's enough memory, allowing for the normal mode 0x13 pixel,
 // z, and surface buffers
-	if ((host_parms.memsize - tbuffersize + SURFCACHE_SIZE_AT_320X200 +
-		 0x10000 * 3) < minimum_memory)
+	if ((host->host_parms.memsize - tbuffersize + SURFCACHE_SIZE_AT_320X200 +
+		 0x10000 * 3) < host->minimum_memory)
 	{
 		Con_SafePrintf ("Not enough memory for video mode\n");
 		return false;		// not enough memory for mode
@@ -365,7 +365,7 @@ void registerAllDispDrivers(void)
 //we don't want VESA 1.X drivers		MGL_registerDriver(MGL_SVGA8NAME,SVGA8_driver);
 		MGL_registerDriver(MGL_LINEAR8NAME,LINEAR8_driver);
 
-		if (!COM_CheckParm ("-novbeaf"))
+		if (!common->COM_CheckParm ("-novbeaf"))
 			MGL_registerDriver(MGL_ACCEL8NAME,ACCEL8_driver);
 	}
 
@@ -392,14 +392,14 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 // FIXME: NT is checked for because MGL currently has a bug that causes it
 // to try to use WinDirect modes even on NT
 	if (common->COM_CheckParm("-nowindirect") ||
-		COM_CheckParm("-nowd") ||
-		COM_CheckParm("-novesa") ||
+		common->COM_CheckParm("-nowd") ||
+		common->COM_CheckParm("-novesa") ||
 		WinNT)
 	{
 		useWinDirect = false;
 	}
 
-	if (common->COM_CheckParm("-nodirectdraw") || COM_CheckParm("-noddraw") || COM_CheckParm("-nodd"))
+	if (common->COM_CheckParm("-nodirectdraw") || common->COM_CheckParm("-noddraw") || common->COM_CheckParm("-nodd"))
 		useDirectDraw = false;
 
 	// Initialise the MGL
@@ -429,7 +429,7 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 				if (m[i] == grVGA_320x200x256)
 					is_mode0x13 = true;
 
-				if (!COM_CheckParm("-noforcevga"))
+				if (!common->COM_CheckParm("-noforcevga"))
 				{
 					if (m[i] == grVGA_320x200x256)
 					{
@@ -564,7 +564,7 @@ MGLDC *createDisplayDC(int forcemem)
 	if (npages > 3)
 		npages = 3;
 
-	if (!COM_CheckParm ("-notriplebuf"))
+	if (!common->COM_CheckParm ("-notriplebuf"))
 	{
 		if (npages > 2)
 		{
@@ -684,7 +684,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 // automatically stretch the default mode up if > 640x480 desktop resolution
 	hdc = GetDC(NULL);
 
-	if ((GetDeviceCaps(hdc, HORZRES) > 640) && !COM_CheckParm("-noautostretch"))
+	if ((GetDeviceCaps(hdc, HORZRES) > 640) && !common->COM_CheckParm("-noautostretch"))
 	{
 		vid_default = MODE_WINDOWED + 1;
 	}
@@ -752,7 +752,7 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 
 			// if the width is more than twice the height, reduce it by half because this
 			// is probably a dual-screen monitor
-				if (!COM_CheckParm("-noadjustaspect"))
+				if (!common->COM_CheckParm("-noadjustaspect"))
 				{
 					if (modelist[nummodes].width > (modelist[nummodes].height << 1))
 					{
@@ -803,7 +803,7 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 
 			if ((((devmode.dmPelsWidth <= MAXWIDTH) &&
 				  (devmode.dmPelsHeight <= MAXHEIGHT)) ||
-				 (!COM_CheckParm("-noadjustaspect") &&
+				 (!common->COM_CheckParm("-noadjustaspect") &&
 				  (devmode.dmPelsWidth <= (MAXWIDTH*2)) &&
 				  (devmode.dmPelsWidth > (devmode.dmPelsHeight*2)))) &&
 				(nummodes < MAX_MODE_LIST) &&
@@ -831,7 +831,7 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 
 				// if the width is more than twice the height, reduce it by half because this
 				// is probably a dual-screen monitor
-					if (!COM_CheckParm("-noadjustaspect"))
+					if (!common->COM_CheckParm("-noadjustaspect"))
 					{
 						if (modelist[nummodes].width > (modelist[nummodes].height*2))
 						{
@@ -1704,7 +1704,7 @@ int VID_SetMode (int modenum, unsigned char *palette)
 // fix the leftover Alt from any Alt-Tab or the like that switched us away
 	ClearAllStates ();
 
-	if (!msg_suppress_1)
+	if (!host->msg_suppress_1)
 		Con_SafePrintf ("%s\n", VID_GetModeDescription (vid_modenum));
 
 	VID_SetPalette (palette);
@@ -1989,7 +1989,7 @@ void VID_TestMode_f (void)
 			testduration = Q_atof (Cmd_Argv(2));
 			if (testduration == 0)
 				testduration = 5.0;
-			vid_testendtime = realtime + testduration;
+			vid_testendtime = host->realtime + testduration;
 		}
 	}
 }
@@ -2102,7 +2102,7 @@ void	VID_Init (unsigned char *palette)
 // fullscreen DIBs as well
 	if (((nummodes == basenummodes) ||
 		 ((nummodes == (basenummodes + 1)) && is_mode0x13)) &&
-		!COM_CheckParm ("-nofulldib"))
+		!common->COM_CheckParm ("-nofulldib"))
 
 	{
 		VID_InitFullDIB (global_hInstance);
@@ -2110,7 +2110,7 @@ void	VID_Init (unsigned char *palette)
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
-	vid.colormap = host_colormap;
+	vid.colormap = host->host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 	vid_testingmode = 0;
 
@@ -2367,7 +2367,7 @@ void	VID_Update (vrect_t *rects)
 
 	if (vid_testingmode)
 	{
-		if (realtime >= vid_testendtime)
+		if (host->realtime >= vid_testendtime)
 		{
 			VID_SetMode (vid_realmode, vid_curpal);
 			vid_testingmode = 0;
@@ -2723,9 +2723,9 @@ void AppActivate(BOOL fActive, BOOL minimize)
 			{
 				if (vid_initialized)
 				{
-					msg_suppress_1 = true;	// don't want to see normal mode set message
+					host->msg_suppress_1 = true;	// don't want to see normal mode set message
 					VID_SetMode (vid_fulldib_on_focus_mode, vid_curpal);
-					msg_suppress_1 = false;
+					host->msg_suppress_1 = false;
 
 					t = in_mode_set;
 					in_mode_set = true;
@@ -2751,9 +2751,9 @@ void AppActivate(BOOL fActive, BOOL minimize)
 				{
 					force_minimized = true;
 					i = vid_fulldib_on_focus_mode;
-					msg_suppress_1 = true;	// don't want to see normal mode set message
+					host->msg_suppress_1 = true;	// don't want to see normal mode set message
 					VID_SetMode (windowed_default, vid_curpal);
-					msg_suppress_1 = false;
+					host->msg_suppress_1 = false;
 					vid_fulldib_on_focus_mode = i;
 					force_minimized = false;
 
@@ -2920,7 +2920,7 @@ LONG WINAPI MainWndProc (
 		case WM_PAINT:
 			hdc = BeginPaint(hWnd, &ps);
 
-			if (!in_mode_set && host_initialized)
+			if (!in_mode_set && host->host_initialized)
 				SCR_UpdateWholeScreen ();
 
 			EndPaint(hWnd, &ps);
@@ -3042,8 +3042,8 @@ LONG WINAPI MainWndProc (
 
 
 extern void M_Menu_Options_f (void);
-extern void M_Print (int cx, int cy, char *str);
-extern void M_PrintWhite (int cx, int cy, char *str);
+extern void M_Print (int cx, int cy, const char *str);
+extern void M_PrintWhite (int cx, int cy, const char *str);
 extern void M_DrawCharacter (int cx, int line, int num);
 extern void M_DrawTransPic (int x, int y, CQuakePic *pic);
 extern void M_DrawPic (int x, int y, CQuakePic *pic);
@@ -3079,7 +3079,7 @@ void VID_MenuDraw (void)
 	vmode_t		*pv;
 	modedesc_t	tmodedesc;
 
-	p = Draw_CachePic ("gfx/vidmodes.lmp");
+	p = g_SoftwareRenderer->Draw_CachePic ("gfx/vidmodes.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
 	for (i=0 ; i<3 ; i++)
@@ -3323,7 +3323,7 @@ void VID_MenuKey (int key)
 	// happens during the mode set and does a VID_Update, which
 	// checks vid_testingmode
 		vid_testingmode = 1;
-		vid_testendtime = realtime + 5.0;
+		vid_testendtime = host->realtime + 5.0;
 
 		if (!VID_SetMode (modedescs[vid_line].modenum, vid_curpal))
 		{

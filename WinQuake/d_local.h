@@ -54,24 +54,24 @@ typedef struct surfcache_s
 	byte				data[4];	// width*height elements
 } surfcache_t;
 
-cvar_t	d_subdiv16;
+extern cvar_t	d_subdiv16;
 
-float	scale_for_mip;
+extern float	scale_for_mip;
 
-bool		d_roverwrapped;
-surfcache_t* sc_rover;
-surfcache_t* d_initial_rover;
+extern bool		d_roverwrapped;
+extern surfcache_t* sc_rover;
+extern surfcache_t* d_initial_rover;
 
-float	d_sdivzstepu, d_tdivzstepu, d_zistepu;
-float	d_sdivzstepv, d_tdivzstepv, d_zistepv;
-float	d_sdivzorigin, d_tdivzorigin, d_ziorigin;
+extern float	d_sdivzstepu, d_tdivzstepu, d_zistepu;
+extern float	d_sdivzstepv, d_tdivzstepv, d_zistepv;
+extern float	d_sdivzorigin, d_tdivzorigin, d_ziorigin;
 
-fixed16_t	sadjust, tadjust;
-fixed16_t	bbextents, bbextentt;
+extern fixed16_t	sadjust, tadjust;
+extern fixed16_t	bbextents, bbextentt;
 
 
-//void D_DrawSpans8(espan_t* pspans);
-//void D_DrawSpans16(espan_t* pspans);
+void D_DrawSpans8(espan_t* pspans);
+void D_DrawSpans16(espan_t* pspans);
 //void D_DrawZSpans(espan_t* pspans);
 //void Turbulent8(espan_t* pspan);
 void D_SpriteDrawSpans(sspan_t* pspan);
@@ -85,24 +85,24 @@ surfcache_t* D_CacheSurface(msurface_t* surface, int miplevel);
 
 int D_MipLevelForScale(float scale);
 
-short* d_pzbuffer;
-unsigned int d_zrowbytes, d_zwidth;
+extern short* d_pzbuffer;
+extern unsigned int d_zrowbytes, d_zwidth;
 
-int* d_pscantable;
-//int	d_scantable[MAXHEIGHT];
+extern int* d_pscantable;
+extern int	d_scantable[MAXHEIGHT];
 
-//int	d_vrectx, d_vrecty, d_vrectright_particle, d_vrectbottom_particle;
+extern int	d_vrectx, d_vrecty, d_vrectright_particle, d_vrectbottom_particle;
 
-//int	d_y_aspect_shift, d_pix_min, d_pix_max, d_pix_shift;
+extern int	d_y_aspect_shift, d_pix_min, d_pix_max, d_pix_shift;
 
-pixel_t* d_viewbuffer;
+extern pixel_t* d_viewbuffer;
 
-//short* zspantable[MAXHEIGHT];
+extern short* zspantable[MAXHEIGHT];
 
-int		d_minmip;
-float	d_scalemip[3];
+extern int		d_minmip;
+extern float	d_scalemip[3];
 
-void (*d_drawspans) (espan_t* pspan);
+extern void (*d_drawspans) (espan_t* pspan);
 
 //void (*d_drawspans) (espan_t* pspan);
 

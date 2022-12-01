@@ -260,7 +260,7 @@ void WarpPalette (void)
 	{
 		for (j=0 ; j<3 ; j++)
 		{
-			newpalette[i*3+j] = (host_basepal[i*3+j] + basecolor[j])/2;
+			newpalette[i*3+j] = (host->host_basepal[i*3+j] + basecolor[j])/2;
 		}
 	}
 	

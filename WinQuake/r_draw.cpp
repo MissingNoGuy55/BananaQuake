@@ -70,7 +70,7 @@ int				r_ceilv1;
 bool	r_lastvertvalid;
 
 
-#if	!id386
+//#if	!id386
 
 /*
 ================
@@ -352,7 +352,7 @@ void R_ClipEdge (mvertex_t *pv0, mvertex_t *pv1, clipplane_t *clip)
 	R_EmitEdge (pv0, pv1);
 }
 
-#endif	// !id386
+//#endif	// !id386
 
 
 /*

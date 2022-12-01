@@ -44,13 +44,15 @@ public:
 	void Draw_Fill(int x, int y, int w, int h, int c);
 	void Draw_FadeScreen(void);
 	void Draw_String(int x, int y, char* str);
-	CQuakePic* Draw_PicFromWad(char* name);
+	CQuakePic* Draw_PicFromWad(const char* name);
 	CQuakePic* Draw_CachePic(const char* path);
 
-	void R_InitSky(texture_t* mt);
+	void R_InitSky(struct texture_s* mt);
 	void D_DrawSkyScans8(struct espan_s* pspan);
 	void Turbulent8(struct espan_s* pspan);
 	void D_DrawZSpans(struct espan_s* pspan);
+
+	void R_MakeSky(void);
 
 };
 

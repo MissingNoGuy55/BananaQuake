@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define DPS_MAXSPANS			MAXHEIGHT+1	
 									// 1 extra for spanpackage that marks end
 
+
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct {
 	void			*pdest;
@@ -115,7 +116,7 @@ void D_PolysetSetEdgeTable (void);
 void D_RasterizeAliasPolySmooth (void);
 void D_PolysetScanLeftEdge (int height);
 
-#if	!id386
+//#if	!id386
 
 /*
 ================
@@ -386,7 +387,7 @@ nodraw:
 	D_PolysetRecursiveTriangle (lp3, inew, lp2);
 }
 
-#endif	// !id386
+//#endif	// !id386
 
 
 /*
@@ -411,7 +412,7 @@ void D_PolysetUpdateTables (void)
 }
 
 
-#if	!id386
+//#if	!id386
 
 /*
 ===================
@@ -479,7 +480,7 @@ void D_PolysetScanLeftEdge (int height)
 	} while (--height);
 }
 
-#endif	// !id386
+//#endif	// !id386
 
 
 /*
@@ -521,7 +522,7 @@ void D_PolysetSetUpForLineScan(fixed8_t startvertu, fixed8_t startvertv,
 }
 
 
-#if	!id386
+//#if	!id386
 
 /*
 ================
@@ -584,7 +585,7 @@ void D_PolysetCalcGradients (int skinwidth)
 	a_ststepxwhole = skinwidth * (r_tstepx >> 16) + (r_sstepx >> 16);
 }
 
-#endif	// !id386
+//#endif	// !id386
 
 
 #if 0
@@ -604,7 +605,7 @@ void InitGel (byte *palette)
 #endif
 
 
-#if	!id386
+//#if	!id386
 
 /*
 ================
@@ -674,7 +675,7 @@ void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage)
 		pspanpackage++;
 	} while (pspanpackage->count != -999999);
 }
-#endif	// !id386
+//#endif	// !id386
 
 
 /*

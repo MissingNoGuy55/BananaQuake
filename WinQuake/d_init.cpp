@@ -25,18 +25,37 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define NUM_MIPS	4
 
 
-// cvar_t	d_subdiv16 = {"d_subdiv16", "1"};
-cvar_t	d_mipcap = {"d_mipcap", "0"};
-cvar_t	d_mipscale = {"d_mipscale", "1"};
+cvar_t	d_subdiv16 = { "d_subdiv16", "1" };
+cvar_t	d_mipcap = { "d_mipcap", "0" };
+cvar_t	d_mipscale = { "d_mipscale", "1" };
 
-// surfcache_t		*d_initial_rover;
-// bool		d_roverwrapped;
-// int				d_minmip;
-// float			d_scalemip[NUM_MIPS-1];
+surfcache_t* sc_rover;
+surfcache_t		*d_initial_rover;
+bool		d_roverwrapped;
+int				d_minmip;
+float			d_scalemip[NUM_MIPS-1];
 
 static float	basemip[NUM_MIPS-1] = {1.0, 0.5*0.8, 0.25*0.8};
 
 extern int			d_aflatcolor;
+
+// Missi: bleh! put this somewhere else (12/1/2022)
+
+CCoreRenderer::CCoreRenderer() : solidskytexture(NULL)
+{
+	solidskytexture = NULL;
+	alphaskytexture = NULL;
+	speedscale = 1.0f;
+	memset(blocklights, 0, sizeof(blocklights));
+}
+
+CCoreRenderer::CCoreRenderer(const CCoreRenderer& src)
+{
+	solidskytexture = NULL;
+	alphaskytexture = NULL;
+	speedscale = 1.0f;
+	memset(blocklights, 0, sizeof(blocklights));
+}
 
 
 /*

@@ -581,7 +581,7 @@ void Con_DrawNotify (void)
 			x++;
 		}
 #ifndef GLQUAKE
-		g_SoftwareRenderer->Draw_Character ( (x+5)<<3, v, 10+((int)(realtime*con_cursorspeed)&1));
+		g_SoftwareRenderer->Draw_Character ( (x+5)<<3, v, 10+((int)(host->realtime*con_cursorspeed)&1));
 #else
 		g_GLRenderer->Draw_Character((x + 5) << 3, v, 10 + ((int)(host->realtime * con_cursorspeed) & 1));
 #endif

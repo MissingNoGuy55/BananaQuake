@@ -155,7 +155,7 @@ void	R_InitTextures (void)
 	byte	*dest;
 	
 // create a simple checkerboard texture for the default
-	r_notexture_mip = static_cast<texture_t*>(g_MemCache->Hunk_AllocName (sizeof(texture_t) + 16*16+8*8+4*4+2*2, "notexture"));
+	r_notexture_mip = g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) + 16*16+8*8+4*4+2*2, "notexture");
 	
 	r_notexture_mip->width = r_notexture_mip->height = 16;
 	r_notexture_mip->offsets[0] = sizeof(texture_t);
@@ -264,7 +264,7 @@ void CCoreRenderer::R_NewMap (void)
 
 	if (r_cnumsurfs > NUMSTACKSURFACES)
 	{
-		surfaces = static_cast<surf_t*>(g_MemCache->Hunk_AllocName (r_cnumsurfs * sizeof(surf_t), "surfaces"));
+		surfaces = g_MemCache->Hunk_AllocName<surf_t>(r_cnumsurfs * sizeof(surf_t), "surfaces");
 		surface_p = surfaces;
 		surf_max = &surfaces[r_cnumsurfs];
 		r_surfsonstack = false;
@@ -292,8 +292,8 @@ void CCoreRenderer::R_NewMap (void)
 	}
 	else
 	{
-		auxedges = static_cast<edge_t*>(g_MemCache->Hunk_AllocName (r_numallocatededges * sizeof(edge_t),
-								   "edges"));
+		auxedges = g_MemCache->Hunk_AllocName<edge_t>(r_numallocatededges * sizeof(edge_t),
+								   "edges");
 	}
 
 	r_dowarpold = false;
@@ -464,7 +464,7 @@ void CCoreRenderer::R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect)
 		r_fov_greater_than_90 = true;
 
 // TODO: collect 386-specific code in one place
-#if	id386
+//#if	id386
 	if (r_pixbytes == 1)
 	{
 		Sys_MakeCodeWriteable ((long)R_Surf8Start,
@@ -479,7 +479,7 @@ void CCoreRenderer::R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect)
 		colormap = vid.colormap16;
 		R_Surf16Patch ();
 	}
-#endif	// id386
+//#endif	// id386
 
 	D_ViewChanged ();
 }

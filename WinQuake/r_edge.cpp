@@ -158,7 +158,7 @@ void R_BeginEdgeFrame (void)
 }
 
 
-#if	!id386
+//#if	!id386
 
 /*
 ==============
@@ -201,10 +201,10 @@ addedge:
 	} while ((edgestoadd = next_edge) != NULL);
 }
 
-#endif	// !id386
+//#endif	// !id386
 	
 
-#if	!id386
+//#if	!id386
 
 /*
 ==============
@@ -221,10 +221,10 @@ void R_RemoveEdges (edge_t *pedge)
 	} while ((pedge = pedge->nextremove) != NULL);
 }
 
-#endif	// !id386
+//#endif	// !id386
 
 
-#if	!id386
+//#if	!id386
 
 /*
 ==============
@@ -291,7 +291,7 @@ pushback:
 	}
 }
 
-#endif	// !id386
+//#endif	// !id386
 
 
 /*
@@ -450,7 +450,7 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge)
 }
 
 
-#if	!id386
+//#if	!id386
 
 /*
 ==============
@@ -616,7 +616,7 @@ void R_GenerateSpans (void)
 	R_CleanupSpan ();
 }
 
-#endif	// !id386
+//#endif	// !id386
 
 
 /*
@@ -725,7 +725,7 @@ void R_ScanEdges (void)
 		if (span_p >= max_span_p)
 		{
 			VID_UnlockBuffer ();
-			S_ExtraUpdate ();	// don't let sound get messed up if going slow
+			g_SoundSystem->S_ExtraUpdate ();	// don't let sound get messed up if going slow
 			VID_LockBuffer ();
 		
 			if (r_drawculledpolys)

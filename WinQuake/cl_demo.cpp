@@ -244,7 +244,7 @@ void CL_Record_f (void)
 // start the map up
 //
 	if (c > 2)
-		Cmd_ExecuteString (common->va("map %s", Cmd_Argv(2)), src_command);
+		Cmd_ExecuteString (common->va_unsafe("map %s", Cmd_Argv(2)), src_command);
 	
 //
 // open the demo file

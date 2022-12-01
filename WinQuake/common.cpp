@@ -1208,7 +1208,7 @@ varargs versions of all text functions.
 FIXME: make this buffer size safe someday
 ============
 */
-char* CCommon::va(char *format, ...)
+const char* CCommon::va(const char *format, ...)
 {
 	va_list         argptr;
 	static char             string[1024];
@@ -1220,6 +1220,17 @@ char* CCommon::va(char *format, ...)
 	return string;  
 }
 
+char* CCommon::va_unsafe(char* format, ...)
+{
+	va_list         argptr;
+	static char             string[1024];
+
+	va_start(argptr, format);
+	vsprintf(string, format, argptr);
+	va_end(argptr);
+
+	return string;
+}
 
 /// just for debugging
 int     memsearch (byte *start, int count, int search)
@@ -1608,7 +1619,7 @@ Sets com_gamedir, adds the directory to the head of the path,
 then loads and adds pak1.pak pak2.pak ... 
 ================
 */
-void CCommon::COM_AddGameDirectory (char *dir)
+void CCommon::COM_AddGameDirectory (const char *dir)
 {
 	int                             i = 0;
 	searchpath_t			*search = NULL;

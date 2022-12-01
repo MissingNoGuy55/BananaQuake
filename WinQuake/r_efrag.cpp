@@ -49,7 +49,7 @@ R_RemoveEfrags
 Call when removing an object from the world or moving it to another position
 ================
 */
-void R_RemoveEfrags (entity_t *ent)
+void CCoreRenderer::R_RemoveEfrags (entity_t *ent)
 {
 	efrag_t		*ef, *old, *walk, **prev;
 	
@@ -160,7 +160,7 @@ void CCoreRenderer::R_SplitEntityOnNode (mnode_t *node)
 R_SplitEntityOnNode2
 ===================
 */
-void R_SplitEntityOnNode2 (mnode_t *node)
+void CCoreRenderer::R_SplitEntityOnNode2 (mnode_t *node)
 {
 	mplane_t	*splitplane;
 	int			sides;
@@ -199,7 +199,7 @@ void R_SplitEntityOnNode2 (mnode_t *node)
 R_AddEfrags
 ===========
 */
-void R_AddEfrags (entity_t *ent)
+void CCoreRenderer::R_AddEfrags (entity_t *ent)
 {
 	model_t		*entmodel;
 	int			i;
@@ -223,7 +223,7 @@ void R_AddEfrags (entity_t *ent)
 		r_emaxs[i] = ent->origin[i] + entmodel->maxs[i];
 	}
 
-	R_SplitEntityOnNode (cl.worldmodel->nodes);
+	g_CoreRenderer->R_SplitEntityOnNode (cl.worldmodel->nodes);
 
 	ent->topnode = r_pefragtopnode;
 }

@@ -51,7 +51,7 @@ cachepic_t	menu_cachepics[MAX_CACHED_PICS];
 int			menu_numcachepics;
 
 
-CQuakePic* CSoftwareRenderer::Draw_PicFromWad (char *name)
+CQuakePic* CSoftwareRenderer::Draw_PicFromWad (const char *name)
 {
 	return static_cast<CQuakePic*>(W_GetLumpName (name));
 }
@@ -87,7 +87,7 @@ CQuakePic* CSoftwareRenderer::Draw_CachePic (const char *path)
 //
 // load the pic from disk
 //
-	COM_LoadCacheFile<cache_user_s>(path, (cache_user_s*)&pic->cache);
+	COM_LoadCacheFile<cache_user_s>(path, &pic->cache);
 	
 	dat = (CQuakePic *)pic->cache.data;
 	if (!dat)
@@ -879,7 +879,7 @@ Draws the little blue disc in the corner of the screen.
 Call before beginning any disc IO.
 ================
 */
-void Draw_BeginDisc (void)
+void CSoftwareRenderer::Draw_BeginDisc (void)
 {
 
 	D_BeginDirectRect (vid.width - 24, 0, draw_disc->data, 24, 24);
@@ -894,7 +894,7 @@ Erases the disc icon.
 Call after completing any disc IO
 ================
 */
-void Draw_EndDisc (void)
+void CSoftwareRenderer::Draw_EndDisc (void)
 {
 
 	D_EndDirectRect (vid.width - 24, 0, 24, 24);

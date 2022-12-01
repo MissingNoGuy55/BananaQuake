@@ -24,9 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static int	miplevel;
 
+float		scale_for_mip;
 int			screenwidth;
 int			ubasestep, errorterm, erroradjustup, erroradjustdown;
 int			vstartscan;
+
+void (*d_drawspans) (espan_t* pspan);
 
 // FIXME: should go away
 extern void			R_RotateBmodel(void);
@@ -215,7 +218,7 @@ void D_DrawSurfaces(void)
 			{
 				if (!r_skymade)
 				{
-					R_MakeSky();
+					g_SoftwareRenderer->R_MakeSky();
 				}
 
 				g_SoftwareRenderer->D_DrawSkyScans8(s->spans);

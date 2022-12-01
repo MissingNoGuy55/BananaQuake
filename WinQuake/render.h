@@ -130,7 +130,6 @@ class CCoreRenderer
 public:
 
 	CCoreRenderer();
-	CCoreRenderer(const CCoreRenderer& src);
 
 	void R_Init(void);
 	void R_InitTextures(void);
@@ -198,9 +197,11 @@ public:
 	void R_cshift_f(void);
 	struct msurface_s* warpface;
 
+	void R_AddDynamicLights(void);
+
 	void R_BuildLightMap(void);
 	void R_EmitEdge(struct msurface_s* pv0, struct msurface_s* pv1);
-	void R_ClipEdge(struct msurface_s* pv0, struct msurface_s* pv1, clipplane_t* clip);
+	void R_ClipEdge(struct msurface_s* pv0, struct msurface_s* pv1, struct clipplane_s* clip);
 	void R_SplitEntityOnNode2(struct mnode_s* node);
 	void R_MarkLights(struct dlight_s* light, int bit, struct mnode_s* node);
 	void R_SplitEntityOnNode(struct mnode_s* node);
@@ -214,6 +215,10 @@ public:
 	void R_DrawSurface(void);
 
 	unsigned		blocklights[18 * 18];
+
+private:
+
+	CCoreRenderer(const CCoreRenderer& src);
 
 };
 

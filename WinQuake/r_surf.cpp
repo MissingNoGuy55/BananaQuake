@@ -241,7 +241,7 @@ texture_t *R_TextureAnimation (texture_t *base)
 R_DrawSurface
 ===============
 */
-void R_DrawSurface (void)
+void CCoreRenderer::R_DrawSurface (void)
 {
 	unsigned char	*basetptr;
 	int				smax, tmax, twidth;
@@ -329,7 +329,7 @@ void R_DrawSurface (void)
 
 //=============================================================================
 
-#if	!id386
+//#if	!id386
 
 /*
 ================
@@ -578,7 +578,7 @@ void R_DrawSurfaceBlock16 (void)
 	prowdestbase = prowdest;
 }
 
-#endif
+//#endif
 
 
 //============================================================================

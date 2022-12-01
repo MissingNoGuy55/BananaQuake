@@ -449,7 +449,7 @@ void R_AliasTransformFinalVert (finalvert_t *fv, auxvert_t *av,
 }
 
 
-#if	!id386
+//#if	!id386
 
 /*
 ================
@@ -503,7 +503,7 @@ void R_AliasTransformAndProjectFinalVerts (finalvert_t *fv, stvert_t *pstverts)
 	}
 }
 
-#endif
+//#endif
 
 
 /*

@@ -27,7 +27,7 @@ static int		sprite_height;
 static int		minindex, maxindex;
 static sspan_t	*sprite_spans;
 
-#if	!id386
+//#if	!id386
 
 /*
 =====================
@@ -188,7 +188,7 @@ NextSpan:
 	} while (pspan->count != DS_SPAN_LIST_END);
 }
 
-#endif
+//#endif
 
 
 /*

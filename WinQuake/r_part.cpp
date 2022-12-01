@@ -668,7 +668,7 @@ void CCoreRenderer::R_DrawParticles (void)
 	VectorScale (vup, 1.5, up);
 	VectorScale (vright, 1.5, right);
 #else
-	D_StartParticles ();
+	//D_StartParticles ();
 
 	VectorScale (vright, xscaleshrink, r_pright);
 	VectorScale (vup, yscaleshrink, r_pup);
