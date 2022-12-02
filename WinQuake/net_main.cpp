@@ -953,6 +953,8 @@ static PollProcedure *pollProcedureList = NULL;
 void NET_Poll(void)
 {
 	PollProcedure *pp;
+
+/*
 	bool	useModem;
 
 	if (!configRestored)
@@ -968,6 +970,7 @@ void NET_Poll(void)
 		}
 		configRestored = true;
 	}
+*/
 
 	SetNetTime();
 

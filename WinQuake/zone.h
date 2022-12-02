@@ -1061,7 +1061,7 @@ CMemBlock<T, I>::CMemBlock(T* memory, int numelements) : m_pMemory(memory), size
 }
 
 template<class T, class I>
-CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory(memory), size(numelements), id(ZONEID), tag(0), prev(NULL), next(NULL)
+CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory((T*)pMemory), size(numelements), id(ZONEID), tag(0), prev(NULL), next(NULL), pad(0)
 {
 	m_growSize = -2;
 }

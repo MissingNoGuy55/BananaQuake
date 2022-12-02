@@ -260,7 +260,7 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
 #endif
 
 // #ifndef _M_IX86
-
+/*
 void Sys_LowFPPrecision(void)
 {
 	__asm fldcw single_cw
@@ -331,7 +331,7 @@ void MaskExceptions (void)
 		fldenv	fpenv
 	}
 }
-
+*/
 #if 0
 void UnmaskExceptions(void)
 {
@@ -358,8 +358,8 @@ void Sys_Init (void)
 	unsigned int	lowpart, highpart;
 	OSVERSIONINFO	vinfo;
 #ifndef WIN64
-	MaskExceptions ();
-	Sys_SetFPCW ();
+	//MaskExceptions ();
+	//Sys_SetFPCW ();
 #endif
 	if (!QueryPerformanceFrequency (&PerformanceFreq))
 		Sys_Error ("No hardware timer available");
@@ -780,7 +780,7 @@ HINSTANCE	global_hInstance;
 int			global_nCmdShow;
 char		*argv[MAX_NUM_ARGVS];
 static char	*empty_string = "";
-HWND		hwnd_dialog;
+HWND		hwnd_dialog = {};
 
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)

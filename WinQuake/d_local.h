@@ -54,7 +54,7 @@ typedef struct surfcache_s
 	byte				data[4];	// width*height elements
 } surfcache_t;
 
-extern cvar_t	d_subdiv16;
+//extern cvar_t	d_subdiv16;
 
 extern float	scale_for_mip;
 

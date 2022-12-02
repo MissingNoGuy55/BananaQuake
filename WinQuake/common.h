@@ -161,7 +161,7 @@ int Q_strncmp (const char *s1, const char *s2, int count);
 int Q_strcasecmp (const char *s1, const char *s2);
 int Q_strncasecmp (const char *s1, const char *s2, int n);
 int	Q_atoi (const char *str);
-float Q_atof (const char *str);
+float Q_atof (char *str);
 int q_vsnprintf(char* str, size_t size, const char* format, va_list args);
 int q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
 
@@ -282,7 +282,7 @@ extern	struct cvar_s	registered;
 
 extern bool		standard_quake, rogue, hipnotic;
 
-extern cache_user_s loadcache;
+extern cache_user_s* loadcache;
 
 
 /*
@@ -324,7 +324,7 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 		buf = static_cast<T*>(g_MemCache->mainzone->Z_Malloc<T>(len + 1));
 		break;
 	case HUNK_CACHE:
-		buf = static_cast<T*>(g_MemCache->Cache_Alloc<T>(&loadcache, len + 1, base));
+		buf = static_cast<T*>(g_MemCache->Cache_Alloc<T>(loadcache, len + 1, base));
 		break;
 	case HUNK_TEMP_FILL:
 		if (len + 1 > loadsize<T>)
@@ -383,7 +383,7 @@ T* COM_LoadTempFile(const char* path)
 template<typename T>
 void COM_LoadCacheFile(const char* path, struct cache_user_s* cu)
 {
-	memcpy(&loadcache, cu, sizeof(loadcache));
+	loadcache = cu;
 	COM_LoadFile<T>(path, HUNK_CACHE);
 }
 

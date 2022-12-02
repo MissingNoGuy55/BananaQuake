@@ -28,6 +28,9 @@ extern	CQuakePic *draw_disc;	// also used on sbar
 class CSoftwareRenderer
 {
 public:
+
+	CSoftwareRenderer();
+
 	void Draw_Init(void);
 	void Draw_Character(int x, int y, int num);
 	void Draw_DebugChar(char num);
@@ -53,6 +56,8 @@ public:
 	void D_DrawZSpans(struct espan_s* pspan);
 
 	void R_MakeSky(void);
+
+	int dummy;
 
 };
 

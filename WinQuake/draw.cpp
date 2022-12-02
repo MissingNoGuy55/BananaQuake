@@ -101,6 +101,9 @@ CQuakePic* CSoftwareRenderer::Draw_CachePic (const char *path)
 }
 
 
+CSoftwareRenderer::CSoftwareRenderer() : dummy(0)
+{
+}
 
 /*
 ===============

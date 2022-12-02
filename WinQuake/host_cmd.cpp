@@ -1425,7 +1425,7 @@ Kicks a user off of the server
 */
 void Host_Kick_f (void)
 {
-	char		*who;
+	const char		*who;
 	const char		*message;
 	client_t	*save;
 	int			i;
