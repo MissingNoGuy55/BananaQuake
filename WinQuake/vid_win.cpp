@@ -645,46 +645,66 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 	registerAllMemDrivers();
 	MGL_initWindowed("");
 
+	// Missi: the mode lists pertain to the MODE_* defines of which there are three, only difference being, well, the video mode... hence only allowing three resolutions in software mode,
+	// hence this mess
+
+	int width = 320, height = 240;
+	int argv = 0;
+	int stretched = false;
+
+	if (argv = common->COM_CheckParm("-width"))
+		width = Q_atoi(common->com_argv[argv + 1]);
+	else if (argv = common->COM_CheckParm("-w"))
+		width = Q_atoi(common->com_argv[argv + 1]);
+
+	if (argv = common->COM_CheckParm("-height"))
+		height = Q_atoi(common->com_argv[argv + 1]);
+	else if (argv = common->COM_CheckParm("-h"))
+		height = Q_atoi(common->com_argv[argv + 1]);
+
+	if (4 * height != 3 * width)
+		stretched = true;
+
 	modelist[0].type = MS_WINDOWED;
-	modelist[0].width = 320;
-	modelist[0].height = 240;
-	Q_strcpy (modelist[0].modedesc, "320x240");
+	modelist[0].width = width;
+	modelist[0].height = height;
+	Q_strcpy (modelist[0].modedesc, "1600x1200");
 	modelist[0].mode13 = 0;
 	modelist[0].modenum = MODE_WINDOWED;
-	modelist[0].stretched = 0;
+	modelist[0].stretched = stretched ? 1 : 0;
 	modelist[0].dib = 1;
 	modelist[0].fullscreen = 0;
 	modelist[0].halfscreen = 0;
-	modelist[0].bpp = 8;
+	modelist[0].bpp = 32;
 
 	modelist[1].type = MS_WINDOWED;
-	modelist[1].width = 640;
-	modelist[1].height = 480;
-	Q_strcpy (modelist[1].modedesc, "640x480");
+	modelist[1].width = 800;
+	modelist[1].height = 600;
+	Q_strcpy(modelist[1].modedesc, "1280x720");
 	modelist[1].mode13 = 0;
-	modelist[1].modenum = MODE_WINDOWED + 1;
-	modelist[1].stretched = 1;
+	modelist[1].modenum = MODE_WINDOWED;
+	modelist[1].stretched = 0;
 	modelist[1].dib = 1;
 	modelist[1].fullscreen = 0;
 	modelist[1].halfscreen = 0;
-	modelist[1].bpp = 8;
+	modelist[1].bpp = 32;
 
 	modelist[2].type = MS_WINDOWED;
-	modelist[2].width = 800;
-	modelist[2].height = 600;
-	Q_strcpy (modelist[2].modedesc, "800x600");
+	modelist[2].width = 320;
+	modelist[2].height = 240;
+	Q_strcpy (modelist[2].modedesc, "320x240");
 	modelist[2].mode13 = 0;
 	modelist[2].modenum = MODE_WINDOWED + 2;
 	modelist[2].stretched = 1;
 	modelist[2].dib = 1;
 	modelist[2].fullscreen = 0;
 	modelist[2].halfscreen = 0;
-	modelist[2].bpp = 8;
+	modelist[2].bpp = 32;
 
 // automatically stretch the default mode up if > 640x480 desktop resolution
 	hdc = GetDC(NULL);
 
-	if ((GetDeviceCaps(hdc, HORZRES) > 640) && !common->COM_CheckParm("-noautostretch"))
+	if ((GetDeviceCaps(hdc, HORZRES) > 1920) && !common->COM_CheckParm("-noautostretch"))	// Missi: was 640 (12/2/2022)
 	{
 		vid_default = MODE_WINDOWED + 1;
 	}
