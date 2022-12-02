@@ -28,9 +28,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <ddraw.h>
 //#include <dsound.h>
 #include <SDL_audio.h>
+
 #ifndef GLQUAKE
+#ifndef WIN64
+
 #include <mgraph.h>
+
 #endif
+#endif
+
 #endif
 
 extern	HINSTANCE	global_hInstance;

@@ -61,10 +61,10 @@ unsigned int ceil_cw, single_cw, full_cw, cw, pushed_cw;
 unsigned int fpenv[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 
-void MaskExceptions (void);
+//void MaskExceptions (void);
 void Sys_InitFloatTime (void);
-void Sys_PushFPCW_SetHigh (void);
-void Sys_PopFPCW (void);
+//void Sys_PushFPCW_SetHigh (void);
+//void Sys_PopFPCW (void);
 
 volatile int					sys_checksum;
 
@@ -347,6 +347,17 @@ void UnmaskExceptions(void)
 
 // #endif
 
+static void Sys_SetTimerResolution(void)
+{
+	/* Set OS timer resolution to 1ms.
+	   Works around buffer underruns with directsound and SDL2, but also
+	   will make Sleep()/SDL_Dleay() accurate to 1ms which should help framerate
+	   stability.
+	*/
+	timeBeginPeriod(1);
+}
+
+
 /*
 ================
 Sys_Init
@@ -354,31 +365,9 @@ Sys_Init
 */
 void Sys_Init (void)
 {
-	LARGE_INTEGER	PerformanceFreq;
-	unsigned int	lowpart, highpart;
 	OSVERSIONINFO	vinfo;
-#ifndef WIN64
-	//MaskExceptions ();
-	//Sys_SetFPCW ();
-#endif
-	if (!QueryPerformanceFrequency (&PerformanceFreq))
-		Sys_Error ("No hardware timer available");
 
-// get 32 out of the 64 time bits such that we have around
-// 1 microsecond resolution
-	lowpart = (unsigned int)PerformanceFreq.LowPart;
-	highpart = (unsigned int)PerformanceFreq.HighPart;
-	lowshift = 0;
-
-	while (highpart || (lowpart > 2000000.0))
-	{
-		lowshift++;
-		lowpart >>= 1;
-		lowpart |= (highpart & 1) << 31;
-		highpart >>= 1;
-	}
-
-	pfreq = 1.0 / (double)lowpart;
+	Sys_SetTimerResolution();
 
 	Sys_InitFloatTime ();
 
@@ -546,7 +535,6 @@ int	Sys_FileTime(char* path)
 ================
 Sys_FloatTime
 ================
-*/
 double Sys_FloatTime (void)
 {
 	static int			sametimecount;
@@ -611,7 +599,7 @@ double Sys_FloatTime (void)
 
     return curtime;
 }
-
+*/
 double Sys_DoubleTime()
 {
 	return SDL_GetTicks() / 1000.0f;
@@ -916,7 +904,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	if (!parms.membase)
 		Sys_Error ("Not enough memory free; check disk space\n");
 
-	Sys_PageIn ((void*)parms.membase, parms.memsize);
+	//Sys_PageIn ((void*)parms.membase, parms.memsize);
 
 	// tevent = CreateEvent(NULL, FALSE, FALSE, NULL);
 

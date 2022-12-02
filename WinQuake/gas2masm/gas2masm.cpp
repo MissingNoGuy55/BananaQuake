@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_TOKEN_LENGTH	1024
 #define LF					0x0A
 
+
 #ifndef WIN64
 #define DSDWORD_PTR "ds:dword ptr"
 #define DSWORD_PTR "ds:word ptr"

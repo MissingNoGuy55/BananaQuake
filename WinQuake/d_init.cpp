@@ -121,6 +121,11 @@ void D_TurnZOn (void)
 }
 
 
+void D_Aff8Patch(void* pcolormap)
+{
+	// not needed for software version
+}
+
 /*
 ===============
 D_DisableBackBufferAccess

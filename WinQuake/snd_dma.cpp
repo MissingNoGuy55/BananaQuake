@@ -807,7 +807,7 @@ void CSoundSystemWin::S_ExtraUpdate (void)
 
 void CSoundInternal::S_Update_(void)
 {
-	unsigned        endtime;
+	unsigned int	endtime;
 	int				samps;
 	
 	if (!sound_started || (snd_blocked > 0))
@@ -829,11 +829,9 @@ void CSoundInternal::S_Update_(void)
 
 // mix ahead of current position
 
-		endtime = soundtime + _snd_mixahead.value * g_SoundSystem->shm->speed;
-		samps = g_SoundSystem->shm->samples >> (g_SoundSystem->shm->channels - 1);
-
-	if (endtime - soundtime > samps)
-		endtime = soundtime + samps;
+	endtime = soundtime + (unsigned int)(_snd_mixahead.value * shm->speed);
+	samps = shm->samples >> (shm->channels - 1);
+	endtime = q_min(endtime, (unsigned int)(soundtime + samps));
 
 	g_SoundSystem->S_PaintChannels (endtime);
 
