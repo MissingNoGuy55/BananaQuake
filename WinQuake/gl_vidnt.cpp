@@ -223,11 +223,17 @@ bool VID_SetWindowedMode (int modenum)
 
 	DIBWidth = modelist[modenum].width;
 	DIBHeight = modelist[modenum].height;
-
-	WindowStyle = WS_OVERLAPPED | WS_BORDER | WS_CAPTION | WS_SYSMENU |
-				  WS_MINIMIZEBOX;
+	
+	if (!common->COM_CheckParm("-noborder"))
+	{
+		WindowStyle = WS_OVERLAPPED | WS_BORDER | WS_CAPTION | WS_SYSMENU |
+			WS_MINIMIZEBOX;
+	}
+	else
+	{
+		WindowStyle = WS_POPUP;
+	}
 	ExWindowStyle = 0;
-
 	rect = WindowRect;
 	AdjustWindowRectEx(&rect, WindowStyle, FALSE, 0);
 

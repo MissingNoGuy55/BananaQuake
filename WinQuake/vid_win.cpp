@@ -1265,9 +1265,16 @@ bool VID_SetWindowedMode (int modenum)
 		DIBHeight >>= 1;
 	}
 
+	if (!common->COM_CheckParm("-noborder"))
+	{
 	WindowStyle = WS_OVERLAPPED | WS_BORDER | WS_CAPTION | WS_SYSMENU |
 				  WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPSIBLINGS |
 				  WS_CLIPCHILDREN;
+	}
+	else
+	{
+		WindowStyle = WS_POPUP;
+	}
 	ExWindowStyle = 0;
 	AdjustWindowRectEx(&WindowRect, WindowStyle, FALSE, 0);
 
