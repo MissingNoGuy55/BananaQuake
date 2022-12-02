@@ -1422,7 +1422,7 @@ void VID_InitDIB (HINSTANCE hInstance)
 	if (common->COM_CheckParm("-height"))
 		modelist[0].height= Q_atoi(common->com_argv[common->COM_CheckParm("-height")+1]);
 	else if (common->COM_CheckParm("-h"))
-		modelist[0].width = Q_atoi(common->com_argv[common->COM_CheckParm("-h") + 1]);
+		modelist[0].height = Q_atoi(common->com_argv[common->COM_CheckParm("-h") + 1]);
 	else
 		modelist[0].height = modelist[0].width * 240/320;
 
@@ -1806,7 +1806,7 @@ void	VID_Init (unsigned char *palette)
 							}
 						}
 					}
-					if (common->COM_CheckParm("-h"))
+					else if (common->COM_CheckParm("-h"))
 					{
 						height = Q_atoi(common->com_argv[common->COM_CheckParm("-h") + 1]);
 
