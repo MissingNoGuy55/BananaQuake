@@ -236,19 +236,19 @@ Translates a skin texture by the per-player color lookup
 void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 {
 	int		top, bottom;
+	int		skinnum;
 	byte	translate[256];
+	byte*	 pixels;
+	byte	*out;
+	char	name[64];
 #ifndef WIN64
 	unsigned	translate32[256];
-	unsigned	*pixels = g_MemCache->Hunk_Alloc<unsigned>(512 * 256);	// Missi (3/8/2022) TWO MINS BEFORE MIDNIGHT BAYBEEEEEEEEE
-	unsigned	*out;
 	unsigned	scaled_width, scaled_height;
 	int			inwidth, inheight;
 	int		i, j, s;
 	unsigned	frac, fracstep;
 #else
 	unsigned long long	translate32[256];
-	unsigned long long* pixels = g_MemCache->Hunk_Alloc<unsigned long long>(512 * 256);	// Missi (3/8/2022) TWO MINS BEFORE MIDNIGHT BAYBEEEEEEEEE
-	unsigned long long* out;
 	unsigned long long	scaled_width, scaled_height;
 	long long			inwidth, inheight;
 	long long			i, j, s;
@@ -293,6 +293,18 @@ void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 
 	paliashdr = (aliashdr_t *)Mod_Extradata<aliashdr_t>(model);
 
+	skinnum = currententity->skinnum;
+
+	//TODO: move these tests to the place where skinnum gets received from the server
+	if (skinnum < 0 || skinnum >= paliashdr->numskins)
+	{
+		Con_DPrintf("(%d): Invalid player skin #%d\n", playernum, skinnum);
+		skinnum = 0;
+}
+
+	pixels = (byte*)paliashdr + paliashdr->texels[skinnum]; // This is not a persistent place!
+
+#if 0
 #ifndef WIN64
 	s = paliashdr->skinwidth * paliashdr->skinheight;
 #else
@@ -306,14 +318,20 @@ void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 		original = (byte *)paliashdr + paliashdr->texels[currententity->skinnum];
 	if (s & 3)
 		Sys_Error ("R_TranslateSkin: s&3");
+#endif
 
 	inwidth = paliashdr->skinwidth;
 	inheight = paliashdr->skinheight;
 
+	snprintf(name, sizeof(name), "player_%i", playernum);
+	playertextures[playernum] = g_GLRenderer->GL_LoadTexture(name, paliashdr->skinwidth, paliashdr->skinheight,
+		pixels, TEXPREF_PAD | TEXPREF_OVERWRITE);
+
 	// because this happens during gameplay, do it fast
 	// instead of sending it through gl_upload 8
-    g_GLRenderer->GL_Bind(playertextures[playernum]);
+    //g_GLRenderer->GL_Bind(playertextures[playernum]);
 
+/*
 #if 0
 	byte	translated[320*200];
 
@@ -363,6 +381,7 @@ void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #endif
+*/
 
 }
 

@@ -244,10 +244,12 @@ public:
 	void GL_Set2D(void);
 
 	CGLTexture* GL_FindTexture(const char* identifier);
+	unsigned* GL_MipMapW(unsigned* data, int width, int height);
+	unsigned* GL_MipMapH(unsigned* data, int width, int height);
 #ifndef WIN64
-	void GL_ResampleTexture(unsigned* in, int inwidth, int inheight, unsigned* out, int outwidth, int outheight);
+	unsigned* GL_ResampleTexture(unsigned* in, int inwidth, int inheight, bool alpha);
 #else
-	void GL_ResampleTexture(unsigned long long* in, int inwidth, int inheight, unsigned long long* out, int outwidth, int outheight);
+	unsigned* GL_ResampleTexture(unsigned long long* in, int inwidth, bool alpha);
 #endif
 	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);

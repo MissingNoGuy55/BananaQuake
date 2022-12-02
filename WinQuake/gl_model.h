@@ -449,7 +449,7 @@ Loads a model into the cache
 template<typename T>
 model_t* Mod_LoadModel(model_t* mod, bool crash)
 {
-	T* d;
+	T* d = NULL;
 	unsigned* buf;
 	byte	stackbuf[1024];		// avoid dirtying the cache heap
 

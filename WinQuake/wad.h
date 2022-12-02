@@ -55,7 +55,7 @@ public:
 	int			width;
 	int			height;
 	byte		data[1];
-	// CQVector<byte>*		datavec;
+	CQVector<byte>*		datavec;
 
 };
 

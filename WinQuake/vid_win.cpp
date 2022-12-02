@@ -634,7 +634,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
     wc.hCursor       = LoadCursor (NULL,IDC_ARROW);
 	wc.hbrBackground = NULL;
     wc.lpszMenuName  = 0;
-    wc.lpszClassName = "WinQuake";
+    wc.lpszClassName = "BananaQuake";	// Missi: was WinQuake (12/1/2022)
 
     if (!RegisterClass (&wc) )
 		Sys_Error ("Couldn't register window class");
@@ -1277,8 +1277,8 @@ bool VID_SetWindowedMode (int modenum)
 	{
 		mainwindow = CreateWindowEx (
 			 ExWindowStyle,
-			 "WinQuake",
-			 "WinQuake",
+			 "BananaQuake",	// Missi: was WinQuake (12/1/2022)
+			 "BananaQuake",	// Missi: was WinQuake (12/1/2022)
 			 WindowStyle,
 			 0, 0,
 			 WindowRect.right - WindowRect.left,
@@ -2142,7 +2142,7 @@ void	VID_Init (unsigned char *palette)
 			*ptmp = bestmatch;
 	}
 
-	if (common->COM_CheckParm("-startwindowed"))
+	if (common->COM_CheckParm("-startwindowed") || common->COM_CheckParm("-sw"))
 	{
 		startwindowed = 1;
 		vid_default = windowed_default;

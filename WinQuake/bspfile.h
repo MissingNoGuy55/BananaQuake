@@ -178,6 +178,7 @@ typedef struct texinfo_s
 	int			flags;
 } texinfo_t;
 #define	TEX_SPECIAL		1		// sky or slime, no lightmap or 256 subdivision
+#define TEX_MISSING		2
 
 // note that edge 0 is never used, because negative edge nums are used for
 // counterclockwise use of the edge in a face

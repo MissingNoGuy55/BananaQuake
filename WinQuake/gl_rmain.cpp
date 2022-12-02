@@ -496,6 +496,7 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 	vec3_t		mins, maxs;
 	aliashdr_t	*paliashdr;
 	trivertx_t	*verts, *v;
+	CGLTexture* tx, * fb;
 	int			index;
 	float		s, t, an;
 	int			anim;
@@ -547,7 +548,7 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 
 	// ZOID: never allow players to go totally black
 	i = currententity - cl_entities;
-	if (i >= 1 && i<=cl.maxclients /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
+	if ((uintptr_t)e >= (uintptr_t)&cl_entities[1] && (uintptr_t)e <= (uintptr_t)&cl_entities[cl.maxclients] /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
 		if (ambientlight < 8)
 			ambientlight = shadelight = 8;
 
@@ -568,7 +569,7 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 	//
 	// locate the proper data
 	//
-	paliashdr = (aliashdr_t *)Mod_Extradata<aliashdr_t>(currententity->model);
+	paliashdr = Mod_Extradata<aliashdr_t>(currententity->model);
 
 	c_alias_polys += paliashdr->numtris;
 
@@ -597,9 +598,8 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 	// seperately for the players.  Heads are just uncolored.
 	if (currententity->colormap != vid.colormap && !gl_nocolors.value)
 	{
-		i = currententity - cl_entities;
-		if (i >= 1 && i<=cl.maxclients /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
-		    g_GLRenderer->GL_Bind(playertextures[i]);
+		if ((uintptr_t)e >= (uintptr_t)&cl_entities[1] && (uintptr_t)e <= (uintptr_t)&cl_entities[cl.maxclients] /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
+		    g_GLRenderer->GL_Bind(playertextures[e - cl_entities - 1]);
 	}
 
 	if (gl_smoothmodels.value)

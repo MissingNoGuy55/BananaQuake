@@ -48,7 +48,7 @@ static double		lastcurtime = 0.0;
 static int			lowshift;
 bool			isDedicated;
 static bool		sc_return_on_enter = false;
-HANDLE				hinput, houtput;
+static HANDLE				hinput, houtput;
 
 static char			*tracking_tag = "Clams & Mooses";
 
@@ -481,7 +481,7 @@ void Sys_Printf (char *fmt, ...)
 	if (isDedicated)
 	{
 		va_start (argptr,fmt);
-		 (text, fmt, argptr);
+		q_vsnprintf_s(text, sizeof(text), 1024, fmt, argptr);
 		va_end (argptr);
 
 		WriteFile(houtput, text, strlen (text), &dummy, NULL);	
@@ -634,14 +634,13 @@ void Sys_InitFloatTime (void)
 
 char *Sys_ConsoleInput (void)
 {
-	static char	text[256] = {};
+	static char	text[256];
 	static int		len = 0;
-	static INPUT_RECORD	recs[1024] = {};
+	INPUT_RECORD	recs[1024];
 	int		count = 0;
 	int		i = 0;
-	LPDWORD dummy = {};
 	int		ch = 0; 
-	LPDWORD numread = {}, numevents = {};
+	DWORD	dummy, numread, numevents;
 
 	if (!isDedicated)
 		return NULL;
@@ -649,16 +648,16 @@ char *Sys_ConsoleInput (void)
 
 	for ( ;; )
 	{
-		if (!GetNumberOfConsoleInputEvents (hinput, numevents))
+		if (!GetNumberOfConsoleInputEvents (hinput, &numevents))
 			Sys_Error ("Error getting # of console events");
 
-		if (numevents <= 0)
+		if (!numevents)
 			break;
 
-		if (!ReadConsoleInput(hinput, recs, 1, numread))
+		if (!ReadConsoleInput(hinput, recs, 1, &numread))
 			Sys_Error ("Error reading console input");
 
-		if (numread)
+		if (numread != 1)
 			Sys_Error ("Couldn't read console input");
 
 		if (recs[0].EventType == KEY_EVENT)
@@ -670,7 +669,7 @@ char *Sys_ConsoleInput (void)
 				switch (ch)
 				{
 					case '\r':
-						WriteFile(houtput, "\r\n", 2, dummy, NULL);	
+						WriteFile(houtput, "\r\n", 2, &dummy, NULL);	
 
 						if (len)
 						{
@@ -678,6 +677,7 @@ char *Sys_ConsoleInput (void)
 							len = 0;
 							return text;
 						}
+						/*
 						else if (sc_return_on_enter)
 						{
 						// special case to allow exiting from the error handler on Enter
@@ -685,11 +685,11 @@ char *Sys_ConsoleInput (void)
 							len = 0;
 							return text;
 						}
-
+						*/
 						break;
 
 					case '\b':
-						WriteFile(houtput, "\b \b", 3, dummy, NULL);	
+						WriteFile(houtput, "\b \b", 3, &dummy, NULL);	
 						if (len)
 						{
 							len--;
@@ -699,7 +699,7 @@ char *Sys_ConsoleInput (void)
 					default:
 						if (ch >= ' ')
 						{
-							WriteFile(houtput, &ch, 1, dummy, NULL);	
+							WriteFile(houtput, &ch, 1, &dummy, NULL);	
 							text[len] = ch;
 							len = (len + 1) & 0xff;
 						}
@@ -943,7 +943,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		g_ConProc->InitConProc (hFile, heventParent, heventChild);
 	}
 
-	//Sys_Init ();
+	Sys_Init ();
 
 // because sound is off until we become active
 	// g_SoundSystem->S_BlockSound ();

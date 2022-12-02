@@ -1857,7 +1857,15 @@ void M_Quit_Draw (void)
 	}
 
 #ifdef _WIN32
-	M_DrawTextBox (0, 0, 38, 23);
+
+	const char* bquake_string = "  BananaQuake version %4.2f by\n";
+	const int bquake_stringlen = strlen(bquake_string);
+	char	ver[32];
+	va_list args;
+
+	snprintf(ver, sizeof(ver), bquake_string, BANANAQUAKE_VERSION);
+
+	M_DrawTextBox (0, 0, 38, 28); // Missi: was 38 and 23 (12/2/2022)
 	M_PrintWhite (16, 12,  "  Quake version 1.09 by id Software\n\n");
 	M_PrintWhite (16, 28,  "Programming        Art \n");
 	M_Print (16, 36,  " John Carmack       Adrian Carmack\n");
@@ -1878,7 +1886,10 @@ void M_Quit_Draw (void)
 	M_PrintWhite (16, 156, "rights reserved. NIN logo is a\n");
 	M_PrintWhite (16, 164, "registered trademark licensed to\n");
 	M_PrintWhite (16, 172, "Nothing Interactive, Inc. All rights\n");
-	M_PrintWhite (16, 180, "reserved. Press y to exit\n");
+	M_PrintWhite(16, 180, "reserved.\n");
+	M_PrintWhite (16, 196, ver);
+	M_Print(16, 206, "   Stephen 'Missi' Schmiedeberg\n");
+	M_PrintWhite(84, 222, "Press y to exit\n");
 #else
 	M_DrawTextBox (56, 76, 24, 4);
 	M_Print (64, 84,  quitMessage[msgNumber*4+0]);

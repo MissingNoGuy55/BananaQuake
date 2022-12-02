@@ -237,8 +237,8 @@ bool VID_SetWindowedMode (int modenum)
 	// Create the DIB window
 	dibwindow = CreateWindowEx (
 		 ExWindowStyle,
-		 "WinQuake",
-		 "GLQuake",
+		 "BananaQuake",			// Missi: was WinQuake (12/1/2022)
+		 "GLBananaQuake",		// Missi: was GLQuake (12/1/2022)
 		 WindowStyle,
 		 rect.left, rect.top,
 		 width,
@@ -328,8 +328,8 @@ bool VID_SetFullDIBMode (int modenum)
 	// Create the DIB window
 	dibwindow = CreateWindowEx (
 		 ExWindowStyle,
-		 "WinQuake",
-		 "GLQuake",
+		 "BananaQuake",	// Missi: was WinQuake (12/1/2022)
+		 "GLBananaQuake",		// Missi: was GLQuake (12/1/2022)
 		 WindowStyle,
 		 rect.left, rect.top,
 		 width,
@@ -1402,7 +1402,7 @@ void VID_InitDIB (HINSTANCE hInstance)
     wc.hCursor       = LoadCursor (NULL,IDC_ARROW);
 	wc.hbrBackground = NULL;
     wc.lpszMenuName  = 0;
-    wc.lpszClassName = "WinQuake";
+    wc.lpszClassName = "BananaQuake"; // Missi: was WinQuake (12/1/2022)
 
     if (!RegisterClass (&wc) )
 		Sys_Error ("Couldn't register window class");
@@ -1411,6 +1411,8 @@ void VID_InitDIB (HINSTANCE hInstance)
 
 	if (common->COM_CheckParm("-width"))
 		modelist[0].width = Q_atoi(common->com_argv[common->COM_CheckParm("-width")+1]);
+	else if (common->COM_CheckParm("-w"))
+		modelist[0].width = Q_atoi(common->com_argv[common->COM_CheckParm("-w") + 1]);
 	else
 		modelist[0].width = 640;
 
@@ -1419,6 +1421,8 @@ void VID_InitDIB (HINSTANCE hInstance)
 
 	if (common->COM_CheckParm("-height"))
 		modelist[0].height= Q_atoi(common->com_argv[common->COM_CheckParm("-height")+1]);
+	else if (common->COM_CheckParm("-h"))
+		modelist[0].width = Q_atoi(common->com_argv[common->COM_CheckParm("-h") + 1]);
 	else
 		modelist[0].height = modelist[0].width * 240/320;
 
@@ -1727,14 +1731,12 @@ void	VID_Init (unsigned char *palette)
 			}
 			else
 			{
-				if (common->COM_CheckParm("-width") || common->COM_CheckParm("-w"))
-				{
+				if (common->COM_CheckParm("-width"))
 					width = Q_atoi(common->com_argv[common->COM_CheckParm("-width")+1]);
-				}
+				else if (common->COM_CheckParm("-w"))
+					width = Q_atoi(common->com_argv[common->COM_CheckParm("-w") + 1]);
 				else
-				{
 					width = 640;
-				}
 
 				if (common->COM_CheckParm("-bpp"))
 				{
@@ -1747,8 +1749,10 @@ void	VID_Init (unsigned char *palette)
 					findbpp = 1;
 				}
 
-				if (common->COM_CheckParm("-height") || common->COM_CheckParm("-h"))
+				if (common->COM_CheckParm("-height"))
 					height = Q_atoi(common->com_argv[common->COM_CheckParm("-height")+1]);
+				else if (common->COM_CheckParm("-h"))
+					height = Q_atoi(common->com_argv[common->COM_CheckParm("-h") + 1]);
 
 			// if they want to force it, add the specified mode to the list
 				if (common->COM_CheckParm("-force") && (nummodes < MAX_MODE_LIST))
@@ -1791,6 +1795,22 @@ void	VID_Init (unsigned char *palette)
 						height = Q_atoi(common->com_argv[common->COM_CheckParm("-height")+1]);
 
 						for (i=1, vid_default=0 ; i<nummodes ; i++)
+						{
+							if ((modelist[i].width == width) &&
+								(modelist[i].height == height) &&
+								(modelist[i].bpp == bpp))
+							{
+								vid_default = i;
+								done = 1;
+								break;
+							}
+						}
+					}
+					if (common->COM_CheckParm("-h"))
+					{
+						height = Q_atoi(common->com_argv[common->COM_CheckParm("-h") + 1]);
+
+						for (i = 1, vid_default = 0; i < nummodes; i++)
 						{
 							if ((modelist[i].width == width) &&
 								(modelist[i].height == height) &&
@@ -1874,8 +1894,6 @@ void	VID_Init (unsigned char *palette)
 	vid.maxwarpheight = WARP_HEIGHT;
 	vid.colormap = host->host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
-	
-	//DestroyWindow (hwnd_dialog);
 
 	DestroyWindow (hwnd_dialog);
 

@@ -993,42 +993,117 @@ CGLTexture* CGLRenderer::GL_FindTexture (const char *identifier)
 
 /*
 ================
+TexMgr_MipMapW
+================
+*/
+unsigned* CGLRenderer::GL_MipMapW(unsigned* data, int width, int height)
+{
+	int	i, size;
+	byte* out, * in;
+
+	out = in = (byte*)data;
+	size = (width * height) >> 1;
+
+	for (i = 0; i < size; i++, out += 4, in += 8)
+	{
+		out[0] = (in[0] + in[4]) >> 1;
+		out[1] = (in[1] + in[5]) >> 1;
+		out[2] = (in[2] + in[6]) >> 1;
+		out[3] = (in[3] + in[7]) >> 1;
+	}
+
+	return data;
+}
+
+/*
+================
+TexMgr_MipMapH
+================
+*/
+unsigned* CGLRenderer::GL_MipMapH(unsigned* data, int width, int height)
+{
+	int	i, j;
+	byte* out, * in;
+
+	out = in = (byte*)data;
+	height >>= 1;
+	width <<= 2;
+
+	for (i = 0; i < height; i++, in += width)
+	{
+		for (j = 0; j < width; j += 4, out += 4, in += 4)
+		{
+			out[0] = (in[0] + in[width + 0]) >> 1;
+			out[1] = (in[1] + in[width + 1]) >> 1;
+			out[2] = (in[2] + in[width + 2]) >> 1;
+			out[3] = (in[3] + in[width + 3]) >> 1;
+		}
+	}
+
+	return data;
+}
+
+/*
+================
 GL_ResampleTexture
 ================
 */
 #ifndef WIN64
-void CGLRenderer::GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,  int outwidth, int outheight)
+unsigned* CGLRenderer::GL_ResampleTexture (unsigned *in, int inwidth, int inheight, bool alpha)
 #else
-void CGLRenderer::GL_ResampleTexture (unsigned long long *in, int inwidth, int inheight, unsigned long long *out,  int outwidth, int outheight)
+unsigned* CGLRenderer::GL_ResampleTexture (unsigned long long *in, int inwidth, int inheight, bool alpha)
 #endif
 {
-#ifndef WIN64
-	int		i, j;
-	unsigned* inrow;
-	unsigned	frac, fracstep;
-#else
-	long long	i, j;
-	unsigned long long	*inrow;
-	unsigned long long	frac, fracstep;
-#endif
+	byte* nwpx, * nepx, * swpx, * sepx, * dest;
+	unsigned xfrac, yfrac, x, y, modx, mody, imodx, imody, injump, outjump;
+	unsigned* out;
+	int i, j, outwidth, outheight;
 
-	fracstep = inwidth*0x10000/outwidth;
-	for (i=0 ; i<outheight ; i++, out += outwidth)
+	if (inwidth == GL_Pad(inwidth) && inheight == GL_Pad(inheight))
+		return in;
+
+	outwidth = GL_Pad(inwidth);
+	outheight = GL_Pad(inheight);
+	out = (unsigned*)g_MemCache->Hunk_Alloc<unsigned>(outwidth * outheight * 4);
+
+	xfrac = ((inwidth - 1) << 16) / (outwidth - 1);
+	yfrac = ((inheight - 1) << 16) / (outheight - 1);
+	y = outjump = 0;
+
+	for (i = 0; i < outheight; i++)
 	{
-		inrow = in + inwidth*(i*inheight/outheight);
-		frac = fracstep >> 1;
-		for (j=0 ; j<outwidth ; j+=4)
+		mody = (y >> 8) & 0xFF;
+		imody = 256 - mody;
+		injump = (y >> 16) * inwidth;
+		x = 0;
+
+		for (j = 0; j < outwidth; j++)
 		{
-			out[j] = inrow[frac>>16];
-			frac += fracstep;
-			out[j+1] = inrow[frac>>16];
-			frac += fracstep;
-			out[j+2] = inrow[frac>>16];
-			frac += fracstep;
-			out[j+3] = inrow[frac>>16];
-			frac += fracstep;
+			modx = (x >> 8) & 0xFF;
+			imodx = 256 - modx;
+
+			nwpx = (byte*)(in + (x >> 16) + injump);
+			nepx = nwpx + 4;
+			swpx = nwpx + inwidth * 4;
+			sepx = swpx + 4;
+
+			dest = (byte*)(out + outjump + j);
+
+			dest[0] = (nwpx[0] * imodx * imody + nepx[0] * modx * imody + swpx[0] * imodx * mody + sepx[0] * modx * mody) >> 16;
+			dest[1] = (nwpx[1] * imodx * imody + nepx[1] * modx * imody + swpx[1] * imodx * mody + sepx[1] * modx * mody) >> 16;
+			dest[2] = (nwpx[2] * imodx * imody + nepx[2] * modx * imody + swpx[2] * imodx * mody + sepx[2] * modx * mody) >> 16;
+			if (alpha)
+				dest[3] = (nwpx[3] * imodx * imody + nepx[3] * modx * imody + swpx[3] * imodx * mody + sepx[3] * modx * mody) >> 16;
+			else
+				dest[3] = 255;
+
+			x += xfrac;
 		}
+		outjump += outwidth;
+		y += yfrac;
 	}
+
+	return out;
 }
 
 /*
@@ -1138,73 +1213,31 @@ void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned* data)
 void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned long long* data)
 #endif
 {
-	int			samples;
-#ifndef WIN64
-	static unsigned	scaled[1024*512];	// [512*256];
-	int			scaled_width, scaled_height;
-#else
-	static unsigned long long	scaled[1024 * 512];	// [512*256];
-	long long			scaled_width, scaled_height;
-#endif
+	int	internalformat, miplevel, mipwidth, mipheight, picmip;
 
-	for (scaled_width = 1 ; scaled_width < tex->width ; scaled_width<<=1)
-		;
-	for (scaled_height = 1 ; scaled_height < tex->height ; scaled_height<<=1)
-		;
-#ifndef WIN64
-	scaled_width >>= (int)gl_picmip.value;
-	scaled_height >>= (int)gl_picmip.value;
-#else
-	scaled_width >>= (long long)gl_picmip.value;
-	scaled_height >>= (long long)gl_picmip.value;
-#endif
-	if (scaled_width > gl_max_size.value)
-		scaled_width = gl_max_size.value;
-	if (scaled_height > gl_max_size.value)
-		scaled_height = gl_max_size.value;
+	// upload
+	GL_Bind(tex);
+	internalformat = (tex->flags & TEXPREF_ALPHA) ? gl_alpha_format : gl_solid_format;
+	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, tex->width, tex->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-	if (scaled_width * scaled_height > sizeof(scaled)/4)
-		Sys_Error ("GL_LoadTexture: too big");
-
-	samples = (tex->flags & TEXPREF_ALPHA) ? gl_alpha_format : gl_solid_format;
-
-	texels += scaled_width * scaled_height;
-
-	if (scaled_width == tex->width && scaled_height == tex->height)
+	if (tex->flags & TEXPREF_MIPMAP && !(tex->flags & TEXPREF_WARPIMAGE)) // warp image mipmaps are generated later
 	{
-		if (!tex->mipmap)
-		{
-			glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-			goto done;
-		}
-#ifndef WIN64
-		memcpy (scaled, data, tex->width* tex->height*4);
-		memcpy (tex->pic.data, data, tex->width* tex->height*4);
-#else
-		memcpy (scaled, data, (long long)tex->width* (long long)tex->height*4);
-		memcpy (tex->pic.data, data, (long long)tex->width* (long long)tex->height*4);
-#endif
-	}
-	else
-		GL_ResampleTexture (data, tex->width, tex->height, scaled, scaled_width, scaled_height);
+		mipwidth = tex->width;
+		mipheight = tex->height;
 
-	glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-	if (tex->mipmap)
-	{
-		int		miplevel;
-
-		miplevel = 0;
-		while (scaled_width > 1 || scaled_height > 1)
+		for (miplevel = 1; mipwidth > 1 || mipheight > 1; miplevel++)
 		{
-			GL_MipMap ((byte *)scaled, scaled_width, scaled_height);
-			scaled_width >>= 1;
-			scaled_height >>= 1;
-			if (scaled_width < 1)
-				scaled_width = 1;
-			if (scaled_height < 1)
-				scaled_height = 1;
-			miplevel++;
-			glTexImage2D (GL_TEXTURE_2D, miplevel, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+			if (mipwidth > 1)
+			{
+				GL_MipMapW(data, mipwidth, mipheight);
+				mipwidth >>= 1;
+			}
+			if (mipheight > 1)
+			{
+				GL_MipMapH(data, mipwidth, mipheight);
+				mipheight >>= 1;
+			}
+			glTexImage2D(GL_TEXTURE_2D, miplevel, internalformat, mipwidth, mipheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		}
 	}
 done: ;
@@ -1293,7 +1326,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 		padbyte = 255;
 	}
 
-	g_GLRenderer->GL_Bind(glt);
+	//g_GLRenderer->GL_Bind(glt);
 
 	data = (byte*)GL_8to32(data, glt->width * glt->height, usepal);
 
@@ -1335,17 +1368,17 @@ void CGLRenderer::GL_SelectTexture (GLenum target)
 	oldtarget = target;
 }
 
-CGLTexture::CGLTexture() : height(0), width(0), mipmap(false), texnum(0), checksum(0)
+CGLTexture::CGLTexture() : height(0), width(0), mipmap(false), texnum(0), checksum(0), next(NULL)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
 
-CGLTexture::CGLTexture(CQuakePic qpic, float des_sl, float des_tl, float des_sh, float des_th) : height(qpic.height), width(qpic.width), mipmap(false), texnum(0), checksum(0)
+CGLTexture::CGLTexture(CQuakePic qpic, float des_sl, float des_tl, float des_sh, float des_th) : height(qpic.height), width(qpic.width), mipmap(false), texnum(0), checksum(0), next(NULL)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
 
-CGLTexture::CGLTexture(const CGLTexture& obj) : height(0), width(0), mipmap(false), texnum(0), checksum(0)
+CGLTexture::CGLTexture(const CGLTexture& obj) : height(0), width(0), mipmap(false), texnum(0), checksum(0), next(NULL)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }

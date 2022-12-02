@@ -111,7 +111,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_STRING1             "WinQuake"
+    IDS_STRING1             "BananaQuake"  // Missi: was WinQuake (12/1/2022)
 END
 
 #endif    // English (U.S.) resources
