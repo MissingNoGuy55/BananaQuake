@@ -66,10 +66,10 @@ lmode_t	lowresmodes[] = {
 cvar_t  vid_width = {"vid_width", "640", true};
 cvar_t  vid_height = { "vid_height", "640", true};
 
-const char *gl_vendor;
-const char *gl_renderer;
-const char *gl_version;
-const char *gl_extensions;
+const char*		gl_vendor;
+const char*		gl_renderer;
+const char*		gl_version;
+const char*		gl_extensions;
 
 bool		DDActive;
 bool		scr_skipupdate;
@@ -606,14 +606,14 @@ Missi: modified. changed the printing functions to Con_SafePrintf (5/23/2022)
 */
 void GL_Init (void)
 {
-	gl_vendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+	gl_vendor = (const char*)glGetString(GL_VENDOR);
 	Con_Printf ("GL_VENDOR: %s\n", gl_vendor);
-	gl_renderer = reinterpret_cast<const char*>(glGetString (GL_RENDERER));
+	gl_renderer = (const char*)glGetString (GL_RENDERER);
 	Con_Printf ("GL_RENDERER: %s\n", gl_renderer);
 
-	gl_version = reinterpret_cast<const char*>(glGetString (GL_VERSION));
+	gl_version = (const char*)glGetString (GL_VERSION);
 	Con_Printf ("GL_VERSION: %s\n", gl_version);
-	gl_extensions = reinterpret_cast<const char*>(glGetString (GL_EXTENSIONS));
+	gl_extensions = (const char*)glGetString (GL_EXTENSIONS);
 	Con_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
 
 //	Con_Printf ("%s %s\n", gl_renderer, gl_version);
