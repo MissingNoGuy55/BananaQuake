@@ -648,27 +648,44 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 	// Missi: the mode lists pertain to the MODE_* defines of which there are three, only difference being, well, the video mode... hence only allowing three resolutions in software mode,
 	// hence this mess
 
+	char res[64];
 	int width = 320, height = 240;
 	int argv = 0;
-	int stretched = false;
+	bool stretched = false;
+	bool modified = false;
 
 	if (argv = common->COM_CheckParm("-width"))
+	{
 		width = Q_atoi(common->com_argv[argv + 1]);
+		modified = true;
+	}
 	else if (argv = common->COM_CheckParm("-w"))
+	{
 		width = Q_atoi(common->com_argv[argv + 1]);
+		modified = true;
+	}
 
 	if (argv = common->COM_CheckParm("-height"))
+	{
 		height = Q_atoi(common->com_argv[argv + 1]);
+		modified = true;
+	}
 	else if (argv = common->COM_CheckParm("-h"))
+	{
 		height = Q_atoi(common->com_argv[argv + 1]);
+		modified = true;
+	}
 
 	if (4 * height != 3 * width)
 		stretched = true;
 
+	if (modified)
+		sprintf_s(res, "%ix%i", width, height);
+
 	modelist[0].type = MS_WINDOWED;
 	modelist[0].width = width;
 	modelist[0].height = height;
-	Q_strcpy (modelist[0].modedesc, "1600x1200");
+	Q_strcpy (modelist[0].modedesc, modified ? res : "320x240");
 	modelist[0].mode13 = 0;
 	modelist[0].modenum = MODE_WINDOWED;
 	modelist[0].stretched = stretched ? 1 : 0;
