@@ -692,7 +692,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 	modelist[0].dib = 1;
 	modelist[0].fullscreen = 0;
 	modelist[0].halfscreen = 0;
-	modelist[0].bpp = 32;
+	modelist[0].bpp = 8;
 
 	modelist[1].type = MS_WINDOWED;
 	modelist[1].width = 800;
@@ -704,7 +704,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 	modelist[1].dib = 1;
 	modelist[1].fullscreen = 0;
 	modelist[1].halfscreen = 0;
-	modelist[1].bpp = 32;
+	modelist[1].bpp = 8;
 
 	modelist[2].type = MS_WINDOWED;
 	modelist[2].width = 320;
@@ -716,7 +716,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 	modelist[2].dib = 1;
 	modelist[2].fullscreen = 0;
 	modelist[2].halfscreen = 0;
-	modelist[2].bpp = 32;
+	modelist[2].bpp = 8;
 
 // automatically stretch the default mode up if > 640x480 desktop resolution
 	hdc = GetDC(NULL);
