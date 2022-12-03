@@ -79,7 +79,7 @@ extern	cmd_source_t	cmd_source;
 
 void	Cmd_Init (void);
 
-void	Cmd_AddCommand (char *cmd_name, xcommand_t function);
+void	Cmd_AddCommand (const char *cmd_name, xcommand_t function);
 // called by the init functions of other parts of the program to
 // register commands and functions to call for them.
 // The cmd_name is referenced later, so it should not be in temp memory
@@ -87,7 +87,7 @@ void	Cmd_AddCommand (char *cmd_name, xcommand_t function);
 bool Cmd_Exists (const char *cmd_name);
 // used by the cvar code to check for cvar / command name overlap
 
-char 	*Cmd_CompleteCommand (char *partial);
+const char 	*Cmd_CompleteCommand (const char *partial);
 // attempts to match a partial command for automatic command line completion
 // returns NULL if nothing fits
 
@@ -106,7 +106,7 @@ void Cmd_TokenizeString (const char *text);
 // Takes a null terminated string.  Does not need to be /n terminated.
 // breaks the string up into arg tokens.
 
-void	Cmd_ExecuteString (char *text, cmd_source_t src);
+void	Cmd_ExecuteString (const char *text, cmd_source_t src);
 // Parses a single line of text into arguments and tries to execute it.
 // The text can come from the command buffer, a remote client, or stdin.
 

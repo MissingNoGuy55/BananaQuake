@@ -141,7 +141,7 @@ int MSG_ReadByte (void);
 int MSG_ReadShort (void);
 int MSG_ReadLong (void);
 float MSG_ReadFloat (void);
-char *MSG_ReadString (void);
+const char *MSG_ReadString (void);
 
 float MSG_ReadCoord (void);
 float MSG_ReadAngle (void);
@@ -161,7 +161,7 @@ int Q_strncmp (const char *s1, const char *s2, int count);
 int Q_strcasecmp (const char *s1, const char *s2);
 int Q_strncasecmp (const char *s1, const char *s2, int n);
 int	Q_atoi (const char *str);
-float Q_atof (char *str);
+float Q_atof (const char *str);
 int q_vsnprintf(char* str, size_t size, const char* format, va_list args);
 int q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
 
@@ -249,6 +249,8 @@ public:
 
 };
 
+extern CCommon* common;
+
 //============================================================================
 
 
@@ -294,6 +296,10 @@ Allways appends a 0 byte.
 ============
 */
 
+#ifdef QUAKE_TOOLS
+#include "zone.h"
+#endif
+
 template<typename T>
 inline T* COM_LoadFile(const char* path, int usehunk)
 {
@@ -321,7 +327,7 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 		buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
 		break;
 	case HUNK_ZONE:
-		buf = static_cast<T*>(g_MemCache->mainzone->Z_Malloc<T>(len + 1));
+		buf = static_cast<T*>(mainzone->Z_Malloc<T>(len + 1));
 		break;
 	case HUNK_CACHE:
 		buf = static_cast<T*>(g_MemCache->Cache_Alloc<T>(loadcache, len + 1, base));
@@ -339,6 +345,7 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 		}
 
 	default:
+
 		Sys_Error("COM_LoadFile: bad usehunk");
 		break;
 
@@ -349,19 +356,23 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 	else
 		((byte*)buf)[len] = 0;
 
+#ifdef QUAKE_GAME	// Missi: more garbage for QCC (12/2/2022)
 #ifndef GLQUAKE
 	g_SoftwareRenderer->Draw_BeginDisc();
 #else
 	g_GLRenderer->Draw_BeginDisc();
 #endif
+#endif
 
 	Sys_FileRead(h, buf, len);
 	common->COM_CloseFile(h);
 
+#ifdef QUAKE_GAME
 #ifndef GLQUAKE
 	g_SoftwareRenderer->Draw_EndDisc();
 #else
 	g_GLRenderer->Draw_EndDisc();
+#endif
 #endif
 
 	return buf;
@@ -399,7 +410,5 @@ T* COM_LoadStackFile(const char* path, void* buffer, int bufsize)
 
 	return (T*)buf;
 }
-
-extern CCommon* common;
 
 #endif

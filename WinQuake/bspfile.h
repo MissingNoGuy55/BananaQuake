@@ -21,6 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef BSPFILE_H
 #define BSPFILE_H
 
+#ifndef QUAKE_GAME	// Missi: more garbage QCC stuff (12/3/2022)
+#include "mathlib.h"
+#endif
+
 // upper design bounds
 
 #define	MAX_MAP_HULLS		4

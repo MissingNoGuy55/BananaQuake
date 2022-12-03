@@ -46,7 +46,7 @@ static double		pfreq;
 static double		curtime = 0.0;
 static double		lastcurtime = 0.0;
 static int			lowshift;
-bool			isDedicated;
+static bool			isDedicated;
 static bool		sc_return_on_enter = false;
 static HANDLE				hinput, houtput;
 
@@ -392,7 +392,7 @@ void Sys_Init (void)
 }
 
 
-void Sys_Error (char *error, ...)
+void Sys_Error (const char *error, ...)
 {
 	va_list		argptr;
 	char		text[1024], text2[1024];

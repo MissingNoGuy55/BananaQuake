@@ -27,7 +27,7 @@ cache_user_s* loadcache;
 #define NUM_SAFE_ARGVS  7
 
 static char     *largv[MAX_NUM_ARGVS + NUM_SAFE_ARGVS + 1];
-static char     *argvdummy = " ";
+static char     *argvdummy = "";
 
 static char     *safeargvs[NUM_SAFE_ARGVS] =
 	{"-stdvid", "-nolan", "-nosound", "-nocdaudio", "-nojoy", "-nomouse", "-dibonly"};
@@ -106,7 +106,88 @@ The file "parms.txt" will be read out of the game directory and appended to the 
 
 //============================================================================
 
+/*
+============
+COM_LoadFile
 
+Filename are reletive to the quake directory.
+Allways appends a 0 byte.
+============
+*/
+#ifndef QUAKE_GAME
+template<typename T>
+inline T* COM_LoadFile(const char* path, int usehunk)
+{
+	int	 h;
+	T*	buf;
+	char	base[32];
+	int	len;
+
+	buf = NULL;     // quiet compiler warning
+
+	// look for it in the filesystem or pack files
+	len = common->COM_OpenFile(path, &h);
+	if (h == -1)
+		return NULL;
+
+	// extract the filename base name for hunk tag
+	common->COM_FileBase(path, base, len);
+
+	switch (usehunk)
+	{
+	case HUNK_FULL:
+		buf = static_cast<T*>(g_MemCache->Hunk_AllocName<T>(len + 1, base));
+		break;
+	case HUNK_TEMP:
+		buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
+		break;
+	case HUNK_ZONE:
+		buf = static_cast<T*>(mainzone->Z_Malloc<T>(len + 1));
+		break;
+	case HUNK_CACHE:
+		buf = static_cast<T*>(g_MemCache->Cache_Alloc<T>(loadcache, len + 1, base));
+		break;
+	case HUNK_TEMP_FILL:
+		if (len + 1 > loadsize<T>)
+		{
+			buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
+			break;
+		}
+		else
+		{
+			buf = loadbuf<T>;
+			break;
+		}
+
+	default:
+		Sys_Error("COM_LoadFile: bad usehunk");
+		break;
+
+	}
+
+	if (!buf)
+		Sys_Error("COM_LoadFile: not enough space for %s", path);
+	else
+		((byte*)buf)[len] = 0;
+
+#ifndef GLQUAKE
+	g_SoftwareRenderer->Draw_BeginDisc();
+#else
+	g_GLRenderer->Draw_BeginDisc();
+#endif
+
+	Sys_FileRead(h, buf, len);
+	common->COM_CloseFile(h);
+
+#ifndef GLQUAKE
+	g_SoftwareRenderer->Draw_EndDisc();
+#else
+	g_GLRenderer->Draw_EndDisc();
+#endif
+
+	return buf;
+}
+#endif
 // ClearLink is used for new headnodes
 void ClearLink (link_t *l)
 {
@@ -355,7 +436,7 @@ int Q_atoi (const char *str)
 }
 
 
-float Q_atof (char *str)
+float Q_atof (const char *str)
 {
 	double			val;
 	int             sign;
@@ -730,7 +811,7 @@ float MSG_ReadFloat (void)
 	return dat.f;   
 }
 
-char *MSG_ReadString (void)
+const char *MSG_ReadString (void)
 {
 	static char     string[2048];
 	int             l,c;
@@ -868,7 +949,7 @@ void CCommon::COM_StripExtension (const char *in, char *out)
 COM_FileExtension
 ============
 */
-char *COM_FileExtension (char *in)
+const char *COM_FileExtension (const char *in)
 {
 	static char exten[8];
 	int             i;

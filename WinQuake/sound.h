@@ -175,9 +175,9 @@ public:
 
 	//void S_Update_(void);
 
-	sfx_t* S_PrecacheSound(char* sample);
-	sfx_t* S_FindName(char* name);
-	void S_TouchSound(char* sample);
+	sfx_t* S_PrecacheSound(const char* sample);
+	sfx_t* S_FindName(const char* name);
+	void S_TouchSound(const char* sample);
 	void S_ClearPrecache(void);
 	void S_BeginPrecaching(void);
 	void S_EndPrecaching(void);

@@ -924,7 +924,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 
 	if (command == CCREQ_RULE_INFO)
 	{
-		char	*prevCvarName;
+		const char	*prevCvarName;
 		cvar_t	*var;
 
 		// find the search start location
@@ -1150,7 +1150,7 @@ static void _Datagram_SearchForHosts (bool xmit)
 		if (MSG_ReadByte() != CCREP_SERVER_INFO)
 			continue;
 
-		dfunc.GetAddrFromName(MSG_ReadString(), &readaddr);
+		dfunc.GetAddrFromName((char*)MSG_ReadString(), &readaddr);
 		// search the cache for this server
 		for (n = 0; n < hostCacheCount; n++)
 			if (dfunc.AddrCompare(&readaddr, &hostcache[n].addr) == 0)
@@ -1221,7 +1221,7 @@ static qsocket_t *_Datagram_Connect (char *host)
 	int			reps;
 	double		start_time;
 	int			control;
-	char		*reason;
+	const char	*reason;
 
 	// see if we can resolve the host name
 	if (dfunc.GetAddrFromName(host, &sendaddr) == -1)

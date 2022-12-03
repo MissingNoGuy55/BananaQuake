@@ -35,7 +35,7 @@ typedef struct efrag_s
 	struct efrag_s		*entnext;
 } efrag_t;
 
-
+#ifdef QUAKE_GAME
 typedef struct entity_s
 {
 	bool				forcelink;		// model changed
@@ -68,6 +68,7 @@ typedef struct entity_s
 											//  that splits bmodel, or NULL if
 											//  not split
 } entity_t;
+#endif
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct

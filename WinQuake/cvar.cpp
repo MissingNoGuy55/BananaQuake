@@ -61,7 +61,7 @@ float	Cvar_VariableValue (const char *var_name)
 Cvar_VariableString
 ============
 */
-char *Cvar_VariableString (const char *var_name)
+const char *Cvar_VariableString (const char *var_name)
 {
 	cvar_t *var;
 	
@@ -77,7 +77,7 @@ char *Cvar_VariableString (const char *var_name)
 Cvar_CompleteVariable
 ============
 */
-char *Cvar_CompleteVariable (const char *partial)
+const char *Cvar_CompleteVariable (const char *partial)
 {
 	cvar_t		*cvar;
 	int			len;
@@ -115,11 +115,13 @@ void Cvar_Set (const char *var_name, const char *value)
 
 	changed = Q_strcmp(var->string, value);
 	
-	g_MemCache->mainzone->Z_Free(var->string);	// free the old value string
+	var->string = "";	// free the old value string
 	
-	var->string = g_MemCache->mainzone->Z_Malloc<char>(Q_strlen(value) + 1);
-	Q_strcpy (var->string, value);
-	var->value = Q_atof (var->string);
+	char str[64];
+
+	Q_strcpy (str, value);
+	var->string = _strdup(str);
+	var->value = Q_atof (str);
 	if (var->server && changed)
 	{
 		if (sv.active)
@@ -150,7 +152,7 @@ Adds a freestanding variable to the variable list.
 */
 void Cvar_RegisterVariable (cvar_t *variable)
 {
-	char	*oldstr;
+	const char	*oldstr;
 	
 // first check to see if it has allready been defined
 	if (Cvar_FindVar (variable->name))
@@ -167,11 +169,18 @@ void Cvar_RegisterVariable (cvar_t *variable)
 	}
 		
 // copy the value off, because future sets will Z_Free it
+#if 0
 	oldstr = variable->string;
-	variable->string = g_MemCache->mainzone->Z_Malloc<char>(Q_strlen(variable->string)+1);
+	variable->string = mainzone->Z_Malloc<char>(Q_strlen(variable->string)+1);
 	Q_strcpy (variable->string, oldstr);
 	variable->value = Q_atof (variable->string);
-	
+#endif
+
+	oldstr = variable->string;
+	//variable->string = mainzone->Z_Malloc<const char>(Q_strlen(variable->string) + 1);
+	variable->string = _strdup(oldstr);
+	variable->value = Q_atof(variable->string);
+
 // link the variable in
 	variable->next = cvar_vars;
 	cvar_vars = variable;

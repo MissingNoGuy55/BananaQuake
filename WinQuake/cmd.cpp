@@ -117,7 +117,7 @@ void Cbuf_InsertText (const char *text)
 	templen = cmd_text.cursize;
 	if (templen)
 	{
-		temp = g_MemCache->mainzone->Z_Malloc<char>(templen);
+		temp = mainzone->Z_Malloc<char>(templen);
 		Q_memcpy (temp, cmd_text.data, templen);
 		SZ_Clear (&cmd_text);
 	}
@@ -131,7 +131,7 @@ void Cbuf_InsertText (const char *text)
 	if (templen)
 	{
 		SZ_Write (&cmd_text, temp, templen);
-		g_MemCache->mainzone->Z_Free (temp);
+		mainzone->Z_Free (temp);
 	}
 }
 
@@ -233,7 +233,7 @@ void Cmd_StuffCmds_f (void)
 	if (!s)
 		return;
 		
-	text = g_MemCache->mainzone->Z_Malloc<char>(s+1);
+	text = mainzone->Z_Malloc<char>(s+1);
 	text[0] = 0;
 	for (i=1 ; i< common->com_argc ; i++)
 	{
@@ -245,7 +245,7 @@ void Cmd_StuffCmds_f (void)
 	}
 	
 // pull out the commands
-	build = g_MemCache->mainzone->Z_Malloc<char>(s+1);
+	build = mainzone->Z_Malloc<char>(s+1);
 	build[0] = 0;
 	
 	for (i=0 ; i<s-1 ; i++)
@@ -270,8 +270,8 @@ void Cmd_StuffCmds_f (void)
 	if (build[0])
 		Cbuf_InsertText (build);
 	
-	g_MemCache->mainzone->Z_Free (text);
-	g_MemCache->mainzone->Z_Free (build);
+	mainzone->Z_Free (text);
+	mainzone->Z_Free (build);
 }
 
 
@@ -333,7 +333,7 @@ char *CopyString (char *in)
 {
 	char	*out;
 	
-	out = g_MemCache->mainzone->Z_Malloc<char>(strlen(in)+1);
+	out = mainzone->Z_Malloc<char>(strlen(in)+1);
 	Q_strcpy (out, in);
 	return out;
 }
@@ -365,14 +365,14 @@ void Cmd_Alias_f (void)
 	{
 		if (!strcmp(s, a->name))
 		{
-			g_MemCache->mainzone->Z_Free (a->value);
+			mainzone->Z_Free (a->value);
 			break;
 		}
 	}
 
 	if (!a)
 	{
-		a = g_MemCache->mainzone->Z_Malloc<cmdalias_t>(sizeof(cmdalias_t));
+		a = mainzone->Z_Malloc<cmdalias_t>(sizeof(cmdalias_t));
 		a->next = cmd_alias;
 		cmd_alias = a;
 	}
@@ -403,7 +403,7 @@ void Cmd_Alias_f (void)
 struct cmd_function_t
 {
 	struct cmd_function_t	*next = NULL;
-	char					*name = "";
+	const char					*name = "";
 	xcommand_t				function;
 }; // Missi: changed from typedef struct cmd_function_s
 
@@ -487,7 +487,7 @@ void Cmd_TokenizeString (const char *text)
 	
 // clear the args from the last string
 	for (i=0 ; i<cmd_argc ; i++)
-		g_MemCache->mainzone->Z_Free (cmd_argv[i]);
+		mainzone->Z_Free (cmd_argv[i]);
 		
 	cmd_argc = 0;
 	cmd_args = NULL;
@@ -518,7 +518,7 @@ void Cmd_TokenizeString (const char *text)
 
 		if (cmd_argc < MAX_ARGS)
 		{
-			cmd_argv[cmd_argc] = g_MemCache->mainzone->Z_Malloc<char>(Q_strlen(common->com_token) + 1);
+			cmd_argv[cmd_argc] = mainzone->Z_Malloc<char>(Q_strlen(common->com_token) + 1);
 			Q_strcpy (cmd_argv[cmd_argc], common->com_token);
 			cmd_argc++;
 		}
@@ -532,7 +532,7 @@ void Cmd_TokenizeString (const char *text)
 Cmd_AddCommand
 ============
 */
-void	Cmd_AddCommand (char *cmd_name, xcommand_t function)
+void	Cmd_AddCommand (const char *cmd_name, xcommand_t function)
 {
 	cmd_function_t	*cmd = NULL;
 	int				i;
@@ -590,7 +590,7 @@ bool	Cmd_Exists (const char *cmd_name)
 Cmd_CompleteCommand
 ============
 */
-char *Cmd_CompleteCommand (char *partial)
+const char *Cmd_CompleteCommand (const char *partial)
 {
 	cmd_function_t	*cmd;
 	int				len;
@@ -617,7 +617,7 @@ A complete command line has been parsed, so try to execute it
 FIXME: lookupnoadd the token to speed search?
 ============
 */
-void	Cmd_ExecuteString (char *text, cmd_source_t src)
+void	Cmd_ExecuteString (const char *text, cmd_source_t src)
 {	
 	cmd_function_t	*cmd;
 	cmdalias_t		*a;

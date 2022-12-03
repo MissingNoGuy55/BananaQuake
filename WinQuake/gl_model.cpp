@@ -184,7 +184,7 @@ Mod_TouchModel
 
 ==================
 */
-void Mod_TouchModel (char *name)
+void Mod_TouchModel (const char *name)
 {
 	model_t*	mod;
 	

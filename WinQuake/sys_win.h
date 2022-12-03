@@ -6,6 +6,17 @@ extern FILE* sys_handles[MAX_HANDLES];
 int VID_ForceUnlockedAndReturnState();
 void VID_ForceLockState(int lk);
 
+#ifndef QUAKE_GAME
+#include "zone.h"
+#endif
+
+//double		pfreq;
+//double		curtime = 0.0;
+//double		lastcurtime = 0.0;
+//int			lowshift;
+//bool			isDedicated;
+//bool		sc_return_on_enter = false;
+
 template<typename T>
 #ifndef WIN64
 int Sys_FileRead(int handle, T* dest, int count)

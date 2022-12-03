@@ -39,6 +39,7 @@ all big things are allocated on the hunk.
 */
 
 CMemCache* g_MemCache;
+CMemZone* mainzone = new CMemZone;
 CMemCacheSystem		cache_head = {};
 
 /*
@@ -246,14 +247,8 @@ CMemZone::CMemZone() : size(0)
 {
 }
 
-CMemCache::CMemCache() : mainzone(NULL)
+CMemCache::CMemCache()
 {
-	if (!mainzone)
-	{
-		mainzone = new CMemZone;
-
-		// Cmd_AddCommand("flush", Cache_Flush_Callback<flush_cache_callback>());
-	}
 }
 /*
 CMemCacheSystem::CMemCacheSystem()

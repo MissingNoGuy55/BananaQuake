@@ -86,6 +86,10 @@ Zone block
 #ifndef ZONE_H
 #define ZONE_H
 
+#ifndef QUAKE_GAME
+#include "sys.h"
+#endif
+
 #define	DYNAMIC_SIZE	0xc000
 
 #define	ZONEID	0x1d4a11
@@ -232,6 +236,8 @@ public:
 	void Z_Print(CMemZone* zone);
 };
 
+extern CMemZone* mainzone;
+
 /*
 ========================
 Z_ClearZone
@@ -266,9 +272,9 @@ template<typename T>
 void CMemZone::Z_Print(CMemZone* zone)
 {
 	CMemBlock<T>* block;
-
+#ifdef QUAKE_GAME
 	Con_Printf("zone size: %i  location: %p\n", size, this);
-
+#endif
 	for (block = (CMemBlock<T>*)zone->blocklist.next; ; block = block->next)
 	{
 		Con_Printf("block:%p    size:%7i    tag:%3i\n",
@@ -276,12 +282,14 @@ void CMemZone::Z_Print(CMemZone* zone)
 
 		if (block->next == (CMemBlock<T>*)&zone->blocklist)
 			break;			// all blocks have been hit	
+#ifdef QUAKE_GAME
 		if ((byte*)block + block->size != (byte*)block->next)
 			Con_Printf("ERROR: block size does not touch the next block\n");
 		if (block->next->prev != block)
 			Con_Printf("ERROR: next block doesn't have proper back link\n");
 		if (!block->tag && !block->next->tag)
 			Con_Printf("ERROR: two consecutive free blocks\n");
+#endif
 	}
 }
 
@@ -359,6 +367,7 @@ void CMemZone::Z_Free(T* ptr)
 Z_Malloc
 ========================
 */
+
 template<typename T>
 T* CMemZone::Z_Malloc(int size)
 {
@@ -370,10 +379,12 @@ T* CMemZone::Z_Malloc(int size)
 		Sys_Error("Z_Malloc: failed on allocation of %i bytes", size);
 	Q_memset(buf, 0, size);
 
+#ifdef QUAKE_GAME	// Missi: MORE QCC garbage (11/3/2022)
 	if (zone_debug.value > 0)
 	{
 		Z_Print<T>(this);
 	}
+#endif
 
 	return buf;
 }
@@ -397,7 +408,7 @@ T* CMemZone::Z_TagMalloc(int size, int tag)
 	size += 4;					// space for memory trash tester
 	size = (size + 7) & ~7;		// align to 8-byte boundary
 
-	base = rover = (CMemBlock<T>*)g_MemCache->mainzone->rover; // = mainzone->rover;
+	base = rover = (CMemBlock<T>*)mainzone->rover; // = mainzone->rover;
 	start = base->prev;
 
 	do
@@ -444,8 +455,6 @@ T* CMemZone::Z_TagMalloc(int size, int tag)
 	return (T*)((byte*)base + sizeof(CMemBlock<T>));
 }
 
-//CMemZone* mainzone;
-
 //============================================================================
 
 #define	HUNK_SENTINAL	0x1df001ed
@@ -474,8 +483,6 @@ public:
 
 	template<typename T>
 	CMemCache();
-
-	CMemZone* mainzone;
 
 	template<typename T>
 	void Memory_Init(T* buf, int size);
@@ -554,8 +561,11 @@ private:
 	static CMemCacheSystem* m_CacheSystem;
 };
 
+
 template<typename T>
 CMemCacheSystem* CMemCache::m_CacheSystem = {};
+
+extern CMemCache* g_MemCache;
 
 /*
 ============
@@ -582,12 +592,13 @@ Cache_Print
 template<typename T>
 void CMemCache::Cache_Print(void)
 {
+#ifdef QUAKE_GAME
 	CMemCacheSystem* cd;
-
 	for (cd = cache_head.next; cd != cache_head; cd = cd->next)
 	{
 		Con_Printf("%8i : %s\n", cd->size, cd->name);
 	}
+#endif
 }
 
 /*
@@ -1019,7 +1030,9 @@ T* CMemCache::Hunk_HighAllocName(int size, const char* name)
 
 	if (hunk_size - hunk_low_used - hunk_high_used < size)
 	{
+#ifdef QUAKE_GAME // Missi: MORE QCC garbage (11/3/2022)
 		Con_Printf("Hunk_HighAlloc: failed on %i bytes\n", size);
+#endif
 		return NULL;
 	}
 
@@ -1035,8 +1048,6 @@ T* CMemCache::Hunk_HighAllocName(int size, const char* name)
 
 	return (T*)(h + 1);
 }
-
-extern CMemCache* g_MemCache;
 
 template<class T, class I>
 CMemBlock<T, I>::CMemBlock(int growSize, int allocationCount) : m_pMemory(0), size(allocationCount), m_growSize(growSize), id(ZONEID), tag(0), prev(NULL), next(NULL), pad(0)
@@ -1061,7 +1072,7 @@ CMemBlock<T, I>::CMemBlock(T* memory, int numelements) : m_pMemory(memory), size
 }
 
 template<class T, class I>
-CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory((T*)pMemory), size(numelements), id(ZONEID), tag(0), prev(NULL), next(NULL), pad(0)
+CMemBlock<T, I>::CMemBlock(const T* memory, int numelements) : m_pMemory((T*)memory), size(numelements), id(ZONEID), tag(0), prev(NULL), next(NULL), pad(0)
 {
 	m_growSize = -2;
 }
@@ -1151,9 +1162,10 @@ void CMemBlock<T, I>::Grow(int num)
 	if (IsExternallyAllocated())
 		return;
 
+#ifdef QUAKE_GAME // Missi: MORE QCC garbage (11/3/2022)
 	if (!num)
 		Con_Printf("CMemBlock::Grow called with 0 grow size!\n");
-
+#endif
 	// Make sure we have at least numallocated + num allocations.
 	// Use the grow rules specified for this memory (in m_nGrowSize)
 	int nAllocationRequested = size + num;

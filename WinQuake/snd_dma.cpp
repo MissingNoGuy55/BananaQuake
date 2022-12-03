@@ -252,7 +252,7 @@ S_FindName
 
 ==================
 */
-sfx_t* CSoundSystemWin::S_FindName (char *name)
+sfx_t* CSoundSystemWin::S_FindName (const char *name)
 {
 	int		i;
 	sfx_t*	sfx;
@@ -288,7 +288,7 @@ S_TouchSound
 
 ==================
 */
-void CSoundSystemWin::S_TouchSound (char *name)
+void CSoundSystemWin::S_TouchSound (const char *name)
 {
 	sfx_t	*sfx;
 	
@@ -305,7 +305,7 @@ g_SoundSystem->S_PrecacheSound
 
 ==================
 */
-sfx_t* CSoundSystemWin::S_PrecacheSound (char *name)
+sfx_t* CSoundSystemWin::S_PrecacheSound (const char *name)
 {
 	sfx_t	*sfx;
 

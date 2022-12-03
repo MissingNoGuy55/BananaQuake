@@ -55,8 +55,8 @@ interface from being ambiguous.
 
 typedef struct cvar_s
 {
-	char	*name;
-	char	*string;
+	const char	*name;
+	const char	*string;
 	bool archive;		// set to true to cause it to be saved to vars.rc
 	bool server;		// notifies players when changed
 	float	value;
@@ -76,10 +76,10 @@ void	Cvar_SetValue (const char *var_name, float value);
 float	Cvar_VariableValue (const char *var_name);
 // returns 0 if not defined or non numeric
 
-char	*Cvar_VariableString (const char *var_name);
+const char	*Cvar_VariableString (const char *var_name);
 // returns an empty string if not defined
 
-char 	*Cvar_CompleteVariable (const char *partial);
+const char 	*Cvar_CompleteVariable (const char *partial);
 // attempts to match a partial variable name for command line completion
 // returns NULL if nothing fits
 

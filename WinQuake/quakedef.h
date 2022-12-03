@@ -25,7 +25,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define TRACY_ENABLE
 
+#ifndef QUAKE_TOOLS
 #define	QUAKE_GAME			// as opposed to utilities
+#endif
 
 #define	VERSION				1.09
 #define	GLQUAKE_VERSION		1.00

@@ -58,7 +58,7 @@ int main(int argc,char *argv[])
 
     if (argc != 2 && argc != 3)
         return -1;
-    strcpy(basename,argv[1]);
+    strcpy_s(basename,argv[1], PM_MAX_PATH);
     if (argc > 2)
         strcpy(suffix,argv[2]);
     strcpy(findname,basename);

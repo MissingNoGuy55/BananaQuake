@@ -47,6 +47,10 @@
 #ifndef __MGL_H
 #define __MGL_H
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -62,6 +66,7 @@
 #include "clib/os/os.h"
 #include "freetype.h"
 #include "ftxkern.h"
+
 
 /*---------------------- Macro and type definitions -----------------------*/
 

@@ -1491,6 +1491,7 @@ del $(OutDir)%(Filename).spp </Command>
     <ClInclude Include="progdefs.h" />
     <ClInclude Include="progs.h" />
     <ClInclude Include="protocol.h" />
+    <ClInclude Include="pr_cmds.h" />
     <ClInclude Include="pr_comp.h" />
     <ClInclude Include="quakedef.h" />
     <ClInclude Include="render.h" />
