@@ -426,12 +426,12 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 				(yRes <= MAXHEIGHT) &&
 				(curmode < MAX_MODE_LIST))
 			{
-				if (m[i] == grVGA_320x200x256)
+				if (m[i] == grSVGA_1600x1200x256)
 					is_mode0x13 = true;
 
 				if (!common->COM_CheckParm("-noforcevga"))
 				{
-					if (m[i] == grVGA_320x200x256)
+					if (m[i] == grSVGA_1600x1200x256)
 					{
 						mode = i;
 						break;
@@ -621,6 +621,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 	WNDCLASS		wc;
 	HDC				hdc;
 	int				i;
+	DEVMODE			devmode;	// Missi (12/2/2022)
 
 	hIcon = LoadIcon (hInstance, MAKEINTRESOURCE (IDI_ICON2));
 
@@ -648,8 +649,17 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 	// Missi: the mode lists pertain to the MODE_* defines of which there are three, only difference being, well, the video mode... hence only allowing three resolutions in software mode,
 	// hence this mess
 
+	MONITORINFO target;
+	target.cbSize = sizeof(MONITORINFO);
+
+	HMONITOR hMon = MonitorFromWindow(GetDesktopWindow(), MONITOR_DEFAULTTOPRIMARY);
+	GetMonitorInfo(hMon, &target);
+
+	auto caps = GetDeviceCaps(hdc, BITSPIXEL);
+
 	char res[64];
-	int width = 320, height = 240;
+	int width = target.rcMonitor.right;
+	int height = target.rcMonitor.bottom;
 	int argv = 0;
 	bool stretched = false;
 	bool modified = false;
@@ -682,6 +692,8 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 	if (modified)
 		sprintf_s(res, "%ix%i", width, height);
 
+	// Missi: WINDOWED DEFAULT (12/2/2022)
+
 	modelist[0].type = MS_WINDOWED;
 	modelist[0].width = width;
 	modelist[0].height = height;
@@ -707,16 +719,30 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 	modelist[1].bpp = 8;
 
 	modelist[2].type = MS_WINDOWED;
-	modelist[2].width = 320;
-	modelist[2].height = 240;
-	Q_strcpy (modelist[2].modedesc, "320x240");
+	modelist[2].width = 1920;
+	modelist[2].height = 1080;
+	Q_strcpy(modelist[2].modedesc, "320x240");
 	modelist[2].mode13 = 0;
 	modelist[2].modenum = MODE_WINDOWED + 2;
-	modelist[2].stretched = 1;
+	modelist[2].stretched = 0;
 	modelist[2].dib = 1;
 	modelist[2].fullscreen = 0;
 	modelist[2].halfscreen = 0;
 	modelist[2].bpp = 8;
+
+	EnumDisplaySettings(NULL, MODE_WINDOWED + 3, &devmode);
+
+	modelist[3].type = MS_FULLDIB;
+	modelist[3].width = target.rcMonitor.right;
+	modelist[3].height = target.rcMonitor.bottom;
+	Q_strcpy(modelist[3].modedesc, "1920x1080");
+	modelist[3].mode13 = 0;
+	modelist[3].modenum = MODE_WINDOWED + 3;
+	modelist[3].stretched = 0;
+	modelist[3].dib = 1;
+	modelist[3].fullscreen = 1;
+	modelist[3].halfscreen = 0;
+	modelist[3].bpp = devmode.dmBitsPerPel;
 
 // automatically stretch the default mode up if > 640x480 desktop resolution
 	hdc = GetDC(NULL);
@@ -734,7 +760,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 
 	ReleaseDC(NULL,hdc);
 
-	nummodes = 3;	// reserve space for windowed mode
+	nummodes = 4;	// Missi: reserved for default fullscreen (12/2/2022) // reserve space for windowed mode
 
 	DDActive = 0;
 }
@@ -747,7 +773,7 @@ VID_InitFullDIB
 */
 void VID_InitFullDIB (HINSTANCE hInstance)
 {
-	DEVMODE	devmode;
+	DEVMODE	devmode = {};
 	int		i, j, modenum, cmodes, existingmode, originalnummodes, lowestres;
 	int		numlowresmodes, bpp, done;
 	int		cstretch, istretch, mstretch;
@@ -841,8 +867,8 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 			if ((((devmode.dmPelsWidth <= MAXWIDTH) &&
 				  (devmode.dmPelsHeight <= MAXHEIGHT)) ||
 				 (!common->COM_CheckParm("-noadjustaspect") &&
-				  (devmode.dmPelsWidth <= (MAXWIDTH*2)) &&
-				  (devmode.dmPelsWidth > (devmode.dmPelsHeight*2)))) &&
+				  (devmode.dmPelsWidth <= (MAXWIDTH)) &&
+				  (devmode.dmPelsWidth > (devmode.dmPelsHeight)))) &&
 				(nummodes < MAX_MODE_LIST) &&
 				(devmode.dmBitsPerPel > 8))
 			{
@@ -1492,6 +1518,12 @@ bool VID_SetFullDIBMode (int modenum)
 	gdevmode.dmPelsHeight = modelist[modenum].height << modelist[modenum].stretched;
 	gdevmode.dmSize = sizeof (gdevmode);
 
+#ifdef _DEBUG
+
+	LONG test = ChangeDisplaySettings(&gdevmode, CDS_FULLSCREEN);
+
+#endif
+
 	if (ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
 		Sys_Error ("Couldn't set fullscreen DIB mode");
 
@@ -1702,6 +1734,7 @@ int VID_SetMode (int modenum, unsigned char *palette)
 // to let messages finish bouncing around the system, then we put
 // ourselves at the top of the z order, then grab the foreground again,
 // Who knows if it helps, but it probably doesn't hurt
+
 	if (!force_minimized)
 		SetForegroundWindow (mainwindow);
 
