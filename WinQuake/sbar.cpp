@@ -538,7 +538,7 @@ void Sbar_DrawNum (int x, int y, int num, int digits, int color)
 		else
 			frame = *ptr -'0';
 
-		Sbar_DrawPic (x,y,sb_nums[color][frame]);
+		Sbar_DrawTransPic (x,y,sb_nums[color][frame]);
 		x += 24;
 		ptr++;
 	}
@@ -728,13 +728,13 @@ void Sbar_DrawInventory (void)
 	if (rogue)
 	{
 		if ( cl.stats[STAT_ACTIVEWEAPON] >= RIT_LAVA_NAILGUN )
-			Sbar_DrawPic (0, -24, rsb_invbar[0]);
+			Sbar_DrawTransPic (0, -24, rsb_invbar[0]);
 		else
-			Sbar_DrawPic (0, -24, rsb_invbar[1]);
+			Sbar_DrawTransPic(0, -24, rsb_invbar[1]);
 	}
 	else
 	{
-		Sbar_DrawPic (0, -24, sb_ibar);
+		Sbar_DrawTransPic(0, -24, sb_ibar);
 	}
 
 // weapons
@@ -754,7 +754,7 @@ void Sbar_DrawInventory (void)
 			else
 				flashon = (flashon%5) + 2;
 
-         Sbar_DrawPic (i*24, -16, sb_weapons[flashon][i]);
+		Sbar_DrawTransPic (i*24, -16, sb_weapons[flashon][i]);
 
 			if (flashon > 1)
 				sb_updates = 0;		// force update to remove flash
