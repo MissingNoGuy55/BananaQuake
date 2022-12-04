@@ -696,7 +696,7 @@ bool	scr_drawdialog;
 
 void SCR_DrawNotifyString (void)
 {
-	char	*start;
+	const char	*start;
 	int		l;
 	int		j;
 	int		x, y;
