@@ -156,8 +156,6 @@
   <ItemGroup>
     <ClCompile Include="builtin.cpp" />
     <ClCompile Include="cmdlib.cpp" />
-    <ClCompile Include="forwarddecl.h" />
-    <ClCompile Include="forwarddecl.cpp" />
     <ClCompile Include="pr_comp.cpp" />
     <ClCompile Include="pr_lex.cpp" />
     <ClCompile Include="qcc.cpp" />
