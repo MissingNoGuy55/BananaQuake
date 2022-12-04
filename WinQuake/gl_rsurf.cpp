@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_rlight.h"
 #include "gl_rsurf.h"
 
+CGLTexture* CGLRenderer::lightmap_textures = {};
+
 /*
 ===============
 R_AddDynamicLights
@@ -1487,6 +1489,10 @@ void CGLRenderer::GL_BuildLightmaps (void)
 	memset (allocated, 0, sizeof(allocated));
 
 	r_framecount = 1;		// no dlightcache
+
+	//Spike -- wipe out all the lightmap data (johnfitz -- the gltexture objects were already freed by Mod_ClearAll)
+	if (lightmap_textures)
+		lightmap_textures = NULL;
 
 	if (!lightmap_textures)
 	{

@@ -437,7 +437,7 @@ void CQuakeHost::Host_ShutdownServer(bool crash)
 //
 // clear structures
 //
-	memset (&sv, 0, sizeof(sv));
+	//memset (&sv, 0, sizeof(sv));
 	memset (svs.clients, 0, svs.maxclientslimit*sizeof(client_t));
 }
 
@@ -495,8 +495,8 @@ void CQuakeHost::Host_ClearMemory (void)
 		g_MemCache->Hunk_FreeToLowMark(host_hunklevel);
 
 	cls.signon = 0;
-	memset (&sv, 0, sizeof(sv));
-	memset (&cl, 0, sizeof(cl));
+	memset(&sv, 0, sizeof(sv));
+	memset(&cl, 0, sizeof(cl));
 }
 
 

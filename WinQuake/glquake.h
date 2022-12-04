@@ -409,7 +409,7 @@ private:
 	long long		lightmap_bytes;		// 1, 2, or 4
 #endif
 
-	CGLTexture* lightmap_textures;
+	static CGLTexture* lightmap_textures;
 
 #ifndef WIN64
 	unsigned		blocklights[18 * 18];

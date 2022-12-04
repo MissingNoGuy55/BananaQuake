@@ -1085,9 +1085,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 //
 	host->Host_ClearMemory ();
 
-	memset (&sv, 0, sizeof(sv));
-
-	Q_strcpy (sv.name, server);
+	q_strlcpy(sv.name, server, sizeof(sv.name));
 #ifdef QUAKE2
 	if (startspot)
 		Q_strcpy(sv.startspot, startspot);
