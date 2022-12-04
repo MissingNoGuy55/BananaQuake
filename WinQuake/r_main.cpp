@@ -520,7 +520,7 @@ void CCoreRenderer::R_MarkLeaves (void)
 	}
 }
 
-
+#ifndef QUAKE_TOOLS
 /*
 =============
 R_DrawEntitiesOnList
@@ -599,7 +599,6 @@ void CCoreRenderer::R_DrawEntitiesOnList (void)
 		}
 	}
 }
-
 /*
 =============
 R_DrawViewModel
@@ -672,13 +671,14 @@ void CCoreRenderer::R_DrawViewModel (void)
 
 	R_AliasDrawModel (&r_viewlighting);
 }
-
+#endif
 
 /*
 =============
 R_BmodelCheckBBox
 =============
 */
+#ifndef QUAKE_TOOLS
 int CCoreRenderer::R_BmodelCheckBBox (model_t *clmodel, float *minmaxs)
 {
 	int			i, *pindex, clipflags;
@@ -736,6 +736,8 @@ int CCoreRenderer::R_BmodelCheckBBox (model_t *clmodel, float *minmaxs)
 
 	return clipflags;
 }
+#endif
+#ifndef QUAKE_TOOLS
 
 /*
 =============
@@ -868,6 +870,7 @@ void CCoreRenderer::R_DrawBEntitiesOnList (void)
 	insubmodel = false;
 }
 
+#endif
 
 /*
 ================
@@ -974,9 +977,11 @@ SetVisibilityByPassages ();
 // done in screen.c
 	// Sys_LowFPPrecision (); // Missi: do NOT enable this
 
+#ifndef QUAKE_TOOLS
 	if (!cl_entities[0].model || !cl.worldmodel)
 		Sys_Error ("R_RenderView: NULL worldmodel");
-		
+#endif		
+
 	if (!r_dspeeds.value)
 	{
 		VID_UnlockBuffer ();

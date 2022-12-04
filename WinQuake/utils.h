@@ -438,7 +438,7 @@ inline void CQVector<T, S>::Compact()
 }
 
 /* use our own copies of strlcpy and strlcat taken from OpenBSD */
-extern size_t q_strlcpy(char* dst, const char* src, size_t size);
+size_t q_strlcpy(char* dst, const char* src, size_t size);
 
 template<class T, size_t MAX_SIZE>
 class CQArray

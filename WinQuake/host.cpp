@@ -481,8 +481,8 @@ CQuakeHost::CQuakeHost(quakeparms_t<byte*> parms) :
 	oldrealtime(0),
 	host_hunklevel(0)
 {
-	host_parms.basedir = parms.basedir ? parms.basedir : "";
-	host_parms.cachedir = parms.cachedir ? parms.cachedir : "";
+	host_parms.basedir = parms.basedir ? parms.basedir : _strdup("");
+	host_parms.cachedir = parms.cachedir ? parms.cachedir : _strdup("");
 	memset(host_abortserver, 0, sizeof(jmp_buf));
 }
 

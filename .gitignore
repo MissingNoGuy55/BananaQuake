@@ -9,4 +9,8 @@
 /WinQuake/gas2masm/x64
 /WinQuake/gas2masm/Debug
 /WinQuake/gas2masm/Release
-/tools
+/tools/qcc/Debug
+/tools/qcc/Release
+/tools/qcc/x64
+/tools/.vs
+/tools/qcc/.vs
