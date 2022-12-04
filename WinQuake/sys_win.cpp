@@ -38,9 +38,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PAUSE_SLEEP		50				// sleep time on pause or minimization
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
 
+#ifndef QUAKE_TOOLS // Missi: considered redefinitions in QCC (12/3/2022)
+
 int			starttime;
 bool	ActiveApp, Minimized;
 bool	WinNT;
+
 
 static double		pfreq;
 static double		curtime = 0.0;
@@ -56,6 +59,7 @@ static HANDLE	tevent;
 static HANDLE	hFile;
 static HANDLE	heventParent;
 static HANDLE	heventChild;
+#endif
 
 unsigned int ceil_cw, single_cw, full_cw, cw, pushed_cw;
 unsigned int fpenv[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -125,6 +129,7 @@ int		findhandle (void)
 filelength
 ================
 */
+
 int filelength (FILE *f)
 {
 	int		pos;
@@ -229,7 +234,6 @@ void Sys_mkdir (char *path)
 
 	shut_up = _mkdir (path); // Missi: shut up compiler (11/28/2022)
 }
-
 
 /*
 ===============================================================================
@@ -365,20 +369,17 @@ Sys_Init
 */
 void Sys_Init (void)
 {
-	OSVERSIONINFO	vinfo;
+	OSVERSIONINFO	vinfo = {};
 
 	Sys_SetTimerResolution();
 
 	Sys_InitFloatTime ();
 
 	vinfo.dwOSVersionInfoSize = sizeof(vinfo);
-#ifndef WIN64
-	if (!GetVersionEx (&vinfo))
-		Sys_Error ("Couldn't get OS info");
-#else
+
 	if (!IsWindowsXPOrGreater())
 		Sys_Error("Couldn't get OS info");
-#endif
+/*
 	if ((vinfo.dwMajorVersion < 4) ||
 		(vinfo.dwPlatformId == VER_PLATFORM_WIN32s))
 	{
@@ -389,6 +390,7 @@ void Sys_Init (void)
 		WinNT = true;
 	else
 		WinNT = false;
+*/
 }
 
 

@@ -26,11 +26,12 @@ cache_user_s* loadcache;
 
 #define NUM_SAFE_ARGVS  7
 
-static char     *largv[MAX_NUM_ARGVS + NUM_SAFE_ARGVS + 1];
-static char     *argvdummy = "";
+static char*     largv[MAX_NUM_ARGVS + NUM_SAFE_ARGVS + 1];
+static char*     argvdummy = "";
 
-static char     *safeargvs[NUM_SAFE_ARGVS] =
+static char*     safeargvs[NUM_SAFE_ARGVS] =
 	{"-stdvid", "-nolan", "-nosound", "-nocdaudio", "-nojoy", "-nomouse", "-dibonly"};
+
 
 cvar_t  registered = {"registered","1"};	// Missi: (6/15/2022)
 cvar_t  cmdline = {"cmdline","0", false, true};
@@ -105,89 +106,7 @@ The file "parms.txt" will be read out of the game directory and appended to the 
 */
 
 //============================================================================
-
-/*
-============
-COM_LoadFile
-
-Filename are reletive to the quake directory.
-Allways appends a 0 byte.
-============
-*/
-#ifndef QUAKE_GAME
-template<typename T>
-inline T* COM_LoadFile(const char* path, int usehunk)
-{
-	int	 h;
-	T*	buf;
-	char	base[32];
-	int	len;
-
-	buf = NULL;     // quiet compiler warning
-
-	// look for it in the filesystem or pack files
-	len = common->COM_OpenFile(path, &h);
-	if (h == -1)
-		return NULL;
-
-	// extract the filename base name for hunk tag
-	common->COM_FileBase(path, base, len);
-
-	switch (usehunk)
-	{
-	case HUNK_FULL:
-		buf = static_cast<T*>(g_MemCache->Hunk_AllocName<T>(len + 1, base));
-		break;
-	case HUNK_TEMP:
-		buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
-		break;
-	case HUNK_ZONE:
-		buf = static_cast<T*>(mainzone->Z_Malloc<T>(len + 1));
-		break;
-	case HUNK_CACHE:
-		buf = static_cast<T*>(g_MemCache->Cache_Alloc<T>(loadcache, len + 1, base));
-		break;
-	case HUNK_TEMP_FILL:
-		if (len + 1 > loadsize<T>)
-		{
-			buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
-			break;
-		}
-		else
-		{
-			buf = loadbuf<T>;
-			break;
-		}
-
-	default:
-		Sys_Error("COM_LoadFile: bad usehunk");
-		break;
-
-	}
-
-	if (!buf)
-		Sys_Error("COM_LoadFile: not enough space for %s", path);
-	else
-		((byte*)buf)[len] = 0;
-
-#ifndef GLQUAKE
-	g_SoftwareRenderer->Draw_BeginDisc();
-#else
-	g_GLRenderer->Draw_BeginDisc();
-#endif
-
-	Sys_FileRead(h, buf, len);
-	common->COM_CloseFile(h);
-
-#ifndef GLQUAKE
-	g_SoftwareRenderer->Draw_EndDisc();
-#else
-	g_GLRenderer->Draw_EndDisc();
-#endif
-
-	return buf;
-}
-#endif
+// 
 // ClearLink is used for new headnodes
 void ClearLink (link_t *l)
 {
@@ -239,7 +158,7 @@ void Q_memset (void *dest, int fill, int count)
 			((byte *)dest)[i] = fill;
 }
 
-void Q_memcpy (void *dest, void *src, int count)
+void Q_memcpy (void *dest, const void *src, int count)
 {
 	int             i;
 
@@ -282,6 +201,31 @@ void Q_strncpy (char *dest, const char *src, int count)
 	}
 	if (count)
 		*dest++ = 0;
+}
+
+size_t q_strlcpy(char* dst, const char* src, size_t siz)
+{
+	char* d = dst;
+	const char* s = src;
+	size_t n = siz;
+
+	/* Copy as many bytes as will fit */
+	if (n != 0) {
+		while (--n != 0) {
+			if ((*d++ = *s++) == '\0')
+				break;
+		}
+	}
+
+	/* Not enough room in dst, add NUL and traverse rest of src */
+	if (n == 0) {
+		if (siz != 0)
+			*d = '\0';		/* NUL-terminate dst */
+		while (*s++)
+			;
+	}
+
+	return(s - src - 1);	/* count does not include NUL */
 }
 
 int Q_strlen (const char *str)
@@ -646,7 +590,7 @@ void MSG_WriteByte (sizebuf_t *sb, int c)
 		Sys_Error ("MSG_WriteByte: range error");
 #endif
 
-	buf = SZ_GetSpace (sb, 1);
+	buf = (byte*)SZ_GetSpace (sb, 1);
 	buf[0] = c;
 }
 
@@ -659,7 +603,7 @@ void MSG_WriteShort (sizebuf_t *sb, int c)
 		Sys_Error ("MSG_WriteShort: range error");
 #endif
 
-	buf = SZ_GetSpace (sb, 2);
+	buf = (byte*)SZ_GetSpace (sb, 2);
 	buf[0] = c&0xff;
 	buf[1] = c>>8;
 }
@@ -668,7 +612,7 @@ void MSG_WriteLong (sizebuf_t *sb, int c)
 {
 	byte    *buf;
 	
-	buf = SZ_GetSpace(sb, 4);
+	buf = (byte*)SZ_GetSpace(sb, 4);
 	buf[0] = c&0xff;
 	buf[1] = (c>>8)&0xff;
 	buf[2] = (c>>16)&0xff;
@@ -868,9 +812,9 @@ void SZ_Clear (sizebuf_t *buf)
 	buf->cursize = 0;
 }
 
-byte *SZ_GetSpace (sizebuf_t *buf, int length)
+void *SZ_GetSpace (sizebuf_t *buf, int length)
 {
-	byte    *data = 0;
+	void    *data = 0;
 	
 	if (buf->cursize + length > buf->maxsize)
 	{
@@ -891,7 +835,7 @@ byte *SZ_GetSpace (sizebuf_t *buf, int length)
 	return data;
 }
 
-void SZ_Write (sizebuf_t *buf, void *data, int length)
+void SZ_Write (sizebuf_t *buf, const void *data, int length)
 {
 	Q_memcpy (SZ_GetSpace(buf,length),data,length);         
 }

@@ -222,7 +222,11 @@ void CSoundSystemWin::SNDDMA_Submit(void)
 	SDL_UnlockAudioDevice(g_SoundDeviceID);
 }
 
+#ifdef QUAKE_GAME
 void CSoundSystemWin::paint_audio(void* unused, Uint8* stream, int len)
+#else
+void CSoundSystemWin::paint_audio(void* unused, byte* stream, int len)
+#endif
 {
 	int	pos, tobufend;
 	int	len1, len2;

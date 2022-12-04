@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #pragma warning( disable : 4229 )  // mgraph gets this
 
+#pragma once
+
 #include <windows.h>
 #define WM_MOUSEWHEEL                   0x020A
 
@@ -60,6 +62,7 @@ void	VID_UnlockBuffer (void);
 
 #endif
 
+#ifndef QUAKE_TOOLS
 typedef enum {MS_WINDOWED, MS_FULLSCREEN, MS_FULLDIB, MS_UNINIT} modestate_t;
 
 extern modestate_t	modestate;
@@ -68,6 +71,7 @@ extern HWND			mainwindow;
 extern bool		ActiveApp, Minimized;
 
 extern bool	WinNT;
+#endif
 
 int VID_ForceUnlockedAndReturnState (void);
 void VID_ForceLockState (int lk);

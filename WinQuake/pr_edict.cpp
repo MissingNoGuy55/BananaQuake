@@ -29,7 +29,11 @@ ddef_t			*pr_fielddefs;
 ddef_t			*pr_globaldefs;
 dstatement_t	*pr_statements;
 globalvars_t	*pr_global_struct;
+
+#ifndef QUAKE_TOOLS
 float*			pr_globals;			// same as pr_global_struct
+#endif
+
 int				pr_edict_size;	// in bytes
 
 int		pr_maxknownstrings;

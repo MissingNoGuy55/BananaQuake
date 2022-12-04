@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#pragma once	// Missi: more QCC crap (12/3/2022)
+
 // this file is shared by quake and qcc
 
 typedef int	func_t;

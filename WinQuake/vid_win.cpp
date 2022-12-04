@@ -99,6 +99,12 @@ double		vid_testendtime;
 int			vid_default = MODE_WINDOWED;
 static int	windowed_default;
 
+#ifdef QUAKE_TOOLS	// Missi: QCC, throwing a god damn fit as usual, thinks this doesn't exist (12/3/2022)
+
+typedef enum { MS_WINDOWED, MS_FULLSCREEN, MS_FULLDIB, MS_UNINIT } modestate_t;
+
+#endif
+
 modestate_t	modestate = MS_UNINIT;
 
 static byte		*vid_surfcache;
@@ -618,9 +624,9 @@ MGLDC *createDisplayDC(int forcemem)
 
 void VID_InitMGLDIB (HINSTANCE hInstance)
 {
-	WNDCLASS		wc;
-	HDC				hdc;
-	int				i;
+	WNDCLASS		wc = {};
+	HDC				hdc = {};
+	int				i = 0;
 	DEVMODE			devmode;	// Missi (12/2/2022)
 
 	hIcon = LoadIcon (hInstance, MAKEINTRESOURCE (IDI_ICON2));

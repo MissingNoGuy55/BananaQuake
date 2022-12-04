@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // conproc.h
 
+#pragma once	// Missi: aaaaaa QCC fucking needs this (12/3/2022)
+
 #define CCOM_WRITE_TEXT		0x2
 // Param1 : Text
 
