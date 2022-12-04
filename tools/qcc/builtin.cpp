@@ -2518,6 +2518,12 @@ void PF_makestatic (void)
 	
 	ent = G_EDICT(OFS_PARM0);
 
+	if (SV_ModelIndex(PR_GetString(ent->v.model)) & 0xFF00 || (int)(ent->v.frame) & 0xFF00)
+	{
+		ED_Free(ent);
+		return; //can't display the correct model & frame, so don't show it at all
+	}
+
 	MSG_WriteByte (&sv.signon,svc_spawnstatic);
 
 	MSG_WriteByte (&sv.signon, SV_ModelIndex(PR_GetString(ent->v.model)));
