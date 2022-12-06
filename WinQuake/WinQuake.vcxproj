@@ -160,7 +160,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">
     <OutDir>.\debug_gl\</OutDir>
     <IntDir>.\debug_gl\</IntDir>
-    <TargetName>glbananaquake</TargetName>
+    <TargetName>glbananaquake64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>.\Debug\</OutDir>
@@ -345,7 +345,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies>.\sdl2\lib\x64\SDL2.lib;comctl32.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>.\sdl2\lib\x64\SDL264.lib;comctl32.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -429,7 +429,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies>.\scitech\lib\win32\vc\mgllt.lib;.\sdl2\lib\x64\SDL2.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>.\scitech\lib\win32\vc\mgllt.lib;.\sdl2\lib\x64\SDL264.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <IgnoreSpecificDefaultLibraries>libc.lib</IgnoreSpecificDefaultLibraries>
     </Link>
