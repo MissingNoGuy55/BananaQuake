@@ -237,6 +237,7 @@ void Mod_LoadTextures (lump_t *l)
 	texture_t	*tx, *tx2;
 	texture_t	*anims[10];
 	texture_t	*altanims[10];
+	uintptr_t		offset;
 	dmiptexlump_t *m;
 
 	if (!l->filelen)
@@ -281,8 +282,10 @@ void Mod_LoadTextures (lump_t *l)
 			g_GLRenderer->R_InitSky (tx);
 		else
 		{
+			offset = (uintptr_t)(mt + 1) - (uintptr_t)mod_base;
+
 			texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
-			tx->gltexture = g_GLRenderer->GL_LoadTexture (mt->name, tx->width, tx->height, (byte *)(tx+1), TEXPREF_MIPMAP);
+			tx->gltexture = g_GLRenderer->GL_LoadTexture (mt->name, tx->width, tx->height, (byte *)(tx+1), offset, TEXPREF_MIPMAP);
 			texture_mode = GL_LINEAR;
 		}
 	}
@@ -1342,6 +1345,9 @@ T* Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 	daliasskingroup_t		*pinskingroup;
 	int		groupskins;
 	daliasskininterval_t	*pinskinintervals;
+	uintptr_t	offset;
+
+	offset = (uintptr_t)pskintype + 1 - (uintptr_t)mod_base;
 	
 	skin = (byte *)(pskintype + 1);
 
@@ -1367,7 +1373,7 @@ T* Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 			pheader->gltextures[i][2] =
 			pheader->gltextures[i][3] =
 				g_GLRenderer->GL_LoadTexture (name, pheader->skinwidth,
-				pheader->skinheight, (byte *)(pskintype + 1), TEXPREF_MIPMAP);
+				pheader->skinheight, (byte *)(pskintype + 1), offset, TEXPREF_MIPMAP);
 			pskintype = (daliasskintype_t *)((byte *)(pskintype+1) + s);
 		} else {
 			// animating skin group.  yuck.
@@ -1389,7 +1395,7 @@ T* Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 					sprintf (name, "%s_%i_%i", loadmodel->name, i,j);
 					pheader->gltextures[i][j&3] =
 						g_GLRenderer->GL_LoadTexture (name, pheader->skinwidth, 
-						pheader->skinheight, (byte *)(pskintype), TEXPREF_MIPMAP);
+						pheader->skinheight, (byte *)(pskintype), offset, TEXPREF_MIPMAP);
 					pskintype = (daliasskintype_t *)((byte *)(pskintype) + s);
 			}
 			k = j;
@@ -1584,8 +1590,11 @@ T* Mod_LoadSpriteFrame (T* pin, mspriteframe_t **ppframe, int framenum)
 	unsigned short		*ppixout;
 	byte				*ppixin;
 	char				name[64];
+	uintptr_t			offset;
 
 	pinframe = (dspriteframe_t *)pin;
+
+	offset = (uintptr_t)pinframe + 1 - (uintptr_t)mod_base;
 
 	width = LittleLong (pinframe->width);
 	height = LittleLong (pinframe->height);
@@ -1608,7 +1617,7 @@ T* Mod_LoadSpriteFrame (T* pin, mspriteframe_t **ppframe, int framenum)
 	pspriteframe->right = width + origin[0];
 
 	sprintf (name, "%s_%i", loadmodel->name, framenum);
-	pspriteframe->gltexture = g_GLRenderer->GL_LoadTexture (name, width, height, (byte *)(pinframe + 1), TEXPREF_ALPHA | TEXPREF_MIPMAP);
+	pspriteframe->gltexture = g_GLRenderer->GL_LoadTexture (name, width, height, (byte *)(pinframe + 1), offset, TEXPREF_ALPHA | TEXPREF_MIPMAP);
 
 	return (T *)((byte *)pinframe + sizeof (dspriteframe_t) + size);
 }

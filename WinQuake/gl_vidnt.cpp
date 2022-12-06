@@ -509,6 +509,30 @@ BINDTEXFUNCPTR bindTexFunc;
 
 #define TEXTURE_EXT_STRING "GL_EXT_texture_object"
 
+static bool GL_ParseExtensionList(const char* list, const char* name)
+{
+	const char* start;
+	const char* where, * terminator;
+
+	if (!list || !name || !*name)
+		return false;
+	if (strchr(name, ' ') != NULL)
+		return false;	// extension names must not have spaces
+
+	start = list;
+	while (1) {
+		where = strstr(start, name);
+		if (!where)
+			break;
+		terminator = where + strlen(name);
+		if (where == start || where[-1] == ' ')
+			if (*terminator == ' ' || *terminator == '\0')
+				return true;
+		start = terminator;
+	}
+	return false;
+}
+
 /*
 ===============
 GL_ParseExtensionList
@@ -550,6 +574,20 @@ void CheckTextureExtensions (void)
 	{
 		Sys_Error ("GetProcAddress for BindTextureEXT failed");
 		return;
+	}
+
+	// texture_non_power_of_two
+	//
+	if (common->COM_CheckParm("-notexturenpot"))
+		Con_DPrintf("texture_non_power_of_two disabled at command line\n");
+	else if (GL_ParseExtensionList(gl_extensions, "GL_ARB_texture_non_power_of_two"))
+	{
+		Con_DPrintf("FOUND: ARB_texture_non_power_of_two\n");
+		gl_texture_NPOT = true;
+	}
+	else
+	{
+		Con_DPrintf("texture_non_power_of_two not supported\n");
 	}
 }
 
@@ -652,6 +690,9 @@ void GL_Init (void)
 
 //	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	// poll max size from hardware
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_hardware_maxsize);
 
 #if 0
 	CheckArrayExtensions ();

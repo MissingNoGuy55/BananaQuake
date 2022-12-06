@@ -33,7 +33,7 @@ extern unsigned char d_15to8table[65536];
 cvar_t		gl_nobind = {"gl_nobind", "0"};
 cvar_t		gl_max_size = {"gl_max_size", "1024"};
 cvar_t		gl_picmip = {"gl_picmip", "0"};
-static GLint	gl_hardware_maxsize;
+GLint		gl_hardware_maxsize;
 
 byte		*draw_chars;				// 8*8 graphic characters
 CQuakePic			*draw_disc;
@@ -141,6 +141,58 @@ unsigned* CGLRenderer::GL_8to32(byte* in, int pixels, unsigned int* usepal)
 	return data;
 }
 
+/*
+===============
+TexMgr_AlphaEdgeFix
+
+eliminate pink edges on sprites, etc.
+operates in place on 32bit data
+===============
+*/
+void CGLRenderer::GL_AlphaEdgeFix(byte* data, int width, int height)
+{
+	int	i, j, n = 0, b, c[3] = { 0,0,0 },
+		lastrow, thisrow, nextrow,
+		lastpix, thispix, nextpix;
+	byte* dest = data;
+
+	for (i = 0; i < height; i++)
+	{
+		lastrow = width * 4 * ((i == 0) ? height - 1 : i - 1);
+		thisrow = width * 4 * i;
+		nextrow = width * 4 * ((i == height - 1) ? 0 : i + 1);
+
+		for (j = 0; j < width; j++, dest += 4)
+		{
+			if (dest[3]) //not transparent
+				continue;
+
+			lastpix = 4 * ((j == 0) ? width - 1 : j - 1);
+			thispix = 4 * j;
+			nextpix = 4 * ((j == width - 1) ? 0 : j + 1);
+
+			b = lastrow + lastpix; if (data[b + 3]) { c[0] += data[b]; c[1] += data[b + 1]; c[2] += data[b + 2]; n++; }
+			b = thisrow + lastpix; if (data[b + 3]) { c[0] += data[b]; c[1] += data[b + 1]; c[2] += data[b + 2]; n++; }
+			b = nextrow + lastpix; if (data[b + 3]) { c[0] += data[b]; c[1] += data[b + 1]; c[2] += data[b + 2]; n++; }
+			b = lastrow + thispix; if (data[b + 3]) { c[0] += data[b]; c[1] += data[b + 1]; c[2] += data[b + 2]; n++; }
+			b = nextrow + thispix; if (data[b + 3]) { c[0] += data[b]; c[1] += data[b + 1]; c[2] += data[b + 2]; n++; }
+			b = lastrow + nextpix; if (data[b + 3]) { c[0] += data[b]; c[1] += data[b + 1]; c[2] += data[b + 2]; n++; }
+			b = thisrow + nextpix; if (data[b + 3]) { c[0] += data[b]; c[1] += data[b + 1]; c[2] += data[b + 2]; n++; }
+			b = nextrow + nextpix; if (data[b + 3]) { c[0] += data[b]; c[1] += data[b + 1]; c[2] += data[b + 2]; n++; }
+
+			//average all non-transparent neighbors
+			if (n)
+			{
+				dest[0] = (byte)(c[0] / n);
+				dest[1] = (byte)(c[1] / n);
+				dest[2] = (byte)(c[2] / n);
+
+				n = c[0] = c[1] = c[2] = 0;
+			}
+		}
+	}
+}
+
 void CGLRenderer::GL_Bind (CGLTexture* tex)
 {
 	if (gl_nobind.value)
@@ -245,7 +297,7 @@ void CGLRenderer::Scrap_Upload (void)
 
 	for (i=0 ; i<MAX_SCRAPS ; i++) {
 		sprintf(name, "scrap%i", i);
-		scrap_textures[i] = GL_LoadTexture(name, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
+		scrap_textures[i] = GL_LoadTexture(name, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], (uintptr_t)scrap_texels[i], TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
 		/*g_GLRenderer->GL_Bind(scrap_textures[i]);
 		GL_Upload8 (scrap_texels[i], BLOCK_WIDTH, BLOCK_HEIGHT, false, true);*/
 	}
@@ -316,16 +368,12 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 {
 	CQuakePic* p = NULL;
 	COpenGLPic	gl;
-	int offset = 0; //Missi -- copied from QuakeSpasm (5/28/2022)
-	int off = 0;
+	uintptr_t offset;
 
-	p = static_cast<CQuakePic*>(W_GetLumpName(name));
+	p = (CQuakePic*)W_GetLumpName(name);
 
 	if (!p) return NULL; //Missi -- copied from QuakeSpasm (5/28/2022)
 
-
-	//p->data.Init();
-	// 
 	// load little ones into the scrap
 	if (p->width < 64 && p->height < 64)
 	{
@@ -343,19 +391,17 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 		}
 		gl.tex = scrap_textures[texnum]; //Missi -- copied from QuakeSpasm (5/28/2022) -- changed to an array
 		//Missi -- copied from QuakeSpasm (5/28/2022) -- no longer go from 0.01 to 0.99
-		gl.sl = x / (float)BLOCK_WIDTH;	// FIXME: Missi -- broken here! (6/14/2022)
+		gl.sl = x / (float)BLOCK_WIDTH;
 		gl.sh = (x + p->width) / (float)BLOCK_WIDTH;
 		gl.tl = y / (float)BLOCK_WIDTH;
 		gl.th = (y + p->height) / (float)BLOCK_WIDTH;
 	}
 	else
 	{
-		//char texturename[64]; //Missi -- copied from QuakeSpasm (5/28/2022)
-		//snprintf(texturename, sizeof(texturename), "%s:%s", texturename, name); //Missi -- copied from QuakeSpasm (5/28/2022)
 
-		offset = (size_t)p - (size_t)wad_base + sizeof(size_t) * 2; //Missi -- copied from QuakeSpasm (5/28/2022)
+		offset = (uintptr_t)p - (uintptr_t)wad_base + sizeof(int) * 2; //johnfitz
 
-		gl.tex = GL_LoadTexture(name, p->width, p->height, p->data, TEXPREF_ALPHA); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
+		gl.tex = GL_LoadTexture(name, p->width, p->height, p->data, offset, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
 		gl.sl = 0;
 		gl.sh = (float)p->width / (float)GL_PadConditional(p->width); //Missi -- copied from QuakeSpasm (5/28/2022)
 		gl.tl = 0;
@@ -382,6 +428,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	byte			*qpicdata = NULL;
 	COpenGLPic		gl;
 	size_t			qpictemp_len = 0;
+	uintptr_t		offset = 0;
 
 	for (pic=menu_cachepics, i=0 ; i<menu_numcachepics ; pic++, i++)
 		if (!strcmp (path, pic->name))
@@ -419,7 +466,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	/*qpic->width = qpicbuf->width;
 	qpic->height = qpicbuf->height;*/
 
-	gl.tex = GL_LoadTexture(path, qpic->width, qpic->height, qpic->data, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); // (COpenGLPic*)pic->pic->data;
+	gl.tex = GL_LoadTexture(path, qpic->width, qpic->height, qpic->data, sizeof(int) * 2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); // (COpenGLPic*)pic->pic->data;
 	gl.sl = 0;
 	gl.sh = 1;
 	gl.tl = 0;
@@ -541,6 +588,7 @@ void CGLRenderer::Draw_Init (void)
 	byte	*ncdata = NULL;
 	int		f = 0, fstep = 0;
 	size_t	s = 0;
+	uintptr_t offset;
 
 	//gltexturevector.SetCount(0);
 
@@ -556,9 +604,10 @@ void CGLRenderer::Draw_Init (void)
 	Cmd_AddCommand ("gl_texturemode", &CGLRenderer::Draw_TextureMode_f);
 
 	draw_chars = static_cast<byte*>(W_GetLumpName ("conchars"));
-	
+	offset = (uintptr_t)draw_chars - (uintptr_t)wad_base;
+
 	// now turn them into textures
-	char_texture = GL_LoadTexture ("charset", 128, 128, draw_chars, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
+	char_texture = GL_LoadTexture ("charset", 128, 128, draw_chars, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
 
 	start = g_MemCache->Hunk_LowMark();
 
@@ -1215,10 +1264,37 @@ void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned long long* data)
 {
 	int	internalformat, miplevel, mipwidth, mipheight, picmip;
 
+	if (!gl_texture_NPOT)
+	{
+		// resample up
+		data = GL_ResampleTexture(data, tex->width, tex->height, tex->flags & TEXPREF_ALPHA);
+		tex->width = GL_Pad(tex->width);
+		tex->height = GL_Pad(tex->height);
+	}
+
 	// upload
 	GL_Bind(tex);
 	internalformat = (tex->flags & TEXPREF_ALPHA) ? gl_alpha_format : gl_solid_format;
 	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, tex->width, tex->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+	// mipmap down
+	picmip = (tex->flags & TEXPREF_NOPICMIP) ? 0 : q_max((int)gl_picmip.value, 0);
+	mipwidth = GL_SafeTextureSize(tex->width >> picmip);
+	mipheight = GL_SafeTextureSize(tex->height >> picmip);
+	while ((int)tex->width > mipwidth)
+	{
+		GL_MipMapW(data, tex->width, tex->height);
+		tex->width >>= 1;
+		if (tex->flags & TEXPREF_ALPHA)
+			GL_AlphaEdgeFix((byte*)data, tex->width, tex->height);
+	}
+	while ((int)tex->height > mipheight)
+	{
+		GL_MipMapH(data, tex->width, tex->height);
+		tex->height >>= 1;
+		if (tex->flags & TEXPREF_ALPHA)
+			GL_AlphaEdgeFix((byte*)data, tex->width, tex->height);
+	}
 
 	if (tex->flags & TEXPREF_MIPMAP && !(tex->flags & TEXPREF_WARPIMAGE)) // warp image mipmaps are generated later
 	{
@@ -1240,7 +1316,8 @@ void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned long long* data)
 			glTexImage2D(GL_TEXTURE_2D, miplevel, internalformat, mipwidth, mipheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		}
 	}
-done: ;
+
+	GL_Bind(tex);
 
 	if (tex->mipmap)
 	{
@@ -1256,11 +1333,135 @@ done: ;
 
 /*
 ================
-GL_FreeTexture -- Missi (7/5/2022)
-
-Loads an OpenGL texture via string ID or byte data. Can take an empty string or NULL if you don't need a name.
+TexMgr_PadImageW -- return image with width padded up to power-of-two dimentions
 ================
 */
+byte* CGLRenderer::GL_PadImageW(byte* in, int width, int height, byte padbyte)
+{
+	int i, j, outwidth;
+	byte* out, * data;
+
+	if (width == GL_Pad(width))
+		return in;
+
+	outwidth = GL_Pad(width);
+
+	out = data = g_MemCache->Hunk_Alloc<byte>(outwidth * height);
+
+	for (i = 0; i < height; i++)
+	{
+		for (j = 0; j < width; j++)
+			*out++ = *in++;
+		for (; j < outwidth; j++)
+			*out++ = padbyte;
+	}
+
+	return data;
+}
+
+/*
+================
+TexMgr_PadImageH -- return image with height padded up to power-of-two dimentions
+================
+*/
+byte* CGLRenderer::GL_PadImageH(byte* in, int width, int height, byte padbyte)
+{
+	int i, srcpix, dstpix;
+	byte* data, * out;
+
+	if (height == GL_Pad(height))
+		return in;
+
+	srcpix = width * height;
+	dstpix = width * GL_Pad(height);
+
+	out = data = g_MemCache->Hunk_Alloc<byte>(dstpix);
+
+	for (i = 0; i < srcpix; i++)
+		*out++ = *in++;
+	for (; i < dstpix; i++)
+		*out++ = padbyte;
+
+	return data;
+}
+
+/*
+===============
+TexMgr_PadEdgeFixW -- special case of AlphaEdgeFix for textures that only need it because they were padded
+
+operates in place on 32bit data, and expects unpadded height and width values
+===============
+*/
+void CGLRenderer::GL_PadEdgeFixW(byte* data, int width, int height)
+{
+	byte* src, * dst;
+	int i, padw, padh;
+
+	padw = GL_PadConditional(width);
+	padh = GL_PadConditional(height);
+
+	//copy last full column to first empty column, leaving alpha byte at zero
+	src = data + (width - 1) * 4;
+	for (i = 0; i < padh; i++)
+	{
+		src[4] = src[0];
+		src[5] = src[1];
+		src[6] = src[2];
+		src += padw * 4;
+	}
+
+	//copy first full column to last empty column, leaving alpha byte at zero
+	src = data;
+	dst = data + (padw - 1) * 4;
+	for (i = 0; i < padh; i++)
+	{
+		dst[0] = src[0];
+		dst[1] = src[1];
+		dst[2] = src[2];
+		src += padw * 4;
+		dst += padw * 4;
+	}
+}
+
+/*
+===============
+TexMgr_PadEdgeFixH -- special case of AlphaEdgeFix for textures that only need it because they were padded
+
+operates in place on 32bit data, and expects unpadded height and width values
+===============
+*/
+void CGLRenderer::GL_PadEdgeFixH(byte* data, int width, int height)
+{
+	byte* src, * dst;
+	int i, padw, padh;
+
+	padw = GL_PadConditional(width);
+	padh = GL_PadConditional(height);
+
+	//copy last full row to first empty row, leaving alpha byte at zero
+	dst = data + height * padw * 4;
+	src = dst - padw * 4;
+	for (i = 0; i < padw; i++)
+	{
+		dst[0] = src[0];
+		dst[1] = src[1];
+		dst[2] = src[2];
+		src += 4;
+		dst += 4;
+	}
+
+	//copy first full row to last empty row, leaving alpha byte at zero
+	dst = data + (padh - 1) * padw * 4;
+	src = data;
+	for (i = 0; i < padw; i++)
+	{
+		dst[0] = src[0];
+		dst[1] = src[1];
+		dst[2] = src[2];
+		src += 4;
+		dst += 4;
+	}
+}
 
 /*
 ================
@@ -1269,18 +1470,19 @@ GL_LoadTexture -- Missi: revised (3/18/2022)
 Loads an OpenGL texture via string ID or byte data. Can take an empty string or NULL if you don't need a name.
 ================
 */
-CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int height, byte *data, int flags)
+CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int height, byte *data, uintptr_t offset, int flags)
 {
-	int			i = 0, p = 0, s = 0, l = 0, m = 0; // -- Missi
-	CGLTexture* glt = NULL;
-	COpenGLPic*	gl;
-	CQuakePic* qpic = NULL;
-	byte* out = data;
-	int			CRCBlock1 = 0, CRCBlock2 = 0;
-	byte padbyte;
-	unsigned int* usepal;
-	char id[64];
-	int len = 0;
+	int				i = 0, p = 0, s = 0, l = 0, m = 0; // -- Missi
+	CGLTexture*		glt = NULL;
+	COpenGLPic*		gl = NULL;
+	CQuakePic*		qpic = NULL;
+	byte*			out = data;
+	int				CRCBlock1 = 0, CRCBlock2 = 0;
+	byte			padbyte;
+	unsigned int*	usepal;
+	char			id[64] = {};
+	int				len	= 0;
+	bool			padh = false, padw = false;
 
 // Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
 
@@ -1294,9 +1496,22 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 
 	Q_strncpy(glt->identifier, identifier, sizeof(glt->identifier));	// Missi: this was Q_strcpy at one point. Caused heap corruption. (4/11/2022)
 	glt->texnum = texture_extension_number;
+	glt->source_offset = offset;
+	glt->source_width = width;
+	glt->source_height = height;
 	glt->width = width;
 	glt->height = height;
 	glt->flags = flags;
+
+	// detect false alpha cases
+	if (glt->flags & TEXPREF_ALPHA && !(glt->flags & TEXPREF_CONCHARS))
+	{
+		for (i = 0; i < (int)(glt->width * glt->height); i++)
+			if (data[i] == 255) //transparent index
+				break;
+		if (i == (int)(glt->width * glt->height))
+			glt->flags -= TEXPREF_ALPHA;
+	}
 
 	// choose palette and padbyte
 	if (glt->flags & TEXPREF_FULLBRIGHT)
@@ -1326,9 +1541,34 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 		padbyte = 255;
 	}
 
-	//g_GLRenderer->GL_Bind(glt);
+	if (glt->flags & TEXPREF_PAD)
+	{
+		if ((int)glt->width < GL_SafeTextureSize(glt->width))
+		{
+			data = GL_PadImageW(data, glt->width, glt->height, padbyte);
+			glt->width = GL_Pad(glt->width);
+			padw = true;
+		}
+		if ((int)glt->height < GL_SafeTextureSize(glt->height))
+		{
+			data = GL_PadImageH(data, glt->width, glt->height, padbyte);
+			glt->height = GL_Pad(glt->height);
+			padh = true;
+		}
+	}
 
 	data = (byte*)GL_8to32(data, glt->width * glt->height, usepal);
+
+	// fix edges
+	if (glt->flags & TEXPREF_ALPHA)
+		GL_AlphaEdgeFix(data, glt->width, glt->height);
+	else
+	{
+		if (padw)
+			GL_PadEdgeFixW(data, glt->source_width, glt->source_height);
+		if (padh)
+			GL_PadEdgeFixH(data, glt->source_width, glt->source_height);
+	}
 
 #ifndef WIN64
 	GL_Upload32(glt, (unsigned*)data);
@@ -1349,6 +1589,10 @@ GL_LoadPicTexture
 */
 CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic)
 {
+	uintptr_t offset;
+
+	offset = (uintptr_t)pic->data - (uintptr_t)wad_base;
+
 	return GL_LoadTexture("", pic->width, pic->height, pic->data, TEXPREF_ALPHA);
 }
 

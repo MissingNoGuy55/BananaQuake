@@ -1562,6 +1562,9 @@ void CGLRenderer::GL_BuildLightmaps (void)
 	//
 	for (i=0 ; i<MAX_LIGHTMAPS ; i++)
 	{
+
+		char name[64];
+
 		if (!allocated[i][0])
 			break;		// no more used
 		lightmap_modified[i] = false;
@@ -1569,6 +1572,7 @@ void CGLRenderer::GL_BuildLightmaps (void)
 		lightmap_rectchange[i].t = BLOCK_HEIGHT;
 		lightmap_rectchange[i].w = 0;
 		lightmap_rectchange[i].h = 0;
+		
 		GL_Bind(lightmap_textures + i);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

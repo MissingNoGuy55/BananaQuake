@@ -1062,8 +1062,12 @@ void CGLRenderer::R_InitSky (texture_t *mt)
 	((byte *)&transpix)[2] = b/(128*128);
 	((byte *)&transpix)[3] = 0;
 
+	uintptr_t offset;
+
+	offset = (uintptr_t)(mt+1) - (uintptr_t)wad_base;	// Missi: Come back to this later (12/4/2022)
+
 	if (!solidskytexture)
-		solidskytexture = g_GLRenderer->GL_LoadTexture("skysolid", 128, 128, (byte*)&trans, TEXPREF_NOPICMIP | TEXPREF_ALPHA); // &g_GLRenderer->gltextures[texture_extension_number-1]; // ++];
+		solidskytexture = g_GLRenderer->GL_LoadTexture("skysolid", 128, 128, (byte*)&trans, offset, TEXPREF_NOPICMIP | TEXPREF_ALPHA); // &g_GLRenderer->gltextures[texture_extension_number-1]; // ++];
 	g_GLRenderer->GL_Bind (solidskytexture);
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1081,7 +1085,7 @@ void CGLRenderer::R_InitSky (texture_t *mt)
 		}
 
 	if (!alphaskytexture)
-		alphaskytexture = g_GLRenderer->GL_LoadTexture("skyalpha", 128, 128, (byte*)&trans, TEXPREF_NOPICMIP | TEXPREF_ALPHA); //&g_GLRenderer->gltextures[texture_extension_number-1]; //++];
+		alphaskytexture = g_GLRenderer->GL_LoadTexture("skyalpha", 128, 128, (byte*)&trans, offset, TEXPREF_NOPICMIP | TEXPREF_ALPHA); //&g_GLRenderer->gltextures[texture_extension_number-1]; //++];
 	g_GLRenderer->GL_Bind(alphaskytexture);
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

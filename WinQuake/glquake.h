@@ -200,6 +200,8 @@ public:
 	CGLRenderer(const CGLRenderer& src);
 	~CGLRenderer();
 
+	void GL_AlphaEdgeFix(byte* data, int width, int height);
+
 	static void GL_Bind(CGLTexture* tex);
 
 	int Scrap_AllocBlock(int w, int h, int* x, int* y);
@@ -254,7 +256,11 @@ public:
 	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
 	CGLTexture* GL_LoadPicTexture(CQuakePic* pic);
-	CGLTexture* GL_LoadTexture(const char* identifier, int width, int height, byte* data, int flags = TEXPREF_NONE);
+	byte* GL_PadImageW(byte* in, int width, int height, byte padbyte);
+	byte* GL_PadImageH(byte* in, int width, int height, byte padbyte);
+	void GL_PadEdgeFixW(byte* data, int width, int height);
+	void GL_PadEdgeFixH(byte* data, int width, int height);
+	CGLTexture* GL_LoadTexture(const char* identifier, int width, int height, byte* data, uintptr_t offset, int flags = TEXPREF_NONE);
 
 	void GL_SetCanvas(canvastype newcanvas);
 
@@ -441,14 +447,16 @@ public:
 	CGLTexture(const CGLTexture& obj);
 	~CGLTexture();
 
-	CGLTexture* next;
-	CQuakePic pic;
-	//COpenGLPic* glcoords;
+	CGLTexture*			next;
+	CQuakePic			pic;
 
 	GLuint				texnum;
 	char				identifier[64];
 	unsigned int		width, height;
 	bool				mipmap;
+
+	int					source_width, source_height;
+	uintptr_t			source_offset;
 
 	unsigned int		checksum;
 	unsigned int		flags;
@@ -456,6 +464,9 @@ public:
 };
 
 constexpr size_t crap = sizeof(CGLTexture);
+
+extern	bool	gl_texture_NPOT;
+extern	GLint	gl_hardware_maxsize;
 
 //====================================================
 
