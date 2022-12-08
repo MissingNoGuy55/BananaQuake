@@ -18,11 +18,11 @@
 */
 
 #include	"qcc.h"
-#include <strsafe.h>
+#include	<strsafe.h>
 
 char		destfile[1024];
 
-float		pr_globals[MAX_REGS];
+float		p_globals[MAX_REGS];
 int			numpr_globals;
 
 char		strings[MAX_STRINGS];
@@ -307,8 +307,8 @@ void WriteData (int crc)
 	progs.ofs_globals = pos;
 	progs.numglobals = numpr_globals;
 	for (i=0 ; i<numpr_globals ; i++)
-		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
-	SafeWrite (h, pr_globals, numpr_globals*4);
+		((int *)p_globals)[i] = LittleLong (((int *)p_globals)[i]);
+	SafeWrite (h, p_globals, numpr_globals*4);
 
 	printf ("%6i TOTAL SIZE\n", (int)pos);
 
@@ -382,7 +382,7 @@ def_t	*PR_DefForFieldOfs (gofs_t ofs)
 	{
 		if (d->type->type != ev_field)
 			continue;
-		if (*((int *)&pr_globals[d->ofs]) == ofs)
+		if (*((int *)&p_globals[d->ofs]) == ofs)
 			return d;
 	}
 	Error ("PR_DefForFieldOfs: couldn't find %i",ofs);
@@ -456,7 +456,7 @@ char *PR_GlobalStringNoContents (gofs_t ofs)
 	void	*val;
 	static char	line[128];
 	
-	val = (void *)&pr_globals[ofs];
+	val = (void *)&p_globals[ofs];
 	def = pr_global_defs[ofs];
 	if (!def)
 //		Error ("PR_GlobalString: no def for %i", ofs);
@@ -480,13 +480,13 @@ char *PR_GlobalString (gofs_t ofs)
 	void	*val;
 	static char	line[128];
 	
-	val = (void *)&pr_globals[ofs];
+	val = (void *)&p_globals[ofs];
 	def = pr_global_defs[ofs];
 	if (!def)
 		return PR_GlobalStringNoContents(ofs);
 	if (def->initialized && def->type->type != ev_function)
 	{
-		s = PR_ValueString (def->type->type, &pr_globals[ofs]);
+		s = PR_ValueString (def->type->type, &p_globals[ofs]);
 		sprintf (line,"%i(%s)", ofs, s);
 	}
 	else
@@ -835,7 +835,7 @@ typedef struct
 packfile_t	pfiles[4096], *pf;
 #ifdef __linux
 int			packhandle;
-#elif WIN32
+#elif _WIN32
 FILE*		packhandle;
 #endif
 int			packbytes;

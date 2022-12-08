@@ -247,7 +247,7 @@ def_t	*PR_ParseImmediate (void)
 	if (pr_immediate_type == &type_string)
 		pr_immediate.string = CopyString (pr_immediate_string);
 	
-	memcpy (pr_globals + cn->ofs, &pr_immediate, 4*type_size[pr_immediate_type->type]);
+	memcpy (p_globals + cn->ofs, &pr_immediate, 4*type_size[pr_immediate_type->type]);
 	
 	PR_Lex ();
 
@@ -800,7 +800,7 @@ def_t *PR_GetDef (type_t *type, char *name, def_t *scope, bool allocate)
 
 	if (type->type == ev_field)
 	{
-		*(int *)&pr_globals[def->ofs] = pr.size_fields;
+		*(int *)&p_globals[def->ofs] = pr.size_fields;
 		
 		if (type->aux_type->type == ev_vector)
 		{
@@ -890,7 +890,7 @@ void PR_ParseDefs (void)
 				PR_ParseError ("wrong immediate type for %s", name);
 	
 			def->initialized = 1;
-			memcpy (pr_globals + def->ofs, &pr_immediate, 4*type_size[pr_immediate_type->type]);
+			memcpy (p_globals + def->ofs, &pr_immediate, 4*type_size[pr_immediate_type->type]);
 			PR_Lex ();
 		}
 		

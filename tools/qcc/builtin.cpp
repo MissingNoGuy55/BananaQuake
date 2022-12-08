@@ -166,6 +166,14 @@ INPUT
 #include <cl_input.cpp>
 #include <keys.cpp>
 
+void IN_Init()
+{
+}
+
+void IN_Shutdown()
+{
+}
+
 /*
 ==================
 NETWORK FORWARD STUFF
@@ -279,6 +287,10 @@ void D_DisableBackBufferAccess()
 }
 
 void D_FlushCaches()
+{
+}
+
+void D_EndDirectRect(int x, int y, int width, int height)
 {
 }
 
@@ -441,6 +453,43 @@ void VID_UnlockBuffer(void)
 
 }
 #endif
+
+void VID_Init(unsigned char* palette)
+{
+}
+
+void VID_Lockbuffer(void)
+{
+}
+
+void VID_SetDefaultMode(void)
+{
+}
+
+void VID_SetPalette(unsigned char* palette)
+{
+}
+
+void VID_ShiftPalette(unsigned char* palette)
+{
+}
+
+void VID_Shutdown(void)
+{
+}
+
+void VID_LockBuffer(void)
+{
+}
+
+void VID_UnlockBuffer(void)
+{
+}
+
+void VID_Update(vrect_t* rects)
+{
+}
+
 #include <sys_win.cpp>
 
 /*

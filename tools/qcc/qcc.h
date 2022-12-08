@@ -392,11 +392,11 @@ void PR_SkipToSemicolon (void);
 extern	char		pr_parm_names[MAX_PARMS][MAX_NAME];
 extern	bool	pr_trace;
 
-#define	G_FLOAT(o) (pr_globals[o])
-#define	G_INT(o) (*(int *)&pr_globals[o])
-#define	G_VECTOR(o) (&pr_globals[o])
-#define	G_STRING(o) (strings + *(string_t *)&pr_globals[o])
-#define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
+#define	G_FLOAT(o) (p_globals[o])
+#define	G_INT(o) (*(int *)&p_globals[o])
+#define	G_VECTOR(o) (&p_globals[o])
+#define	G_STRING(o) (strings + *(string_t *)&p_globals[o])
+#define	G_FUNCTION(o) (*(func_t *)&p_globals[o])
 
 const char *PR_ValueString (etype_t type, void *val);
 
@@ -433,7 +433,7 @@ extern	int			statement_linenums[MAX_STATEMENTS];
 extern	dfunction_t	functions[MAX_FUNCTIONS];
 extern	int			numfunctions;
 
-extern	float		pr_globals[MAX_REGS];
+extern	float		p_globals[MAX_REGS];
 extern	int			numpr_globals;
 
 extern	char	pr_immediate_string[2048];
