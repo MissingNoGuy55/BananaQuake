@@ -564,7 +564,7 @@ void Host_Loadgame_f (void)
 	FILE	*f;
 	static char	mapname[MAX_QPATH];
 	float	time, tfloat;
-	static char	str[32768];
+	char	str[32768];
 	const char *start;
 	int		i, r;
 	edict_t	*ent;
@@ -642,8 +642,7 @@ void Host_Loadgame_f (void)
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = g_MemCache->Hunk_Alloc<char>(strlen(str) + 1);
-		sv.lightstyles[i] = str;
+		sv.lightstyles[i] = strdup(str);
 	}
 
 // load the edicts out of the savegame file
@@ -1008,12 +1007,13 @@ void Host_Please_f (void)
 
 void Host_Say(bool teamonly)
 {
-	client_t *client;
-	client_t *save;
-	int		j;
-	char	*p;
-	char	text[64];
+	client_t *client = NULL;
+	client_t *save = NULL;
+	int		j = 0;
+	char*	p = NULL;
+	char	text[64] = {};
 	bool	fromServer = false;
+
 
 	if (cmd_source == src_command)
 	{
@@ -1031,10 +1031,12 @@ void Host_Say(bool teamonly)
 
 	if (Cmd_Argc () < 2)
 		return;
+	
+	p = mainzone->Z_Malloc<char>(strlen(Cmd_Args())+1);	// Missi (12/7/2022)
 
 	save = host_client;
 
-	strcat(p, Cmd_Args());
+	Q_strcat(p, Cmd_Args());
 // remove quotes if present
 	if (*p == '"')
 	{
