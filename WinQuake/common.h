@@ -71,11 +71,9 @@ void InsertLinkAfter (link_t *l, link_t *after);
 // (type *)STRUCT_FROM_LINK(link_t *link, type, member)
 // ent = STRUCT_FROM_LINK(link,entity_t,order)
 // FIXME: remove this mess!
-#ifndef WIN64
+
 #define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (int)&(((t *)0)->m)))
-#else
-#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (int)&(((t *)0)->m)))
-#endif
+
 //============================================================================
 
 #ifndef NULL
@@ -213,6 +211,9 @@ class CCommon
 public:
 
 	const char* COM_Parse(const char* data);
+	const char* COM_ParseIntNewline(const char* buffer, int* value);
+	const char* COM_ParseFloatNewline(const char* buffer, float* value);
+	const char* COM_ParseStringNewline(const char* buffer);
 
 	int COM_CheckParm (const char *parm);
 	void COM_Init (const char *path);
@@ -356,24 +357,24 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 	else
 		((byte*)buf)[len] = 0;
 
-#ifdef QUAKE_GAME	// Missi: more garbage for QCC (12/2/2022)
-#ifndef GLQUAKE
-	g_SoftwareRenderer->Draw_BeginDisc();
-#else
-	g_GLRenderer->Draw_BeginDisc();
-#endif
-#endif
+//#ifndef QUAKE_TOOLS	// Missi: more garbage for QCC (12/2/2022)
+//#ifndef GLQUAKE
+//	g_SoftwareRenderer->Draw_BeginDisc();
+//#else
+//	g_GLRenderer->Draw_BeginDisc();
+//#endif
+//#endif
 
 	Sys_FileRead(h, buf, len);
 	common->COM_CloseFile(h);
 
-#ifdef QUAKE_GAME
-#ifndef GLQUAKE
-	g_SoftwareRenderer->Draw_EndDisc();
-#else
-	g_GLRenderer->Draw_EndDisc();
-#endif
-#endif
+//#ifdef QUAKE_GAME
+//#ifndef GLQUAKE
+//	g_SoftwareRenderer->Draw_EndDisc();
+//#else
+//	g_GLRenderer->Draw_EndDisc();
+//#endif
+//#endif
 
 	return buf;
 }

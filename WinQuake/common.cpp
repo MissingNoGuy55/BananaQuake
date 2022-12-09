@@ -1048,6 +1048,28 @@ skipwhite:
 	return data;
 }
 
+const char* CCommon::COM_ParseIntNewline(const char* buffer, int* value)
+{
+	int consumed = 0;
+	sscanf(buffer, "%i\n%n", value, &consumed);
+	return buffer + consumed;
+}
+
+const char* CCommon::COM_ParseFloatNewline(const char* buffer, float* value)
+{
+	int consumed = 0;
+	sscanf(buffer, "%f\n%n", value, &consumed);
+	return buffer + consumed;
+}
+
+const char* CCommon::COM_ParseStringNewline(const char* buffer)
+{
+	int consumed = 0;
+	com_token[0] = '\0';
+	sscanf(buffer, "%1023s\n%n", com_token, &consumed);
+	return buffer + consumed;
+}
+
 
 /*
 ================
