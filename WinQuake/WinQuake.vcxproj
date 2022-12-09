@@ -87,6 +87,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -148,9 +149,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>glbananaquake</TargetName>
-    <OutDir>.\release_gl\</OutDir>
-    <IntDir>.\release_gl\</IntDir>
+    <TargetName>glbananaquake64</TargetName>
+    <OutDir>.\release_gl_64\</OutDir>
+    <IntDir>.\release_gl_64\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">
     <OutDir>.\debug_gl\</OutDir>
@@ -158,8 +159,8 @@
     <TargetName>glbananaquake</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">
-    <OutDir>.\debug_gl\</OutDir>
-    <IntDir>.\debug_gl\</IntDir>
+    <OutDir>.\debug_gl_64\</OutDir>
+    <IntDir>.\debug_gl_64\</IntDir>
     <TargetName>glbananaquake64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -324,7 +325,6 @@
       <AdditionalIncludeDirectories>.\sdl2\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
