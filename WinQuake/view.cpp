@@ -446,10 +446,63 @@ void V_CalcPowerupCshift (void)
 {
 	if (cl.items & IT_QUAD)
 	{
-		cl.cshifts[CSHIFT_POWERUP].destcolor[0] = 0;
-		cl.cshifts[CSHIFT_POWERUP].destcolor[1] = 0;
-		cl.cshifts[CSHIFT_POWERUP].destcolor[2] = 255;
-		cl.cshifts[CSHIFT_POWERUP].percent = 30;
+
+		const int rainbowred[3]			= { 255, 0, 0 };
+		const int rainboworange[3]		= { 255, 128, 0 };
+		const int rainbowyellow[3]		= { 255, 255, 0 };
+		const int rainbowgreen[3]		= { 0, 255, 0 };
+		const int rainbowcyan[3]		= { 0, 255, 255 };
+		const int rainbowblue[3]		= { 0, 0, 255 };
+		const int numcolors				= 6;
+		static double lastcolortime		= cl.time;
+		static int colorinc				= 0;
+
+		if (cl.time >= lastcolortime + 0.25f)
+		{
+			switch (colorinc)
+			{
+			case 0:
+				cl.cshifts[CSHIFT_POWERUP].destcolor[0] = rainbowred[0];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[1] = rainbowred[1];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[2] = rainbowred[2];
+				break;
+			case 1:
+				cl.cshifts[CSHIFT_POWERUP].destcolor[0] = rainboworange[0];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[1] = rainboworange[1];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[2] = rainboworange[2];
+				break;
+			case 2:
+				cl.cshifts[CSHIFT_POWERUP].destcolor[0] = rainbowyellow[0];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[1] = rainbowyellow[1];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[2] = rainbowyellow[2];
+				break;
+			case 3:
+				cl.cshifts[CSHIFT_POWERUP].destcolor[0] = rainbowgreen[0];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[1] = rainbowgreen[1];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[2] = rainbowgreen[2];
+				break;
+			case 4:
+				cl.cshifts[CSHIFT_POWERUP].destcolor[0] = rainbowcyan[0];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[1] = rainbowcyan[1];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[2] = rainbowcyan[2];
+				break;
+			case 5:
+				cl.cshifts[CSHIFT_POWERUP].destcolor[0] = rainbowblue[0];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[1] = rainbowblue[1];
+				cl.cshifts[CSHIFT_POWERUP].destcolor[2] = rainbowblue[2];
+				break;
+			}
+			
+			cl.cshifts[CSHIFT_POWERUP].percent = 30;
+			colorinc++;
+			lastcolortime = cl.time;
+		}
+
+		if (colorinc == numcolors)
+		{
+			lastcolortime = 0.0;
+			colorinc = 0;
+		}
 	}
 	else if (cl.items & IT_SUIT)
 	{
@@ -611,7 +664,7 @@ void V_UpdatePalette (void)
 		newpal += 3;
 	}
 
-	VID_ShiftPalette (pal);	
+	// VID_ShiftPalette (pal);	
 }
 #else	// !GLQUAKE
 void V_UpdatePalette (void)
@@ -682,6 +735,11 @@ void V_UpdatePalette (void)
 	VID_ShiftPalette (pal);	
 }
 #endif	// !GLQUAKE
+
+void V_CalcMDMAPalShift()
+{
+	V_CalcPowerupCshift();
+}
 
 
 /* 
