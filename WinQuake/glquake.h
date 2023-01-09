@@ -21,9 +21,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #pragma warning(disable : 4244)     // MIPS
 #pragma warning(disable : 4136)     // X86
+
+#ifdef WIN64
+#pragma warning(disable : 4267)		// Missi: x64 (12/5/2022)
+#endif
+
 #pragma warning(disable : 4051)     // ALPHA
   
 //#include <GL/glew.h>
+
+#define	GL_UNUSED_TEXTURE	(~(GLuint)0)
 
 #ifdef _WIN32
 #include <windows.h>
@@ -98,18 +105,6 @@ extern	PROC QglVertexPointerEXT;
 #define BACKFACE_EPSILON	0.01
 
 #define	MAX_GLTEXTURES	1024
-
-#ifndef WIN64
-#define	BLOCK_WIDTH		256
-#define	BLOCK_HEIGHT	256
-#else
-constexpr long long BLOCK_WIDTH = 256;
-constexpr long long BLOCK_HEIGHT = 256; // reason this is now a constexpr is because in R_DrawSequentialPoly in
-									// gl_rsurf.cpp, it expects an integer that is then converted to an unsigned char for OpenGL. 
-									// as 64-bit code requires "long long", the implicit conversion is not possible
-									// and it is not possible to cast the value of an #ifdef, so we have to do this
-#endif
-#define	MAX_LIGHTMAPS	64
 
 #ifndef GL_RGBA4
 #define	GL_RGBA4	0
@@ -246,13 +241,15 @@ public:
 	void GL_Set2D(void);
 
 	CGLTexture* GL_FindTexture(const char* identifier);
+	void GL_FreeTextureForModel(model_t* mod);
+	void GL_FreeTexture(CGLTexture* kill);
+	void GL_DeleteTexture(CGLTexture* texture);
+
 	unsigned* GL_MipMapW(unsigned* data, int width, int height);
 	unsigned* GL_MipMapH(unsigned* data, int width, int height);
-#ifndef WIN64
+
 	unsigned* GL_ResampleTexture(unsigned* in, int inwidth, int inheight, bool alpha);
-#else
-	unsigned* GL_ResampleTexture(unsigned long long* in, int inwidth, bool alpha);
-#endif
+
 	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
 	CGLTexture* GL_LoadPicTexture(CQuakePic* pic);
@@ -268,11 +265,11 @@ public:
 
 	void GL_MipMap(byte* in, int width, int height);
 	void GL_MipMap8Bit(byte* in, int width, int height);
-#ifndef WIN64
+	static void GL_SetFilterModes(CGLTexture* glt);
+
+	void GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha);
+
 	void GL_Upload32(CGLTexture* tex, unsigned* data);
-#else
-	void GL_Upload32(CGLTexture* tex, unsigned long long* data);
-#endif
 	void GL_BuildLightmaps(void);
 	void GL_CreateSurfaceLightmap(msurface_t* surf);
 	void GL_SubdivideSurface(msurface_t* fa);
@@ -391,42 +388,35 @@ private:
 
 	int			skytexturenum;
 
-	glpoly_t* lightmap_polys[MAX_LIGHTMAPS];
-	bool	lightmap_modified[MAX_LIGHTMAPS];
-	glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
+	static glpoly_t*		lightmap_polys[MAX_LIGHTMAPS];
+	static bool			lightmap_modified[MAX_LIGHTMAPS];
+	static glRect_t		lightmap_rectchange[MAX_LIGHTMAPS];
+	static int				lightmap_count;
 
-#ifndef WIN64
-	int			allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
-#else
-	long long	allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
-#endif
+	static int			allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];	// Missi: changed from a 2D array (12/6/2022)
 
 	// the lightmap texture data needs to be kept in
 	// main memory so texsubimage can update properly
-	byte		lightmaps[MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
+	static	byte		lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
 
 	// For gl_texsort 0
 	msurface_t* skychain = NULL;
 	msurface_t* waterchain = NULL;
 
-#ifndef WIN64
 	int		lightmap_bytes;		// 1, 2, or 4
-#else
-	long long		lightmap_bytes;		// 1, 2, or 4
-#endif
 
-	static CGLTexture* lightmap_textures;
+	CGLTexture* lightmap_textures;
 
-#ifndef WIN64
-	unsigned		blocklights[18 * 18];
+	unsigned		blocklights[BLOCK_WIDTH*BLOCK_HEIGHT*3];
 	int			active_lightmaps;
-#else
-	unsigned long long		blocklights[18 * 18];
-	long long	active_lightmaps;
-#endif
+
+	static CGLTexture* free_gltextures;
+	static CGLTexture* active_gltextures;
 
 	static CGLTexture* translate_texture;
 	static CGLTexture* char_texture;
+
+	int last_lightmap_allocated = 0;
 
 };
 

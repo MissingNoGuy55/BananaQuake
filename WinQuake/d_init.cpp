@@ -46,7 +46,6 @@ CCoreRenderer::CCoreRenderer() : solidskytexture(NULL)
 	solidskytexture = NULL;
 	alphaskytexture = NULL;
 	speedscale = 1.0f;
-	memset(blocklights, 0, sizeof(blocklights));
 }
 
 CCoreRenderer::CCoreRenderer(const CCoreRenderer& src)
@@ -54,7 +53,6 @@ CCoreRenderer::CCoreRenderer(const CCoreRenderer& src)
 	solidskytexture = NULL;
 	alphaskytexture = NULL;
 	speedscale = 1.0f;
-	memset(blocklights, 0, sizeof(blocklights));
 }
 
 

@@ -47,11 +47,11 @@ void CCoreRenderer::R_InitParticles (void)
 {
 	int		i;
 
-	i = common->COM_CheckParm ("-particles");
+	i = g_Common->COM_CheckParm ("-particles");
 
 	if (i)
 	{
-		r_numparticles = (int)(Q_atoi(common->com_argv[i+1]));
+		r_numparticles = (int)(Q_atoi(g_Common->com_argv[i+1]));
 		if (r_numparticles < ABSOLUTE_MIN_PARTICLES)
 			r_numparticles = ABSOLUTE_MIN_PARTICLES;
 	}
@@ -204,7 +204,7 @@ void CCoreRenderer::R_ReadPointFile_f (void)
 	
 	sprintf (name,"maps/%s.pts", sv.name);
 
-	common->COM_FOpenFile (name, &f);
+	g_Common->COM_FOpenFile (name, &f, NULL);
 	if (!f)
 	{
 		Con_Printf ("couldn't open %s\n", name);

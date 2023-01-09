@@ -110,11 +110,15 @@ int			clearnotify;
 
 vrect_t		scr_vrect;
 
+#ifndef QUAKE_TOOLS
+
 bool	scr_disabled_for_loading;
 bool	scr_drawloading;
 float		scr_disabled_time;
 
 bool	block_drawing;
+
+#endif
 
 void SCR_ScreenShot_f (void);
 
@@ -605,7 +609,7 @@ void SCR_ScreenShot_f (void)
 	{ 
 		pcxname[5] = i/10 + '0'; 
 		pcxname[6] = i%10 + '0'; 
-		sprintf (checkname, "%s/%s", common->com_gamedir, pcxname);
+		sprintf (checkname, "%s/%s", g_Common->com_gamedir, pcxname);
 		if (Sys_FileTime(checkname) == -1)
 			break;	// file doesn't exist
 	} 
@@ -635,7 +639,7 @@ void SCR_ScreenShot_f (void)
 		buffer[i] = buffer[i+2];
 		buffer[i+2] = temp;
 	}
-	common->COM_WriteFile (pcxname, buffer, glwidth*glheight*3 + 18 );
+	g_Common->COM_WriteFile (pcxname, buffer, glwidth*glheight*3 + 18 );
 
 	free (buffer);
 	Con_Printf ("Wrote %s\n", pcxname);

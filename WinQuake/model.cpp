@@ -279,7 +279,7 @@ model_t *Mod_LoadModel (model_t *mod, bool crash)
 //
 // load the file
 //
-	buf = COM_LoadStackFile<unsigned>(mod->name, stackbuf, sizeof(stackbuf));
+	buf = COM_LoadStackFile<unsigned>(mod->name, stackbuf, sizeof(stackbuf), &mod->path_id);
 	if (!buf)
 	{
 		if (crash)
@@ -290,7 +290,7 @@ model_t *Mod_LoadModel (model_t *mod, bool crash)
 //
 // allocate a new model
 //
-	common->COM_FileBase(mod->name, loadname, sizeof(loadname));
+	g_Common->COM_FileBase(mod->name, loadname, sizeof(loadname));
 	
 	loadmodel = mod;
 

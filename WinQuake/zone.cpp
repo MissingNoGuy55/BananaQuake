@@ -76,6 +76,15 @@ Hunk_Check
 Run consistancy and sentinal trahing checks
 ==============
 */
+
+char* CMemCache::Hunk_Strdup(const char* s, const char* name)
+{
+	size_t sz = strlen(s) + 1;
+	char* ptr = (char*)Hunk_AllocName<char>(sz, name);
+	memcpy(ptr, s, sz);
+	return ptr;
+}
+
 void CMemCache::Hunk_Check (void)
 {
 	hunk_t	*h;

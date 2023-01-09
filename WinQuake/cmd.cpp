@@ -224,23 +224,23 @@ void Cmd_StuffCmds_f (void)
 
 // build the combined string to parse from
 	s = 0;
-	for (i=1 ; i<common->com_argc ; i++)
+	for (i=1 ; i<g_Common->com_argc ; i++)
 	{
-		if (!common->com_argv[i])
+		if (!g_Common->com_argv[i])
 			continue;		// NEXTSTEP nulls out -NXHost
-		s += Q_strlen (common->com_argv[i]) + 1;
+		s += Q_strlen (g_Common->com_argv[i]) + 1;
 	}
 	if (!s)
 		return;
 		
 	text = mainzone->Z_Malloc<char>(s+1);
 	text[0] = 0;
-	for (i=1 ; i< common->com_argc ; i++)
+	for (i=1 ; i< g_Common->com_argc ; i++)
 	{
-		if (!common->com_argv[i])
+		if (!g_Common->com_argv[i])
 			continue;		// NEXTSTEP nulls out -NXHost
-		Q_strcat (text, common->com_argv[i]);
-		if (i != common->com_argc-1)
+		Q_strcat (text, g_Common->com_argv[i]);
+		if (i != g_Common->com_argc-1)
 			Q_strcat (text, " ");
 	}
 	
@@ -292,7 +292,7 @@ void Cmd_Exec_f (void)
 	}
 
 	mark = g_MemCache->Hunk_LowMark ();
-	f = COM_LoadHunkFile<char> (Cmd_Argv(1));
+	f = COM_LoadHunkFile<char> (Cmd_Argv(1), NULL);
 	if (!f)
 	{
 		Con_Printf ("couldn't exec %s\n",Cmd_Argv(1));
@@ -512,14 +512,14 @@ void Cmd_TokenizeString (const char *text)
 		if (cmd_argc == 1)
 			 cmd_args = text;
 			
-		text = common->COM_Parse (text);
+		text = g_Common->COM_Parse (text);
 		if (!text)
 			return;
 
 		if (cmd_argc < MAX_ARGS)
 		{
-			cmd_argv[cmd_argc] = mainzone->Z_Malloc<char>(Q_strlen(common->com_token) + 1);
-			Q_strcpy (cmd_argv[cmd_argc], common->com_token);
+			cmd_argv[cmd_argc] = mainzone->Z_Malloc<char>(Q_strlen(g_Common->com_token) + 1);
+			Q_strcpy (cmd_argv[cmd_argc], g_Common->com_token);
 			cmd_argc++;
 		}
 	}

@@ -40,6 +40,8 @@ DWORD		gSndBufSize;
 volatile dma_t* shm;
 int total_channels;
 int paintedtime;
+int s_rawend;
+portable_samplepair_t	s_rawsamples[MAX_RAW_SAMPLES];
 
 // void Snd_WriteLinearBlastStereo16 (void);
 
@@ -443,6 +445,27 @@ void CSoundSystemWin::S_PaintChannels(int endtime)
 			static filter_t memory_l, memory_r;
 			S_LowpassFilter((int*)paintbuffer, 2, end - paintedtime, &memory_l);
 			S_LowpassFilter(((int*)paintbuffer) + 1, 2, end - paintedtime, &memory_r);
+		}
+
+		// paint in the music
+		if (s_rawend >= paintedtime)
+		{	// copy from the streaming sound source
+			int		s;
+			int		stop;
+
+			stop = (end < s_rawend) ? end : s_rawend;
+
+			for (i = paintedtime; i < stop; i++)
+			{
+				s = i & (MAX_RAW_SAMPLES - 1);
+				// lower music by 6db to match sfx
+				paintbuffer[i - paintedtime].left += s_rawsamples[s].left / 2;
+				paintbuffer[i - paintedtime].right += s_rawsamples[s].right / 2;
+			}
+			//	if (i != end)
+			//		Con_Printf ("partial stream\n");
+			//	else
+			//		Con_Printf ("full stream\n");
 		}
 
 		// transfer out according to DMA format

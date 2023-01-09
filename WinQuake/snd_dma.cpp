@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "in_win.h"
+#include "snd_codec.h"
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -148,10 +149,10 @@ void CSoundSystemWin::S_Init (void)
 
 	Con_Printf("\nSound Initialization\n");
 
-	if (common->COM_CheckParm("-nosound"))
+	if (g_Common->COM_CheckParm("-nosound"))
 		return;
 
-	if (common->COM_CheckParm("-simsound"))
+	if (g_Common->COM_CheckParm("-simsound"))
 		fakedma = true;
 
 	
@@ -214,6 +215,10 @@ void CSoundSystemWin::S_Init (void)
 
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound("ambience/water1.wav");
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound("ambience/wind2.wav");
+
+#ifndef QUAKE_TOOLS
+	S_CodecInit();
+#endif
 
 	S_StopAllSounds (true);
 }
@@ -662,6 +667,90 @@ void CSoundSystemWin::S_UpdateAmbientSounds (void)
 	}
 }
 
+/*
+===================
+S_RawSamples		(from QuakeII)
+
+Streaming music support. Byte swapping
+of data must be handled by the codec.
+Expects data in signed 16 bit, or unsigned
+8 bit format.
+===================
+*/
+void CSoundSystemWin::S_RawSamples(int samples, int rate, int width, int channels, byte* data, float volume)
+{
+	int i;
+	int src, dst;
+	float scale;
+	int intVolume;
+
+	if (s_rawend < paintedtime)
+		s_rawend = paintedtime;
+
+	scale = (float)rate / shm->speed;
+	intVolume = (int)(256 * volume);
+
+	if (channels == 2 && width == 2)
+	{
+		for (i = 0; ; i++)
+		{
+			src = i * scale;
+			if (src >= samples)
+				break;
+			dst = s_rawend & (MAX_RAW_SAMPLES - 1);
+			s_rawend++;
+			s_rawsamples[dst].left = ((short*)data)[src * 2] * intVolume;
+			s_rawsamples[dst].right = ((short*)data)[src * 2 + 1] * intVolume;
+		}
+	}
+	else if (channels == 1 && width == 2)
+	{
+		for (i = 0; ; i++)
+		{
+			src = i * scale;
+			if (src >= samples)
+				break;
+			dst = s_rawend & (MAX_RAW_SAMPLES - 1);
+			s_rawend++;
+			s_rawsamples[dst].left = ((short*)data)[src] * intVolume;
+			s_rawsamples[dst].right = ((short*)data)[src] * intVolume;
+		}
+	}
+	else if (channels == 2 && width == 1)
+	{
+		intVolume *= 256;
+
+		for (i = 0; ; i++)
+		{
+			src = i * scale;
+			if (src >= samples)
+				break;
+			dst = s_rawend & (MAX_RAW_SAMPLES - 1);
+			s_rawend++;
+			//	s_rawsamples [dst].left = ((signed char *) data)[src * 2] * intVolume;
+			//	s_rawsamples [dst].right = ((signed char *) data)[src * 2 + 1] * intVolume;
+			s_rawsamples[dst].left = (((byte*)data)[src * 2] - 128) * intVolume;
+			s_rawsamples[dst].right = (((byte*)data)[src * 2 + 1] - 128) * intVolume;
+		}
+	}
+	else if (channels == 1 && width == 1)
+	{
+		intVolume *= 256;
+
+		for (i = 0; ; i++)
+		{
+			src = i * scale;
+			if (src >= samples)
+				break;
+			dst = s_rawend & (MAX_RAW_SAMPLES - 1);
+			s_rawend++;
+			//	s_rawsamples [dst].left = ((signed char *) data)[src] * intVolume;
+			//	s_rawsamples [dst].right = ((signed char *) data)[src] * intVolume;
+			s_rawsamples[dst].left = (((byte*)data)[src] - 128) * intVolume;
+			s_rawsamples[dst].right = (((byte*)data)[src] - 128) * intVolume;
+		}
+	}
+}
 
 /*
 ============
@@ -770,11 +859,8 @@ void CSoundSystemWin::GetSoundtime(void)
 
 // it is possible to miscount buffers if it has wrapped twice between
 // calls to S_Update.  Oh well.
-#ifdef __sun__
-	soundtime = SNDDMA_GetSamples();
-#else
-	samplepos = SNDDMA_GetDMAPos();
 
+	samplepos = SNDDMA_GetDMAPos();
 
 	if (samplepos < oldsamplepos)
 	{
@@ -790,13 +876,13 @@ void CSoundSystemWin::GetSoundtime(void)
 	oldsamplepos = samplepos;
 
 	soundtime = buffers*fullsamples + samplepos/shm->channels;
-#endif
+
 }
 
 void CSoundSystemWin::S_ExtraUpdate (void)
 {
 
-#ifdef _WIN32
+#ifndef QUAKE_TOOLS
 	IN_Accumulate ();
 #endif
 
@@ -835,7 +921,7 @@ void CSoundInternal::S_Update_(void)
 
 	g_SoundSystem->S_PaintChannels (endtime);
 
-	g_SoundSystem->SNDDMA_Submit ();
+ 	g_SoundSystem->SNDDMA_Submit ();
 
 }
 

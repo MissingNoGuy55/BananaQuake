@@ -26,9 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // returns the file size
 // return -1 if file is not present
 // the file should be in BINARY mode for stupid OSs that care
-int Sys_FileOpenRead (char *path, int *hndl);
+int Sys_FileOpenRead (const char *path, int *hndl);
 
-int Sys_FileOpenWrite (char *path);
+int Sys_FileOpenWrite (const char *path);
+
+int Sys_FileType(const char* path);
 void Sys_FileClose (int handle);
 void Sys_FileSeek (int handle, int position);
 /*
@@ -76,8 +78,3 @@ void Sys_Sleep (void);
 
 void Sys_SendKeyEvents (void);
 // Perform Key_Event () callbacks until the input que is empty
-#ifndef WIN64
-//void Sys_LowFPPrecision (void);
-//void Sys_HighFPPrecision (void);
-//void Sys_SetFPCW (void);
-#endif

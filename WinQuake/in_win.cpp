@@ -20,10 +20,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // in_win.c -- windows 95 mouse and joystick code
 // 02/21/97 JCB Added extended DirectInput code to support external controllers.
 
+#ifndef QUAKE_TOOLS
+
 #include <dinput.h>
 #include "quakedef.h"
 #include "winquake.h"
 #include "dosisms.h"
+#include "in_win.h"
 
 #define DINPUT_BUFFERSIZE           16
 #define iDirectInput8Create(a,b,c,d)	pDirectInput8Create(a,b,c,d)
@@ -434,7 +437,7 @@ void IN_StartupMouse (void)
 {
 	HDC			hdc;
 
-	if ( common->COM_CheckParm ("-nomouse") ) 
+	if ( g_Common->COM_CheckParm ("-nomouse") ) 
 		return; 
 
 	mouseinitialized = true;
@@ -789,7 +792,7 @@ void IN_StartupJoystick (void)
 	joy_avail = false; 
 
 	// abort startup if user requests no joystick
-	if ( common->COM_CheckParm ("-nojoy") ) 
+	if ( g_Common->COM_CheckParm ("-nojoy") ) 
 		return; 
  
 	if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) == -1)
@@ -799,7 +802,7 @@ void IN_StartupJoystick (void)
 	}
 
 	// Load additional SDL2 controller definitions from gamecontrollerdb.txt
-	snprintf(controllerdb, sizeof(controllerdb), "%s/gamecontrollerdb.txt", common->com_gamedir);
+	snprintf(controllerdb, sizeof(controllerdb), "%s/gamecontrollerdb.txt", g_Common->com_gamedir);
 	nummappings = SDL_GameControllerAddMappingsFromFile(controllerdb);
 	if (nummappings > 0)
 		Con_Printf("%d mappings loaded from gamecontrollerdb.txt\n", nummappings);
@@ -1225,3 +1228,5 @@ void IN_JoyMove (usercmd_t *cmd)
 	if (cl.viewangles[PITCH] < -70.0)
 		cl.viewangles[PITCH] = -70.0;
 }
+
+#endif

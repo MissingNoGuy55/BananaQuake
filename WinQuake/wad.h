@@ -39,8 +39,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	TYP_SOUND		67
 #define	TYP_MIPTEX		68
 
-#define Q_QPIC_BUFLEN	(size_t)0xFFFFF
-
 struct CQuakePic
 {
 public:
@@ -54,9 +52,24 @@ public:
 
 	int			width;
 	int			height;
-	byte		data[1];
-	CQVector<byte>*		datavec;
+	//byte		data[1];		// Missi: Array size has been treated as a constant expression in C++ for a long time. 
+								// While C variable-length arrays are supported in C++17 and beyond, they're extremely 
+								// susceptible to corruption and overruns from other memory.
+								// See the comment in CGLRenderer::Draw_PicFromWad (12/8/2022)
+	CQVector<byte>	datavec;
 
+};
+
+typedef struct qpicbuf_s
+{
+	int		width;
+	int		height;
+	byte	data[1];
+} qpicbuf_t;
+
+struct CQuakePicVector
+{
+	CQVector<byte>	data;
 };
 
 typedef struct
@@ -84,10 +97,36 @@ extern	byte		*wad_base;
 void	W_LoadWadFile (const char *filename);
 void	W_CleanupName (const char *in, char *out);
 lumpinfo_t	*W_GetLumpinfo (const char *name);
-void	*W_GetLumpName (const char *name);
-void	*W_GetLumpNum (int num);
 
-void	SwapPic(CQuakePic* pic);
+template<typename T>
+T	*W_GetLumpName (const char *name);
+template<typename T>
+T	*W_GetLumpNum (int num);
+
+void	SwapPic(qpicbuf_t* pic);
+
+template<typename T>
+T* W_GetLumpName(const char* name)
+{
+	lumpinfo_t* lump;
+
+	lump = W_GetLumpinfo(name);
+
+	return (T*)(wad_base + lump->filepos);
+}
+
+template<typename T>
+T* W_GetLumpNum(int num)
+{
+	lumpinfo_t* lump;
+
+	if (num < 0 || num > wad_numlumps)
+		Sys_Error("W_GetLumpNum: bad number: %i", num);
+
+	lump = wad_lumps + num;
+
+	return (T*)(wad_base + lump->filepos);
+}
 
 #endif
 

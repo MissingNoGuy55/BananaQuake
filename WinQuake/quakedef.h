@@ -212,6 +212,8 @@ void	VID_UnlockBuffer (void);
 
 //===========================================
 
+typedef uintptr_t src_offset_t;
+
 #define	MAX_SCOREBOARD		16
 #define	MAX_SCOREBOARDNAME	32
 
@@ -269,7 +271,10 @@ typedef struct
 #include "view.h"
 #include "menu.h"
 #include "crc.h"
+#ifndef QUAKE_TOOLS
 #include "cdaudio.h"
+#include "bgmusic.h"
+#endif
 #include "host.h"
 
 #ifdef GLQUAKE

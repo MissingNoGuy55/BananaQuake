@@ -192,7 +192,11 @@ void CQuakeServer::SV_SendServerinfo (client_t *client)
 	char			message[2048];
 
 	MSG_WriteByte (&client->message, svc_print);
-	snprintf(message, sizeof(message), "%c\nVERSION %4.2f SERVER (%i CRC)", 2, VERSION, pr_crc);
+#if 0
+	snprintf(message, sizeof(message), "%c\nVERSION %4.2f SERVER (%i CRC)\n", 2, VERSION, pr_crc);
+#else
+	snprintf(message, sizeof(message), "%c\nBANANAQUAKE VERSION %4.2f SERVER (%i CRC)\n", 2, BANANAQUAKE_VERSION, pr_crc);
+#endif
 	MSG_WriteString (&client->message,message);
 
 	MSG_WriteByte (&client->message, svc_serverinfo);

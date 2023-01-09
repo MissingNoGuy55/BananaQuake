@@ -206,6 +206,15 @@ typedef struct
 
 void COM_Path_f();
 
+typedef struct _fshandle_t
+{
+	FILE* file;
+	bool pak;	/* is the file read from a pak */
+	long start;	/* file or data start position */
+	long length;	/* file or data size */
+	long pos;	/* current position relative to start */
+} fshandle_t;
+
 class CCommon
 {
 public:
@@ -224,16 +233,19 @@ public:
 	void COM_StripExtension (const char *in, char *out);
 	void COM_FileBase(const char* in, char* out, size_t outsize);
 	void COM_DefaultExtension (char *path, const char *extension);
+	const char* COM_FileGetExtension(const char* in);
+	bool COM_FileExists(const char* filename, uintptr_t* path_id);
 
 	void COM_WriteFile (const char *filename, void *data, int len);
-	int COM_OpenFile (const char *filename, int *hndl);
-	int COM_FOpenFile (const char *filename, FILE **file);
+	int COM_OpenFile (const char *filename, int *handle, uintptr_t* path_id);
+	static int COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id);
 	void COM_CloseFile (int h);
 
 	void COM_AddGameDirectory(const char* dir);
 
 	void COM_InitFilesystem();
-	int COM_FindFile(const char* filename, int* handle, FILE** file);
+	static int COM_FindFile(const char* filename, int* handle, FILE** file, uintptr_t* path_id);
+	static long COM_filelength(FILE* f);
 	pack_t* COM_LoadPackFile(char* packfile);
 
 	static void COM_Path_f(void);
@@ -252,10 +264,33 @@ public:
 	static	int		com_filesize;
 	static	char	com_gamedir[MAX_OSPATH];
 	static	char	com_cachedir[MAX_OSPATH];
+	static	int		file_from_pak;
 
 };
 
-extern CCommon* common;
+extern CCommon* g_Common;
+
+#define	FS_ENT_NONE		(0)
+#define	FS_ENT_FILE		(1 << 0)
+#define	FS_ENT_DIRECTORY	(1 << 1)
+
+// Missi: Repurposed QuakeSpasm filesystem stuff (1/1/2023)
+class CFileSystem
+{
+public:
+	static size_t FS_fread(void* ptr, size_t size, size_t nmemb, fshandle_t* fh);
+	int FS_fseek(fshandle_t* fh, long offset, int whence);
+	static long FS_ftell(fshandle_t* fh);
+	void FS_rewind(fshandle_t* fh);
+	int FS_feof(fshandle_t* fh);
+	int FS_ferror(fshandle_t* fh);
+	int FS_fclose(fshandle_t* fh);
+	int FS_fgetc(fshandle_t* fh);
+	char* FS_fgets(char* s, int size, fshandle_t* fh);
+	long FS_filelength(fshandle_t* fh);
+};
+
+extern CFileSystem* g_FileSystem;
 
 //============================================================================
 
@@ -270,15 +305,15 @@ T* loadbuf;
 //T* cache_user_s::data = new T;
 
 template<typename T>
-T* COM_LoadStackFile (const char *path, void* buffer, int bufsize);
+T* COM_LoadStackFile (const char *path, void* buffer, int bufsize, uintptr_t* path_id);
 
 template<typename T>
-T* COM_LoadTempFile (const char *path);
+T* COM_LoadTempFile (const char *path, uintptr_t* path_id);
 template<typename T>
-T* COM_LoadHunkFile (const char *path);
+T* COM_LoadHunkFile (const char *path, uintptr_t* path_id);
 
 template<typename T>
-void COM_LoadCacheFile (const char *path, struct cache_user_s *cu);
+void COM_LoadCacheFile (const char *path, struct cache_user_s *cu, uintptr_t* path_id);
 
 
 extern	struct cvar_s	registered;
@@ -302,7 +337,7 @@ Allways appends a 0 byte.
 #endif
 
 template<typename T>
-inline T* COM_LoadFile(const char* path, int usehunk)
+inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 {
 	int	 h;
 	T*	buf;
@@ -312,12 +347,12 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 	buf = NULL;     // quiet compiler warning
 
 	// look for it in the filesystem or pack files
-	len = common->COM_OpenFile(path, &h);
+	len = g_Common->COM_OpenFile(path, &h, NULL);
 	if (h == -1)
 		return NULL;
 
 	// extract the filename base name for hunk tag
-	common->COM_FileBase(path, base, len);
+	g_Common->COM_FileBase(path, base, len);
 
 	switch (usehunk)
 	{
@@ -366,7 +401,7 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 //#endif
 
 	Sys_FileRead(h, buf, len);
-	common->COM_CloseFile(h);
+	g_Common->COM_CloseFile(h);
 
 //#ifdef QUAKE_GAME
 //#ifndef GLQUAKE
@@ -380,34 +415,34 @@ inline T* COM_LoadFile(const char* path, int usehunk)
 }
 
 template<typename T>
-T* COM_LoadHunkFile(const char* path)
+T* COM_LoadHunkFile(const char* path, uintptr_t* path_id)
 {
-	return COM_LoadFile<T>(path, HUNK_FULL);
+	return COM_LoadFile<T>(path, HUNK_FULL, path_id);
 }
 
 
 template<typename T>
-T* COM_LoadTempFile(const char* path)
+T* COM_LoadTempFile(const char* path, uintptr_t* path_id)
 {
 	return COM_LoadFile<T>(path, HUNK_TEMP);
 }
 
 template<typename T>
-void COM_LoadCacheFile(const char* path, struct cache_user_s* cu)
+void COM_LoadCacheFile(const char* path, struct cache_user_s* cu, uintptr_t* path_id)
 {
 	loadcache = cu;
-	COM_LoadFile<T>(path, HUNK_CACHE);
+	COM_LoadFile<T>(path, HUNK_CACHE, path_id);
 }
 
 // uses temp hunk if larger than bufsize
 template<typename T>
-T* COM_LoadStackFile(const char* path, void* buffer, int bufsize)
+T* COM_LoadStackFile(const char* path, void* buffer, int bufsize, uintptr_t* path_id)
 {
 	T* buf;
 
 	loadbuf<T> = (T*)buffer;
 	loadsize<T> = bufsize;
-	buf = COM_LoadFile<T>(path, HUNK_TEMP_FILL);
+	buf = COM_LoadFile<T>(path, HUNK_TEMP_FILL, path_id);
 
 	return (T*)buf;
 }

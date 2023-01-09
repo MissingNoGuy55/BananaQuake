@@ -511,8 +511,8 @@ void Host_Savegame_f (void)
 		}
 	}
 
-	sprintf (name, "%s/%s", common->com_gamedir, Cmd_Argv(1));
-	common->COM_DefaultExtension (name, ".sav");
+	sprintf (name, "%s/%s", g_Common->com_gamedir, Cmd_Argv(1));
+	g_Common->COM_DefaultExtension (name, ".sav");
 	
 	Con_Printf ("Saving game to %s...\n", name);
 	f = fopen (name, "w");
@@ -583,15 +583,15 @@ void Host_Loadgame_f (void)
 
 	cls.demonum = -1;		// stop demo loop in case this fails
 
-	sprintf (name, "%s/%s", common->com_gamedir, Cmd_Argv(1));
-	common->COM_DefaultExtension (name, ".sav");
+	sprintf (name, "%s/%s", g_Common->com_gamedir, Cmd_Argv(1));
+	g_Common->COM_DefaultExtension (name, ".sav");
 	
 // we can't call SCR_BeginLoadingPlaque, because too much stack space has
 // been used.  The menu calls it before stuffing loadgame command
 //	SCR_BeginLoadingPlaque ();
 
 	Con_Printf ("Loading game from %s...\n", name);
-	f = fopen (name, "r");
+	f = fopen (name, "rt");
 	if (!f)
 	{
 		Con_Printf ("ERROR: couldn't open.\n");
@@ -642,7 +642,7 @@ void Host_Loadgame_f (void)
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = strdup(str);
+		sv.lightstyles[i] = (const char*)strdup(str);
 	}
 
 // load the edicts out of the savegame file
@@ -665,10 +665,10 @@ void Host_Loadgame_f (void)
 			Sys_Error ("Loadgame buffer overflow");
 		str[i] = 0;
 		start = str;
-		start = common->COM_Parse(str);
-		if (!common->com_token[0])
+		start = g_Common->COM_Parse(str);
+		if (!g_Common->com_token[0])
 			break;		// end of file
-		if (strcmp(common->com_token,"{"))
+		if (strcmp(g_Common->com_token,"{"))
 			Sys_Error ("First token isn't a brace");
 			
 		if (entnum == -1)
@@ -1483,7 +1483,7 @@ void Host_Kick_f (void)
 
 		if (Cmd_Argc() > 2)
 		{
-			message = common->COM_Parse(Cmd_Args());
+			message = g_Common->COM_Parse(Cmd_Args());
 			if (byNumber)
 			{
 				message++;							// skip the #

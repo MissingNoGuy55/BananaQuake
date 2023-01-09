@@ -216,13 +216,13 @@ void Con_Init (void)
 	char	temp[MAXGAMEDIRLEN+1];
 	char	*t2 = "/qconsole.log";
 
-	con_debuglog = common->COM_CheckParm("-condebug");
+	con_debuglog = g_Common->COM_CheckParm("-condebug");
 
 	if (con_debuglog)
 	{
-		if (strlen (common->com_gamedir) < (MAXGAMEDIRLEN - strlen (t2)))
+		if (strlen (g_Common->com_gamedir) < (MAXGAMEDIRLEN - strlen (t2)))
 		{
-			sprintf (temp, "%s%s", common->com_gamedir, t2);
+			sprintf (temp, "%s%s", g_Common->com_gamedir, t2);
 			_unlink (temp);
 		}
 	}
@@ -391,7 +391,7 @@ void Con_Printf (const char *fmt, ...)
 
 // log all messages to file
 	if (con_debuglog)
-		Con_DebugLog(common->va("%s/qconsole.log", common->com_gamedir), "%s", msg);
+		Con_DebugLog(g_Common->va("%s/qconsole.log", g_Common->com_gamedir), "%s", msg);
 
 	if (!con_initialized)
 		return;

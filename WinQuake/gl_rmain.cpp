@@ -104,6 +104,8 @@ extern	cvar_t	gl_ztrick;
 
 int skytexturenum;
 
+unsigned CCoreRenderer::blocklights[BLOCK_WIDTH * BLOCK_HEIGHT * 3];
+
 CCoreRenderer::CCoreRenderer() : solidskytexture(NULL)
 {
 	solidskytexture = NULL;
@@ -322,25 +324,16 @@ GL_DrawAliasFrame
 */
 void CGLRenderer::GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 {
-	float	s, t;
 	float 	l;
-	int		i, j;
-	int		index;
-	trivertx_t	*v, *verts;
+	trivertx_t *verts;
 	int		list;
 	int		*order;
-	vec3_t	point;
-	float	*normal;
 	int		count;
 
-lastposenum = posenum;
+	lastposenum = posenum;
 
 	verts = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
-#ifndef WIN64
 	verts += posenum * paliashdr->poseverts;
-#else
-	verts += (long long)posenum * (long long)paliashdr->poseverts;
-#endif
 	order = (int *)((byte *)paliashdr + paliashdr->commands);
 
 	while (1)
@@ -384,8 +377,6 @@ extern	vec3_t			lightspot;
 
 void CGLRenderer::GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 {
-	float	s, t, l;
-	int		i, j;
 	int		index;
 	trivertx_t	*v, *verts;
 	int		list;
@@ -398,13 +389,10 @@ void CGLRenderer::GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 	lheight = currententity->origin[2] - lightspot[2];
 
 	height = 0;
-#ifndef WIN64
+
 	verts = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 	verts += posenum * paliashdr->poseverts;
-#else
-	verts = (trivertx_t*)((byte*)paliashdr + (long long)paliashdr->posedata);
-	verts += (long long)posenum * (long long)paliashdr->poseverts;
-#endif
+
 	order = (int *)((byte *)paliashdr + paliashdr->commands);
 
 	height = -lheight + 1.0;

@@ -136,13 +136,13 @@ void CQuakeHost::Host_FindMaxClients (void)
 
 	svs.maxclients = 1;
 		
-	i = common->COM_CheckParm ("-dedicated");
+	i = g_Common->COM_CheckParm ("-dedicated");
 	if (i)
 	{
 		cls.state = ca_dedicated;
-		if (i != (common->com_argc - 1))
+		if (i != (g_Common->com_argc - 1))
 		{
-			svs.maxclients = Q_atoi (common->com_argv[i+1]);
+			svs.maxclients = Q_atoi (g_Common->com_argv[i+1]);
 		}
 		else
 			svs.maxclients = 8;
@@ -150,13 +150,13 @@ void CQuakeHost::Host_FindMaxClients (void)
 	else
 		cls.state = ca_disconnected;
 
-	i = common->COM_CheckParm ("-listen");
+	i = g_Common->COM_CheckParm ("-listen");
 	if (i)
 	{
 		if (cls.state == ca_dedicated)
 			Sys_Error ("Only one of -dedicated or -listen can be specified");
-		if (i != (common->com_argc - 1))
-			svs.maxclients = Q_atoi (common->com_argv[i+1]);
+		if (i != (g_Common->com_argc - 1))
+			svs.maxclients = Q_atoi (g_Common->com_argv[i+1]);
 		else
 			svs.maxclients = 8;
 	}
@@ -227,7 +227,7 @@ void CQuakeHost::Host_WriteConfiguration (void)
 // config.cfg cvars
 	if (host_initialized & !isDedicated)
 	{
-		f = fopen (common->va("%s/config.cfg", common->com_gamedir), "w");
+		f = fopen (g_Common->va("%s/config.cfg", g_Common->com_gamedir), "w");
 		if (!f)
 		{
 			Con_Printf ("Couldn't write config.cfg.\n");
@@ -662,8 +662,11 @@ void CQuakeHost::_Host_Frame (float time)
 // get new key events
 	Sys_SendKeyEvents ();
 
+
+#ifndef QUAKE_TOOLS
 // allow mice or other external controllers to add commands
 	IN_Commands ();
+#endif
 
 // process console commands
 	Cbuf_Execute ();
@@ -715,6 +718,9 @@ void CQuakeHost::_Host_Frame (float time)
 		time2 = Sys_DoubleTime ();
 		
 // update audio
+#ifndef QUAKE_TOOLS
+	g_BGM->BGM_Update();
+	
 	if (cls.signon == SIGNONS)
 	{
 		g_SoundSystem->S_Update (r_origin, vpn, vright, vup);
@@ -722,8 +728,9 @@ void CQuakeHost::_Host_Frame (float time)
 	}
 	else
 		g_SoundSystem->S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
-	
+
 	CDAudio_Update();
+#endif
 
 	if (host_speeds.value)
 	{
@@ -786,7 +793,7 @@ void CQuakeHost::Host_Frame (float time)
 //	int		i, len, n;
 //	char	*p;
 //	
-//	if (common->COM_CheckParm("-playback"))
+//	if (g_Common->COM_CheckParm("-playback"))
 //	{
 //		if (com_argc != 2)
 //			Sys_Error("No other parameters allowed with -playback\n");
@@ -855,7 +862,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	else
 		minimum_memory = MINIMUM_MEMORY_LEVELPAK;
 
-	if (common->COM_CheckParm ("-minmemory"))
+	if (g_Common->COM_CheckParm ("-minmemory"))
 		parms.memsize = minimum_memory;
 
 	host_parms = parms;
@@ -863,8 +870,8 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	if (parms.memsize < minimum_memory)
 		Sys_Error ("Only %4.1f megs of memory available, can't execute game", parms.memsize / (float)0x100000);
 
-	common->com_argc = parms.argc;
-	common->com_argv = parms.argv;
+	g_Common->com_argc = parms.argc;
+	g_Common->com_argv = parms.argv;
 
 	g_MemCache = new CMemCache;
 	g_MemCache->Memory_Init (host_parms.membase, host_parms.memsize);
@@ -874,7 +881,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	V_Init ();
 	Chase_Init ();
 	//Host_InitVCR (parms);
-	common->COM_Init (parms.basedir);
+	g_Common->COM_Init (parms.basedir);
 	Host_InitLocal ();
 	W_LoadWadFile ("gfx.wad");
 	Key_Init ();
@@ -890,10 +897,10 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 
 	if (cls.state != ca_dedicated)
 	{
-		host_basepal = COM_LoadHunkFile<byte> ("gfx/palette.lmp");
+		host_basepal = COM_LoadHunkFile<byte> ("gfx/palette.lmp", NULL);
 		if (!host_basepal)
 			Sys_Error ("Couldn't load gfx/palette.lmp");
-		host_colormap = COM_LoadHunkFile<byte> ("gfx/colormap.lmp");
+		host_colormap = COM_LoadHunkFile<byte> ("gfx/colormap.lmp", NULL);
 		if (!host_colormap)
 			Sys_Error ("Couldn't load gfx/colormap.lmp");
 
@@ -938,7 +945,12 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 #endif
 
 #endif	// _WIN32
+
+#ifndef QUAKE_TOOLS
 		CDAudio_Init ();
+		g_BGM = new CBackgroundMusic;
+		g_BGM->BGM_Init();
+#endif
 		Sbar_Init ();
 		CL_Init ();
 #ifdef _WIN32 // on non win32, mouse comes before video for security reasons
@@ -980,10 +992,15 @@ void CQuakeHost::Host_Shutdown(void)
 	scr_disabled_for_loading = true;
 
 	Host_WriteConfiguration (); 
-
+#ifndef QUAKE_TOOLS
 	CDAudio_Shutdown ();
+#endif
 	NET_Shutdown ();
+#ifndef QUAKE_TOOLS
 	g_SoundSystem->S_Shutdown();
+#endif
+	delete g_SoundSystem;
+
 	IN_Shutdown ();
 
 	if (cls.state != ca_dedicated)

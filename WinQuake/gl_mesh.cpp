@@ -306,10 +306,10 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 	// look for a cached version
 	//
 	Q_strcpy (cache, "glquake/");
-	common->COM_StripExtension (m->name+strlen("progs/"), cache+strlen("glquake/"));
+	g_Common->COM_StripExtension (m->name+strlen("progs/"), cache+strlen("glquake/"));
 	Q_strcat (cache, ".ms2");
 
-	common->COM_FOpenFile (cache, &f);
+	g_Common->COM_FOpenFile (cache, &f);
 	if (f)
 	{
 		fread(&numcommands, 4, 1, f);
@@ -333,7 +333,7 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 		//
 		// save out the cached version
 		//
-		sprintf (fullpath, "%s/%s", common->com_gamedir, cache);
+		sprintf (fullpath, "%s/%s", g_Common->com_gamedir, cache);
 		f = fopen (fullpath, "wb");
 		if (f)
 		{
@@ -352,11 +352,9 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 
 	cmds = g_MemCache->Hunk_Alloc<int>(numcommands * 4);
 	paliashdr->commands = (byte *)cmds - (byte *)paliashdr;
-#ifndef WIN64
+
 	memcpy (cmds, commands, numcommands * 4);
-#else
-	memcpy (cmds, commands, numcommands * (long long)4);
-#endif
+
 	verts = g_MemCache->Hunk_Alloc<trivertx_t>(paliashdr->numposes * paliashdr->poseverts
 		* sizeof(trivertx_t));
 	paliashdr->posedata = (byte *)verts - (byte *)paliashdr;

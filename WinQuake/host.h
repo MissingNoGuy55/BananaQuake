@@ -7,6 +7,7 @@ struct quakeparms_t
 {
 	char* basedir;
 	char* cachedir;		// for development over ISDN lines
+	char* userdir;
 	int		argc;
 	char** argv;
 	T		membase;

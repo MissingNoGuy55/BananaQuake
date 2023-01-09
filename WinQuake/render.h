@@ -25,6 +25,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	TOP_RANGE		16			// soldier uniform colors
 #define	BOTTOM_RANGE	96
 
+/*
+#define	BLOCK_WIDTH		256
+#define	BLOCK_HEIGHT	256
+*/
+
+constexpr long BLOCK_WIDTH = 256;
+constexpr long BLOCK_HEIGHT = 256;
+
+constexpr long LMBLOCK_WIDTH = 256;
+constexpr long LMBLOCK_HEIGHT = 256;
+
+#define	MAX_LIGHTMAPS	64
+
 //=============================================================================
 
 typedef struct efrag_s
@@ -215,7 +228,7 @@ public:
 
 	void R_DrawSurface(void);
 
-	unsigned		blocklights[18 * 18];
+	static unsigned		blocklights[BLOCK_WIDTH * BLOCK_HEIGHT * 3];
 
 private:
 

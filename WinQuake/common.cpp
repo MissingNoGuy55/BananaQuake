@@ -21,7 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-CCommon* common;
+CCommon* g_Common;
+CFileSystem* g_FileSystem;
 cache_user_s* loadcache;
 
 #define NUM_SAFE_ARGVS  7
@@ -57,6 +58,7 @@ bool	CCommon::com_eof = false;
 int		CCommon::com_filesize = 0;
 char    CCommon::com_cachedir[MAX_OSPATH] = {};
 char    CCommon::com_gamedir[MAX_OSPATH] = {};
+int		CCommon::file_from_pak = 0;
 
 #define CMDLINE_LENGTH	256
 char	com_cmdline[CMDLINE_LENGTH];
@@ -970,6 +972,41 @@ void CCommon::COM_DefaultExtension (char *path, const char *extension)
 	Q_strcat (path, extension);
 }
 
+/*
+==================
+Missi: COM_FileGetExtension (1/1/2023)
+==================
+*/
+const char* CCommon::COM_FileGetExtension(const char* in)
+{
+	const char* src;
+	size_t		len;
+
+	len = strlen(in);
+	if (len < 2)	/* nothing meaningful */
+		return "";
+
+	src = in + len - 1;
+	while (src != in && src[-1] != '.')
+		src--;
+	if (src == in || strchr(src, '/') != NULL || strchr(src, '\\') != NULL)
+		return "";	/* no extension, or parent directory has a dot */
+
+	return src;
+}
+
+/*
+===========
+COM_FileExists
+
+Returns whether the file is found in the quake filesystem.
+===========
+*/
+bool CCommon::COM_FileExists(const char* filename, uintptr_t* path_id)
+{
+	int ret = COM_FindFile(filename, NULL, NULL, path_id);
+	return (ret == -1) ? false : true;
+}
 
 /*
 ==============
@@ -1110,7 +1147,7 @@ void CCommon::COM_CheckRegistered (void)
 	unsigned short  check[128];
 	int                     i;
 
-	common->COM_OpenFile("gfx/pop.lmp", &h);
+	g_Common->COM_OpenFile("gfx/pop.lmp", &h, NULL);
 	static_registered = 0;
 
 	if (h == -1)
@@ -1192,13 +1229,13 @@ void CCommon::COM_InitArgv (int argc, char **argv)
 	largv[com_argc] = argvdummy;
 	com_argv = largv;
 
-	if (common->COM_CheckParm ("-rogue"))
+	if (g_Common->COM_CheckParm ("-rogue"))
 	{
 		rogue = true;
 		standard_quake = false;
 	}
 
-	if (common->COM_CheckParm ("-hipnotic"))
+	if (g_Common->COM_CheckParm ("-hipnotic"))
 	{
 		hipnotic = true;
 		standard_quake = false;
@@ -1304,6 +1341,7 @@ int     com_filesize;
 
 struct searchpath_t
 {
+	uintptr_t path_id;
 	char    filename[MAX_OSPATH] = "";
 	pack_t  *pack = NULL;          // only one of filename / pack will be used
 	struct searchpath_t *next = NULL;
@@ -1424,20 +1462,22 @@ Finds the file in the search path.
 Sets com_filesize and one of handle or file
 ===========
 */
-int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file)
+int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintptr_t* path_id)
 {
-	searchpath_t    *search = NULL;
-	char            netpath[MAX_OSPATH] = "";
-	char            cachepath[MAX_OSPATH] = "";
-	pack_t          *pak = NULL;
-	int                     i;
-	int                     findtime, cachetime;
+	searchpath_t	*search = NULL;
+	char			netpath[MAX_OSPATH] = "";
+	char			cachepath[MAX_OSPATH] = "";
+	pack_t			*pak = NULL;
+	int				i;
+	int				findtime = 0, cachetime = 0;
 
 	if (file && handle)
 		Sys_Error ("COM_FindFile: both handle and file set");
-	if (!file && !handle)
-		Sys_Error ("COM_FindFile: neither handle or file set");
-		
+	/*if (!file && !handle)
+		Sys_Error ("COM_FindFile: neither handle or file set");*/
+	
+	file_from_pak = 0;
+
 //
 // search through the path, one element at a time
 //
@@ -1448,95 +1488,127 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file)
 			search = search->next;
 	}
 
-	for ( ; search ; search = search->next)
-	{
-	// is the element a pak file?
-		if (search->pack)
+	if (!strcmp(filename, "music/track06.ogg") && file)
+		Con_Printf("");
+
+	for (search = com_searchpaths; search; search = search->next)
 		{
-		// look through all the pak file elements
-			pak = search->pack;
-			for (i=0 ; i<pak->numfiles ; i++)
-				if (!strcmp (pak->files[i].name, filename))
-				{       // found it!
-					Sys_Printf ("PackFile: %s : %s\n",pak->filename, filename);
-					if (handle)
-					{
-						*handle = pak->handle;
-						Sys_FileSeek (pak->handle, pak->files[i].filepos);
+			// is the element a pak file?
+			if (search->pack)
+			{
+				// look through all the pak file elements
+				pak = search->pack;
+				for (i = 0; i < pak->numfiles; i++)
+					if (!strcmp(pak->files[i].name, filename))
+					{       // found it!
+						Sys_Printf("PackFile: %s : %s\n", pak->filename, filename);
+						file_from_pak = 1;
+						if (path_id)
+							*path_id = search->path_id;
+						if (handle)
+						{
+							*handle = pak->handle;
+							Sys_FileSeek(pak->handle, pak->files[i].filepos);
+						}
+						else
+						{       // open a new file on the pakfile
+							*file = fopen(pak->filename, "rb");
+							if (*file)
+								fseek(*file, pak->files[i].filepos, SEEK_SET);
+						}
+						com_filesize = pak->files[i].filelen;
+						return com_filesize;
 					}
-					else
-					{       // open a new file on the pakfile
-						*file = fopen (pak->filename, "rb");
-						if (*file)
-							fseek (*file, pak->files[i].filepos, SEEK_SET);
-					}
-					com_filesize = pak->files[i].filelen;
-					return com_filesize;
-				}
-		}
-		else
-		{               
-	// check a file in the directory tree
-			if (!static_registered)
-			{       // if not a registered version, don't ever go beyond base
-				if ( strchr (filename, '/') || strchr (filename,'\\'))
-					continue;
 			}
-			
-			sprintf_s(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
-			
-			findtime = Sys_FileTime (netpath);
-			if (findtime == -1)
-				continue;
-				
-		// see if the file needs to be updated in the cache
-			if (!com_cachedir[0])
-				Q_strcpy (cachepath, netpath);
-			else
-			{	
-#if defined(_WIN32)
-				if ((strlen(netpath) < 2) || (netpath[1] != ':'))
-					sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
-				else
-					sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath+2);
-#else
-				sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
-#endif
-
-				cachetime = Sys_FileTime (cachepath);
-			
-				if (cachetime < findtime)
-					COM_CopyFile (netpath, cachepath);
-				Q_strcpy (netpath, cachepath);
-			}	
-
-			Sys_Printf ("FindFile: %s\n",netpath);
-			com_filesize = Sys_FileOpenRead (netpath, &i);
-			if (handle)
-				*handle = i;
 			else
 			{
-				Sys_FileClose (i);
+				// check a file in the directory tree
+				if (!static_registered)
+				{       // if not a registered version, don't ever go beyond base
+					if (strchr(filename, '/') || strchr(filename, '\\'))
+						continue;
+				}
 
-				errno_t err;
+				sprintf_s(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
 
-				err = fopen_s(file, netpath, "rb");
+				if (!(Sys_FileType(netpath) & FS_ENT_FILE))
+					continue;
+
+				/*findtime = Sys_FileTime(netpath);
+				if (findtime == -1)
+					continue;*/
+
+				// see if the file needs to be updated in the cache
+				if (!com_cachedir[0])
+					Q_strcpy(cachepath, netpath);
+				else
+				{
+#if defined(_WIN32)
+					if ((strlen(netpath) < 2) || (netpath[1] != ':'))
+						sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
+					else
+						sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath + 2);
+#else
+					sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
+#endif
+
+					cachetime = Sys_FileTime(cachepath);
+
+					if (cachetime < findtime)
+						COM_CopyFile(netpath, cachepath);
+					Q_strcpy(netpath, cachepath);
+				}
+
+				Sys_Printf("FindFile: %s\n", netpath);
+				com_filesize = Sys_FileOpenRead(netpath, &i);
+				if (path_id)
+					*path_id = search->path_id;
+				if (handle)
+				{
+					com_filesize = Sys_FileOpenRead(netpath, &i);
+					*handle = i;
+					return com_filesize;
+				}
+				else if (file)
+				{
+					*file = fopen(netpath, "rb");
+					com_filesize = (*file == NULL) ? -1 : COM_filelength(*file);
+					return com_filesize;
+				}
+				else
+				{
+					return 0; /* dummy valid value for COM_FileExists() */
+				}
+				return com_filesize;
 			}
-			return com_filesize;
 		}
-		
-	}
 	
 	Sys_Printf ("FindFile: can't find %s\n", filename);
 	
 	if (handle)
 		*handle = -1;
-	else
+	if (file)
 		*file = NULL;
 	com_filesize = -1;
 	return -1;
 }
 
+/*
+================
+COM_filelength
+================
+*/
+long CCommon::COM_filelength(FILE* f)
+{
+	long		pos, end;
+
+	pos = ftell(f);
+	fseek(f, 0, SEEK_END);
+	end = ftell(f);
+	fseek(f, pos, SEEK_SET);
+
+	return end;
+}
 
 /*
 ===========
@@ -1547,9 +1619,9 @@ returns a handle and a length
 it may actually be inside a pak file
 ===========
 */
-int CCommon::COM_OpenFile (const char *filename, int *handle)
+int CCommon::COM_OpenFile (const char *filename, int *handle, uintptr_t* path_id)
 {
-	return COM_FindFile (filename, handle, NULL);
+	return COM_FindFile (filename, handle, NULL, path_id);
 }
 
 /*
@@ -1560,9 +1632,9 @@ If the requested file is inside a packfile, a new FILE * will be opened
 into the file.
 ===========
 */
-int CCommon::COM_FOpenFile (const char *filename, FILE **file)
+int CCommon::COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id)
 {
-	return COM_FindFile (filename, NULL, file);
+	return COM_FindFile (filename, NULL, file, path_id);
 }
 
 /*
@@ -1664,6 +1736,8 @@ COM_AddGameDirectory
 
 Sets com_gamedir, adds the directory to the head of the path,
 then loads and adds pak1.pak pak2.pak ... 
+
+Missi: copied from QuakeSpasm (1/4/2023)
 ================
 */
 void CCommon::COM_AddGameDirectory (const char *dir)
@@ -1672,13 +1746,20 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 	searchpath_t			*search = NULL;
 	pack_t                  *pak = NULL;
 	char                    pakfile[MAX_OSPATH] = {};
+	uintptr_t				path_id = 0;
 
 	Q_strcpy (com_gamedir, dir);
+
+	// assign a path_id to this game directory
+	if (com_searchpaths)
+		path_id = com_searchpaths->path_id << 1;
+	else	path_id = 1U;
 
 //
 // add the directory to the search path
 //
 	search = g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t));
+	search->path_id = path_id;
 	Q_strcpy (search->filename, dir);
 	search->next = com_searchpaths;
 	com_searchpaths = search;
@@ -1693,6 +1774,7 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 		if (!pak)
 			break;
 		search = g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t));
+		search->path_id = path_id;
 		search->pack = pak;
 		search->next = com_searchpaths;
 		com_searchpaths = search;               
@@ -1711,9 +1793,9 @@ COM_InitFilesystem
 */
 void CCommon::COM_InitFilesystem (void)
 {
-	int             i, j;
-	char    basedir[MAX_OSPATH] = "";
-	searchpath_t    *search = NULL;
+	int				i, j;
+	char			basedir[MAX_OSPATH] = "";
+	searchpath_t	*search = NULL;
 
 //
 // -basedir <path>
@@ -1756,9 +1838,9 @@ void CCommon::COM_InitFilesystem (void)
 //
 	COM_AddGameDirectory (va("%s/" GAMENAME, basedir) );
 
-	if (common->COM_CheckParm ("-rogue"))
+	if (g_Common->COM_CheckParm ("-rogue"))
 		COM_AddGameDirectory (va("%s/rogue", basedir) );
-	if (common->COM_CheckParm ("-hipnotic"))
+	if (g_Common->COM_CheckParm ("-hipnotic"))
 		COM_AddGameDirectory (va("%s/hipnotic", basedir) );
 
 //
@@ -1800,8 +1882,177 @@ void CCommon::COM_InitFilesystem (void)
 		}
 	}
 
-	if (common->COM_CheckParm ("-proghack"))
+	if (g_Common->COM_CheckParm ("-proghack"))
 		proghack = true;
 }
 
+/* Missi: copied from QuakeSpasm (1/6/2023)
+ * The following FS_*() stdio replacements are necessary if one is
+ * to perform non-sequential reads on files reopened on pak files
+ * because we need the bookkeeping about file start/end positions.
+ * Allocating and filling in the fshandle_t structure is the users'
+ * responsibility when the file is initially opened. */
+
+size_t CFileSystem::FS_fread(void* ptr, size_t size, size_t nmemb, fshandle_t* fh)
+{
+	long byte_size;
+	long bytes_read;
+	size_t nmemb_read;
+
+	if (!fh) {
+		errno = EBADF;
+		return 0;
+	}
+	if (!ptr) {
+		errno = EFAULT;
+		return 0;
+	}
+	if (!size || !nmemb) {	/* no error, just zero bytes wanted */
+		errno = 0;
+		return 0;
+	}
+
+	byte_size = nmemb * size;
+	if (byte_size > fh->length - fh->pos)	/* just read to end */
+		byte_size = fh->length - fh->pos;
+	bytes_read = fread(ptr, 1, byte_size, fh->file);
+	fh->pos += bytes_read;
+
+	/* fread() must return the number of elements read,
+	 * not the total number of bytes. */
+	nmemb_read = bytes_read / size;
+	/* even if the last member is only read partially
+	 * it is counted as a whole in the return value. */
+	if (bytes_read % size)
+		nmemb_read++;
+
+	return nmemb_read;
+}
+
+int CFileSystem::FS_fseek(fshandle_t* fh, long offset, int whence)
+{
+	/* I don't care about 64 bit off_t or fseeko() here.
+	 * the quake/hexen2 file system is 32 bits, anyway. */
+	int ret;
+
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+
+	/* the relative file position shouldn't be smaller
+	 * than zero or bigger than the filesize. */
+	switch (whence)
+	{
+	case SEEK_SET:
+		break;
+	case SEEK_CUR:
+		offset += fh->pos;
+		break;
+	case SEEK_END:
+		offset = fh->length + offset;
+		break;
+	default:
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (offset < 0) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (offset > fh->length)	/* just seek to end */
+		offset = fh->length;
+
+	ret = fseek(fh->file, fh->start + offset, SEEK_SET);
+	if (ret < 0)
+		return ret;
+
+	fh->pos = offset;
+	return 0;
+}
+
+int CFileSystem::FS_fclose(fshandle_t* fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+	return fclose(fh->file);
+}
+
+long CFileSystem::FS_ftell(fshandle_t* fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+	return fh->pos;
+}
+
+void CFileSystem::FS_rewind(fshandle_t* fh)
+{
+	if (!fh) return;
+	clearerr(fh->file);
+	fseek(fh->file, fh->start, SEEK_SET);
+	fh->pos = 0;
+}
+
+int CFileSystem::FS_feof(fshandle_t* fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+	if (fh->pos >= fh->length)
+		return -1;
+	return 0;
+}
+
+int CFileSystem::FS_ferror(fshandle_t* fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+	return ferror(fh->file);
+}
+
+int CFileSystem::FS_fgetc(fshandle_t* fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return EOF;
+	}
+	if (fh->pos >= fh->length)
+		return EOF;
+	fh->pos += 1;
+	return fgetc(fh->file);
+}
+
+char* CFileSystem::FS_fgets(char* s, int size, fshandle_t* fh)
+{
+	char* ret;
+
+	if (FS_feof(fh))
+		return NULL;
+
+	if (size > (fh->length - fh->pos) + 1)
+		size = (fh->length - fh->pos) + 1;
+
+	ret = fgets(s, size, fh->file);
+	fh->pos = ftell(fh->file) - fh->start;
+
+	return ret;
+}
+
+long CFileSystem::FS_filelength(fshandle_t* fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+	return fh->length;
+}
 

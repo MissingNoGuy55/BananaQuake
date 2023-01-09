@@ -273,13 +273,13 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <Optimization>Disabled</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;USE_CODEC_VORBIS;_DEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\debug_gl\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\debug_gl\WinQuake.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\debug_gl\</ObjectFileName>
       <ProgramDataBaseFileName>.\debug_gl\</ProgramDataBaseFileName>
-      <AdditionalIncludeDirectories>.\sdl2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\sdl2\include;.\codecs\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -316,13 +316,13 @@
       <Optimization>Disabled</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;USE_CODEC_VORBIS;_DEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\debug_gl\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\debug_gl\WinQuake.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\debug_gl\</ObjectFileName>
       <ProgramDataBaseFileName>.\debug_gl\</ProgramDataBaseFileName>
-      <AdditionalIncludeDirectories>.\sdl2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\sdl2\include;.\codecs\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -351,14 +351,13 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <Optimization>Disabled</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalIncludeDirectories>.\scitech\include;.\sdl2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MGL40_COMPAT;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\scitech\include;.\sdl2\include;.\codecs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>MGL40_COMPAT;USE_CODEC_VORBIS;USE_CODEC_WAVE;USE_CODEC_MP3;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\Debug\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\Debug\WinQuake.pch</PrecompiledHeaderOutputFile>
@@ -366,6 +365,7 @@
       <ProgramDataBaseFileName>.\Debug\</ProgramDataBaseFileName>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -387,9 +387,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies>.\scitech\lib\win32\vc\mgllt.lib;.\sdl2\lib\Win32\SDL2.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>.\scitech\lib\win32\vc\mgllt.lib;.\sdl2\lib\Win32\SDL2.lib;libvorbisfile.lib;libvorbis.lib;libopusfile.lib;libopus.lib;libFLAC.lib;libogg.lib;libmad.lib;libxmp.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <IgnoreSpecificDefaultLibraries>libc.lib</IgnoreSpecificDefaultLibraries>
+      <AdditionalLibraryDirectories>.\codecs\x86</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -526,6 +527,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bgmusic.cpp" />
     <ClCompile Include="cd_win.cpp" />
     <ClCompile Include="chase.cpp" />
     <ClCompile Include="cl_demo.cpp" />
@@ -794,9 +796,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="server.cpp" />
+    <ClCompile Include="snd_codec.cpp" />
     <ClCompile Include="snd_dma.cpp" />
     <ClCompile Include="snd_mem.cpp" />
     <ClCompile Include="snd_mix.cpp" />
+    <ClCompile Include="snd_mp3.cpp" />
+    <ClCompile Include="snd_mp3tag.cpp" />
+    <ClCompile Include="snd_vorbis.cpp" />
+    <ClCompile Include="snd_wave.cpp" />
     <ClCompile Include="snd_win.cpp" />
     <ClCompile Include="d_vars.cpp" />
     <ClCompile Include="sv_main.cpp" />
@@ -1449,6 +1456,7 @@ del $(OutDir)%(Filename).spp </Command>
     <ClInclude Include="anorm_dots.h" />
     <ClInclude Include="asm_draw.h" />
     <ClInclude Include="asm_i386.h" />
+    <ClInclude Include="bgmusic.h" />
     <ClInclude Include="bspfile.h" />
     <ClInclude Include="cdaudio.h" />
     <ClInclude Include="client.h" />
@@ -1494,6 +1502,7 @@ del $(OutDir)%(Filename).spp </Command>
     <ClInclude Include="pr_cmds.h" />
     <ClInclude Include="pr_comp.h" />
     <ClInclude Include="quakedef.h" />
+    <ClInclude Include="q_ctype.h" />
     <ClInclude Include="render.h" />
     <ClInclude Include="r_local.h" />
     <ClInclude Include="r_part.h" />
@@ -1501,6 +1510,11 @@ del $(OutDir)%(Filename).spp </Command>
     <ClInclude Include="sbar.h" />
     <ClInclude Include="screen.h" />
     <ClInclude Include="server.h" />
+    <ClInclude Include="snd_codec.h" />
+    <ClInclude Include="snd_codeci.h" />
+    <ClInclude Include="snd_mp3.h" />
+    <ClInclude Include="snd_vorbis.h" />
+    <ClInclude Include="snd_wave.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="spritegn.h" />
     <ClInclude Include="sys.h" />

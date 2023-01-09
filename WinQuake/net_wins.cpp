@@ -158,7 +158,7 @@ int WINS_Init (void)
 		return -1;
 	}
 
-	if (common->COM_CheckParm ("-noudp"))
+	if (g_Common->COM_CheckParm ("-noudp"))
 		return -1;
 
 	if (winsock_initialized == 0)
@@ -203,15 +203,15 @@ int WINS_Init (void)
 		Cvar_Set ("hostname", buff);
 	}
 
-	i = common->COM_CheckParm ("-ip");
+	i = g_Common->COM_CheckParm ("-ip");
 	if (i)
 	{
-		if (i < common->com_argc-1)
+		if (i < g_Common->com_argc-1)
 		{
-			myAddr = inet_addr(common->com_argv[i+1]);
+			myAddr = inet_addr(g_Common->com_argv[i+1]);
 			if (myAddr == INADDR_NONE)
-				Sys_Error ("%s is not a valid IP address", common->com_argv[i+1]);
-			Q_strcpy(my_tcpip_address, common->com_argv[i+1]);
+				Sys_Error ("%s is not a valid IP address", g_Common->com_argv[i+1]);
+			Q_strcpy(my_tcpip_address, g_Common->com_argv[i+1]);
 		}
 		else
 		{

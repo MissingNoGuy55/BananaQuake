@@ -377,9 +377,9 @@ void M_Main_Draw (void)
 	f = (int)(host_time * 10)%6;
 
 #ifdef GLQUAKE
-	M_DrawTransPic (54, 32 + m_main_cursor * 20,g_GLRenderer->Draw_CachePic( common->va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + m_main_cursor * 20,g_GLRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
 #else
-	M_DrawTransPic (54, 32 + m_main_cursor * 20, g_SoftwareRenderer->Draw_CachePic( common->va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + m_main_cursor * 20, g_SoftwareRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
 #endif
 }
 
@@ -469,9 +469,9 @@ void M_SinglePlayer_Draw (void)
 #endif
 	f = (int)(host_time * 10)%6;
 #ifdef GLQUAKE
-	M_DrawTransPic (54, 32 + m_singleplayer_cursor * 20, g_GLRenderer->Draw_CachePic( common->va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + m_singleplayer_cursor * 20, g_GLRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
 #else
-	M_DrawTransPic (54, 32 + m_singleplayer_cursor * 20, g_SoftwareRenderer->Draw_CachePic( common->va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + m_singleplayer_cursor * 20, g_SoftwareRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
 #endif
 }
 
@@ -543,7 +543,7 @@ void M_ScanSaves (void)
 	{
 		Q_strcpy (m_filenames[i], "--- UNUSED SLOT ---");
 		loadable[i] = false;
-		sprintf (name, "%s/s%i.sav", common->com_gamedir, i);
+		sprintf (name, "%s/s%i.sav", g_Common->com_gamedir, i);
 		f = fopen (name, "r");
 		if (!f)
 			continue;
@@ -646,7 +646,7 @@ void M_Load_Key (int k)
 		SCR_BeginLoadingPlaque ();
 
 	// issue the load command
-		Cbuf_AddText (common->va ("load s%i\n", load_cursor) );
+		Cbuf_AddText (g_Common->va ("load s%i\n", load_cursor) );
 		return;
 
 	case K_UPARROW:
@@ -679,7 +679,7 @@ void M_Save_Key (int k)
 	case K_ENTER:
 		m_state = m_none;
 		key_dest = key_game;
-		Cbuf_AddText (common->va("save s%i\n", load_cursor));
+		Cbuf_AddText (g_Common->va("save s%i\n", load_cursor));
 		return;
 
 	case K_UPARROW:
@@ -735,9 +735,9 @@ void M_MultiPlayer_Draw (void)
 	f = (int)(host_time * 10)%6;
 
 #ifdef GLQUAKE
-	M_DrawTransPic (54, 32 + m_multiplayer_cursor * 20, g_GLRenderer->Draw_CachePic( common->va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + m_multiplayer_cursor * 20, g_GLRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
 #else
-	M_DrawTransPic (54, 32 + m_multiplayer_cursor * 20, g_SoftwareRenderer->Draw_CachePic( common->va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + m_multiplayer_cursor * 20, g_SoftwareRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
 #endif
 	if (serialAvailable || ipxAvailable || tcpipAvailable)
 		return;
@@ -913,11 +913,11 @@ forward:
 
 		// setup_cursor == 4 (OK)
 		if (Q_strcmp(cl_name.string, setup_myname) != 0)
-			Cbuf_AddText (common->va ("name \"%s\"\n", setup_myname) );
+			Cbuf_AddText (g_Common->va ("name \"%s\"\n", setup_myname) );
 		if (Q_strcmp(hostname.string, setup_hostname) != 0)
 			Cvar_Set("hostname", setup_hostname);
 		if (setup_top != setup_oldtop || setup_bottom != setup_oldbottom)
-			Cbuf_AddText(common->va ("color %i %i\n", setup_top, setup_bottom) );
+			Cbuf_AddText(g_Common->va ("color %i %i\n", setup_top, setup_bottom) );
 		m_entersound = true;
 		M_Menu_MultiPlayer_f ();
 		break;
@@ -1128,9 +1128,9 @@ void M_Net_Draw (void)
 
 	f = (int)(host_time * 10)%6;
 #ifdef GLQUAKE	
-	M_DrawTransPic (54, 32 + m_net_cursor * 20, g_GLRenderer->Draw_CachePic( common->va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + m_net_cursor * 20, g_GLRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
 #else
-	M_DrawTransPic (54, 32 + m_net_cursor * 20, g_SoftwareRenderer->Draw_CachePic( common->va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + m_net_cursor * 20, g_SoftwareRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
 #endif
 }
 
@@ -1213,10 +1213,12 @@ void M_Menu_Options_f (void)
 	m_entersound = true;
 
 #ifdef _WIN32
+#ifndef QUAKE_TOOLS
 	if ((options_cursor == 13) && (modestate != MS_WINDOWED))
 	{
 		options_cursor = 0;
 	}
+#endif
 #endif
 }
 
@@ -1390,11 +1392,13 @@ void M_Options_Draw (void)
 		M_Print (16, 128, "         Video Options");
 
 #ifdef _WIN32
+#ifndef QUAKE_TOOLS
 	if (modestate == MS_WINDOWED)
 	{
 		M_Print (16, 136, "             Use Mouse");
 		M_DrawCheckbox (220, 136, _windowed_mouse.value);
 	}
+#endif
 #endif
 
 // cursor
@@ -1465,6 +1469,7 @@ void M_Options_Key (int k)
 	}
 
 #ifdef _WIN32
+#ifndef QUAKE_TOOLS
 	if ((options_cursor == 13) && (modestate != MS_WINDOWED))
 	{
 		if (k == K_UPARROW)
@@ -1472,6 +1477,7 @@ void M_Options_Key (int k)
 		else
 			options_cursor = 0;
 	}
+#endif
 #endif
 }
 
@@ -1716,9 +1722,9 @@ void M_Menu_Help_f (void)
 void M_Help_Draw (void)
 {
 #ifdef GLQUAKE
-	M_DrawPic (0, 0, g_GLRenderer->Draw_CachePic ( common->va("gfx/help%i.lmp", help_page)) );
+	M_DrawPic (0, 0, g_GLRenderer->Draw_CachePic ( g_Common->va("gfx/help%i.lmp", help_page)) );
 #else
-	M_DrawPic(0, 0, g_SoftwareRenderer->Draw_CachePic(common->va("gfx/help%i.lmp", help_page)));
+	M_DrawPic(0, 0, g_SoftwareRenderer->Draw_CachePic(g_Common->va("gfx/help%i.lmp", help_page)));
 #endif
 }
 
@@ -1985,20 +1991,20 @@ void M_SerialConfig_Draw (void)
 		directModem = "Modem";
 	else
 		directModem = "Direct Connect";
-	M_Print (basex, 32, common->va ("%s - %s", startJoin, directModem));
+	M_Print (basex, 32, g_Common->va ("%s - %s", startJoin, directModem));
 	basex += 8;
 
 	M_Print (basex, serialConfig_cursor_table[0], "Port");
 	M_DrawTextBox (160, 40, 4, 1);
-	M_Print (168, serialConfig_cursor_table[0], common->va("COM%u", serialConfig_comport));
+	M_Print (168, serialConfig_cursor_table[0], g_Common->va("COM%u", serialConfig_comport));
 
 	M_Print (basex, serialConfig_cursor_table[1], "IRQ");
 	M_DrawTextBox (160, serialConfig_cursor_table[1]-8, 1, 1);
-	M_Print (168, serialConfig_cursor_table[1], common->va("%u", serialConfig_irq));
+	M_Print (168, serialConfig_cursor_table[1], g_Common->va("%u", serialConfig_irq));
 
 	M_Print (basex, serialConfig_cursor_table[2], "Baud");
 	M_DrawTextBox (160, serialConfig_cursor_table[2]-8, 5, 1);
-	M_Print (168, serialConfig_cursor_table[2], common->va("%u", serialConfig_baudrate[serialConfig_baud]));
+	M_Print (168, serialConfig_cursor_table[2], g_Common->va("%u", serialConfig_baudrate[serialConfig_baud]));
 
 	if (SerialConfig)
 	{
@@ -2156,7 +2162,7 @@ forward:
 		m_state = m_none;
 
 		if (SerialConfig)
-			Cbuf_AddText (common->va ("connect \"%s\"\n", serialConfig_phone));
+			Cbuf_AddText (g_Common->va ("connect \"%s\"\n", serialConfig_phone));
 		else
 			Cbuf_AddText ("connect\n");
 		break;
@@ -2312,7 +2318,7 @@ void M_ModemConfig_Key (int key)
 
 		if (modemConfig_cursor == 4)
 		{
-			(*SetModemConfig) (0, common->va_unsafe("%c", modemConfig_dialing), modemConfig_clear, modemConfig_init, modemConfig_hangup);
+			(*SetModemConfig) (0, g_Common->va_unsafe("%c", modemConfig_dialing), modemConfig_clear, modemConfig_init, modemConfig_hangup);
 			m_entersound = true;
 			M_Menu_SerialConfig_f ();
 		}
@@ -2433,7 +2439,7 @@ void M_LanConfig_Draw (void)
 		protocol = "IPX";
 	else
 		protocol = "TCP/IP";
-	M_Print (basex, 32, common->va ("%s - %s", startJoin, protocol));
+	M_Print (basex, 32, g_Common->va ("%s - %s", startJoin, protocol));
 	basex += 8;
 
 	M_Print (basex, 52, "Address:");
@@ -2521,7 +2527,7 @@ void M_LanConfig_Key (int key)
 			m_return_onerror = true;
 			key_dest = key_game;
 			m_state = m_none;
-			Cbuf_AddText (common->va ("connect \"%s\"\n", lanConfig_joinname) );
+			Cbuf_AddText (g_Common->va ("connect \"%s\"\n", lanConfig_joinname) );
 			break;
 		}
 
@@ -2770,7 +2776,7 @@ void M_GameOptions_Draw (void)
 	M_Print (160, 40, "begin game");
 
 	M_Print (0, 56, "      Max players");
-	M_Print (160, 56, common->va("%i", maxplayers) );
+	M_Print (160, 56, g_Common->va("%i", maxplayers) );
 
 	M_Print (0, 64, "        Game Type");
 	if (coop.value)
@@ -2822,13 +2828,13 @@ void M_GameOptions_Draw (void)
 	if (fraglimit.value == 0)
 		M_Print (160, 88, "none");
 	else
-		M_Print (160, 88, common->va("%i frags", (int)fraglimit.value));
+		M_Print (160, 88, g_Common->va("%i frags", (int)fraglimit.value));
 
 	M_Print (0, 96, "       Time Limit");
 	if (timelimit.value == 0)
 		M_Print (160, 96, "none");
 	else
-		M_Print (160, 96, common->va("%i minutes", (int)timelimit.value));
+		M_Print (160, 96, g_Common->va("%i minutes", (int)timelimit.value));
 
 	M_Print (0, 112, "         Episode");
    //MED 01/06/97 added hipnotic episodes
@@ -3027,15 +3033,15 @@ void M_GameOptions_Key (int key)
 			if (sv.active)
 				Cbuf_AddText ("disconnect\n");
 			Cbuf_AddText ("listen 0\n");	// so host_netport will be re-examined
-			Cbuf_AddText (common->va ("maxplayers %u\n", maxplayers) );
+			Cbuf_AddText (g_Common->va ("maxplayers %u\n", maxplayers) );
 			SCR_BeginLoadingPlaque ();
 
 			if (hipnotic)
-				Cbuf_AddText (common->va ("map %s\n", hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel].name) );
+				Cbuf_AddText (g_Common->va ("map %s\n", hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel].name) );
 			else if (rogue)
-				Cbuf_AddText (common->va ("map %s\n", roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].name) );
+				Cbuf_AddText (g_Common->va ("map %s\n", roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].name) );
 			else
-				Cbuf_AddText (common->va ("map %s\n", levels[episodes[startepisode].firstLevel + startlevel].name) );
+				Cbuf_AddText (g_Common->va ("map %s\n", levels[episodes[startepisode].firstLevel + startlevel].name) );
 
 			return;
 		}
@@ -3209,7 +3215,7 @@ void M_ServerList_Key (int k)
 		slist_sorted = false;
 		key_dest = key_game;
 		m_state = m_none;
-		Cbuf_AddText (common->va ("connect \"%s\"\n", hostcache[slist_cursor].cname) );
+		Cbuf_AddText (g_Common->va ("connect \"%s\"\n", hostcache[slist_cursor].cname) );
 		break;
 
 	default:

@@ -142,7 +142,10 @@ void Mod_ClearAll (void)
 	
 	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
 		if (mod->type != mod_alias)
+		{
 			mod->needload = true;
+				g_GLRenderer->GL_FreeTextureForModel(mod);
+		}
 }
 
 /*
@@ -284,9 +287,9 @@ void Mod_LoadTextures (lump_t *l)
 		{
 			offset = (uintptr_t)(mt + 1) - (uintptr_t)mod_base;
 
-			texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
+			//texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
 			tx->gltexture = g_GLRenderer->GL_LoadTexture (mt->name, tx->width, tx->height, (byte *)(tx+1), offset, TEXPREF_MIPMAP);
-			texture_mode = GL_LINEAR;
+			//texture_mode = GL_LINEAR;
 		}
 	}
 

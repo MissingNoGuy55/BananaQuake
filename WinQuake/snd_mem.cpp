@@ -115,7 +115,7 @@ sfxcache_t * CSoundSystemWin::S_LoadSound (sfx_t *s)
 
 //	Con_Printf ("loading %s\n",namebuffer);
 
-	data = COM_LoadStackFile<byte>(namebuffer, stackbuf, sizeof(stackbuf));
+	data = COM_LoadStackFile<byte>(namebuffer, stackbuf, sizeof(stackbuf), NULL);
 
 	if (!data)
 	{
@@ -123,7 +123,7 @@ sfxcache_t * CSoundSystemWin::S_LoadSound (sfx_t *s)
 		return NULL;
 	}
 
-	info = g_SoundSystem->GetWavinfo (s->name, data, common->com_filesize);
+	info = g_SoundSystem->GetWavinfo (s->name, data, g_Common->com_filesize);
 	if (info.channels != 1)
 	{
 		Con_Printf ("%s is a stereo sample\n",s->name);
@@ -234,7 +234,11 @@ void DumpChunks(void)
 		memcpy (str, data_p, 4);
 		data_p += 4;
 		iff_chunk_len = GetLittleLong();
+#ifndef WIN64
 		Con_Printf ("0x%x : %s (%d)\n", (int)(data_p - 4), str, iff_chunk_len);
+#else
+		Con_Printf ("0x%x : %s (%d)\n", (long long)(data_p - 4), str, iff_chunk_len);
+#endif
 		data_p += (iff_chunk_len + 1) & ~1;
 	} while (data_p < iff_end);
 }

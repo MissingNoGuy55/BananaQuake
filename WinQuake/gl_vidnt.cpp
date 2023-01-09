@@ -224,7 +224,7 @@ bool VID_SetWindowedMode (int modenum)
 	DIBWidth = modelist[modenum].width;
 	DIBHeight = modelist[modenum].height;
 	
-	if (!common->COM_CheckParm("-noborder"))
+	if (!g_Common->COM_CheckParm("-noborder"))
 	{
 		WindowStyle = WS_OVERLAPPED | WS_BORDER | WS_CAPTION | WS_SYSMENU |
 			WS_MINIMIZEBOX;
@@ -554,7 +554,7 @@ void CheckTextureExtensions (void)
 		tmp++;
 	}
 
-	if (!texture_ext || common->COM_CheckParm ("-gl11") )
+	if (!texture_ext || g_Common->COM_CheckParm ("-gl11") )
 	{
 		hInstGL = LoadLibrary("opengl32.dll");
 		
@@ -578,7 +578,7 @@ void CheckTextureExtensions (void)
 
 	// texture_non_power_of_two
 	//
-	if (common->COM_CheckParm("-notexturenpot"))
+	if (g_Common->COM_CheckParm("-notexturenpot"))
 		Con_DPrintf("texture_non_power_of_two disabled at command line\n");
 	else if (GL_ParseExtensionList(gl_extensions, "GL_ARB_texture_non_power_of_two"))
 	{
@@ -627,7 +627,7 @@ int		texture_extension_number = 1;
 #ifdef _WIN32
 void CheckMultiTextureExtensions(void) 
 {
-	if (strstr(gl_extensions, "GL_SGIS_multitexture ") && !common->COM_CheckParm("-nomtex")) {
+	if (strstr(gl_extensions, "GL_SGIS_multitexture ") && !g_Common->COM_CheckParm("-nomtex")) {
 		Con_Printf("Multitexture extensions found.\n");
 		qglMTexCoord2fSGIS = (lpMTexFUNC) wglGetProcAddress("glMTexCoord2fSGIS");
 		qglSelectTextureSGIS = (lpSelTexFUNC) wglGetProcAddress("glSelectTextureSGIS");
@@ -815,7 +815,7 @@ void	VID_SetPalette (unsigned char *palette)
 //		d_15to8table[i]=k;
 //	}
 
-	common->COM_FOpenFile("gfx/palette.lmp", &f);
+	g_Common->COM_FOpenFile("gfx/palette.lmp", &f);
 	if (!f)
 		Sys_Error("Couldn't load gfx/palette.lmp");
 
@@ -884,18 +884,6 @@ void	VID_SetPalette (unsigned char *palette)
 
 	g_MemCache->Hunk_FreeToLowMark(mark);
 }
-
-BOOL	gammaworks;
-
-void	VID_ShiftPalette (unsigned char *palette)
-{
-	extern	byte ramps[3][256];
-	
-//	VID_SetPalette (palette);
-
-//	gammaworks = SetDeviceGammaRamp (maindc, ramps);
-}
-
 
 void VID_SetDefaultMode (void)
 {
@@ -1456,20 +1444,20 @@ void VID_InitDIB (HINSTANCE hInstance)
 
 	modelist[0].type = MS_WINDOWED;
 
-	if (common->COM_CheckParm("-width"))
-		modelist[0].width = Q_atoi(common->com_argv[common->COM_CheckParm("-width")+1]);
-	else if (common->COM_CheckParm("-w"))
-		modelist[0].width = Q_atoi(common->com_argv[common->COM_CheckParm("-w") + 1]);
+	if (g_Common->COM_CheckParm("-width"))
+		modelist[0].width = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-width")+1]);
+	else if (g_Common->COM_CheckParm("-w"))
+		modelist[0].width = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-w") + 1]);
 	else
 		modelist[0].width = 640;
 
 	if (modelist[0].width < 320)
 		modelist[0].width = 320;
 
-	if (common->COM_CheckParm("-height"))
-		modelist[0].height= Q_atoi(common->com_argv[common->COM_CheckParm("-height")+1]);
-	else if (common->COM_CheckParm("-h"))
-		modelist[0].height = Q_atoi(common->com_argv[common->COM_CheckParm("-h") + 1]);
+	if (g_Common->COM_CheckParm("-height"))
+		modelist[0].height= Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-height")+1]);
+	else if (g_Common->COM_CheckParm("-h"))
+		modelist[0].height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-h") + 1]);
 	else
 		modelist[0].height = modelist[0].width * 240/320;
 
@@ -1535,7 +1523,7 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 
 			// if the width is more than twice the height, reduce it by half because this
 			// is probably a dual-screen monitor
-				if (!common->COM_CheckParm("-noadjustaspect"))
+				if (!g_Common->COM_CheckParm("-noadjustaspect"))
 				{
 					if (modelist[nummodes].width > (modelist[nummodes].height << 1))
 					{
@@ -1650,7 +1638,7 @@ void VID_Init8bitPalette()
 
 	QglColorTableEXT = (lp3DFXFUNC)wglGetProcAddress("glColorTableEXT");
     if (!QglColorTableEXT || strstr(gl_extensions, "GL_EXT_shared_texture_palette") ||
-		common->COM_CheckParm("-no8bit"))
+		g_Common->COM_CheckParm("-no8bit"))
 		return;
 
 	Con_SafePrintf("8-bit GL extensions enabled.\n");
@@ -1674,14 +1662,14 @@ static void Check_Gamma (unsigned char *pal)
 	unsigned char	palette[768];
 	int		i;
 
-	if ((i = common->COM_CheckParm("-gamma")) == 0) {
+	if ((i = g_Common->COM_CheckParm("-gamma")) == 0) {
 		if ((gl_renderer && strstr(gl_renderer, "Voodoo")) ||
 			(gl_vendor && strstr(gl_vendor, "3Dfx")))
 			vid_gamma = 1;
 		else
 			vid_gamma = 0.7; // default to 0.7 on non-3dfx hardware
 	} else
-		vid_gamma = Q_atof(common->com_argv[i+1]);
+		vid_gamma = Q_atof(g_Common->com_argv[i+1]);
 
 	for (i=0 ; i<768 ; i++)
 	{
@@ -1739,7 +1727,7 @@ void	VID_Init (unsigned char *palette)
 
 	VID_InitFullDIB (global_hInstance);
 
-	if (common->COM_CheckParm("-window") || common->COM_CheckParm("-sw") || common->COM_CheckParm("-windowed"))		// Missi: because I'm very tired of typing "-window"
+	if (g_Common->COM_CheckParm("-window") || g_Common->COM_CheckParm("-sw") || g_Common->COM_CheckParm("-windowed"))		// Missi: because I'm very tired of typing "-window"
 	{
 		hdc = GetDC (NULL);
 
@@ -1761,13 +1749,13 @@ void	VID_Init (unsigned char *palette)
 
 		windowed = false;
 
-		if (common->COM_CheckParm("-mode"))
+		if (g_Common->COM_CheckParm("-mode"))
 		{
-			vid_default = Q_atoi(common->com_argv[common->COM_CheckParm("-mode")+1]);
+			vid_default = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-mode")+1]);
 		}
 		else
 		{
-			if (common->COM_CheckParm("-current"))
+			if (g_Common->COM_CheckParm("-current"))
 			{
 				modelist[MODE_FULLSCREEN_DEFAULT].width =
 						GetSystemMetrics (SM_CXSCREEN);
@@ -1778,16 +1766,16 @@ void	VID_Init (unsigned char *palette)
 			}
 			else
 			{
-				if (common->COM_CheckParm("-width"))
-					width = Q_atoi(common->com_argv[common->COM_CheckParm("-width")+1]);
-				else if (common->COM_CheckParm("-w"))
-					width = Q_atoi(common->com_argv[common->COM_CheckParm("-w") + 1]);
+				if (g_Common->COM_CheckParm("-width"))
+					width = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-width")+1]);
+				else if (g_Common->COM_CheckParm("-w"))
+					width = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-w") + 1]);
 				else
 					width = 640;
 
-				if (common->COM_CheckParm("-bpp"))
+				if (g_Common->COM_CheckParm("-bpp"))
 				{
-					bpp = Q_atoi(common->com_argv[common->COM_CheckParm("-bpp")+1]);
+					bpp = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-bpp")+1]);
 					findbpp = 0;
 				}
 				else
@@ -1796,13 +1784,13 @@ void	VID_Init (unsigned char *palette)
 					findbpp = 1;
 				}
 
-				if (common->COM_CheckParm("-height"))
-					height = Q_atoi(common->com_argv[common->COM_CheckParm("-height")+1]);
-				else if (common->COM_CheckParm("-h"))
-					height = Q_atoi(common->com_argv[common->COM_CheckParm("-h") + 1]);
+				if (g_Common->COM_CheckParm("-height"))
+					height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-height")+1]);
+				else if (g_Common->COM_CheckParm("-h"))
+					height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-h") + 1]);
 
 			// if they want to force it, add the specified mode to the list
-				if (common->COM_CheckParm("-force") && (nummodes < MAX_MODE_LIST))
+				if (g_Common->COM_CheckParm("-force") && (nummodes < MAX_MODE_LIST))
 				{
 					modelist[nummodes].type = MS_FULLDIB;
 					modelist[nummodes].width = width;
@@ -1837,9 +1825,9 @@ void	VID_Init (unsigned char *palette)
 
 				do
 				{
-					if (common->COM_CheckParm("-height"))
+					if (g_Common->COM_CheckParm("-height"))
 					{
-						height = Q_atoi(common->com_argv[common->COM_CheckParm("-height")+1]);
+						height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-height")+1]);
 
 						for (i=1, vid_default=0 ; i<nummodes ; i++)
 						{
@@ -1853,9 +1841,9 @@ void	VID_Init (unsigned char *palette)
 							}
 						}
 					}
-					else if (common->COM_CheckParm("-h"))
+					else if (g_Common->COM_CheckParm("-h"))
 					{
-						height = Q_atoi(common->com_argv[common->COM_CheckParm("-h") + 1]);
+						height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-h") + 1]);
 
 						for (i = 1, vid_default = 0; i < nummodes; i++)
 						{
@@ -1919,8 +1907,8 @@ void	VID_Init (unsigned char *palette)
 
 	vid_initialized = true;
 
-	if ((i = common->COM_CheckParm("-conwidth")) != 0)
-		vid.conwidth = Q_atoi(common->com_argv[i+1]);
+	if ((i = g_Common->COM_CheckParm("-conwidth")) != 0)
+		vid.conwidth = Q_atoi(g_Common->com_argv[i+1]);
 	else
 		vid.conwidth = 640;
 
@@ -1932,8 +1920,8 @@ void	VID_Init (unsigned char *palette)
 	// pick a conheight that matches with correct aspect
 	vid.conheight = vid.conwidth*3 / 4;
 
-	if ((i = common->COM_CheckParm("-conheight")) != 0)
-		vid.conheight = Q_atoi(common->com_argv[i+1]);
+	if ((i = g_Common->COM_CheckParm("-conheight")) != 0)
+		vid.conheight = Q_atoi(g_Common->com_argv[i+1]);
 	if (vid.conheight < 200)
 		vid.conheight = 200;
 
@@ -1963,7 +1951,7 @@ void	VID_Init (unsigned char *palette)
 
 	GL_Init ();
 
-	sprintf (gldir, "%s/glquake", common->com_gamedir);
+	sprintf (gldir, "%s/glquake", g_Common->com_gamedir);
 	Sys_mkdir (gldir);
 
 	vid_realmode = vid_modenum;
@@ -1977,7 +1965,7 @@ void	VID_Init (unsigned char *palette)
 	Q_strcpy (badmode.modedesc, "Bad mode");
 	vid_canalttab = true;
 
-	if (common->COM_CheckParm("-fullsbar"))
+	if (g_Common->COM_CheckParm("-fullsbar"))
 		fullsbardraw = true;
 }
 

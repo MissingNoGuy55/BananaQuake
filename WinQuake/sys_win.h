@@ -54,12 +54,15 @@ int Sys_FileRead(int handle, T* dest, int count)
 int Sys_FileRead(int handle, T* dest, size_t count)
 #endif
 {
+#ifndef QUAKE_TOOLS
 	int		t, x;
-
 	t = VID_ForceUnlockedAndReturnState();
 	x = fread(dest, 1, count, sys_handles[handle]);
 	VID_ForceLockState(t);
 	return x;
+#else
+	return -1;
+#endif
 }
 
 /*

@@ -26,36 +26,41 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern	HWND	mainwindow;
 extern	cvar_t	bgmvolume;
 
-static bool cdValid = false;
-static bool	playing = false;
-static bool	wasPlaying = false;
-static bool	initialized = false;
-static bool	enabled = false;
-static bool playLooping = false;
-static float	cdvolume;
-static byte 	remap[100];
-static byte		cdrom;
-static byte		playTrack;
-static byte		maxTrack;
+static bool		cdValid = false;
+static bool		playing = false;
+static bool		wasPlaying = false;
+static bool		initialized = false;
+static bool		enabled = false;
+static bool		playLooping = false;
+static float	cdvolume = 0.0f;
+static byte		remap[100] = {};
+static byte		cdrom = 0;
+static byte		playTrack = 0;
+static byte		maxTrack = 0;
 
 UINT	wDeviceID;
 
+#ifndef QUAKE_TOOLS
 
 static void CDAudio_Eject(void)
 {
+#ifndef QUAKE_TOOLS
 	DWORD_PTR	dwReturn;
 
     if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_OPEN, (DWORD_PTR)NULL))
 		Con_DPrintf("MCI_SET_DOOR_OPEN failed (%i)\n", dwReturn);
+#endif
 }
 
 
 static void CDAudio_CloseDoor(void)
 {
+#ifndef QUAKE_TOOLS
 	DWORD_PTR	dwReturn;
 
     if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_CLOSED, (DWORD_PTR)NULL))
 		Con_DPrintf("MCI_SET_DOOR_CLOSED failed (%i)\n", dwReturn);
+#endif
 }
 
 
@@ -99,21 +104,20 @@ static int CDAudio_GetAudioDiskInfo(void)
 	return 0;
 }
 
-
-void CDAudio_Play(byte track, bool looping)
+int CDAudio_Play(byte track, bool looping)
 {
 	DWORD_PTR				dwReturn;
     MCI_PLAY_PARMS		mciPlayParms;
 	MCI_STATUS_PARMS	mciStatusParms;
 
 	if (!enabled)
-		return;
+		return -1;
 	
 	if (!cdValid)
 	{
 		CDAudio_GetAudioDiskInfo();
 		if (!cdValid)
-			return;
+			return -1;
 	}
 
 	track = remap[track];
@@ -121,7 +125,7 @@ void CDAudio_Play(byte track, bool looping)
 	if (track < 1 || track > maxTrack)
 	{
 		Con_DPrintf("CDAudio: Bad track number %u.\n", track);
-		return;
+		return -1;
 	}
 
 	// don't try to play a non-audio track
@@ -131,12 +135,12 @@ void CDAudio_Play(byte track, bool looping)
 	if (dwReturn)
 	{
 		Con_DPrintf("MCI_STATUS failed (%i)\n", dwReturn);
-		return;
+		return -1;
 	}
 	if (mciStatusParms.dwReturn != MCI_CDA_TRACK_AUDIO)
 	{
 		Con_Printf("CDAudio: track %i is not audio\n", track);
-		return;
+		return -1;
 	}
 
 	// get the length of the track to be played
@@ -146,13 +150,13 @@ void CDAudio_Play(byte track, bool looping)
 	if (dwReturn)
 	{
 		Con_DPrintf("MCI_STATUS failed (%i)\n", dwReturn);
-		return;
+		return -1;
 	}
 
 	if (playing)
 	{
 		if (playTrack == track)
-			return;
+			return -1;
 		CDAudio_Stop();
 	}
 
@@ -163,7 +167,7 @@ void CDAudio_Play(byte track, bool looping)
 	if (dwReturn)
 	{
 		Con_DPrintf("CDAudio: MCI_PLAY failed (%i)\n", dwReturn);
-		return;
+		return -1;
 	}
 
 	playLooping = looping;
@@ -172,6 +176,7 @@ void CDAudio_Play(byte track, bool looping)
 
 	if (cdvolume == 0.0)
 		CDAudio_Pause ();
+	return 0;
 }
 
 
@@ -460,7 +465,7 @@ int CDAudio_Init(void)
 	if (cls.state == ca_dedicated)
 		return -1;
 
-	if (common->COM_CheckParm("-nocdaudio"))
+	if (g_Common->COM_CheckParm("-nocdaudio"))
 		return -1;
 
 	mciOpenParms.lpstrDeviceType = "cdaudio";
@@ -507,3 +512,99 @@ void CDAudio_Shutdown(void)
 	if (mciSendCommand(wDeviceID, MCI_CLOSE, MCI_WAIT, (DWORD_PTR)NULL))
 		Con_DPrintf("CDAudio_Shutdown: MCI_CLOSE failed\n");
 }
+
+#else
+
+static void CDAudio_Eject(void)
+{
+
+}
+
+
+static void CDAudio_CloseDoor(void)
+{
+
+}
+
+
+static int CDAudio_GetAudioDiskInfo(void)
+{
+	return 0;
+}
+
+bool CDAudio_Play(byte track, bool looping)
+{
+	return false;
+}
+
+
+void CDAudio_Stop(void)
+{
+}
+
+
+void CDAudio_Pause(void)
+{
+}
+
+LONG CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	return 0;
+}
+
+static void CD_f(void)
+{
+}
+
+
+//long CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+//{
+//	if (lParam != wDeviceID)
+//		return 1;
+//
+//	switch (wParam)
+//	{
+//		case MCI_NOTIFY_SUCCESSFUL:
+//			if (playing)
+//			{
+//				playing = false;
+//				if (playLooping)
+//					CDAudio_Play(playTrack, true);
+//			}
+//			break;
+//
+//		case MCI_NOTIFY_ABORTED:
+//		case MCI_NOTIFY_SUPERSEDED:
+//			break;
+//
+//		case MCI_NOTIFY_FAILURE:
+//			Con_DPrintf("MCI_NOTIFY_FAILURE\n");
+//			CDAudio_Stop ();
+//			cdValid = false;
+//			break;
+//
+//		default:
+//			Con_DPrintf("Unexpected MM_MCINOTIFY type (%i)\n", wParam);
+//			return 1;
+//	}
+//
+//	return 0;
+//}
+
+
+void CDAudio_Update(void)
+{
+}
+
+
+int CDAudio_Init(void)
+{
+	return 0;
+}
+
+
+void CDAudio_Shutdown(void)
+{
+}
+
+#endif

@@ -238,18 +238,18 @@ void CL_Record_f (void)
 	else
 		track = -1;	
 
-	sprintf (name, "%s/%s", common->com_gamedir, Cmd_Argv(1));
+	sprintf (name, "%s/%s", g_Common->com_gamedir, Cmd_Argv(1));
 	
 //
 // start the map up
 //
 	if (c > 2)
-		Cmd_ExecuteString (common->va_unsafe("map %s", Cmd_Argv(2)), src_command);
+		Cmd_ExecuteString (g_Common->va_unsafe("map %s", Cmd_Argv(2)), src_command);
 	
 //
 // open the demo file
 //
-	common->COM_DefaultExtension (name, ".dem");
+	g_Common->COM_DefaultExtension (name, ".dem");
 
 	Con_Printf ("recording to %s.\n", name);
 	cls.demofile = fopen (name, "wb");
@@ -297,10 +297,10 @@ void CL_PlayDemo_f (void)
 // open the demo file
 //
 	Q_strcpy (name, Cmd_Argv(1));
-	common->COM_DefaultExtension (name, ".dem");
+	g_Common->COM_DefaultExtension (name, ".dem");
 
 	Con_Printf ("Playing demo from %s.\n", name);
-	common->COM_FOpenFile (name, &cls.demofile);
+	g_Common->COM_FOpenFile (name, &cls.demofile, NULL);
 	if (!cls.demofile)
 	{
 		Con_Printf ("ERROR: couldn't open.\n");

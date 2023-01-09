@@ -487,7 +487,7 @@ model_t* Mod_LoadModel(model_t* mod, bool crash)
 	//
 	// allocate a new model
 	//
-	common->COM_FileBase(mod->name, loadname, sizeof(loadname));
+	g_Common->COM_FileBase(mod->name, loadname, sizeof(loadname));
 
 	loadmodel = mod;
 

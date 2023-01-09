@@ -49,6 +49,8 @@ static void	(*surfmiptable[4])(void) = {
 	R_DrawSurfaceBlock8_mip3
 };
 
+unsigned int CCoreRenderer::blocklights[BLOCK_WIDTH * BLOCK_HEIGHT * 3] = {};
+
 /*
 ===============
 R_AddDynamicLights

@@ -127,6 +127,7 @@ public:
 
 	int			soundtime;		// sample PAIRS
 	int   		paintedtime; 	// sample PAIRS
+	int			s_rawend;
 
 
 #define	MAX_SFX		512
@@ -157,7 +158,6 @@ public:
 	// Global crap
 
 	unsigned long		gSndBufSize = 0;
-	int paintedtime = 0;
 
 	void S_Init(void);
 	void S_Startup(void);
@@ -169,6 +169,7 @@ public:
 	//void S_StopAllSounds(bool clear);
 	//void S_StopAllSoundsC(void);
 	void S_ClearBuffer(void);
+	void S_RawSamples(int samples, int rate, int width, int channels, byte* data, float volume);
 	void S_Update(vec3_t origin, vec3_t v_forward, vec3_t v_right, vec3_t v_up);
 	void GetSoundtime(void);
 	void S_ExtraUpdate(void);
@@ -251,11 +252,11 @@ extern	int			total_channels;
 
 extern bool 		fakedma;
 extern int 			fakedma_updates;
-extern int		paintedtime;
-extern vec3_t listener_origin;
-extern vec3_t listener_forward;
-extern vec3_t listener_right;
-extern vec3_t listener_up;
+//extern int			paintedtime;
+extern vec3_t		listener_origin;
+extern vec3_t		listener_forward;
+extern vec3_t		listener_right;
+extern vec3_t		listener_up;
 //extern volatile dma_t *shm;
 //extern volatile dma_t sn;
 extern vec_t sound_nominal_clip_dist;
@@ -266,6 +267,9 @@ extern	cvar_t	volume;
 extern	cvar_t	snd_filterquality;
 extern	cvar_t	snd_mixspeed;
 extern	cvar_t	snd_speed;
+
+#define	MAX_RAW_SAMPLES	8192
+extern	portable_samplepair_t	s_rawsamples[MAX_RAW_SAMPLES];
 
 extern bool	snd_initialized;
 

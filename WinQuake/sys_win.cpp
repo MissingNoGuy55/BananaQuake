@@ -81,7 +81,7 @@ Sys_PageIn
 #ifndef WIN64
 void Sys_PageIn (void *ptr, int size)
 #else
-void Sys_PageIn(void* ptr, size_t size)
+void Sys_PageIn	(void* ptr, size_t size)
 #endif
 {
 	byte	*x;
@@ -134,28 +134,32 @@ int filelength (FILE *f)
 {
 	int		pos;
 	int		end;
+#ifndef QUAKE_TOOLS
 	int		t;
-
 	t = VID_ForceUnlockedAndReturnState ();
-
+#endif
 	pos = ftell (f);
 	fseek (f, 0, SEEK_END);
 	end = ftell (f);
 	fseek (f, pos, SEEK_SET);
 
+#ifndef QUAKE_TOOLS
 	VID_ForceLockState (t);
+#endif
 
 	return end;
 }
 
-int Sys_FileOpenRead (char *path, int *hndl)
+int Sys_FileOpenRead (const char *path, int *hndl)
 {
-	FILE	*f;
+	FILE	*f = NULL;
 	errno_t err;
-	int		i, retval;
-	int		t;
+	int		i = 0, retval = 0;
+	int		t = 0;
 
+#ifndef QUAKE_TOOLS
 	t = VID_ForceUnlockedAndReturnState ();
+#endif
 
 	i = findhandle ();
 
@@ -173,58 +177,92 @@ int Sys_FileOpenRead (char *path, int *hndl)
 		retval = filelength(f);
 	}
 
+#ifndef QUAKE_TOOLS
 	VID_ForceLockState (t);
+#endif
 
 	return retval;
 }
 
-int Sys_FileOpenWrite (char *path)
+int Sys_FileOpenWrite (const char *path)
 {
-	FILE	*f;
-	int		i;
-	int		t;
+	FILE	*f = NULL;
+	int		i = 0;
+	int		t = 0;
+	char*	p = "";
 	errno_t err;
-
+#ifndef QUAKE_TOOLS
 	t = VID_ForceUnlockedAndReturnState ();
-	
+#endif
 	i = findhandle ();
+
+	Q_strcpy(p, path);
 
 	err = fopen_s(&f, path, "wb");
 	if (!err)
-		Sys_Error ("Error opening %s: %s", path,strerror_s(path,strlen(path),errno));
+		Sys_Error ("Error opening %s: %s", path,strerror_s(p,strlen(path),errno));
 	sys_handles[i] = f;
 	
+#ifndef QUAKE_TOOLS
 	VID_ForceLockState (t);
+#endif
 
 	return i;
+}
+
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES	((DWORD)-1)
+#endif
+int Sys_FileType(const char* path)
+{
+	DWORD result = GetFileAttributes(path);
+
+	if (result == INVALID_FILE_ATTRIBUTES)
+		return FS_ENT_NONE;
+	if (result & FILE_ATTRIBUTE_DIRECTORY)
+		return FS_ENT_DIRECTORY;
+
+	return FS_ENT_FILE;
 }
 
 void Sys_FileClose (int handle)
 {
 	int		t;
-
+#ifndef QUAKE_TOOLS
 	t = VID_ForceUnlockedAndReturnState ();
+#endif
 	fclose (sys_handles[handle]);
 	sys_handles[handle] = NULL;
+
+#ifndef QUAKE_TOOLS
 	VID_ForceLockState (t);
+#endif
 }
 
 void Sys_FileSeek (int handle, int position)
 {
+#ifndef QUAKE_TOOLS
 	int		t;
-
 	t = VID_ForceUnlockedAndReturnState ();
+#endif
 	fseek (sys_handles[handle], position, SEEK_SET);
+
+#ifndef QUAKE_TOOLS
 	VID_ForceLockState (t);
+#endif
 }
 
 int Sys_FileWrite (int handle, void *data, int count)
 {
-	int		t, x;
-
+	int		x;
+#ifndef QUAKE_TOOLS
+	int		t;
 	t = VID_ForceUnlockedAndReturnState ();
+#endif
 	x = fwrite (data, 1, count, sys_handles[handle]);
+#ifndef QUAKE_TOOLS
 	VID_ForceLockState (t);
+#endif
 	return x;
 }
 
@@ -353,12 +391,14 @@ void UnmaskExceptions(void)
 
 static void Sys_SetTimerResolution(void)
 {
+#ifndef QUAKE_TOOLS
 	/* Set OS timer resolution to 1ms.
 	   Works around buffer underruns with directsound and SDL2, but also
 	   will make Sleep()/SDL_Dleay() accurate to 1ms which should help framerate
 	   stability.
 	*/
 	timeBeginPeriod(1);
+#endif
 }
 
 
@@ -411,7 +451,9 @@ void Sys_Error (const char *error, ...)
 	if (!in_sys_error3)
 	{
 		in_sys_error3 = 1;
+#ifndef QUAKE_TOOLS
 		VID_ForceUnlockedAndReturnState ();
+#endif
 	}
 
 	va_start (argptr, error);
@@ -474,6 +516,7 @@ void Sys_Error (const char *error, ...)
 	exit (1);
 }
 
+
 void Sys_Printf (char *fmt, ...)
 {
 	va_list		argptr;
@@ -493,7 +536,9 @@ void Sys_Printf (char *fmt, ...)
 void Sys_Quit (void)
 {
 
+#ifndef QUAKE_TOOLS
 	VID_ForceUnlockedAndReturnState ();
+#endif
 
 	host->Host_Shutdown();
 
@@ -515,7 +560,9 @@ int	Sys_FileTime(char* path)
 	errno_t err;
 	int		t, retval;
 
+#ifndef QUAKE_TOOLS
 	t = VID_ForceUnlockedAndReturnState();
+#endif
 
 	err = fopen_s(&f, path, "r+");
 
@@ -529,7 +576,10 @@ int	Sys_FileTime(char* path)
 		retval = -1;
 	}
 
+#ifndef QUAKE_TOOLS
 	VID_ForceLockState(t);
+#endif
+
 	return retval;
 }
 
@@ -619,11 +669,11 @@ void Sys_InitFloatTime (void)
 
 	Sys_DoubleTime ();
 
-	j = common->COM_CheckParm("-starttime");
+	j = g_Common->COM_CheckParm("-starttime");
 
 	if (j)
 	{
-		curtime = (double) (Q_atof(common->com_argv[j+1]));
+		curtime = (double) (Q_atof(g_Common->com_argv[j+1]));
 	}
 	else
 	{
@@ -786,7 +836,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	int				t;
 	RECT			rect;
 
-	common = new CCommon;
+	g_Common = new CCommon;
+	g_FileSystem = new CFileSystem;
 	host = new CQuakeHost;
 
     /* previous instances do not exist in Win32 */
@@ -838,12 +889,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	parms.argv = argv;
 
-	common->COM_InitArgv (parms.argc, parms.argv);
+	g_Common->COM_InitArgv (parms.argc, parms.argv);
 
-	parms.argc = common->com_argc;
-	parms.argv = common->com_argv;
+	parms.argc = g_Common->com_argc;
+	parms.argv = g_Common->com_argv;
 
-	isDedicated = (common->COM_CheckParm ("-dedicated") != 0);
+	isDedicated = (g_Common->COM_CheckParm ("-dedicated") != 0);
 
 	if (!isDedicated)
 	{
@@ -893,12 +944,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	if (parms.memsize > MAXIMUM_WIN_MEMORY)
 		parms.memsize = MAXIMUM_WIN_MEMORY;
 
-	if (common->COM_CheckParm ("-heapsize"))
+	if (g_Common->COM_CheckParm ("-heapsize"))
 	{
-		t = common->COM_CheckParm("-heapsize") + 1;
+		t = g_Common->COM_CheckParm("-heapsize") + 1;
 
-		if (t < common->com_argc)
-			parms.memsize = Q_atoi (common->com_argv[t]) * 1024;
+		if (t < g_Common->com_argc)
+			parms.memsize = Q_atoi (g_Common->com_argv[t]) * 1024;
 	}
 
 	parms.membase = (byte*)malloc (parms.memsize);
@@ -924,22 +975,22 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
 #ifndef WIN64
 	// give QHOST a chance to hook into the console
-		if ((t = common->COM_CheckParm ("-HFILE")) > 0)
+		if ((t = g_Common->COM_CheckParm ("-HFILE")) > 0)
 		{
-			if (t < common->com_argc)
-				hFile = (HANDLE)Q_atoi (common->com_argv[t+1]);
+			if (t < g_Common->com_argc)
+				hFile = (HANDLE)Q_atoi (g_Common->com_argv[t+1]);
 		}
 			
-		if ((t = common->COM_CheckParm ("-HPARENT")) > 0)
+		if ((t = g_Common->COM_CheckParm ("-HPARENT")) > 0)
 		{
-			if (t < common->com_argc)
-				heventParent = (HANDLE)Q_atoi (common->com_argv[t+1]);
+			if (t < g_Common->com_argc)
+				heventParent = (HANDLE)Q_atoi (g_Common->com_argv[t+1]);
 		}
 			
-		if ((t = common->COM_CheckParm ("-HCHILD")) > 0)
+		if ((t = g_Common->COM_CheckParm ("-HCHILD")) > 0)
 		{
-			if (t < common->com_argc)
-				heventChild = (HANDLE)Q_atoi (common->com_argv[t+1]);
+			if (t < g_Common->com_argc)
+				heventChild = (HANDLE)Q_atoi (g_Common->com_argv[t+1]);
 		}
 #endif
 		g_ConProc->InitConProc (hFile, heventParent, heventChild);
@@ -948,7 +999,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	Sys_Init ();
 
 // because sound is off until we become active
-	// g_SoundSystem->S_BlockSound ();
+	g_SoundSystem->S_BlockSound ();
 
 	Sys_Printf ("Host_Init\n");
 	host->Host_Init(parms);
@@ -972,6 +1023,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		}
 		else
 		{
+#ifndef QUAKE_TOOLS
 		// yield the CPU for a little while when paused, minimized, or not the focus
 			if ((cl.paused && (!ActiveApp && !DDActive)) || Minimized || block_drawing)
 			{
@@ -982,7 +1034,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			{
 				SleepUntilInput (NOT_FOCUS_SLEEP);
 			}
-
+#endif
 			newtime = Sys_DoubleTime ();
 			time = newtime - oldtime;
 		}

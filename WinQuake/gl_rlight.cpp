@@ -90,7 +90,7 @@ void CGLRenderer::R_RenderDlight (dlight_t *light)
 	}
 
 	glBegin (GL_TRIANGLE_FAN);
-	glColor3f (0.2,0.1,0.0);
+	glColor3f (0.2f,0.1f,0.0f);
 	for (i=0 ; i<3 ; i++)
 		v[i] = light->origin[i] - vpn[i]*rad;
 	glVertex3fv (v);
@@ -311,23 +311,16 @@ int CGLRenderer::RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 		r = 0;
 		if (lightmap)
 		{
-#ifndef WIN64
+
 			lightmap += dt * ((surf->extents[0]>>4)+1) + ds;
-#else
-			lightmap += dt * ((long long)(surf->extents[0] >> 4) + 1) + ds;
-#endif
+
 			for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ;
 					maps++)
 			{
 				scale = d_lightstylevalue[surf->styles[maps]];
 				r += *lightmap * scale;
-#ifndef WIN64
 				lightmap += ((surf->extents[0]>>4)+1) *
 						((surf->extents[1]>>4)+1);
-#else
-				lightmap += ((long long)(surf->extents[0] >> 4) + 1) *
-					((long long)(surf->extents[1] >> 4) + 1);
-#endif
 			}
 			
 			r >>= 8;

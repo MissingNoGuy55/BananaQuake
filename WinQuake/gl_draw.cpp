@@ -33,6 +33,7 @@ extern unsigned char d_15to8table[65536];
 cvar_t		gl_nobind = {"gl_nobind", "0"};
 cvar_t		gl_max_size = {"gl_max_size", "1024"};
 cvar_t		gl_picmip = {"gl_picmip", "0"};
+cvar_t		gl_texturemode = {"gl_texturemode", ""};
 GLint		gl_hardware_maxsize;
 
 byte		*draw_chars;				// 8*8 graphic characters
@@ -55,8 +56,11 @@ int		gl_filter_max = GL_LINEAR;
 
 int		texels;
 
-CGLTexture CGLRenderer::gltextures[MAX_GLTEXTURES];
-int			numgltextures;
+CGLTexture	CGLRenderer::gltextures[MAX_GLTEXTURES];
+CGLTexture* CGLRenderer::free_gltextures;
+CGLTexture* CGLRenderer::active_gltextures;
+byte		CGLRenderer::lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];// [MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
+static int	numgltextures;
 
 unsigned int d_8to24table_fbright[256];
 unsigned int d_8to24table_fbright_fence[256];
@@ -71,8 +75,17 @@ bool gl_texture_NPOT = false;
 CGLTexture* CGLRenderer::char_texture = NULL;
 CGLTexture* CGLRenderer::translate_texture = NULL;
 
+int			CGLRenderer::allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
+int			CGLRenderer::lightmap_count;
+glpoly_t*	CGLRenderer::lightmap_polys[MAX_LIGHTMAPS];
+bool		CGLRenderer::lightmap_modified[MAX_LIGHTMAPS];
+glRect_t	CGLRenderer::lightmap_rectchange[MAX_LIGHTMAPS];
+
 CGLRenderer::CGLRenderer()
 {
+
+	int i = 0;
+
 	active_lightmaps = 0;
 
 	memset(allocated, 0, sizeof(allocated));
@@ -84,10 +97,21 @@ CGLRenderer::CGLRenderer()
 
 	skytexturenum = 0;
 	lightmap_bytes = 0;
+	lightmap_count = 0;
+	last_lightmap_allocated = 0;
 
 	lightmap_textures = NULL;
 	translate_texture = NULL;
 	char_texture = NULL;
+
+	free_gltextures = g_MemCache->Hunk_AllocName<CGLTexture>(MAX_GLTEXTURES * sizeof(CGLTexture), "gltextures");
+	active_gltextures = NULL;
+	for (i = 0; i < MAX_GLTEXTURES - 1; i++)
+		free_gltextures[i].next = &free_gltextures[i + 1];
+	free_gltextures[i].next = NULL;
+
+	numgltextures = 0;
+
 }
 
 CGLRenderer::CGLRenderer(const CGLRenderer& src)
@@ -128,6 +152,26 @@ CGLRenderer::~CGLRenderer()
 	char_texture = NULL;
 }
 
+typedef struct
+{
+	int	magfilter;
+	int	minfilter;
+	const char* name;
+} glmode_t;
+static glmode_t glmodes[] = {
+	{GL_NEAREST, GL_NEAREST,		"GL_NEAREST"},
+	{GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST,	"GL_NEAREST_MIPMAP_NEAREST"},
+	{GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR,	"GL_NEAREST_MIPMAP_LINEAR"},
+	{GL_LINEAR,  GL_LINEAR,			"GL_LINEAR"},
+	{GL_LINEAR,  GL_LINEAR_MIPMAP_NEAREST,	"GL_LINEAR_MIPMAP_NEAREST"},
+	{GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,	"GL_LINEAR_MIPMAP_LINEAR"},
+};
+
+#define NUM_GLMODES (int)(sizeof(glmodes)/sizeof(glmodes[0]))
+static int glmode_idx = NUM_GLMODES - 1;
+
+static GLenum	currenttarget = GL_TEXTURE0_ARB;
+
 unsigned* CGLRenderer::GL_8to32(byte* in, int pixels, unsigned int* usepal)
 {
 	int i;
@@ -143,7 +187,7 @@ unsigned* CGLRenderer::GL_8to32(byte* in, int pixels, unsigned int* usepal)
 
 /*
 ===============
-TexMgr_AlphaEdgeFix
+GL_AlphaEdgeFix
 
 eliminate pink edges on sprites, etc.
 operates in place on 32bit data
@@ -214,11 +258,16 @@ CGLTexture* CGLRenderer::GL_NewTexture()
 {
 	CGLTexture* glt;
 
-	glt = &gltextures[numgltextures];
-	numgltextures++;
+	if (numgltextures == MAX_GLTEXTURES)
+		Sys_Error("numgltextures == MAX_GLTEXTURES\n");
+
+	glt = free_gltextures;
+	free_gltextures = glt->next;
+	glt->next = active_gltextures;
+	active_gltextures = glt;
 
 	glGenTextures(1, &glt->texnum);
-
+	numgltextures++;
 	return glt;
 }
 
@@ -237,11 +286,11 @@ CGLTexture* CGLRenderer::GL_NewTexture()
 // #define	BLOCK_WIDTH		256
 // #define	BLOCK_HEIGHT	256
 
-int			scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
-byte		scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT];
-bool		scrap_dirty;
-CGLTexture* scrap_textures[MAX_SCRAPS];
-int			scrap_texnum;
+static int			scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
+static byte			scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT*4];
+static bool			scrap_dirty;
+static CGLTexture*	scrap_textures[MAX_SCRAPS];
+static int			scrap_texnum;
 
 // returns a texture and the position inside it
 int CGLRenderer::Scrap_AllocBlock (int w, int h, int *x, int *y)
@@ -297,7 +346,8 @@ void CGLRenderer::Scrap_Upload (void)
 
 	for (i=0 ; i<MAX_SCRAPS ; i++) {
 		sprintf(name, "scrap%i", i);
-		scrap_textures[i] = GL_LoadTexture(name, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], (uintptr_t)scrap_texels[i], TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
+		scrap_textures[i] = GL_LoadTexture(name, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], 
+			(src_offset_t)scrap_texels[i], TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
 		/*g_GLRenderer->GL_Bind(scrap_textures[i]);
 		GL_Upload8 (scrap_texels[i], BLOCK_WIDTH, BLOCK_HEIGHT, false, true);*/
 	}
@@ -367,15 +417,21 @@ int CGLRenderer::GL_PadConditional(int s)
 CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 {
 	CQuakePic* p = NULL;
+	qpicbuf_t* pbuf = NULL;
 	COpenGLPic	gl;
 	uintptr_t offset;
+	byte	test[1];
 
-	p = (CQuakePic*)W_GetLumpName(name);
+	pbuf = W_GetLumpName<qpicbuf_t>(name);
+	
+	if (!pbuf) return NULL; //Missi -- copied from QuakeSpasm (5/28/2022)
 
-	if (!p) return NULL; //Missi -- copied from QuakeSpasm (5/28/2022)
+	p = g_MemCache->Hunk_AllocName<CQuakePic>(pbuf->width * pbuf->height, name);
+	p->width = pbuf->width;
+	p->height = pbuf->height;
 
 	// load little ones into the scrap
-	if (p->width < 64 && p->height < 64)
+	if (p->width < 64 && pbuf->height < 64)
 	{
 		int		x, y;
 		int		i, j, k;
@@ -387,7 +443,7 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 		for (i = 0; i < p->height; i++)
 		{
 			for (j = 0; j < p->width; j++, k++)
-				scrap_texels[texnum][(y + i) * BLOCK_WIDTH + x + j] = p->data[k];
+				scrap_texels[texnum][(y + i) * BLOCK_WIDTH + x + j] = pbuf->data[k];
 		}
 		gl.tex = scrap_textures[texnum]; //Missi -- copied from QuakeSpasm (5/28/2022) -- changed to an array
 		//Missi -- copied from QuakeSpasm (5/28/2022) -- no longer go from 0.01 to 0.99
@@ -401,14 +457,16 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 
 		offset = (uintptr_t)p - (uintptr_t)wad_base + sizeof(int) * 2; //johnfitz
 
-		gl.tex = GL_LoadTexture(name, p->width, p->height, p->data, offset, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
+		gl.tex = GL_LoadTexture(name, p->width, p->height, pbuf->data, offset, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
 		gl.sl = 0;
 		gl.sh = (float)p->width / (float)GL_PadConditional(p->width); //Missi -- copied from QuakeSpasm (5/28/2022)
 		gl.tl = 0;
 		gl.th = (float)p->height / (float)GL_PadConditional(p->height); //Missi -- copied from QuakeSpasm (5/28/2022)
 	}
 
-	memcpy(p->data, &gl, sizeof(COpenGLPic));
+	//memset(&p->datavec, 0, sizeof(p->datavec));
+
+	p->datavec.AddMultipleToTail(sizeof(COpenGLPic), (byte*)&gl);
 
 	return p;
 }
@@ -421,9 +479,9 @@ Draw_CachePic
 */
 CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 {
-	cachepic_t	*pic = NULL;
-	int			i = 0;
-	CQuakePic		*qpic = NULL;
+	cachepic_t		*pic = NULL;
+	int				i = 0;
+	qpicbuf_t		*qpicbuf = NULL;
 	byte			*qpictemp = NULL;
 	byte			*qpicdata = NULL;
 	COpenGLPic		gl;
@@ -442,37 +500,31 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 //
 // load the pic from disk
 //
-	qpic = COM_LoadTempFile<CQuakePic> (path);
-	if (!qpic)
+	qpicbuf = COM_LoadTempFile<qpicbuf_t> (path);
+	if (!qpicbuf)
 	{
 		Sys_Error ("Draw_CachePic: failed to load %s", path);
 		return NULL;
 	}
 
-	SwapPic (qpic);
-
-	pic->pic.width = qpic->width;
-	pic->pic.height = qpic->height;
+	SwapPic (qpicbuf);
+	pic->pic.width = qpicbuf->width;
+	pic->pic.height = qpicbuf->height;
 
 	// HACK HACK HACK --- we need to keep the bytes for
 	// the translatable player picture just for the menu
 	// configuration dialog
 	if (!strcmp (path, "gfx/menuplyr.lmp"))
-#ifndef WIN64
-		memcpy (menuplyr_pixels, &qpic->data, qpic->width * qpic->height);
-#else
-		memcpy(menuplyr_pixels, &qpic->data, (long long)qpic->width * (long long)qpic->height);
-#endif
-	/*qpic->width = qpicbuf->width;
-	qpic->height = qpicbuf->height;*/
+		memcpy (menuplyr_pixels, pic->pic.datavec.Base(), qpicbuf->width * qpicbuf->height);
 
-	gl.tex = GL_LoadTexture(path, qpic->width, qpic->height, qpic->data, sizeof(int) * 2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); // (COpenGLPic*)pic->pic->data;
+	gl.tex = GL_LoadTexture(path, qpicbuf->width, qpicbuf->height, qpicbuf->data, sizeof(int) * 2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); // (COpenGLPic*)pic->pic->data;
 	gl.sl = 0;
 	gl.sh = 1;
 	gl.tl = 0;
 	gl.th = 1;
 
-	memcpy(pic->pic.data, &gl, sizeof(COpenGLPic));
+	pic->pic.datavec.AddMultipleToTail(sizeof(COpenGLPic), (byte*)&gl);
+	//memcpy(pic->pic.data, &gl, sizeof(COpenGLPic));
 
  	return &pic->pic;
 }
@@ -480,11 +532,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 
 void CGLRenderer::Draw_CharToConback (int num, byte *dest)
 {
-#ifndef WIN64
 	int		row, col;
-#else
-	long long	row, col;
-#endif
 	byte	*source;
 	int		drawline;
 	int		x;
@@ -506,21 +554,6 @@ void CGLRenderer::Draw_CharToConback (int num, byte *dest)
 
 }
 
-typedef struct
-{
-	char *name;
-	int	minimize, maximize;
-} glmode_t;
-
-glmode_t modes[] = {
-	{"GL_NEAREST", GL_NEAREST, GL_NEAREST},
-	{"GL_LINEAR", GL_LINEAR, GL_LINEAR},
-	{"GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST},
-	{"GL_LINEAR_MIPMAP_NEAREST", GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR},
-	{"GL_NEAREST_MIPMAP_LINEAR", GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST},
-	{"GL_LINEAR_MIPMAP_LINEAR", GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR}
-};
-
 /*
 ===============
 Draw_TextureMode_f
@@ -529,43 +562,67 @@ Draw_TextureMode_f
 void CGLRenderer::Draw_TextureMode_f (void)
 {
 	int		i;
-	CGLTexture*	glt;
+	CGLTexture	*glt;
 
 	if (Cmd_Argc() == 1)
 	{
-		for (i=0 ; i< 6 ; i++)
-			if (gl_filter_min == modes[i].minimize)
+		for (i=0 ; i< NUM_GLMODES; i++)
+			if (gl_filter_min == glmodes[i].minfilter)
 			{
-				Con_Printf ("%s\n", modes[i].name);
+				Con_Printf ("%s\n", glmodes[i].name);
 				return;
 			}
 		Con_Printf ("current filter is unknown???\n");
 		return;
 	}
 
-	for (i=0 ; i< 6 ; i++)
+	for (i=0 ; i< NUM_GLMODES; i++)
 	{
-		if (!Q_strcasecmp (modes[i].name, Cmd_Argv(1) ) )
+		if (!Q_strcasecmp (glmodes[i].name, Cmd_Argv(1) ) )
 			break;
 	}
-	if (i == 6)
+	if (i == NUM_GLMODES)
 	{
 		Con_Printf ("bad filter name\n");
 		return;
 	}
 
-	gl_filter_min = modes[i].minimize;
-	gl_filter_max = modes[i].maximize;
+	gl_filter_min = glmodes[i].minfilter;
+	gl_filter_max = glmodes[i].magfilter;
+
+	gl_texturemode.string = Cmd_Argv(1);
 
 	// change all the existing mipmap texture objects
-	for (i=0, glt=gltextures; i<numgltextures ; i++)
+	for (i = 0; i < NUM_GLMODES; i++)
 	{
-		if (glt->mipmap)
+		if (!Q_strcmp(glmodes[i].name, gl_texturemode.string))
 		{
-			g_GLRenderer->GL_Bind (glt);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+			if (glmode_idx != i)
+			{
+				glmode_idx = i;
+				for (glt = active_gltextures; glt; glt = glt->next)
+					GL_SetFilterModes(glt);
+				Sbar_Changed(); //sbar graphics need to be redrawn with new filter mode
+				//FIXME: warpimages need to be redrawn, too.
+			}
+			return;
 		}
+	}
+
+	for (i = 0; i < NUM_GLMODES; i++)
+	{
+		if (!Q_strcasecmp(glmodes[i].name, gl_texturemode.string))
+		{
+			gl_texturemode.string = Cmd_Argv(1);
+			return;
+		}
+	}
+
+	i = atoi(gl_texturemode.string);
+	if (i >= 1 && i <= NUM_GLMODES)
+	{
+		gl_texturemode.string = Cmd_Argv(1);
+		return;
 	}
 }
 
@@ -578,7 +635,7 @@ Draw_Init
 */
 void CGLRenderer::Draw_Init (void)
 {
-	int		i = 0;
+	int			i = 0;
 	CQuakePic* cb =	NULL;
 	byte	*dest = NULL, *src = NULL;
 	int		x = 0, y = 0;
@@ -603,7 +660,7 @@ void CGLRenderer::Draw_Init (void)
 
 	Cmd_AddCommand ("gl_texturemode", &CGLRenderer::Draw_TextureMode_f);
 
-	draw_chars = static_cast<byte*>(W_GetLumpName ("conchars"));
+	draw_chars = W_GetLumpName<byte>("conchars");
 	offset = (uintptr_t)draw_chars - (uintptr_t)wad_base;
 
 	// now turn them into textures
@@ -617,12 +674,6 @@ void CGLRenderer::Draw_Init (void)
 	conback = Draw_CachePic("gfx/conback.lmp");
 	conback->width = vid.conwidth;
 	conback->height = vid.conheight;
-
-	/*gl.tex = GL_LoadTexture ("conback", conback->width, conback->height, cb->data, TEXPREF_NOPICMIP | TEXPREF_ALPHA);
-	gl.sl = 0;
-	gl.sh = 1;
-	gl.tl = 0;
-	gl.th = 1;*/
 
 	// free loaded console
 	g_MemCache->Hunk_FreeToLowMark(start);
@@ -738,7 +789,7 @@ void CGLRenderer::Draw_AlphaPic (int x, int y, CQuakePic *pic, float alpha)
 
 	if (scrap_dirty)
 		Scrap_Upload ();
-	gl = (COpenGLPic*)&pic->data;
+	gl = (COpenGLPic*)pic->datavec.Base();
 	glDisable(GL_ALPHA_TEST);
 	glEnable (GL_BLEND);
 //	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -772,7 +823,7 @@ void CGLRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 
 	if (scrap_dirty)
 		Scrap_Upload();
-	gl = (COpenGLPic*)pic->data;
+	gl = (COpenGLPic*)pic->datavec.Base();
 	GL_Bind(gl->tex);
 	glBegin(GL_QUADS);
 	glTexCoord2f(gl->sl, gl->tl);
@@ -890,7 +941,7 @@ void CGLRenderer::Draw_TileClear (int x, int y, int w, int h)
 {
 	COpenGLPic* gl;
 
-	gl = (COpenGLPic*)draw_backtile->data;
+	gl = (COpenGLPic*)draw_backtile->datavec.Base();
 
 	glColor3f (1,1,1);
 	g_GLRenderer->GL_Bind(gl->tex); // *(int*)draw_backtile->data;
@@ -1031,18 +1082,98 @@ CGLTexture* CGLRenderer::GL_FindTexture (const char *identifier)
 	int		i;
 	CGLTexture* glt;
 
-	for (i=0, glt=gltextures; i<numgltextures ; i++)
+	for (i=0, glt=active_gltextures; i<numgltextures ; i++)
 	{
 		if (!strcmp (identifier, glt->identifier))
-			return &gltextures[i];
+			return glt;
 	}
 
 	return NULL;
 }
 
+void CGLRenderer::GL_FreeTextureForModel(model_t* mod)
+{
+	CGLTexture* glt, * next;
+
+	for (glt = active_gltextures; glt; glt = next)
+	{
+		next = glt->next;
+		if (glt)
+			if (mod->texinfo)
+				if (mod->texinfo->texture->gltexture == glt)
+					GL_FreeTexture(glt);
+	}
+}
+
 /*
 ================
-TexMgr_MipMapW
+GL_FreeTexture
+================
+*/
+void CGLRenderer::GL_FreeTexture(CGLTexture* kill)
+{
+	CGLTexture* glt, *next;
+
+checktex:
+
+	if (kill == NULL)
+	{
+		Con_Printf("GL_FreeTexture: NULL texture\n");
+		return;
+	}
+
+	if (active_gltextures == kill)
+	{
+		active_gltextures = kill->next;
+		kill->next = free_gltextures;
+		free_gltextures = kill;
+
+		GL_DeleteTexture(kill);
+		numgltextures--;
+		return;
+	}
+
+	for (glt = active_gltextures; glt; glt = glt->next)
+	{
+		next = glt->next;
+
+		if (glt->next == kill)
+		{
+			glt->next = kill->next;
+			kill->next = free_gltextures;
+			free_gltextures = kill;
+
+			GL_DeleteTexture(kill);
+			numgltextures--;
+			return;
+		}
+	}
+
+	Con_Printf("GL_FreeTexture: not found\n");
+}
+
+/*
+================
+GL_DeleteTexture -- ericw
+
+Wrapper around glDeleteTextures that also clears the given texture number
+from our per-TMU cached texture binding table.
+================
+*/
+void CGLRenderer::GL_DeleteTexture(CGLTexture* texture)
+{
+	glDeleteTextures(1, &texture->texnum);
+
+	if (texture == &currenttexture[0]) memset(currenttexture, 0, 1);
+	if (texture == &currenttexture[1]) memset(currenttexture, 0, 1);
+	if (texture == &currenttexture[2]) memset(currenttexture, 0, 1);
+
+	texture->texnum = 0;
+}
+
+/*
+================
+GL_MipMapW
 ================
 */
 unsigned* CGLRenderer::GL_MipMapW(unsigned* data, int width, int height)
@@ -1066,9 +1197,10 @@ unsigned* CGLRenderer::GL_MipMapW(unsigned* data, int width, int height)
 
 /*
 ================
-TexMgr_MipMapH
+GL_MipMapH
 ================
 */
+
 unsigned* CGLRenderer::GL_MipMapH(unsigned* data, int width, int height)
 {
 	int	i, j;
@@ -1097,11 +1229,7 @@ unsigned* CGLRenderer::GL_MipMapH(unsigned* data, int width, int height)
 GL_ResampleTexture
 ================
 */
-#ifndef WIN64
 unsigned* CGLRenderer::GL_ResampleTexture (unsigned *in, int inwidth, int inheight, bool alpha)
-#else
-unsigned* CGLRenderer::GL_ResampleTexture (unsigned long long *in, int inwidth, int inheight, bool alpha)
-#endif
 {
 	byte* nwpx, * nepx, * swpx, * sepx, * dest;
 	unsigned xfrac, yfrac, x, y, modx, mody, imodx, imody, injump, outjump;
@@ -1114,7 +1242,6 @@ unsigned* CGLRenderer::GL_ResampleTexture (unsigned long long *in, int inwidth, 
 	outwidth = GL_Pad(inwidth);
 	outheight = GL_Pad(inheight);
 	out = (unsigned*)g_MemCache->Hunk_Alloc<unsigned>(outwidth * outheight * 4);
-
 	xfrac = ((inwidth - 1) << 16) / (outwidth - 1);
 	yfrac = ((inheight - 1) << 16) / (outheight - 1);
 	y = outjump = 0;
@@ -1162,11 +1289,7 @@ GL_Resample8BitTexture -- JACK
 */
 void CGLRenderer::GL_Resample8BitTexture (unsigned char *in, int inwidth, int inheight, unsigned char *out,  int outwidth, int outheight)
 {
-#ifndef WIN64
 	int		i, j;
-#else
-	long long	i, j;
-#endif
 	unsigned	char *inrow;
 	unsigned	frac, fracstep;
 
@@ -1251,16 +1374,92 @@ void CGLRenderer::GL_MipMap8Bit (byte *in, int width, int height)
 	}
 }
 
+void CGLRenderer::GL_SetFilterModes(CGLTexture* glt)
+{
+	GL_Bind(glt);
+
+	if (glt->flags & TEXPREF_NEAREST)
+	{
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	}
+	else if (glt->flags & TEXPREF_LINEAR)
+	{
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
+	else if (glt->flags & TEXPREF_MIPMAP)
+	{
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glmodes[glmode_idx].magfilter);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glmodes[glmode_idx].minfilter);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1);
+	}
+	else
+	{
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glmodes[glmode_idx].magfilter);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glmodes[glmode_idx].magfilter);
+	}
+}
+
+/*
+===============
+GL_Upload8
+===============
+*/
+void CGLRenderer::GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha)
+{
+	static	unsigned	trans[640 * 480];		// FIXME, temporary
+	int			i, s;
+	bool		noalpha;
+	int			p;
+	qpicbuf_t*	buf;
+	CGLTexture	tex;
+
+	buf = (qpicbuf_t*)data;
+	tex.width = width;
+	tex.height = height;
+
+	s = width * height;
+	// if there are no transparent pixels, make it a 3 component
+	// texture even if it was specified as otherwise
+	if (alpha)
+	{
+		noalpha = true;
+		for (i = 0; i < s; i++)
+		{
+			p = data[i];
+			if (p == 255)
+				noalpha = false;
+			trans[i] = d_8to24table[p];
+		}
+
+		if (alpha && noalpha)
+			alpha = false;
+	}
+	else
+	{
+		if (s & 3)
+			Sys_Error("GL_Upload8: s&3");
+		for (i = 0; i < s; i += 4)
+		{
+			trans[i] = d_8to24table[data[i]];
+			trans[i + 1] = d_8to24table[data[i + 1]];
+			trans[i + 2] = d_8to24table[data[i + 2]];
+			trans[i + 3] = d_8to24table[data[i + 3]];
+		}
+	}
+
+	tex.pic.datavec.AddMultipleToTail(s, (byte*)trans);
+
+	GL_Upload32(&tex, trans);
+}
+
 /*
 ===============
 GL_Upload32
 ===============
 */
-#ifndef WIN64
 void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned* data)
-#else
-void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned long long* data)
-#endif
 {
 	int	internalformat, miplevel, mipwidth, mipheight, picmip;
 
@@ -1317,9 +1516,9 @@ void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned long long* data)
 		}
 	}
 
-	GL_Bind(tex);
+	GL_SetFilterModes(tex);
 
-	if (tex->mipmap)
+	/*if (tex->mipmap)
 	{
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
@@ -1328,12 +1527,12 @@ void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned long long* data)
 	{
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-	}
+	}*/
 }
 
 /*
 ================
-TexMgr_PadImageW -- return image with width padded up to power-of-two dimentions
+GL_PadImageW -- return image with width padded up to power-of-two dimentions
 ================
 */
 byte* CGLRenderer::GL_PadImageW(byte* in, int width, int height, byte padbyte)
@@ -1361,7 +1560,7 @@ byte* CGLRenderer::GL_PadImageW(byte* in, int width, int height, byte padbyte)
 
 /*
 ================
-TexMgr_PadImageH -- return image with height padded up to power-of-two dimentions
+GL_PadImageH -- return image with height padded up to power-of-two dimentions
 ================
 */
 byte* CGLRenderer::GL_PadImageH(byte* in, int width, int height, byte padbyte)
@@ -1387,7 +1586,7 @@ byte* CGLRenderer::GL_PadImageH(byte* in, int width, int height, byte padbyte)
 
 /*
 ===============
-TexMgr_PadEdgeFixW -- special case of AlphaEdgeFix for textures that only need it because they were padded
+GL_PadEdgeFixW -- special case of AlphaEdgeFix for textures that only need it because they were padded
 
 operates in place on 32bit data, and expects unpadded height and width values
 ===============
@@ -1425,7 +1624,7 @@ void CGLRenderer::GL_PadEdgeFixW(byte* data, int width, int height)
 
 /*
 ===============
-TexMgr_PadEdgeFixH -- special case of AlphaEdgeFix for textures that only need it because they were padded
+GL_PadEdgeFixH -- special case of AlphaEdgeFix for textures that only need it because they were padded
 
 operates in place on 32bit data, and expects unpadded height and width values
 ===============
@@ -1483,6 +1682,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	char			id[64] = {};
 	int				len	= 0;
 	bool			padh = false, padw = false;
+	int				mark = 0;
 
 // Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
 
@@ -1502,6 +1702,10 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	glt->width = width;
 	glt->height = height;
 	glt->flags = flags;
+	glt->mipmap = (flags & TEXPREF_MIPMAP) ? true : false;
+
+	//upload it
+	mark = g_MemCache->Hunk_LowMark();
 
 	// detect false alpha cases
 	if (glt->flags & TEXPREF_ALPHA && !(glt->flags & TEXPREF_CONCHARS))
@@ -1570,13 +1774,13 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 			GL_PadEdgeFixH(data, glt->source_width, glt->source_height);
 	}
 
-#ifndef WIN64
 	GL_Upload32(glt, (unsigned*)data);
-#else
-	GL_Upload32(glt, (unsigned long long*)data);
-#endif
+
+	glt->pic.datavec.AddMultipleToTail(width * height, data);
 
 	texture_extension_number++;
+
+	g_MemCache->Hunk_FreeToLowMark(mark);
 
 	return glt;
 
@@ -1591,9 +1795,9 @@ CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic)
 {
 	uintptr_t offset;
 
-	offset = (uintptr_t)pic->data - (uintptr_t)wad_base;
+	offset = (uintptr_t)pic->datavec.Base() - (uintptr_t)wad_base;
 
-	return GL_LoadTexture("", pic->width, pic->height, pic->data, TEXPREF_ALPHA);
+	return GL_LoadTexture("", pic->width, pic->height, pic->datavec.Base(), TEXPREF_ALPHA);
 }
 
 /****************************************/
@@ -1629,5 +1833,5 @@ CGLTexture::CGLTexture(const CGLTexture& obj) : height(0), width(0), mipmap(fals
 
 CGLTexture::~CGLTexture()
 {
-	memset(&pic.data, 0, sizeof(CQuakePic));
+	memset(&pic.datavec, 0, sizeof(CQuakePic));
 }

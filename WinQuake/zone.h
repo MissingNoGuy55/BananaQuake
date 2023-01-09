@@ -395,8 +395,6 @@ T* CMemZone::Z_TagMalloc(int size, int tag)
 	int		extra = 0;
 	CMemBlock<T>* start, * rover, * m_new, * base;
 
-	// start = rover = m_new = base = new CMemBlock<byte>(size);
-
 	if (!tag)
 		Sys_Error("Z_TagMalloc: tried to use a 0 tag");
 
@@ -510,6 +508,8 @@ public:
 
 	template<typename T>
 	void Cache_Move(CMemCacheSystem* c);
+
+	char* Hunk_Strdup(const char* s, const char* name);
 
 	void Hunk_Check(void);
 
@@ -827,11 +827,11 @@ void CMemCache::Memory_Init(T* buf, int size)
 	hunk_high_used = 0;
 
 	Cache_Init();
-	p = common->COM_CheckParm("-zone");
+	p = g_Common->COM_CheckParm("-zone");
 	if (p)
 	{
-		if (p < common->com_argc - 1)
-			zonesize = Q_atoi(common->com_argv[p + 1]) * 1024;
+		if (p < g_Common->com_argc - 1)
+			zonesize = Q_atoi(g_Common->com_argv[p + 1]) * 1024;
 		else
 			Sys_Error("Memory_Init: you must specify a size in KB after -zone");
 	}

@@ -187,10 +187,10 @@ Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 		
 	case 2:		
 		MSG_WriteByte (&cls.message, clc_stringcmd);
-		MSG_WriteString (&cls.message, common->va("name \"%s\"\n", cl_name.string));
+		MSG_WriteString (&cls.message, g_Common->va("name \"%s\"\n", cl_name.string));
 	
 		MSG_WriteByte (&cls.message, clc_stringcmd);
-		MSG_WriteString (&cls.message, common->va("color %i %i\n", ((int)cl_color.value)>>4, ((int)cl_color.value)&15));
+		MSG_WriteString (&cls.message, g_Common->va("color %i %i\n", ((int)cl_color.value)>>4, ((int)cl_color.value)&15));
 	
 		MSG_WriteByte (&cls.message, clc_stringcmd);
 		sprintf (str, "spawn %s", cls.spawnparms);

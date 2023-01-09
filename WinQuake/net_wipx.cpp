@@ -50,7 +50,7 @@ int WIPX_Init (void)
 	int		r;
 	WORD	wVersionRequested; 
 
-	if (common->COM_CheckParm ("-noipx"))
+	if (g_Common->COM_CheckParm ("-noipx"))
 		return -1;
 
 // make sure LoadLibrary has happened successfully

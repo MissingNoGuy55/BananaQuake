@@ -128,39 +128,39 @@ void CGLRenderer::R_Envmap_f (void)
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-	common->COM_WriteFile ("env0.rgb", buffer, sizeof(buffer));
+	g_Common->COM_WriteFile ("env0.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[1] = 90;
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-	common->COM_WriteFile ("env1.rgb", buffer, sizeof(buffer));
+	g_Common->COM_WriteFile ("env1.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[1] = 180;
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-	common->COM_WriteFile ("env2.rgb", buffer, sizeof(buffer));
+	g_Common->COM_WriteFile ("env2.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[1] = 270;
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-	common->COM_WriteFile ("env3.rgb", buffer, sizeof(buffer));
+	g_Common->COM_WriteFile ("env3.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[0] = -90;
 	r_refdef.viewangles[1] = 0;
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-	common->COM_WriteFile ("env4.rgb", buffer, sizeof(buffer));
+	g_Common->COM_WriteFile ("env4.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[0] = 90;
 	r_refdef.viewangles[1] = 0;
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-	common->COM_WriteFile ("env5.rgb", buffer, sizeof(buffer));
+	g_Common->COM_WriteFile ("env5.rgb", buffer, sizeof(buffer));
 
 	envmap = false;
 	glDrawBuffer  (GL_BACK);
@@ -241,19 +241,12 @@ void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 	byte*	 pixels;
 	byte	*out;
 	char	name[64];
-#ifndef WIN64
 	unsigned	translate32[256];
 	unsigned	scaled_width, scaled_height;
 	int			inwidth, inheight;
 	int		i, j, s;
 	unsigned	frac, fracstep;
-#else
-	unsigned long long	translate32[256];
-	unsigned long long	scaled_width, scaled_height;
-	long long			inwidth, inheight;
-	long long			i, j, s;
-	unsigned long long	frac, fracstep;
-#endif
+
 	model_t	*model;
 	aliashdr_t *paliashdr;
 	byte	*original;

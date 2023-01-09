@@ -600,7 +600,7 @@ void WritePCXfile (char *filename, byte *data, int width, int height,
 		
 // write output file 
 	length = pack - (byte *)pcx;
-	common->COM_WriteFile (filename, pcx, length);
+	g_Common->COM_WriteFile (filename, pcx, length);
 } 
  
 
@@ -625,7 +625,7 @@ void SCR_ScreenShot_f (void)
 	{ 
 		pcxname[5] = i/10 + '0'; 
 		pcxname[6] = i%10 + '0'; 
-		sprintf (checkname, "%s/%s", common->com_gamedir, pcxname);
+		sprintf (checkname, "%s/%s", g_Common->com_gamedir, pcxname);
 		if (Sys_FileTime(checkname) == -1)
 			break;	// file doesn't exist
 	} 

@@ -71,7 +71,7 @@ void W_LoadWadFile (const char *filename)
 	unsigned		i;
 	int				infotableofs;
 	
-	wad_base = COM_LoadHunkFile<byte> (filename);
+	wad_base = COM_LoadHunkFile<byte> (filename, NULL);
 	if (!wad_base)
 		Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
 
@@ -96,7 +96,7 @@ void W_LoadWadFile (const char *filename)
 		lump_p->size = LittleLong(lump_p->size);
 		W_CleanupName (lump_p->name, lump_p->name);
 		if (lump_p->type == TYP_QPIC)
-			SwapPic ( (CQuakePic *)(wad_base + lump_p->filepos));
+			SwapPic ( (qpicbuf_t *)(wad_base + lump_p->filepos));
 	}
 }
 
@@ -124,27 +124,6 @@ lumpinfo_t	*W_GetLumpinfo (const char *name)
 	return NULL;
 }
 
-void *W_GetLumpName (const char *name)
-{
-	lumpinfo_t	*lump;
-	
-	lump = W_GetLumpinfo (name);
-	
-	return (void *)(wad_base + lump->filepos);
-}
-
-void *W_GetLumpNum (int num)
-{
-	lumpinfo_t	*lump;
-	
-	if (num < 0 || num > wad_numlumps)
-		Sys_Error ("W_GetLumpNum: bad number: %i", num);
-		
-	lump = wad_lumps + num;
-	
-	return (void *)(wad_base + lump->filepos);
-}
-
 /*
 =============================================================================
 
@@ -153,7 +132,7 @@ automatic byte swapping
 =============================================================================
 */
 
-void SwapPic (CQuakePic *pic)
+void SwapPic (qpicbuf_t *pic)
 {
 	pic->width = LittleLong(pic->width);
 	pic->height = LittleLong(pic->height);
@@ -161,21 +140,15 @@ void SwapPic (CQuakePic *pic)
 
 CQuakePic::CQuakePic() : height(0), width(0)
 {
-	memset(&data, 0, sizeof(&data));
-	/*datavec = new CQVector<byte>;
-	datavec->Init();*/
+	memset(&datavec, 0, sizeof(&datavec));
 }
 
 CQuakePic::CQuakePic(byte& mem) : height(0), width(0)
 {
-	memset(&data, 0, sizeof(&data));
-	/*datavec = new CQVector<byte>;
-	datavec->Init();*/
+	memset(&datavec, 0, sizeof(&datavec));
 }
 
 CQuakePic::CQuakePic(const CQuakePic& src) : height(0), width(0)
 {
-	memset(&data, 0, sizeof(&data));
-	/*datavec = new CQVector<byte>;
-	datavec->Init();*/
+	memset(&datavec, 0, sizeof(&datavec));
 }

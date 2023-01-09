@@ -34,8 +34,8 @@ typedef struct {
 static rectdesc_t	r_rectdesc;
 
 byte		*draw_chars;				// 8*8 graphic characters
-CQuakePic		*draw_disc;
-CQuakePic		*draw_backtile;
+CQuakePic	*draw_disc;
+CQuakePic	*draw_backtile;
 
 //=============================================================================
 /* Support Routines */
@@ -53,7 +53,16 @@ int			menu_numcachepics;
 
 CQuakePic* CSoftwareRenderer::Draw_PicFromWad (const char *name)
 {
-	return static_cast<CQuakePic*>(W_GetLumpName (name));
+
+	qpicbuf_t* buf = W_GetLumpName<qpicbuf_t>(name);
+	CQuakePic* pic = (CQuakePic*)malloc(sizeof(CQuakePic));
+
+	pic->width = buf->width;
+	pic->height = buf->height;
+	pic->datavec.Init();
+	pic->datavec.AddMultipleToTail(buf->width * buf->height, buf->data);
+
+	return pic;
 }
 
 /*
@@ -63,10 +72,11 @@ Draw_CachePic
 */
 CQuakePic* CSoftwareRenderer::Draw_CachePic (const char *path)
 {
-	cachepic_t	*pic;
-	int			i;
-	CQuakePic		*dat;
-	
+	cachepic_t		*pic = NULL;
+	int				i = 0;
+	qpicbuf_t		*buf = NULL;
+	static CQuakePic	*dat = (CQuakePic*)calloc(1, sizeof(CQuakePic));
+
 	for (pic=menu_cachepics, i=0 ; i<menu_numcachepics ; pic++, i++)
 		if (!strcmp (path, pic->name))
 			break;
@@ -79,23 +89,34 @@ CQuakePic* CSoftwareRenderer::Draw_CachePic (const char *path)
 		Q_strcpy (pic->name, path);
 	}
 
-	dat = g_MemCache->Cache_Check<CQuakePic>(&pic->cache);
+	buf = g_MemCache->Cache_Check<qpicbuf_t>(&pic->cache);
 
-	if (dat)
+	if (buf)
+	{
+		dat->width = buf->width;
+		dat->height = buf->height;
+		dat->datavec.RemoveAll();
+		dat->datavec.AddMultipleToTail(buf->width*buf->height*4, (byte*)buf->data);
 		return dat;
+	}
 
 //
 // load the pic from disk
 //
-	COM_LoadCacheFile<cache_user_s>(path, &pic->cache);
+	COM_LoadCacheFile<cache_user_s>(path, &pic->cache, NULL);
 	
-	dat = (CQuakePic *)pic->cache.data;
-	if (!dat)
+	buf = (qpicbuf_t*)pic->cache.data;
+	if (!buf)
 	{
 		Sys_Error ("Draw_CachePic: failed to load %s", path);
 	}
 
-	SwapPic (dat);
+	SwapPic (buf);
+
+	dat->width = buf->width;
+	dat->height = buf->height;
+	dat->datavec.Init();
+	dat->datavec.AddMultipleToTail(buf->width * buf->height * 4, buf->data);
 
 	return dat;
 }
@@ -113,14 +134,16 @@ Draw_Init
 void CSoftwareRenderer::Draw_Init (void)
 {
 	int		i;
+	qpicbuf_t* draw_disc_buf, draw_backtile_buf;
 
-	draw_chars = static_cast<byte*>(W_GetLumpName ("conchars"));
-	draw_disc = static_cast<CQuakePic*>(W_GetLumpName ("disc"));
-	draw_backtile = static_cast<CQuakePic*>(W_GetLumpName ("backtile"));
+
+	draw_chars = W_GetLumpName<byte>("conchars");
+	draw_disc = Draw_PicFromWad("disc");
+	draw_backtile = Draw_PicFromWad("backtile");
 
 	r_rectdesc.width = draw_backtile->width;
 	r_rectdesc.height = draw_backtile->height;
-	r_rectdesc.ptexbytes = draw_backtile->data;
+	r_rectdesc.ptexbytes = draw_backtile->datavec.Base();
 	r_rectdesc.rowbytes = draw_backtile->width;
 }
 
@@ -303,7 +326,7 @@ void CSoftwareRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 		Sys_Error ("Draw_Pic: bad coordinates");
 	}
 
-	source = pic->data;
+	source = pic->datavec.Base();
 
 	if (r_pixbytes == 1)
 	{
@@ -352,7 +375,7 @@ void CSoftwareRenderer::Draw_TransPic (int x, int y, CQuakePic *pic)
 		Sys_Error ("Draw_TransPic: bad coordinates");
 	}
 		
-	source = pic->data;
+	source = pic->datavec.Base();
 
 	if (r_pixbytes == 1)
 	{
@@ -439,7 +462,7 @@ void CSoftwareRenderer::Draw_TransPicTranslate (int x, int y, CQuakePic *pic, by
 		Sys_Error ("Draw_TransPic: bad coordinates");
 	}
 		
-	source = pic->data;
+	source = pic->datavec.Base();
 
 	if (r_pixbytes == 1)
 	{
@@ -553,7 +576,7 @@ void CSoftwareRenderer::Draw_ConsoleBackground (int lines)
 // hack the version number directly into the pic
 #ifdef _WIN32
 	sprintf (ver, "(WinQuake) %4.2f", (float)VERSION);
-	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
+	dest = conback->datavec.Base() + 320*186 + 320 - 11 - 8*strlen(ver);
 #elif defined(X11)
 	sprintf (ver, "(X11 Quake %2.2f) %4.2f", (float)X11_VERSION, (float)VERSION);
 	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
@@ -576,7 +599,7 @@ void CSoftwareRenderer::Draw_ConsoleBackground (int lines)
 		for (y=0 ; y<lines ; y++, dest += vid.conrowbytes)
 		{
 			v = (vid.conheight - lines + y)*200/vid.conheight;
-			src = conback->data + v*320;
+			src = conback->datavec.Base() + v * 320;
 			if (vid.conwidth == 320)
 				memcpy (dest, src, vid.conwidth);
 			else
@@ -606,7 +629,7 @@ void CSoftwareRenderer::Draw_ConsoleBackground (int lines)
 		// FIXME: pre-expand to native format?
 		// FIXME: does the endian switching go away in production?
 			v = (vid.conheight - lines + y)*200/vid.conheight;
-			src = conback->data + v*320;
+			src = conback->datavec.Base() + v*320;
 			f = 0;
 			fstep = 320*0x10000/vid.conwidth;
 			for (x=0 ; x<vid.conwidth ; x+=4)
@@ -884,8 +907,9 @@ Call before beginning any disc IO.
 */
 void CSoftwareRenderer::Draw_BeginDisc (void)
 {
-
-	D_BeginDirectRect (vid.width - 24, 0, draw_disc->data, 24, 24);
+#ifndef QUAKE_TOOLS
+	D_BeginDirectRect (vid.width - 24, 0, draw_disc->datavec.Base(), 24, 24);
+#endif
 }
 
 

@@ -1235,6 +1235,13 @@ void PF_lightstyle (void)
 	style = G_FLOAT(OFS_PARM0);
 	val = G_STRING(OFS_PARM1);
 
+	// bounds check to avoid clobbering sv struct
+	if (style < 0 || style >= MAX_LIGHTSTYLES)
+	{
+		Con_DPrintf("PF_lightstyle: invalid style %d\n", style);
+		return;
+	}
+
 // change the string in sv
 	sv.lightstyles[style] = val;
 	
@@ -1671,7 +1678,7 @@ void PF_changelevel (void)
 	svs.changelevel_issued = true;
 	
 	s = G_STRING(OFS_PARM0);
-	Cbuf_AddText (common->va("changelevel %s\n",s));
+	Cbuf_AddText (g_Common->va("changelevel %s\n",s));
 #endif
 }
 
