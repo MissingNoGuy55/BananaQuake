@@ -346,7 +346,7 @@ void CGLRenderer::Scrap_Upload (void)
 
 	for (i=0 ; i<MAX_SCRAPS ; i++) {
 		sprintf(name, "scrap%i", i);
-		scrap_textures[i] = GL_LoadTexture(name, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], 
+		scrap_textures[i] = GL_LoadTexture(NULL, name, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], 
 			(src_offset_t)scrap_texels[i], TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
 		/*g_GLRenderer->GL_Bind(scrap_textures[i]);
 		GL_Upload8 (scrap_texels[i], BLOCK_WIDTH, BLOCK_HEIGHT, false, true);*/
@@ -457,7 +457,7 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 
 		offset = (uintptr_t)p - (uintptr_t)wad_base + sizeof(int) * 2; //johnfitz
 
-		gl.tex = GL_LoadTexture(name, p->width, p->height, pbuf->data, offset, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
+		gl.tex = GL_LoadTexture(NULL, name, p->width, p->height, pbuf->data, offset, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
 		gl.sl = 0;
 		gl.sh = (float)p->width / (float)GL_PadConditional(p->width); //Missi -- copied from QuakeSpasm (5/28/2022)
 		gl.tl = 0;
@@ -517,7 +517,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	if (!strcmp (path, "gfx/menuplyr.lmp"))
 		memcpy (menuplyr_pixels, pic->pic.datavec.Base(), qpicbuf->width * qpicbuf->height);
 
-	gl.tex = GL_LoadTexture(path, qpicbuf->width, qpicbuf->height, qpicbuf->data, sizeof(int) * 2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); // (COpenGLPic*)pic->pic->data;
+	gl.tex = GL_LoadTexture(NULL, path, qpicbuf->width, qpicbuf->height, qpicbuf->data, sizeof(int) * 2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); // (COpenGLPic*)pic->pic->data;
 	gl.sl = 0;
 	gl.sh = 1;
 	gl.tl = 0;
@@ -664,7 +664,7 @@ void CGLRenderer::Draw_Init (void)
 	offset = (uintptr_t)draw_chars - (uintptr_t)wad_base;
 
 	// now turn them into textures
-	char_texture = GL_LoadTexture ("charset", 128, 128, draw_chars, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
+	char_texture = GL_LoadTexture (NULL, "charset", 128, 128, draw_chars, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
 
 	start = g_MemCache->Hunk_LowMark();
 
@@ -1098,10 +1098,8 @@ void CGLRenderer::GL_FreeTextureForModel(model_t* mod)
 	for (glt = active_gltextures; glt; glt = next)
 	{
 		next = glt->next;
-		if (glt)
-			if (mod->texinfo)
-				if (mod->texinfo->texture->gltexture == glt)
-					GL_FreeTexture(glt);
+		if (glt && glt->owner == mod)
+			GL_FreeTexture(glt);
 	}
 }
 
@@ -1669,7 +1667,7 @@ GL_LoadTexture -- Missi: revised (3/18/2022)
 Loads an OpenGL texture via string ID or byte data. Can take an empty string or NULL if you don't need a name.
 ================
 */
-CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int height, byte *data, uintptr_t offset, int flags)
+CGLTexture* CGLRenderer::GL_LoadTexture (model_t* owner, const char *identifier, int width, int height, byte *data, uintptr_t offset, int flags)
 {
 	int				i = 0, p = 0, s = 0, l = 0, m = 0; // -- Missi
 	CGLTexture*		glt = NULL;
@@ -1695,6 +1693,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (const char *identifier, int width, int 
 	glt->pic.height = height;
 
 	Q_strncpy(glt->identifier, identifier, sizeof(glt->identifier));	// Missi: this was Q_strcpy at one point. Caused heap corruption. (4/11/2022)
+	glt->owner = owner;
 	glt->texnum = texture_extension_number;
 	glt->source_offset = offset;
 	glt->source_width = width;
@@ -1797,7 +1796,7 @@ CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic)
 
 	offset = (uintptr_t)pic->datavec.Base() - (uintptr_t)wad_base;
 
-	return GL_LoadTexture("", pic->width, pic->height, pic->datavec.Base(), TEXPREF_ALPHA);
+	return GL_LoadTexture(NULL, "", pic->width, pic->height, pic->datavec.Base(), TEXPREF_ALPHA);
 }
 
 /****************************************/

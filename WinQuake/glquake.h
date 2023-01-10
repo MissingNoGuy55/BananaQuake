@@ -257,7 +257,7 @@ public:
 	byte* GL_PadImageH(byte* in, int width, int height, byte padbyte);
 	void GL_PadEdgeFixW(byte* data, int width, int height);
 	void GL_PadEdgeFixH(byte* data, int width, int height);
-	CGLTexture* GL_LoadTexture(const char* identifier, int width, int height, byte* data, uintptr_t offset, int flags = TEXPREF_NONE);
+	CGLTexture* GL_LoadTexture(model_t* owner, const char* identifier, int width, int height, byte* data, uintptr_t offset, int flags = TEXPREF_NONE);
 
 	void GL_SetCanvas(canvastype newcanvas);
 
@@ -438,6 +438,7 @@ public:
 	~CGLTexture();
 
 	CGLTexture*			next;
+	model_t*			owner;
 	CQuakePic			pic;
 
 	GLuint				texnum;

@@ -317,7 +317,7 @@ void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 	inheight = paliashdr->skinheight;
 
 	snprintf(name, sizeof(name), "player_%i", playernum);
-	playertextures[playernum] = g_GLRenderer->GL_LoadTexture(name, paliashdr->skinwidth, paliashdr->skinheight,
+	playertextures[playernum] = g_GLRenderer->GL_LoadTexture(currententity->model, name, paliashdr->skinwidth, paliashdr->skinheight,
 		pixels, paliashdr->gltextures[skinnum][0]->source_offset, TEXPREF_PAD | TEXPREF_OVERWRITE);
 
 	// because this happens during gameplay, do it fast
