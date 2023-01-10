@@ -90,7 +90,7 @@ net_landriver_t	net_landrivers[MAX_NET_DRIVERS] =
 	WINS_AddrCompare,
 	WINS_GetSocketPort,
 	WINS_SetSocketPort
-	},
+	}/*,
 	{
 	"Winsock IPX",
 	false,
@@ -113,8 +113,8 @@ net_landriver_t	net_landrivers[MAX_NET_DRIVERS] =
 	WIPX_AddrCompare,
 	WIPX_GetSocketPort,
 	WIPX_SetSocketPort
-	}
+	}*/
 
 };
 
-int net_numlandrivers = 2;
+int net_numlandrivers = 1;	// Missi: was 2 (1/10/2023)

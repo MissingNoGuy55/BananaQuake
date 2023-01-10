@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-#define	MAX_HANDLES		10
+#define	MAX_HANDLES		64	// Missi: was 10 (1/10/2023)
 extern FILE* sys_handles[MAX_HANDLES];
 
 int VID_ForceUnlockedAndReturnState();

@@ -815,7 +815,7 @@ void	VID_SetPalette (unsigned char *palette)
 //		d_15to8table[i]=k;
 //	}
 
-	g_Common->COM_FOpenFile("gfx/palette.lmp", &f);
+	g_Common->COM_FOpenFile("gfx/palette.lmp", &f, NULL);
 	if (!f)
 		Sys_Error("Couldn't load gfx/palette.lmp");
 

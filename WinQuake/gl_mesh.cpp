@@ -309,7 +309,7 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 	g_Common->COM_StripExtension (m->name+strlen("progs/"), cache+strlen("glquake/"));
 	Q_strcat (cache, ".ms2");
 
-	g_Common->COM_FOpenFile (cache, &f);
+	g_Common->COM_FOpenFile (cache, &f, NULL);
 	if (f)
 	{
 		fread(&numcommands, 4, 1, f);

@@ -476,7 +476,7 @@ model_t* Mod_LoadModel(model_t* mod, bool crash)
 	//
 	// load the file
 	//
-	buf = COM_LoadStackFile<unsigned>(mod->name, stackbuf, sizeof(stackbuf));
+	buf = COM_LoadStackFile<unsigned>(mod->name, stackbuf, sizeof(stackbuf), NULL);
 	if (!buf)
 	{
 		if (crash)

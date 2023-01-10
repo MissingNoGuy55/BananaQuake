@@ -500,7 +500,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 //
 // load the pic from disk
 //
-	qpicbuf = COM_LoadTempFile<qpicbuf_t> (path);
+	qpicbuf = COM_LoadTempFile<qpicbuf_t> (path, NULL);
 	if (!qpicbuf)
 	{
 		Sys_Error ("Draw_CachePic: failed to load %s", path);
