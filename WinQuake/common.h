@@ -229,6 +229,8 @@ public:
 	void COM_CheckRegistered(void);
 	void COM_InitArgv (int argc, char **argv);
 
+	void COM_AddExtension(char* path, const char* extension, size_t len);	// Missi: copied from QuakeSpasm (1/10/2023)
+
 	char* COM_SkipPath (char *pathname);
 	void COM_StripExtension (const char *in, char *out);
 	void COM_FileBase(const char* in, char* out, size_t outsize);
@@ -240,6 +242,8 @@ public:
 	int COM_OpenFile (const char *filename, int *handle, uintptr_t* path_id);
 	static int COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id);
 	void COM_CloseFile (int h);
+
+	byte* COM_LoadMallocFile_TextMode_OSPath(const char* path, long* len_out);
 
 	void COM_AddGameDirectory(const char* dir);
 

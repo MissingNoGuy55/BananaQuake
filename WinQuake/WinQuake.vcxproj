@@ -810,6 +810,7 @@
     <ClCompile Include="snd_wave.cpp" />
     <ClCompile Include="snd_win.cpp" />
     <ClCompile Include="d_vars.cpp" />
+    <ClCompile Include="strlcat.cpp" />
     <ClCompile Include="sv_main.cpp" />
     <ClCompile Include="sv_move.cpp" />
     <ClCompile Include="sv_phys.cpp" />
@@ -1520,6 +1521,7 @@ del $(OutDir)%(Filename).spp </Command>
     <ClInclude Include="snd_wave.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="spritegn.h" />
+    <ClInclude Include="strl_fn.h" />
     <ClInclude Include="sys.h" />
     <ClInclude Include="sys_win.h" />
     <ClInclude Include="utils.h" />

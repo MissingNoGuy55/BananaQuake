@@ -116,8 +116,8 @@ void CGLRenderer::R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 
 	surf->cached_dlight = (surf->dlightframe == r_framecount);
 
-	smax = ((long long)surf->extents[0]>>4)+1;
-	tmax = ((long long)surf->extents[1]>>4)+1;
+	smax = (surf->extents[0]>>4)+1;
+	tmax = (surf->extents[1]>>4)+1;
 	size = smax*tmax;
 	lightmap = surf->samples;
 
@@ -570,12 +570,6 @@ void CGLRenderer::R_BlendLightmaps (void)
 		{
 			lightmap_modified[i] = false;
 			theRect = &lightmap_rectchange[i];
-//			glTexImage2D (GL_TEXTURE_2D, 0, lightmap_bytes
-//			, BLOCK_WIDTH, BLOCK_HEIGHT, 0, 
-//			gl_lightmap_format, GL_UNSIGNED_BYTE, lightmaps+i*BLOCK_WIDTH*BLOCK_HEIGHT*lightmap_bytes);
-//			glTexImage2D (GL_TEXTURE_2D, 0, lightmap_bytes
-//				, BLOCK_WIDTH, theRect->h, 0, 
-//				gl_lightmap_format, GL_UNSIGNED_BYTE, lightmaps+(i*BLOCK_HEIGHT+theRect->t)*BLOCK_WIDTH*lightmap_bytes);
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, theRect->t, 
 				BLOCK_WIDTH, theRect->h, gl_lightmap_format, GL_UNSIGNED_BYTE,
 				lightmaps+(i* BLOCK_HEIGHT + theRect->t) *BLOCK_WIDTH*lightmap_bytes);

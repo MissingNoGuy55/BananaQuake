@@ -262,7 +262,7 @@ void CL_ParseServerInfo (void)
 			Con_Printf ("Server sent too many model precaches\n");
 			return;
 		}
-		q_strlcpy (model_precache[nummodels], str, MAX_QPATH);
+		Q_strlcpy (model_precache[nummodels], str, MAX_QPATH);
 		Mod_TouchModel (str);
 	}
 
@@ -278,7 +278,7 @@ void CL_ParseServerInfo (void)
 			Con_Printf ("Server sent too many sound precaches\n");
 			return;
 		}
-		q_strlcpy (sound_precache[numsounds], str, MAX_QPATH);
+		Q_strlcpy (sound_precache[numsounds], str, MAX_QPATH);
 		g_SoundSystem->S_TouchSound (str);
 	}
 
@@ -835,7 +835,7 @@ void CL_ParseServerMessage (void)
 				Sys_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
 			else
 			{
-				q_strlcpy (cl_lightstyle[i].map,  MSG_ReadString(), MAX_STYLESTRING);
+				Q_strlcpy (cl_lightstyle[i].map,  MSG_ReadString(), MAX_STYLESTRING);
 				cl_lightstyle[i].length = Q_strlen(cl_lightstyle[i].map);
 			}
 			break;

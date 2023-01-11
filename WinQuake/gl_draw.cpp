@@ -420,7 +420,6 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 	qpicbuf_t* pbuf = NULL;
 	COpenGLPic	gl;
 	uintptr_t offset;
-	byte	test[1];
 
 	pbuf = W_GetLumpName<qpicbuf_t>(name);
 	
@@ -1077,15 +1076,17 @@ void CGLRenderer::GL_Set2D (void)
 GL_FindTexture
 ================
 */
-CGLTexture* CGLRenderer::GL_FindTexture (const char *identifier)
+CGLTexture* CGLRenderer::GL_FindTexture (model_t* model, const char *identifier)
 {
-	int		i;
 	CGLTexture* glt;
 
-	for (i=0, glt=active_gltextures; i<numgltextures ; i++)
+	if (identifier)
 	{
-		if (!strcmp (identifier, glt->identifier))
-			return glt;
+		for (glt = active_gltextures; glt; glt = glt->next)
+		{
+			if (glt->owner == model && !strcmp(glt->identifier, identifier))
+				return glt;
+		}
 	}
 
 	return NULL;
@@ -1674,7 +1675,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (model_t* owner, const char *identifier,
 	COpenGLPic*		gl = NULL;
 	CQuakePic*		qpic = NULL;
 	byte*			out = data;
-	int				CRCBlock1 = 0, CRCBlock2 = 0;
+	int				CRCBlock;
 	byte			padbyte;
 	unsigned int*	usepal;
 	char			id[64] = {};
@@ -1684,8 +1685,13 @@ CGLTexture* CGLRenderer::GL_LoadTexture (model_t* owner, const char *identifier,
 
 // Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
 
-	if ((glt = GL_FindTexture(identifier)) && (glt->flags & TEXPREF_OVERWRITE))
-		return glt;
+	CRCBlock = g_CRCManager->CRC_Block(data, width * height);
+
+	if ((flags & TEXPREF_OVERWRITE) && (glt = GL_FindTexture(owner, identifier)))
+	{
+		if (glt->checksum == CRCBlock)
+			return glt;
+	}
 	else
 		glt = GL_NewTexture();
 

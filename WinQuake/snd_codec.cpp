@@ -305,7 +305,7 @@ snd_stream_t* S_CodecUtilOpen(const char* filename, snd_codec_t* codec, bool loo
 	stream->fh.pos = 0;
 	stream->fh.length = length;
 	stream->fh.pak = stream->pak = pak;
-	q_strlcpy(stream->name, filename, MAX_QPATH);
+	Q_strlcpy(stream->name, filename, MAX_QPATH);
 
 	return stream;
 }

@@ -240,7 +240,7 @@ public:
 
 	void GL_Set2D(void);
 
-	CGLTexture* GL_FindTexture(const char* identifier);
+	CGLTexture* GL_FindTexture(model_t* model, const char* identifier);
 	void GL_FreeTextureForModel(model_t* mod);
 	void GL_FreeTexture(CGLTexture* kill);
 	void GL_DeleteTexture(CGLTexture* texture);

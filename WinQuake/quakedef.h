@@ -256,6 +256,7 @@ typedef struct
 #include "client.h"
 #include "progs.h"
 #include "server.h"
+#include "strl_fn.h"	// Missi (1/10/2023)
 
 #ifdef GLQUAKE
 #include "gl_model.h"
