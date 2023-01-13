@@ -823,7 +823,7 @@ static char	*empty_string = "";
 HWND		hwnd_dialog = {};
 
 
-int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _Out_ int nCmdShow)
+int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
 	quakeparms_t<byte*>	parms;
 	double			time, oldtime, newtime;
