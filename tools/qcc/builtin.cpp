@@ -197,6 +197,7 @@ CVAR
 ==================
 */
 
+#include <strlcat.cpp>
 #include <cmd.cpp>
 #include <cvar.cpp>
 
@@ -879,7 +880,7 @@ void Q_strncpy(char* dest, const char* src, int count)
 		*dest++ = 0;
 }
 
-size_t q_strlcpy(char* dst, const char* src, size_t siz)
+size_t Q_strlcpy(char* dst, const char* src, size_t siz)
 {
 	char* d = dst;
 	const char* s = src;
@@ -902,6 +903,33 @@ size_t q_strlcpy(char* dst, const char* src, size_t siz)
 	}
 
 	return(s - src - 1);	/* count does not include NUL */
+}
+
+size_t Q_strlcat(char* dst, const char* src, size_t siz)
+{
+	char* d = dst;
+	const char* s = src;
+	size_t n = siz;
+	size_t dlen;
+
+	/* Find the end of dst and adjust bytes left but don't go past end */
+	while (n-- != 0 && *d != '\0')
+		d++;
+	dlen = d - dst;
+	n = siz - dlen;
+
+	if (n == 0)
+		return(dlen + strlen(s));
+	while (*s != '\0') {
+		if (n != 1) {
+			*d++ = *s;
+			n--;
+		}
+		s++;
+	}
+	*d = '\0';
+
+	return(dlen + (s - src));	/* count does not include NUL */
 }
 
 int Q_strlen(const char* str)
@@ -2630,7 +2658,7 @@ void PF_changelevel (void)
 	svs.changelevel_issued = true;
 	
 	s = G_STRING(OFS_PARM0);
-	Cbuf_AddText (common->va("changelevel %s\n",s));
+	Cbuf_AddText (g_Common->va("changelevel %s\n",s));
 }
 
 
