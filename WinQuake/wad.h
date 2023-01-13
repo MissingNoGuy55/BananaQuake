@@ -39,6 +39,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	TYP_SOUND		67
 #define	TYP_MIPTEX		68
 
+enum srcformat_t
+{
+	SRC_NONE,
+	SRC_INDEXED,
+	SRC_LIGHTMAP,
+	SRC_RGBA
+};
+
 struct CQuakePic
 {
 public:

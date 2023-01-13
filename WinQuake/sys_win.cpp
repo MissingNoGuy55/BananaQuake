@@ -50,8 +50,8 @@ static double		curtime = 0.0;
 static double		lastcurtime = 0.0;
 static int			lowshift;
 static bool			isDedicated;
-static bool		sc_return_on_enter = false;
-static HANDLE				hinput, houtput;
+static bool			sc_return_on_enter = false;
+static HANDLE		hinput, houtput;
 
 static char			*tracking_tag = "Clams & Mooses";
 
@@ -823,7 +823,7 @@ static char	*empty_string = "";
 HWND		hwnd_dialog = {};
 
 
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _Out_ int nCmdShow)
 {
 	quakeparms_t<byte*>	parms;
 	double			time, oldtime, newtime;
@@ -957,12 +957,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	if (!parms.membase)
 		Sys_Error ("Not enough memory free; check disk space\n");
 
-	//Sys_PageIn ((void*)parms.membase, parms.memsize);
+	Sys_PageIn ((void*)parms.membase, parms.memsize);
 
-	// tevent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	tevent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-	// if (!tevent)
-	// 	Sys_Error ("Couldn't create event");
+	if (!tevent)
+		Sys_Error ("Couldn't create event");
 
 	if (isDedicated)
 	{

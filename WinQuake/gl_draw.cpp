@@ -34,6 +34,7 @@ cvar_t		gl_nobind = {"gl_nobind", "0"};
 cvar_t		gl_max_size = {"gl_max_size", "1024"};
 cvar_t		gl_picmip = {"gl_picmip", "0"};
 cvar_t		gl_texturemode = {"gl_texturemode", ""};
+cvar_t		gl_fullbrights = {"gl_fullbrights", "0"};
 GLint		gl_hardware_maxsize;
 
 byte		*draw_chars;				// 8*8 graphic characters
@@ -346,7 +347,7 @@ void CGLRenderer::Scrap_Upload (void)
 
 	for (i=0 ; i<MAX_SCRAPS ; i++) {
 		sprintf(name, "scrap%i", i);
-		scrap_textures[i] = GL_LoadTexture(NULL, name, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], 
+		scrap_textures[i] = GL_LoadTexture(NULL, name, BLOCK_WIDTH, BLOCK_HEIGHT, SRC_INDEXED, scrap_texels[i],
 			(src_offset_t)scrap_texels[i], TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
 		/*g_GLRenderer->GL_Bind(scrap_textures[i]);
 		GL_Upload8 (scrap_texels[i], BLOCK_WIDTH, BLOCK_HEIGHT, false, true);*/
@@ -456,7 +457,7 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 
 		offset = (uintptr_t)p - (uintptr_t)wad_base + sizeof(int) * 2; //johnfitz
 
-		gl.tex = GL_LoadTexture(NULL, name, p->width, p->height, pbuf->data, offset, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
+		gl.tex = GL_LoadTexture(NULL, name, p->width, p->height, SRC_INDEXED, pbuf->data, offset, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
 		gl.sl = 0;
 		gl.sh = (float)p->width / (float)GL_PadConditional(p->width); //Missi -- copied from QuakeSpasm (5/28/2022)
 		gl.tl = 0;
@@ -516,7 +517,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	if (!strcmp (path, "gfx/menuplyr.lmp"))
 		memcpy (menuplyr_pixels, pic->pic.datavec.Base(), qpicbuf->width * qpicbuf->height);
 
-	gl.tex = GL_LoadTexture(NULL, path, qpicbuf->width, qpicbuf->height, qpicbuf->data, sizeof(int) * 2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); // (COpenGLPic*)pic->pic->data;
+	gl.tex = GL_LoadTexture(NULL, path, qpicbuf->width, qpicbuf->height, SRC_INDEXED, qpicbuf->data, sizeof(int) * 2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); // (COpenGLPic*)pic->pic->data;
 	gl.sl = 0;
 	gl.sh = 1;
 	gl.tl = 0;
@@ -663,7 +664,7 @@ void CGLRenderer::Draw_Init (void)
 	offset = (uintptr_t)draw_chars - (uintptr_t)wad_base;
 
 	// now turn them into textures
-	char_texture = GL_LoadTexture (NULL, "charset", 128, 128, draw_chars, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
+	char_texture = GL_LoadTexture (NULL, "charset", 128, 128, SRC_INDEXED, draw_chars, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
 
 	start = g_MemCache->Hunk_LowMark();
 
@@ -1663,54 +1664,95 @@ void CGLRenderer::GL_PadEdgeFixH(byte* data, int width, int height)
 
 /*
 ================
-GL_LoadTexture -- Missi: revised (3/18/2022)
-
-Loads an OpenGL texture via string ID or byte data. Can take an empty string or NULL if you don't need a name.
+GL_LoadImage32 -- handles 32bit source data
 ================
 */
-CGLTexture* CGLRenderer::GL_LoadTexture (model_t* owner, const char *identifier, int width, int height, byte *data, uintptr_t offset, int flags)
+void CGLRenderer::GL_LoadImage32(CGLTexture* glt, unsigned* data)
 {
-	int				i = 0, p = 0, s = 0, l = 0, m = 0; // -- Missi
-	CGLTexture*		glt = NULL;
-	COpenGLPic*		gl = NULL;
-	CQuakePic*		qpic = NULL;
-	byte*			out = data;
-	int				CRCBlock;
-	byte			padbyte;
-	unsigned int*	usepal;
-	char			id[64] = {};
-	int				len	= 0;
-	bool			padh = false, padw = false;
-	int				mark = 0;
+	int	internalformat, miplevel, mipwidth, mipheight, picmip;
 
-// Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
-
-	CRCBlock = g_CRCManager->CRC_Block(data, width * height);
-
-	if ((flags & TEXPREF_OVERWRITE) && (glt = GL_FindTexture(owner, identifier)))
+	if (!gl_texture_NPOT)
 	{
-		if (glt->checksum == CRCBlock)
-			return glt;
+		// resample up
+		data = GL_ResampleTexture(data, glt->width, glt->height, glt->flags & TEXPREF_ALPHA);
+		glt->width = GL_Pad(glt->width);
+		glt->height = GL_Pad(glt->height);
 	}
-	else
-		glt = GL_NewTexture();
 
-	glt->pic.width = width;
-	glt->pic.height = height;
+	// mipmap down
+	picmip = (glt->flags & TEXPREF_NOPICMIP) ? 0 : q_max((int)gl_picmip.value, 0);
+	mipwidth = GL_SafeTextureSize(glt->width >> picmip);
+	mipheight = GL_SafeTextureSize(glt->height >> picmip);
+	while ((int)glt->width > mipwidth)
+	{
+		GL_MipMapW(data, glt->width, glt->height);
+		glt->width >>= 1;
+		if (glt->flags & TEXPREF_ALPHA)
+			GL_AlphaEdgeFix((byte*)data, glt->width, glt->height);
+	}
+	while ((int)glt->height > mipheight)
+	{
+		GL_MipMapH(data, glt->width, glt->height);
+		glt->height >>= 1;
+		if (glt->flags & TEXPREF_ALPHA)
+			GL_AlphaEdgeFix((byte*)data, glt->width, glt->height);
+	}
 
-	Q_strncpy(glt->identifier, identifier, sizeof(glt->identifier));	// Missi: this was Q_strcpy at one point. Caused heap corruption. (4/11/2022)
-	glt->owner = owner;
-	glt->texnum = texture_extension_number;
-	glt->source_offset = offset;
-	glt->source_width = width;
-	glt->source_height = height;
-	glt->width = width;
-	glt->height = height;
-	glt->flags = flags;
-	glt->mipmap = (flags & TEXPREF_MIPMAP) ? true : false;
+	// upload
+	GL_Bind(glt);
+	internalformat = (glt->flags & TEXPREF_ALPHA) ? gl_alpha_format : gl_solid_format;
+	glt->pic.datavec.AddMultipleToTail(glt->source_width * glt->source_height, (byte*)data);
+	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, glt->width, glt->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-	//upload it
-	mark = g_MemCache->Hunk_LowMark();
+	// upload mipmaps
+	if (glt->flags & TEXPREF_MIPMAP && !(glt->flags & TEXPREF_WARPIMAGE)) // warp image mipmaps are generated later
+	{
+		mipwidth = glt->width;
+		mipheight = glt->height;
+
+		for (miplevel = 1; mipwidth > 1 || mipheight > 1; miplevel++)
+		{
+			if (mipwidth > 1)
+			{
+				GL_MipMapW(data, mipwidth, mipheight);
+				mipwidth >>= 1;
+			}
+			if (mipheight > 1)
+			{
+				GL_MipMapH(data, mipwidth, mipheight);
+				mipheight >>= 1;
+			}
+			glTexImage2D(GL_TEXTURE_2D, miplevel, internalformat, mipwidth, mipheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		}
+	}
+
+	// set filter modes
+	GL_SetFilterModes(glt);
+}
+
+/*
+================
+GL_LoadImage8 -- handles 8bit source data, then passes it to LoadImage32
+================
+*/
+void CGLRenderer::GL_LoadImage8(CGLTexture* glt, byte* data)
+{
+	extern cvar_t gl_fullbrights;
+	bool padw = false, padh = false;
+	byte padbyte;
+	unsigned int* usepal;
+	int i;
+
+	// HACK HACK HACK -- taken from tomazquake
+	if (strstr(glt->identifier, "shot1sid") &&
+		glt->width == 32 && glt->height == 32 &&
+		g_CRCManager->CRC_Block(data, 1024) == 65393)
+	{
+		// This texture in b_shell1.bsp has some of the first 32 pixels painted white.
+		// They are invisible in software, but look really ugly in GL. So we just copy
+		// 32 pixels from the bottom to make it look nice.
+		memcpy(data, data + 32 * 31, 32);
+	}
 
 	// detect false alpha cases
 	if (glt->flags & TEXPREF_ALPHA && !(glt->flags & TEXPREF_CONCHARS))
@@ -1731,7 +1773,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (model_t* owner, const char *identifier,
 			usepal = d_8to24table_fbright;
 		padbyte = 0;
 	}
-	else if (glt->flags & TEXPREF_NOBRIGHT) // && gl_fullbrights.value)
+	else if (glt->flags & TEXPREF_NOBRIGHT && gl_fullbrights.value)
 	{
 		if (glt->flags & TEXPREF_ALPHA)
 			usepal = d_8to24table_nobright_fence;
@@ -1750,6 +1792,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (model_t* owner, const char *identifier,
 		padbyte = 255;
 	}
 
+	// pad each dimention, but only if it's not going to be downsampled later
 	if (glt->flags & TEXPREF_PAD)
 	{
 		if ((int)glt->width < GL_SafeTextureSize(glt->width))
@@ -1766,6 +1809,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture (model_t* owner, const char *identifier,
 		}
 	}
 
+	// convert to 32bit
 	data = (byte*)GL_8to32(data, glt->width * glt->height, usepal);
 
 	// fix edges
@@ -1779,9 +1823,103 @@ CGLTexture* CGLRenderer::GL_LoadTexture (model_t* owner, const char *identifier,
 			GL_PadEdgeFixH(data, glt->source_width, glt->source_height);
 	}
 
-	GL_Upload32(glt, (unsigned*)data);
+	// upload it
+	GL_LoadImage32(glt, (unsigned*)data);
+}
 
-	glt->pic.datavec.AddMultipleToTail(width * height, data);
+/*
+================
+GL_LoadLightmap -- handles lightmap data
+================
+*/
+void CGLRenderer::GL_LoadLightmap(CGLTexture* glt, byte* data)
+{
+	// upload it
+	GL_Bind(glt);
+	glTexImage2D(GL_TEXTURE_2D, 0, lightmap_bytes, glt->width, glt->height, 0, gl_lightmap_format, GL_UNSIGNED_BYTE, data);
+
+	// set filter modes
+	GL_SetFilterModes(glt);
+}
+
+/*
+================
+GL_LoadTexture -- Missi: revised (3/18/2022)
+
+Loads an OpenGL texture via string ID or byte data. Can take an empty string or NULL if you don't need a name.
+================
+*/
+CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, int width, int height, enum srcformat_t format, byte* data, uintptr_t offset, int flags)
+{
+	int				i = 0, p = 0, s = 0, l = 0, m = 0; // -- Missi
+	CGLTexture*		glt = NULL;
+	COpenGLPic*		gl = NULL;
+	CQuakePic*		qpic = NULL;
+	byte*			out = data;
+	int				CRCBlock;
+	byte			padbyte;
+	unsigned int*	usepal;
+	char			id[64] = {};
+	int				len	= 0;
+	bool			padh = false, padw = false;
+	int				mark = 0;
+
+// Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
+
+	switch (format)
+	{
+	case SRC_INDEXED:
+		CRCBlock = g_CRCManager->CRC_Block(data, width * height);
+		break;
+	case SRC_LIGHTMAP:
+		CRCBlock = g_CRCManager->CRC_Block(data, width * height * lightmap_bytes);
+		break;
+	case SRC_RGBA:
+		CRCBlock = g_CRCManager->CRC_Block(data, width * height * 4);
+		break;
+	default: /* not reachable but avoids compiler warnings */
+		CRCBlock = 0;
+	}
+
+	if ((flags & TEXPREF_OVERWRITE) && (glt = GL_FindTexture(owner, identifier)))
+	{
+		if (glt->checksum == CRCBlock)
+			return glt;
+	}
+	else
+		glt = GL_NewTexture();
+
+	glt->pic.width = width;
+	glt->pic.height = height;
+
+	Q_strlcpy(glt->identifier, identifier, sizeof(glt->identifier));	// Missi: this was Q_strcpy at one point. Caused heap corruption. (4/11/2022)
+	glt->owner = owner;
+	glt->texnum = texture_extension_number;
+	glt->source_offset = offset;
+	glt->source_width = width;
+	glt->source_height = height;
+	glt->width = width;
+	glt->height = height;
+	glt->flags = flags;
+	glt->mipmap = (flags & TEXPREF_MIPMAP) ? true : false;
+	glt->source_format = format;
+	glt->checksum = CRCBlock;
+
+	//upload it
+	mark = g_MemCache->Hunk_LowMark();
+
+	switch (glt->source_format)
+	{
+	case SRC_INDEXED:
+		GL_LoadImage8(glt, data);
+		break;
+	case SRC_LIGHTMAP:
+		GL_LoadLightmap(glt, data);
+		break;
+	case SRC_RGBA:
+		GL_LoadImage32(glt, (unsigned*)data);
+		break;
+	}
 
 	texture_extension_number++;
 
@@ -1802,7 +1940,7 @@ CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic)
 
 	offset = (uintptr_t)pic->datavec.Base() - (uintptr_t)wad_base;
 
-	return GL_LoadTexture(NULL, "", pic->width, pic->height, pic->datavec.Base(), TEXPREF_ALPHA);
+	return GL_LoadTexture(NULL, "", pic->width, pic->height, SRC_INDEXED, pic->datavec.Base(), TEXPREF_ALPHA);
 }
 
 /****************************************/

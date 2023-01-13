@@ -257,7 +257,12 @@ public:
 	byte* GL_PadImageH(byte* in, int width, int height, byte padbyte);
 	void GL_PadEdgeFixW(byte* data, int width, int height);
 	void GL_PadEdgeFixH(byte* data, int width, int height);
-	CGLTexture* GL_LoadTexture(model_t* owner, const char* identifier, int width, int height, byte* data, uintptr_t offset, int flags = TEXPREF_NONE);
+
+	void GL_LoadImage32(CGLTexture* glt, unsigned* data);
+	void GL_LoadImage8(CGLTexture* glt, byte* data);
+	void GL_LoadLightmap(CGLTexture* glt, byte* data);
+
+	CGLTexture* GL_LoadTexture(model_t* owner, const char* identifier, int width, int height, enum srcformat_t format, byte* data, uintptr_t offset, int flags = TEXPREF_NONE);
 
 	void GL_SetCanvas(canvastype newcanvas);
 
@@ -447,6 +452,7 @@ public:
 	bool				mipmap;
 
 	int					source_width, source_height;
+	srcformat_t			source_format;
 	uintptr_t			source_offset;
 
 	unsigned int		checksum;
@@ -523,6 +529,7 @@ extern	cvar_t	gl_reporttjunctions;
 extern	cvar_t	gl_flashblend;
 extern	cvar_t	gl_nocolors;
 extern	cvar_t	gl_doubleeyes;
+extern	cvar_t	gl_fullbrights;
 
 extern	int		gl_lightmap_format;
 extern	int		gl_solid_format;
