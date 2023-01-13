@@ -811,6 +811,7 @@
     <ClCompile Include="snd_win.cpp" />
     <ClCompile Include="d_vars.cpp" />
     <ClCompile Include="strlcat.cpp" />
+    <ClCompile Include="strlcpy.cpp" />
     <ClCompile Include="sv_main.cpp" />
     <ClCompile Include="sv_move.cpp" />
     <ClCompile Include="sv_phys.cpp" />
