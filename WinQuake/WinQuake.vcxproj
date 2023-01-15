@@ -65,7 +65,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -95,7 +95,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -141,16 +141,14 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">
-    <OutDir>.\release_gl\</OutDir>
-    <IntDir>.\release_gl\</IntDir>
-    <LinkIncremental>true</LinkIncremental>
+    <OutDir>release_gl\</OutDir>
+    <IntDir>release_gl\</IntDir>
     <TargetName>glbananaquake</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">
-    <LinkIncremental>true</LinkIncremental>
     <TargetName>glbananaquake64</TargetName>
-    <OutDir>.\release_gl_64\</OutDir>
-    <IntDir>.\release_gl_64\</IntDir>
+    <OutDir>release_gl_64\</OutDir>
+    <IntDir>release_gl_64\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">
     <OutDir>.\debug_gl\</OutDir>
@@ -163,24 +161,28 @@
     <TargetName>glbananaquake64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\Debug\</OutDir>
-    <IntDir>.\Debug\</IntDir>
+    <OutDir>Debug\</OutDir>
+    <IntDir>Debug\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>softwarebananaquake</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>softwarebananaquake</TargetName>
+    <OutDir>Debug\</OutDir>
+    <IntDir>Debug\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>.\Release\</OutDir>
-    <IntDir>.\Release\</IntDir>
-    <LinkIncremental>false</LinkIncremental>
+    <OutDir>Release\</OutDir>
+    <IntDir>Release\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
     <TargetName>softwarebananaquake</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>softwarebananaquake</TargetName>
+    <IntDir>Release\</IntDir>
+    <OutDir>Release\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">
     <ClCompile>
@@ -190,8 +192,8 @@
       <Optimization>MaxSpeed</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>.\sdl2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\sdl2\include;.\codecs\include%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;USE_CODEC_VORBIS;USE_CODEC_WAVE;USE_CODEC_MP3;NDEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\release_gl\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\release_gl\WinQuake.pch</PrecompiledHeaderOutputFile>
@@ -217,11 +219,11 @@
     </Bscmake>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <OutputFile>.\release_gl\glquake.exe</OutputFile>
-      <AdditionalDependencies>.\SDL2.lib;comctl32.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>.\sdl2\lib\Win32\SDL2.lib;libvorbisfile.lib;libvorbis.lib;libopusfile.lib;libopus.lib;libFLAC.lib;libogg.lib;libmad.lib;libxmp.lib;comctl32.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <AdditionalLibraryDirectories>.\codecs\x86</AdditionalLibraryDirectories>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">
@@ -229,11 +231,11 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <FunctionLevelLinking>false</FunctionLevelLinking>
-      <Optimization>Disabled</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>.\sdl2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\sdl2\include;.\codecs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;USE_CODEC_VORBIS;NDEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\release_gl\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\release_gl\WinQuake.pch</PrecompiledHeaderOutputFile>
@@ -241,7 +243,6 @@
       <ProgramDataBaseFileName>.\release_gl\</ProgramDataBaseFileName>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <OmitFramePointers>false</OmitFramePointers>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -261,8 +262,9 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <OutputFile>.\release_gl\glquake.exe</OutputFile>
-      <AdditionalDependencies>.\SDL2.lib;comctl32.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>.\sdl2\lib\x64\SDL264.lib;libvorbisfile.lib;libvorbis.lib;libopusfile.lib;libopus.lib;libFLAC.lib;libogg.lib;libmad.lib;libxmp.lib;comctl32.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\codecs\x64</AdditionalLibraryDirectories>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">
@@ -272,7 +274,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <Optimization>Disabled</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <PreprocessorDefinitions>WIN32;USE_CODEC_VORBIS;_DEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;USE_CODEC_VORBIS;USE_CODEC_WAVE;USE_CODEC_MP3;_DEBUG;_WINDOWS;GLQUAKE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\debug_gl\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\debug_gl\WinQuake.pch</PrecompiledHeaderOutputFile>
@@ -406,7 +408,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>.\sdl2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;MGL40_COMPAT;USE_CODEC_VORBIS;USE_CODEC_WAVE;USE_CODEC_MP3;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\Debug\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\Debug\WinQuake.pch</PrecompiledHeaderOutputFile>
@@ -448,8 +450,8 @@
       <Optimization>MaxSpeed</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>.\scitech\include;.\dxsdk\sdk\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\scitech\include;.\sdl2\include;.\codecs\include;.\dxsdk\sdk\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;MGL40_COMPAT;USE_CODEC_VORBIS;USE_CODEC_WAVE;USE_CODEC_MP3;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\Release\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\Release\WinQuake.pch</PrecompiledHeaderOutputFile>
@@ -477,19 +479,22 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>.\scitech\lib\win32\vc\mgllt.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>.\scitech\lib\win32\vc\mgllt.lib;.\sdl2\lib\Win32\SDL2.lib;libvorbisfile.lib;libvorbis.lib;libopusfile.lib;libopus.lib;libFLAC.lib;libogg.lib;libmad.lib;libxmp.lib;winmm.lib;wsock32.lib;opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\codecs\x86</AdditionalLibraryDirectories>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>libc.lib</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
       <Optimization>MaxSpeed</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>.\scitech\include;.\dxsdk\sdk\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\sdl2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;MGL40_COMPAT;USE_CODEC_VORBIS;USE_CODEC_WAVE;USE_CODEC_MP3;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\Release\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\Release\WinQuake.pch</PrecompiledHeaderOutputFile>
@@ -1043,12 +1048,12 @@ del $(OutDir)%(Filename).spp </Command>
     </CustomBuild>
     <CustomBuild Include="math.s">
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /EP &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+gas2masm\release\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">cl /EP &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+gas2masm\release\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+ml64 /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">mycoolbuild</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">mycoolbuild</Message>
@@ -1072,19 +1077,19 @@ ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                             
 del $(OutDir)%(Filename).spp </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cl /EP &gt; $(OutDir)%(Filename).spp %(FullPath) 
 gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml64 /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+ml64 /c /Cp /Fo$(OutDir)%(Filename).obj /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">mycoolbuild</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">mycoolbuild</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /EP &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+gas2masm\release\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cl /EP &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+gas2masm\release\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+ml64 /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">mycoolbuild</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mycoolbuild</Message>
@@ -1250,7 +1255,7 @@ ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                             
 del $(OutDir)%(Filename).spp </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">cl /EP /DGLQUAKE &gt; $(OutDir)%(Filename).spp %(FullPath) 
 gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+ml64 /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">mycoolbuild</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">mycoolbuild</Message>
@@ -1285,8 +1290,8 @@ gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                      
 ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cl /EP &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+gas2masm\release\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+ml64 /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">mycoolbuild</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mycoolbuild</Message>
@@ -1353,56 +1358,6 @@ del $(OutDir)%(Filename).spp </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="sys_wina.s">
-      <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /EP /DGLQUAKE &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-del $(OutDir)%(Filename).spp </Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">cl /EP /DGLQUAKE &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-del $(OutDir)%(Filename).spp </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">mycoolbuild</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">mycoolbuild</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">cl /EP /DGLQUAKE &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-del $(OutDir)%(Filename).spp </Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">cl /EP /DGLQUAKE &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml64 /c /Cp /Fo$(OutDir)%(Filename).obj /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-del $(OutDir)%(Filename).spp </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">mycoolbuild</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">mycoolbuild</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|x64'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cl /EP &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-del $(OutDir)%(Filename).spp </Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cl /EP &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml64 /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-del $(OutDir)%(Filename).spp </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">mycoolbuild</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">mycoolbuild</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /EP &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-del $(OutDir)%(Filename).spp </Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cl /EP &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-del $(OutDir)%(Filename).spp </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">mycoolbuild</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mycoolbuild</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OUTDIR)\%(Filename).obj;%(Outputs)</Outputs>
-    </CustomBuild>
     <CustomBuild Include="worlda.s">
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /EP /DGLQUAKE &gt; $(OutDir)%(Filename).spp %(FullPath) 
 gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
@@ -1410,7 +1365,7 @@ ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                             
 del $(OutDir)%(Filename).spp </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">cl /EP /DGLQUAKE &gt; $(OutDir)%(Filename).spp %(FullPath) 
 gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+ml64 /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">mycoolbuild</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='GL Release|x64'">mycoolbuild</Message>
@@ -1445,8 +1400,8 @@ gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                      
 ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cl /EP &gt; $(OutDir)%(Filename).spp %(FullPath) 
-gas2masm\debug\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
-ml /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+gas2masm\release\gas2masm &lt; $(OutDir)%(Filename).spp &gt;                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
+ml64 /c /Cp /coff /Fo$(OutDir)%(Filename).obj /Zm /Zi                                                                                                                                                                                                    $(OutDir)%(Filename).asm 
 del $(OutDir)%(Filename).spp </Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">mycoolbuild</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mycoolbuild</Message>
