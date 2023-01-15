@@ -198,6 +198,7 @@ CVAR
 */
 
 #include <strlcat.cpp>
+#include <strlcpy.cpp>
 #include <cmd.cpp>
 #include <cvar.cpp>
 

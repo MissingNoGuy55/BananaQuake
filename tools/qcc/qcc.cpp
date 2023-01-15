@@ -955,8 +955,8 @@ CreatePath
 void	CreatePath (char *path)
 {
 	char	*ofs;
-	LPCCH	crap = {};
-	LPWSTR crap2 = {};
+	LPCCH	mulbytestr = {};
+	LPWSTR	mulbytestr2 = {};
 	
 	for (ofs = path+1 ; *ofs ; ofs++)
 	{
@@ -964,9 +964,9 @@ void	CreatePath (char *path)
 		{	// create the directory
 			*ofs = 0;
 
-			MultiByteToWideChar(CP_UTF8, 0, crap, (int)strlen(crap), crap2, wcslen(crap2));
+			MultiByteToWideChar(CP_UTF8, 0, mulbytestr, strlen(mulbytestr), mulbytestr2, wcslen(mulbytestr2));
 
-			Sys_mkdir (crap2);
+			Sys_mkdir (mulbytestr2);
 			*ofs = '/';
 		}
 	}
