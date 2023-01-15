@@ -221,8 +221,8 @@ char *Q_strrchr(const char *s, char c)
     int len = Q_strlen(s);
     s += len;
     while (len--)
-	if (*--s == c) return const_cast<char*>(s);
-    return 0;
+	if (*--s == c) return (char*)s;
+    return NULL;
 }
 
 void Q_strcat (char *dest, const char *src)
