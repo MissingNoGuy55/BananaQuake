@@ -29,13 +29,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_TOKEN_LENGTH	1024
 #define LF					0x0A
 
-
 #ifndef WIN64
 #define DSDWORD_PTR "ds:dword ptr"
 #define DSWORD_PTR "ds:word ptr"
 #else
 #define DSDWORD_PTR "dword ptr"
 #define DSWORD_PTR "word ptr"
+#endif
+
+#if WIN64
+#define ASSUME_NOTHING "ASSUME FS:NOTHING\n"
 #endif
 
 enum class tokenstat {NOT_WHITESPACE, WHITESPACE, TOKEN_AVAILABLE, LINE_DONE, FILE_DONE, PARSED_OKAY};
@@ -1027,13 +1030,14 @@ tokenstat parseline (void)
 	}
 }
 
-
 void main (int argc, char **argv)
 {
 	tokenstat	stat;
 #ifndef WIN64
 	printf (" .386P\n"
             " .model FLAT\n");
+#elif NDEBUG && WIN32
+	printf(ASSUME_NOTHING);
 #endif
 	int_inline = 1;
 	int_outline = 3;
