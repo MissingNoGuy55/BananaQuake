@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "in_win.h"
 #include "snd_codec.h"
+#include "bgmusic.h"
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -844,8 +845,35 @@ void CSoundSystemWin::S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3
 		Con_Printf ("----(%i)----\n", total);
 	}
 
+	S_CheckMDMAMusic(); // Missi (1/20/2023)
+
 // mix some sound
 	S_Update_();
+}
+
+void CSoundSystemWin::S_CheckMDMAMusic()
+{
+	static int oldtrack = cl.cdtrack;
+	static int oldlooptrack = cl.looptrack;
+	static bool oldsongplaying = false;
+	static bool songplaying = false;
+
+	if (cl.items & IT_QUAD && !songplaying)
+	{
+		cl.cdtrack = 12;
+		cl.looptrack = true;
+		g_BGM->BGM_PlayCDtrack((byte)cl.cdtrack, cl.looptrack);
+		oldsongplaying = false;
+		songplaying = true;
+	}
+	else if (!(cl.items & IT_QUAD) && !oldsongplaying)
+	{
+		cl.cdtrack = oldtrack;
+		cl.looptrack = oldlooptrack;
+		g_BGM->BGM_PlayCDtrack((byte)cl.cdtrack, cl.looptrack);
+		oldsongplaying = true;
+		songplaying = false;
+	}
 }
 
 void CSoundSystemWin::GetSoundtime(void)
