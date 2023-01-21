@@ -210,6 +210,8 @@ public:
 
 	~CMemZone();
 
+	char* Z_Strdup(const char* s);
+
 	int		size;		// total bytes malloced, including header
 	CMemBlock<byte>	blocklist;		// start / end cap for linked list
 	CMemBlock<byte>* rover;

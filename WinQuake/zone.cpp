@@ -67,6 +67,14 @@ CMemZone::~CMemZone()
 {
 }
 
+char* CMemZone::Z_Strdup(const char* s)
+{
+	size_t sz = strlen(s) + 1;
+	char* ptr = (char*)mainzone->Z_Malloc<char>(sz);
+	memcpy(ptr, s, sz);
+	return ptr;
+}
+
 //============================================================================
 
 /*
