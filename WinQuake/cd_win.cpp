@@ -515,47 +515,6 @@ void CDAudio_Shutdown(void)
 
 #else
 
-static void CDAudio_Eject(void)
-{
-
-}
-
-
-static void CDAudio_CloseDoor(void)
-{
-
-}
-
-
-static int CDAudio_GetAudioDiskInfo(void)
-{
-	return 0;
-}
-
-bool CDAudio_Play(byte track, bool looping)
-{
-	return false;
-}
-
-
-void CDAudio_Stop(void)
-{
-}
-
-
-void CDAudio_Pause(void)
-{
-}
-
-LONG CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	return 0;
-}
-
-static void CD_f(void)
-{
-}
-
 
 //long CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 //{
@@ -590,21 +549,5 @@ static void CD_f(void)
 //
 //	return 0;
 //}
-
-
-void CDAudio_Update(void)
-{
-}
-
-
-int CDAudio_Init(void)
-{
-	return 0;
-}
-
-
-void CDAudio_Shutdown(void)
-{
-}
 
 #endif
