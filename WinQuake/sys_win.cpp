@@ -266,7 +266,7 @@ int Sys_FileWrite (int handle, void *data, int count)
 	return x;
 }
 
-void Sys_mkdir (char *path)
+void Sys_mkdir (const char *path)
 {
 	int shut_up = 0;
 
