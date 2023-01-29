@@ -482,8 +482,8 @@ void CL_RelinkEntities (void)
 	{
 		if (!ent->model)
 		{	// empty slot
-			if (ent->forcelink)
-				g_CoreRenderer->R_RemoveEfrags (ent);	// just became empty
+			//if (ent->forcelink)
+				//g_CoreRenderer->R_RemoveEfrags (ent);	// just became empty
 			continue;
 		}
 
