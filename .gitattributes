@@ -1,0 +1,12 @@
+* text=auto
+
+*.bsp binary
+*.dat binary
+*.tmp binary
+*.dll binary
+*.so binary
+
+*.txt text
+*.cfg text
+*.res text
+*.rc text
