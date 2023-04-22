@@ -1,7 +1,7 @@
 #
 # Quake Makefile for Linux 2.0
 #
-# Aug '98 by Zoid <zoid@idsoftware.cppom>
+# Aug '98 by Zoid <zoid@idsoftware.com>
 #
 # ELF only
 #
@@ -33,7 +33,8 @@ TDFXGL_DIR = /home/zoid/3dfxgl
 BUILD_DEBUG_DIR=debug$(ARCH)$(LIBC++)
 BUILD_RELEASE_DIR=release$(ARCH)$(LIBC++)
 
-EGCS=/bin/gcc
+# Missi: was gcc
+EGCS=/bin/g++
 CC=$(EGCS)
 
 BASE_CPPFLAGS=-Dstricmp=strcasecmp
@@ -46,7 +47,7 @@ XLDFLAGS=-L/usr/X11R6/lib -lX11 -lXext -lXxf86dga
 XCPPFLAGS=-DX11
 
 GLLDFLAGS=-L/usr/X11/lib -L/usr/local/lib -lGL -lX11 -lXext -ldl -lXxf86dga -lXxf86vm -lm
-GLCPPFLAGS=-DGLQUAKE -I$(MESA_DIR)/include -I/usr/include/glide -I/usr/include/SDL2
+GLCPPFLAGS= -DGLQUAKE -I$(MESA_DIR)/include -I/usr/include/glide -I$(MOUNT_DIR)/sdl2/include
 
 DO_CC=$(CC) $(CPPFLAGS) -o $@ -c $<
 DO_DEBUG_CC=$(CC) $(DEBUG_CPPFLAGS) -o $@ -c $<
