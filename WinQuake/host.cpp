@@ -481,8 +481,13 @@ CQuakeHost::CQuakeHost(quakeparms_t<byte*> parms) :
 	oldrealtime(0),
 	host_hunklevel(0)
 {
+#ifdef __linux__
+	host_parms.basedir = parms.basedir ? parms.basedir : strdup("");
+	host_parms.cachedir = parms.cachedir ? parms.cachedir : strdup("");
+#elif _WIN32
 	host_parms.basedir = parms.basedir ? parms.basedir : _strdup("");
 	host_parms.cachedir = parms.cachedir ? parms.cachedir : _strdup("");
+#endif
 	memset(host_abortserver, 0, sizeof(jmp_buf));
 }
 
@@ -927,7 +932,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 #ifndef	_WIN32
 	// on Win32, sound initialization has to come before video initialization, so we
 	// can put up a popup if the sound hardware is in use
-		S_Init ();
+		g_SoundSystem->S_Init ();
 #else
 
 //#ifdef _DEBUG

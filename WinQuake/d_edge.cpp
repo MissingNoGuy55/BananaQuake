@@ -198,7 +198,7 @@ void D_DrawSurfaces(void)
 			d_ziorigin = s->d_ziorigin;
 
 			D_DrawSolidSurface(s, (int)s->data & 0xFF);
-			g_SoftwareRenderer->D_DrawZSpans(s->spans);
+			ResolveRenderer()->D_DrawZSpans(s->spans);
 		}
 	}
 	else
@@ -218,11 +218,11 @@ void D_DrawSurfaces(void)
 			{
 				if (!r_skymade)
 				{
-					g_SoftwareRenderer->R_MakeSky();
+					ResolveRenderer()->R_MakeSky();
 				}
 
-				g_SoftwareRenderer->D_DrawSkyScans8(s->spans);
-				g_SoftwareRenderer->D_DrawZSpans(s->spans);
+				ResolveRenderer()->D_DrawSkyScans8(s->spans);
+				ResolveRenderer()->D_DrawZSpans(s->spans);
 			}
 			else if (s->flags & SURF_DRAWBACKGROUND)
 			{
@@ -233,7 +233,7 @@ void D_DrawSurfaces(void)
 				d_ziorigin = -0.9;
 
 				D_DrawSolidSurface(s, (int)r_clearcolor.value & 0xFF);
-				g_SoftwareRenderer->D_DrawZSpans(s->spans);
+				ResolveRenderer()->D_DrawZSpans(s->spans);
 			}
 			else if (s->flags & SURF_DRAWTURB)
 			{
@@ -259,8 +259,8 @@ void D_DrawSurfaces(void)
 				}
 
 				D_CalcGradients(pface);
-				g_SoftwareRenderer->Turbulent8(s->spans);
-				g_SoftwareRenderer->D_DrawZSpans(s->spans);
+				ResolveRenderer()->Turbulent8(s->spans);
+				ResolveRenderer()->D_DrawZSpans(s->spans);
 
 				if (s->insubmodel)
 				{
@@ -308,7 +308,7 @@ void D_DrawSurfaces(void)
 
 				(*d_drawspans) (s->spans);
 
-				g_SoftwareRenderer->D_DrawZSpans(s->spans);
+				ResolveRenderer()->D_DrawZSpans(s->spans);
 
 				if (s->insubmodel)
 				{

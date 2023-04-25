@@ -272,7 +272,7 @@ ddef_t *ED_FieldAtOfs (int ofs)
 ED_FindField
 ============
 */
-ddef_t *ED_FindField (char *name)
+ddef_t *ED_FindField (const char *name)
 {
 	ddef_t		*def;
 	int			i;
@@ -286,7 +286,7 @@ ddef_t *ED_FindField (char *name)
 	return NULL;
 }
 
-eval_t* GetEdictFieldValue(edict_t* ed, char* field)
+eval_t* GetEdictFieldValue(edict_t* ed, const char* field)
 {
 	ddef_t* def = NULL;
 	int				i;

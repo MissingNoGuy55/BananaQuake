@@ -80,13 +80,13 @@ bool fakedma = false;
 int fakedma_updates = 15;
 
 
-void CSoundSystemWin::S_AmbientOff (void)
+void CSoundDMA::S_AmbientOff (void)
 {
 	g_SoundSystem->snd_ambient = false;
 }
 
 
-void CSoundSystemWin::S_AmbientOn (void)
+void CSoundDMA::S_AmbientOn (void)
 {
 	snd_ambient = true;
 }
@@ -117,13 +117,17 @@ S_Startup
 ================
 */
 
-void CSoundSystemWin::S_Startup (void)
+void CSoundDMA::S_Startup (void)
 {
 	if (!snd_initialized)
 		return;
 
-	sound_started = SNDDMA_Init(&sn);
-
+#ifdef __linux__
+    sound_started = g_SoundSystem->SNDDMA_Init();
+#else
+	sound_started = g_SoundSystem->SNDDMA_Init(&sn);
+#endif
+    
 	if (!sound_started)
 	{
 		Con_Printf("Failed initializing sound\n");
@@ -137,7 +141,7 @@ void CSoundSystemWin::S_Startup (void)
 	}
 }
 
-CSoundSystemWin::CSoundSystemWin()
+CSoundDMA::CSoundDMA()
 {
 }
 /*
@@ -145,7 +149,7 @@ CSoundSystemWin::CSoundSystemWin()
 S_Init
 ================
 */
-void CSoundSystemWin::S_Init (void)
+void CSoundDMA::S_Init (void)
 {
 
 	Con_Printf("\nSound Initialization\n");
@@ -229,7 +233,7 @@ void CSoundSystemWin::S_Init (void)
 // Shutdown sound engine
 // =======================================================================
 
-void CSoundSystemWin::S_Shutdown(void)
+void CSoundDMA::S_Shutdown(void)
 {
 
 	if (!sound_started)
@@ -243,7 +247,7 @@ void CSoundSystemWin::S_Shutdown(void)
 
 	if (!fakedma)
 	{
-		SNDDMA_Shutdown();
+		g_SoundSystem->SNDDMA_Shutdown();
 	}
 }
 
@@ -258,7 +262,7 @@ S_FindName
 
 ==================
 */
-sfx_t* CSoundSystemWin::S_FindName (const char *name)
+sfx_t* CSoundInternal::S_FindName (const char *name)
 {
 	int		i;
 	sfx_t*	sfx;
@@ -294,7 +298,7 @@ S_TouchSound
 
 ==================
 */
-void CSoundSystemWin::S_TouchSound (const char *name)
+void CSoundDMA::S_TouchSound (const char *name)
 {
 	sfx_t	*sfx;
 	
@@ -307,11 +311,11 @@ void CSoundSystemWin::S_TouchSound (const char *name)
 
 /*
 ==================
-g_SoundSystem->S_PrecacheSound
+S_PrecacheSound
 
 ==================
 */
-sfx_t* CSoundSystemWin::S_PrecacheSound (const char *name)
+sfx_t* CSoundInternal::S_PrecacheSound (const char *name)
 {
 	sfx_t	*sfx;
 
@@ -335,7 +339,7 @@ sfx_t* CSoundSystemWin::S_PrecacheSound (const char *name)
 SND_PickChannel
 =================
 */
-channel_t* CSoundSystemWin::SND_PickChannel(int entnum, int entchannel)
+channel_t* CSoundDMA::SND_PickChannel(int entnum, int entchannel)
 {
     int ch_idx;
     int first_to_die;
@@ -379,7 +383,7 @@ channel_t* CSoundSystemWin::SND_PickChannel(int entnum, int entchannel)
 SND_Spatialize
 =================
 */
-void CSoundSystemWin::SND_Spatialize(channel_t *ch)
+void CSoundDMA::SND_Spatialize(channel_t *ch)
 {
     vec_t dot;
     vec_t ldist, rdist, dist;
@@ -432,7 +436,7 @@ void CSoundSystemWin::SND_Spatialize(channel_t *ch)
 // Start a sound effect
 // =======================================================================
 
-void CSoundSystemWin::S_StartSound(int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float fvol, float attenuation)
+void CSoundDMA::S_StartSound(int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float fvol, float attenuation)
 {
 	channel_t *target_chan, *check;
 	sfxcache_t	*sc;
@@ -507,7 +511,7 @@ void CSoundSystemWin::S_StartSound(int entnum, int entchannel, sfx_t *sfx, vec3_
 	}
 }
 
-void CSoundSystemWin::S_StopSound(int entnum, int entchannel)
+void CSoundDMA::S_StopSound(int entnum, int entchannel)
 {
 	int i;
 
@@ -547,7 +551,7 @@ void CSoundInternal::S_StopAllSoundsC (void)
 	S_StopAllSounds (true);
 }
 
-void CSoundSystemWin::S_ClearBuffer (void)
+void CSoundDMA::S_ClearBuffer (void)
 {
 	int		clear;
 
@@ -559,13 +563,13 @@ void CSoundSystemWin::S_ClearBuffer (void)
 	else
 		clear = 0;
 
-	SNDDMA_LockBuffer();
+	g_SoundSystem->SNDDMA_LockBuffer();
 	if (!shm->buffer)
 		return;
 
 	Q_memset(shm->buffer, clear, shm->samples * shm->samplebits / 8);
 
-	SNDDMA_UnlockBuffer();
+	g_SoundSystem->SNDDMA_UnlockBuffer();
 
 }
 
@@ -575,7 +579,7 @@ void CSoundSystemWin::S_ClearBuffer (void)
 S_StaticSound
 =================
 */
-void CSoundSystemWin::S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
+void CSoundDMA::S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
 {
 	channel_t	*ss;
 	sfxcache_t		*sc;
@@ -619,7 +623,7 @@ void CSoundSystemWin::S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float
 S_UpdateAmbientSounds
 ===================
 */
-void CSoundSystemWin::S_UpdateAmbientSounds (void)
+void CSoundDMA::S_UpdateAmbientSounds (void)
 {
 	mleaf_t		*l = NULL;
 	float		vol;
@@ -678,7 +682,7 @@ Expects data in signed 16 bit, or unsigned
 8 bit format.
 ===================
 */
-void CSoundSystemWin::S_RawSamples(int samples, int rate, int width, int channels, byte* data, float volume)
+void CSoundDMA::S_RawSamples(int samples, int rate, int width, int channels, byte* data, float volume)
 {
 	int i;
 	int src, dst;
@@ -760,7 +764,7 @@ S_Update
 Called once each time through the main loop
 ============
 */
-void CSoundSystemWin::S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
+void CSoundDMA::S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 {
 	int			i, j;
 	int			total;
@@ -851,7 +855,7 @@ void CSoundSystemWin::S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3
 	S_Update_();
 }
 
-void CSoundSystemWin::S_CheckMDMAMusic()
+void CSoundDMA::S_CheckMDMAMusic()
 {
 	static int oldtrack = cl.cdtrack;
 	static int oldlooptrack = cl.looptrack;
@@ -876,7 +880,7 @@ void CSoundSystemWin::S_CheckMDMAMusic()
 	}
 }
 
-void CSoundSystemWin::GetSoundtime(void)
+void CSoundDMA::GetSoundtime(void)
 {
 	int		samplepos;
 	static	int		buffers;
@@ -888,7 +892,7 @@ void CSoundSystemWin::GetSoundtime(void)
 // it is possible to miscount buffers if it has wrapped twice between
 // calls to S_Update.  Oh well.
 
-	samplepos = SNDDMA_GetDMAPos();
+	samplepos = g_SoundSystem->SNDDMA_GetDMAPos();
 
 	if (samplepos < oldsamplepos)
 	{
@@ -907,7 +911,7 @@ void CSoundSystemWin::GetSoundtime(void)
 
 }
 
-void CSoundSystemWin::S_ExtraUpdate (void)
+void CSoundDMA::S_ExtraUpdate (void)
 {
 
 #ifndef QUAKE_TOOLS
@@ -1005,7 +1009,7 @@ void CSoundInternal::S_Play(void)
 		}
 		else
 			Q_strcpy(name, Cmd_Argv(i));
-		sfx = g_SoundSystem->S_PrecacheSound(name);
+		sfx = S_PrecacheSound(name);
 		g_SoundSystem->S_StartSound(hash++, 0, sfx, listener_origin, 1.0, 1.0);
 		i++;
 	}
@@ -1062,7 +1066,7 @@ void CSoundInternal::S_SoundList(void)
 }
 
 
-void CSoundSystemWin::S_LocalSound (char *sound)
+void CSoundDMA::S_LocalSound (const char *sound)
 {
 	sfx_t	*sfx;
 
@@ -1081,17 +1085,17 @@ void CSoundSystemWin::S_LocalSound (char *sound)
 }
 
 
-void CSoundSystemWin::S_ClearPrecache (void)
+void CSoundDMA::S_ClearPrecache (void)
 {
 }
 
 
-void CSoundSystemWin::S_BeginPrecaching (void)
+void CSoundDMA::S_BeginPrecaching (void)
 {
 }
 
 
-void CSoundSystemWin::S_EndPrecaching (void)
+void CSoundDMA::S_EndPrecaching (void)
 {
 }
 

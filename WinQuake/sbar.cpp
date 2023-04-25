@@ -111,283 +111,139 @@ void Sbar_Init (void)
 {
 	int		i;
 
-#ifdef GLQUAKE
-
 	for (i=0 ; i<10 ; i++)
 	{
-		sb_nums[0][i] = g_GLRenderer->Draw_PicFromWad (g_Common->va("num_%i",i));
-		sb_nums[1][i] = g_GLRenderer->Draw_PicFromWad (g_Common->va("anum_%i",i));
+		sb_nums[0][i] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("num_%i",i));
+		sb_nums[1][i] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("anum_%i",i));
 	}
 
-	sb_nums[0][10] = g_GLRenderer->Draw_PicFromWad ("num_minus");
-	sb_nums[1][10] = g_GLRenderer->Draw_PicFromWad ("anum_minus");
+	sb_nums[0][10] = ResolveRenderer()->Draw_PicFromWad ("num_minus");
+	sb_nums[1][10] = ResolveRenderer()->Draw_PicFromWad ("anum_minus");
 
-	sb_colon = g_GLRenderer->Draw_PicFromWad ("num_colon");
-	sb_slash = g_GLRenderer->Draw_PicFromWad ("num_slash");
+	sb_colon = ResolveRenderer()->Draw_PicFromWad ("num_colon");
+	sb_slash = ResolveRenderer()->Draw_PicFromWad ("num_slash");
 
-	sb_weapons[0][0] = g_GLRenderer->Draw_PicFromWad ("inv_shotgun");
-	sb_weapons[0][1] = g_GLRenderer->Draw_PicFromWad ("inv_sshotgun");
-	sb_weapons[0][2] = g_GLRenderer->Draw_PicFromWad ("inv_nailgun");
-	sb_weapons[0][3] = g_GLRenderer->Draw_PicFromWad ("inv_snailgun");
-	sb_weapons[0][4] = g_GLRenderer->Draw_PicFromWad ("inv_rlaunch");
-	sb_weapons[0][5] = g_GLRenderer->Draw_PicFromWad ("inv_srlaunch");
-	sb_weapons[0][6] = g_GLRenderer->Draw_PicFromWad ("inv_lightng");
+	sb_weapons[0][0] = ResolveRenderer()->Draw_PicFromWad ("inv_shotgun");
+	sb_weapons[0][1] = ResolveRenderer()->Draw_PicFromWad ("inv_sshotgun");
+	sb_weapons[0][2] = ResolveRenderer()->Draw_PicFromWad ("inv_nailgun");
+	sb_weapons[0][3] = ResolveRenderer()->Draw_PicFromWad ("inv_snailgun");
+	sb_weapons[0][4] = ResolveRenderer()->Draw_PicFromWad ("inv_rlaunch");
+	sb_weapons[0][5] = ResolveRenderer()->Draw_PicFromWad ("inv_srlaunch");
+	sb_weapons[0][6] = ResolveRenderer()->Draw_PicFromWad ("inv_lightng");
 
-	sb_weapons[1][0] = g_GLRenderer->Draw_PicFromWad ("inv2_shotgun");
-	sb_weapons[1][1] = g_GLRenderer->Draw_PicFromWad ("inv2_sshotgun");
-	sb_weapons[1][2] = g_GLRenderer->Draw_PicFromWad ("inv2_nailgun");
-	sb_weapons[1][3] = g_GLRenderer->Draw_PicFromWad ("inv2_snailgun");
-	sb_weapons[1][4] = g_GLRenderer->Draw_PicFromWad ("inv2_rlaunch");
-	sb_weapons[1][5] = g_GLRenderer->Draw_PicFromWad ("inv2_srlaunch");
-	sb_weapons[1][6] = g_GLRenderer->Draw_PicFromWad ("inv2_lightng");
+	sb_weapons[1][0] = ResolveRenderer()->Draw_PicFromWad ("inv2_shotgun");
+	sb_weapons[1][1] = ResolveRenderer()->Draw_PicFromWad ("inv2_sshotgun");
+	sb_weapons[1][2] = ResolveRenderer()->Draw_PicFromWad ("inv2_nailgun");
+	sb_weapons[1][3] = ResolveRenderer()->Draw_PicFromWad ("inv2_snailgun");
+	sb_weapons[1][4] = ResolveRenderer()->Draw_PicFromWad ("inv2_rlaunch");
+	sb_weapons[1][5] = ResolveRenderer()->Draw_PicFromWad ("inv2_srlaunch");
+	sb_weapons[1][6] = ResolveRenderer()->Draw_PicFromWad ("inv2_lightng");
 
 	for (i=0 ; i<5 ; i++)
 	{
-		sb_weapons[2+i][0] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_shotgun",i+1));
-		sb_weapons[2+i][1] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_sshotgun",i+1));
-		sb_weapons[2+i][2] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_nailgun",i+1));
-		sb_weapons[2+i][3] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_snailgun",i+1));
-		sb_weapons[2+i][4] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_rlaunch",i+1));
-		sb_weapons[2+i][5] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_srlaunch",i+1));
-		sb_weapons[2+i][6] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_lightng",i+1));
+		sb_weapons[2+i][0] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_shotgun",i+1));
+		sb_weapons[2+i][1] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_sshotgun",i+1));
+		sb_weapons[2+i][2] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_nailgun",i+1));
+		sb_weapons[2+i][3] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_snailgun",i+1));
+		sb_weapons[2+i][4] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_rlaunch",i+1));
+		sb_weapons[2+i][5] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_srlaunch",i+1));
+		sb_weapons[2+i][6] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_lightng",i+1));
 	}
 
-	sb_ammo[0] = g_GLRenderer->Draw_PicFromWad ("sb_shells");
-	sb_ammo[1] = g_GLRenderer->Draw_PicFromWad ("sb_nails");
-	sb_ammo[2] = g_GLRenderer->Draw_PicFromWad ("sb_rocket");
-	sb_ammo[3] = g_GLRenderer->Draw_PicFromWad ("sb_cells");
+	sb_ammo[0] = ResolveRenderer()->Draw_PicFromWad ("sb_shells");
+	sb_ammo[1] = ResolveRenderer()->Draw_PicFromWad ("sb_nails");
+	sb_ammo[2] = ResolveRenderer()->Draw_PicFromWad ("sb_rocket");
+	sb_ammo[3] = ResolveRenderer()->Draw_PicFromWad ("sb_cells");
 
-	sb_armor[0] = g_GLRenderer->Draw_PicFromWad ("sb_armor1");
-	sb_armor[1] = g_GLRenderer->Draw_PicFromWad ("sb_armor2");
-	sb_armor[2] = g_GLRenderer->Draw_PicFromWad ("sb_armor3");
+	sb_armor[0] = ResolveRenderer()->Draw_PicFromWad ("sb_armor1");
+	sb_armor[1] = ResolveRenderer()->Draw_PicFromWad ("sb_armor2");
+	sb_armor[2] = ResolveRenderer()->Draw_PicFromWad ("sb_armor3");
 
-	sb_items[0] = g_GLRenderer->Draw_PicFromWad ("sb_key1");
-	sb_items[1] = g_GLRenderer->Draw_PicFromWad ("sb_key2");
-	sb_items[2] = g_GLRenderer->Draw_PicFromWad ("sb_invis");
-	sb_items[3] = g_GLRenderer->Draw_PicFromWad ("sb_invuln");
-	sb_items[4] = g_GLRenderer->Draw_PicFromWad ("sb_suit");
-	sb_items[5] = g_GLRenderer->Draw_PicFromWad ("sb_quad");
+	sb_items[0] = ResolveRenderer()->Draw_PicFromWad ("sb_key1");
+	sb_items[1] = ResolveRenderer()->Draw_PicFromWad ("sb_key2");
+	sb_items[2] = ResolveRenderer()->Draw_PicFromWad ("sb_invis");
+	sb_items[3] = ResolveRenderer()->Draw_PicFromWad ("sb_invuln");
+	sb_items[4] = ResolveRenderer()->Draw_PicFromWad ("sb_suit");
+	sb_items[5] = ResolveRenderer()->Draw_PicFromWad ("sb_quad");
 
-	sb_sigil[0] = g_GLRenderer->Draw_PicFromWad ("sb_sigil1");
-	sb_sigil[1] = g_GLRenderer->Draw_PicFromWad ("sb_sigil2");
-	sb_sigil[2] = g_GLRenderer->Draw_PicFromWad ("sb_sigil3");
-	sb_sigil[3] = g_GLRenderer->Draw_PicFromWad ("sb_sigil4");
+	sb_sigil[0] = ResolveRenderer()->Draw_PicFromWad ("sb_sigil1");
+	sb_sigil[1] = ResolveRenderer()->Draw_PicFromWad ("sb_sigil2");
+	sb_sigil[2] = ResolveRenderer()->Draw_PicFromWad ("sb_sigil3");
+	sb_sigil[3] = ResolveRenderer()->Draw_PicFromWad ("sb_sigil4");
 
-	sb_faces[4][0] = g_GLRenderer->Draw_PicFromWad ("face1");
-	sb_faces[4][1] = g_GLRenderer->Draw_PicFromWad ("face_p1");
-	sb_faces[3][0] = g_GLRenderer->Draw_PicFromWad ("face2");
-	sb_faces[3][1] = g_GLRenderer->Draw_PicFromWad ("face_p2");
-	sb_faces[2][0] = g_GLRenderer->Draw_PicFromWad ("face3");
-	sb_faces[2][1] = g_GLRenderer->Draw_PicFromWad ("face_p3");
-	sb_faces[1][0] = g_GLRenderer->Draw_PicFromWad ("face4");
-	sb_faces[1][1] = g_GLRenderer->Draw_PicFromWad ("face_p4");
-	sb_faces[0][0] = g_GLRenderer->Draw_PicFromWad ("face5");
-	sb_faces[0][1] = g_GLRenderer->Draw_PicFromWad ("face_p5");
+	sb_faces[4][0] = ResolveRenderer()->Draw_PicFromWad ("face1");
+	sb_faces[4][1] = ResolveRenderer()->Draw_PicFromWad ("face_p1");
+	sb_faces[3][0] = ResolveRenderer()->Draw_PicFromWad ("face2");
+	sb_faces[3][1] = ResolveRenderer()->Draw_PicFromWad ("face_p2");
+	sb_faces[2][0] = ResolveRenderer()->Draw_PicFromWad ("face3");
+	sb_faces[2][1] = ResolveRenderer()->Draw_PicFromWad ("face_p3");
+	sb_faces[1][0] = ResolveRenderer()->Draw_PicFromWad ("face4");
+	sb_faces[1][1] = ResolveRenderer()->Draw_PicFromWad ("face_p4");
+	sb_faces[0][0] = ResolveRenderer()->Draw_PicFromWad ("face5");
+	sb_faces[0][1] = ResolveRenderer()->Draw_PicFromWad ("face_p5");
 
-	sb_face_invis = g_GLRenderer->Draw_PicFromWad ("face_invis");
-	sb_face_invuln = g_GLRenderer->Draw_PicFromWad ("face_invul2");
-	sb_face_invis_invuln = g_GLRenderer->Draw_PicFromWad ("face_inv2");
-	sb_face_quad = g_GLRenderer->Draw_PicFromWad ("face_quad");
+	sb_face_invis = ResolveRenderer()->Draw_PicFromWad ("face_invis");
+	sb_face_invuln = ResolveRenderer()->Draw_PicFromWad ("face_invul2");
+	sb_face_invis_invuln = ResolveRenderer()->Draw_PicFromWad ("face_inv2");
+	sb_face_quad = ResolveRenderer()->Draw_PicFromWad ("face_quad");
 
 	Cmd_AddCommand ("+showscores", Sbar_ShowScores);
 	Cmd_AddCommand ("-showscores", Sbar_DontShowScores);
 
-	sb_sbar = g_GLRenderer->Draw_PicFromWad ("sbar");
-	sb_ibar = g_GLRenderer->Draw_PicFromWad ("ibar");
-	sb_scorebar = g_GLRenderer->Draw_PicFromWad ("scorebar");
+	sb_sbar = ResolveRenderer()->Draw_PicFromWad ("sbar");
+	sb_ibar = ResolveRenderer()->Draw_PicFromWad ("ibar");
+	sb_scorebar = ResolveRenderer()->Draw_PicFromWad ("scorebar");
 
 //MED 01/04/97 added new hipnotic weapons
 	if (hipnotic)
 	{
-	  hsb_weapons[0][0] = g_GLRenderer->Draw_PicFromWad ("inv_laser");
-	  hsb_weapons[0][1] = g_GLRenderer->Draw_PicFromWad ("inv_mjolnir");
-	  hsb_weapons[0][2] = g_GLRenderer->Draw_PicFromWad ("inv_gren_prox");
-	  hsb_weapons[0][3] = g_GLRenderer->Draw_PicFromWad ("inv_prox_gren");
-	  hsb_weapons[0][4] = g_GLRenderer->Draw_PicFromWad ("inv_prox");
+	  hsb_weapons[0][0] = ResolveRenderer()->Draw_PicFromWad ("inv_laser");
+	  hsb_weapons[0][1] = ResolveRenderer()->Draw_PicFromWad ("inv_mjolnir");
+	  hsb_weapons[0][2] = ResolveRenderer()->Draw_PicFromWad ("inv_gren_prox");
+	  hsb_weapons[0][3] = ResolveRenderer()->Draw_PicFromWad ("inv_prox_gren");
+	  hsb_weapons[0][4] = ResolveRenderer()->Draw_PicFromWad ("inv_prox");
 
-	  hsb_weapons[1][0] = g_GLRenderer->Draw_PicFromWad ("inv2_laser");
-	  hsb_weapons[1][1] = g_GLRenderer->Draw_PicFromWad ("inv2_mjolnir");
-	  hsb_weapons[1][2] = g_GLRenderer->Draw_PicFromWad ("inv2_gren_prox");
-	  hsb_weapons[1][3] = g_GLRenderer->Draw_PicFromWad ("inv2_prox_gren");
-	  hsb_weapons[1][4] = g_GLRenderer->Draw_PicFromWad ("inv2_prox");
+	  hsb_weapons[1][0] = ResolveRenderer()->Draw_PicFromWad ("inv2_laser");
+	  hsb_weapons[1][1] = ResolveRenderer()->Draw_PicFromWad ("inv2_mjolnir");
+	  hsb_weapons[1][2] = ResolveRenderer()->Draw_PicFromWad ("inv2_gren_prox");
+	  hsb_weapons[1][3] = ResolveRenderer()->Draw_PicFromWad ("inv2_prox_gren");
+	  hsb_weapons[1][4] = ResolveRenderer()->Draw_PicFromWad ("inv2_prox");
 
 	  for (i=0 ; i<5 ; i++)
 	  {
-		 hsb_weapons[2+i][0] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_laser",i+1));
-		 hsb_weapons[2+i][1] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_mjolnir",i+1));
-		 hsb_weapons[2+i][2] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_gren_prox",i+1));
-		 hsb_weapons[2+i][3] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_prox_gren",i+1));
-		 hsb_weapons[2+i][4] = g_GLRenderer->Draw_PicFromWad (g_Common->va("inva%i_prox",i+1));
+		 hsb_weapons[2+i][0] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_laser",i+1));
+		 hsb_weapons[2+i][1] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_mjolnir",i+1));
+		 hsb_weapons[2+i][2] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_gren_prox",i+1));
+		 hsb_weapons[2+i][3] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_prox_gren",i+1));
+		 hsb_weapons[2+i][4] = ResolveRenderer()->Draw_PicFromWad (g_Common->va("inva%i_prox",i+1));
 	  }
 
-	  hsb_items[0] = g_GLRenderer->Draw_PicFromWad ("sb_wsuit");
-	  hsb_items[1] = g_GLRenderer->Draw_PicFromWad ("sb_eshld");
+	  hsb_items[0] = ResolveRenderer()->Draw_PicFromWad ("sb_wsuit");
+	  hsb_items[1] = ResolveRenderer()->Draw_PicFromWad ("sb_eshld");
 	}
 
 	if (rogue)
 	{
-		rsb_invbar[0] = g_GLRenderer->Draw_PicFromWad ("r_invbar1");
-		rsb_invbar[1] = g_GLRenderer->Draw_PicFromWad ("r_invbar2");
+		rsb_invbar[0] = ResolveRenderer()->Draw_PicFromWad ("r_invbar1");
+		rsb_invbar[1] = ResolveRenderer()->Draw_PicFromWad ("r_invbar2");
 
-		rsb_weapons[0] = g_GLRenderer->Draw_PicFromWad ("r_lava");
-		rsb_weapons[1] = g_GLRenderer->Draw_PicFromWad ("r_superlava");
-		rsb_weapons[2] = g_GLRenderer->Draw_PicFromWad ("r_gren");
-		rsb_weapons[3] = g_GLRenderer->Draw_PicFromWad ("r_multirock");
-		rsb_weapons[4] = g_GLRenderer->Draw_PicFromWad ("r_plasma");
+		rsb_weapons[0] = ResolveRenderer()->Draw_PicFromWad ("r_lava");
+		rsb_weapons[1] = ResolveRenderer()->Draw_PicFromWad ("r_superlava");
+		rsb_weapons[2] = ResolveRenderer()->Draw_PicFromWad ("r_gren");
+		rsb_weapons[3] = ResolveRenderer()->Draw_PicFromWad ("r_multirock");
+		rsb_weapons[4] = ResolveRenderer()->Draw_PicFromWad ("r_plasma");
 
-		rsb_items[0] = g_GLRenderer->Draw_PicFromWad ("r_shield1");
-        rsb_items[1] = g_GLRenderer->Draw_PicFromWad ("r_agrav1");
+		rsb_items[0] = ResolveRenderer()->Draw_PicFromWad ("r_shield1");
+        rsb_items[1] = ResolveRenderer()->Draw_PicFromWad ("r_agrav1");
 
 // PGM 01/19/97 - team color border
-        rsb_teambord = g_GLRenderer->Draw_PicFromWad ("r_teambord");
+        rsb_teambord = ResolveRenderer()->Draw_PicFromWad ("r_teambord");
 // PGM 01/19/97 - team color border
 
-		rsb_ammo[0] = g_GLRenderer->Draw_PicFromWad ("r_ammolava");
-		rsb_ammo[1] = g_GLRenderer->Draw_PicFromWad ("r_ammomulti");
-		rsb_ammo[2] = g_GLRenderer->Draw_PicFromWad ("r_ammoplasma");
+		rsb_ammo[0] = ResolveRenderer()->Draw_PicFromWad ("r_ammolava");
+		rsb_ammo[1] = ResolveRenderer()->Draw_PicFromWad ("r_ammomulti");
+		rsb_ammo[2] = ResolveRenderer()->Draw_PicFromWad ("r_ammoplasma");
 	}
-
-#else
-
-	for (i = 0; i < 10; i++)
-	{
-		sb_nums[0][i] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("num_%i", i));
-		sb_nums[1][i] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("anum_%i", i));
-	}
-
-	sb_nums[0][10] = g_SoftwareRenderer->Draw_PicFromWad("num_minus");
-	sb_nums[1][10] = g_SoftwareRenderer->Draw_PicFromWad("anum_minus");
-
-	sb_colon = g_SoftwareRenderer->Draw_PicFromWad("num_colon");
-	sb_slash = g_SoftwareRenderer->Draw_PicFromWad("num_slash");
-
-	sb_weapons[0][0] = g_SoftwareRenderer->Draw_PicFromWad("inv_shotgun");
-	sb_weapons[0][1] = g_SoftwareRenderer->Draw_PicFromWad("inv_sshotgun");
-	sb_weapons[0][2] = g_SoftwareRenderer->Draw_PicFromWad("inv_nailgun");
-	sb_weapons[0][3] = g_SoftwareRenderer->Draw_PicFromWad("inv_snailgun");
-	sb_weapons[0][4] = g_SoftwareRenderer->Draw_PicFromWad("inv_rlaunch");
-	sb_weapons[0][5] = g_SoftwareRenderer->Draw_PicFromWad("inv_srlaunch");
-	sb_weapons[0][6] = g_SoftwareRenderer->Draw_PicFromWad("inv_lightng");
-
-	sb_weapons[1][0] = g_SoftwareRenderer->Draw_PicFromWad("inv2_shotgun");
-	sb_weapons[1][1] = g_SoftwareRenderer->Draw_PicFromWad("inv2_sshotgun");
-	sb_weapons[1][2] = g_SoftwareRenderer->Draw_PicFromWad("inv2_nailgun");
-	sb_weapons[1][3] = g_SoftwareRenderer->Draw_PicFromWad("inv2_snailgun");
-	sb_weapons[1][4] = g_SoftwareRenderer->Draw_PicFromWad("inv2_rlaunch");
-	sb_weapons[1][5] = g_SoftwareRenderer->Draw_PicFromWad("inv2_srlaunch");
-	sb_weapons[1][6] = g_SoftwareRenderer->Draw_PicFromWad("inv2_lightng");
-
-	for (i = 0; i < 5; i++)
-	{
-		sb_weapons[2 + i][0] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_shotgun", i + 1));
-		sb_weapons[2 + i][1] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_sshotgun", i + 1));
-		sb_weapons[2 + i][2] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_nailgun", i + 1));
-		sb_weapons[2 + i][3] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_snailgun", i + 1));
-		sb_weapons[2 + i][4] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_rlaunch", i + 1));
-		sb_weapons[2 + i][5] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_srlaunch", i + 1));
-		sb_weapons[2 + i][6] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_lightng", i + 1));
-	}
-
-	sb_ammo[0] = g_SoftwareRenderer->Draw_PicFromWad("sb_shells");
-	sb_ammo[1] = g_SoftwareRenderer->Draw_PicFromWad("sb_nails");
-	sb_ammo[2] = g_SoftwareRenderer->Draw_PicFromWad("sb_rocket");
-	sb_ammo[3] = g_SoftwareRenderer->Draw_PicFromWad("sb_cells");
-
-	sb_armor[0] = g_SoftwareRenderer->Draw_PicFromWad("sb_armor1");
-	sb_armor[1] = g_SoftwareRenderer->Draw_PicFromWad("sb_armor2");
-	sb_armor[2] = g_SoftwareRenderer->Draw_PicFromWad("sb_armor3");
-
-	sb_items[0] = g_SoftwareRenderer->Draw_PicFromWad("sb_key1");
-	sb_items[1] = g_SoftwareRenderer->Draw_PicFromWad("sb_key2");
-	sb_items[2] = g_SoftwareRenderer->Draw_PicFromWad("sb_invis");
-	sb_items[3] = g_SoftwareRenderer->Draw_PicFromWad("sb_invuln");
-	sb_items[4] = g_SoftwareRenderer->Draw_PicFromWad("sb_suit");
-	sb_items[5] = g_SoftwareRenderer->Draw_PicFromWad("sb_quad");
-
-	sb_sigil[0] = g_SoftwareRenderer->Draw_PicFromWad("sb_sigil1");
-	sb_sigil[1] = g_SoftwareRenderer->Draw_PicFromWad("sb_sigil2");
-	sb_sigil[2] = g_SoftwareRenderer->Draw_PicFromWad("sb_sigil3");
-	sb_sigil[3] = g_SoftwareRenderer->Draw_PicFromWad("sb_sigil4");
-
-	sb_faces[4][0] = g_SoftwareRenderer->Draw_PicFromWad("face1");
-	sb_faces[4][1] = g_SoftwareRenderer->Draw_PicFromWad("face_p1");
-	sb_faces[3][0] = g_SoftwareRenderer->Draw_PicFromWad("face2");
-	sb_faces[3][1] = g_SoftwareRenderer->Draw_PicFromWad("face_p2");
-	sb_faces[2][0] = g_SoftwareRenderer->Draw_PicFromWad("face3");
-	sb_faces[2][1] = g_SoftwareRenderer->Draw_PicFromWad("face_p3");
-	sb_faces[1][0] = g_SoftwareRenderer->Draw_PicFromWad("face4");
-	sb_faces[1][1] = g_SoftwareRenderer->Draw_PicFromWad("face_p4");
-	sb_faces[0][0] = g_SoftwareRenderer->Draw_PicFromWad("face5");
-	sb_faces[0][1] = g_SoftwareRenderer->Draw_PicFromWad("face_p5");
-
-	sb_face_invis = g_SoftwareRenderer->Draw_PicFromWad("face_invis");
-	sb_face_invuln = g_SoftwareRenderer->Draw_PicFromWad("face_invul2");
-	sb_face_invis_invuln = g_SoftwareRenderer->Draw_PicFromWad("face_inv2");
-	sb_face_quad = g_SoftwareRenderer->Draw_PicFromWad("face_quad");
-
-	Cmd_AddCommand("+showscores", Sbar_ShowScores);
-	Cmd_AddCommand("-showscores", Sbar_DontShowScores);
-
-	sb_sbar = g_SoftwareRenderer->Draw_PicFromWad("sbar");
-	sb_ibar = g_SoftwareRenderer->Draw_PicFromWad("ibar");
-	sb_scorebar = g_SoftwareRenderer->Draw_PicFromWad("scorebar");
-
-	//MED 01/04/97 added new hipnotic weapons
-	if (hipnotic)
-	{
-		hsb_weapons[0][0] = g_SoftwareRenderer->Draw_PicFromWad("inv_laser");
-		hsb_weapons[0][1] = g_SoftwareRenderer->Draw_PicFromWad("inv_mjolnir");
-		hsb_weapons[0][2] = g_SoftwareRenderer->Draw_PicFromWad("inv_gren_prox");
-		hsb_weapons[0][3] = g_SoftwareRenderer->Draw_PicFromWad("inv_prox_gren");
-		hsb_weapons[0][4] = g_SoftwareRenderer->Draw_PicFromWad("inv_prox");
-
-		hsb_weapons[1][0] = g_SoftwareRenderer->Draw_PicFromWad("inv2_laser");
-		hsb_weapons[1][1] = g_SoftwareRenderer->Draw_PicFromWad("inv2_mjolnir");
-		hsb_weapons[1][2] = g_SoftwareRenderer->Draw_PicFromWad("inv2_gren_prox");
-		hsb_weapons[1][3] = g_SoftwareRenderer->Draw_PicFromWad("inv2_prox_gren");
-		hsb_weapons[1][4] = g_SoftwareRenderer->Draw_PicFromWad("inv2_prox");
-
-		for (i = 0; i < 5; i++)
-		{
-			hsb_weapons[2 + i][0] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_laser", i + 1));
-			hsb_weapons[2 + i][1] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_mjolnir", i + 1));
-			hsb_weapons[2 + i][2] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_gren_prox", i + 1));
-			hsb_weapons[2 + i][3] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_prox_gren", i + 1));
-			hsb_weapons[2 + i][4] = g_SoftwareRenderer->Draw_PicFromWad(g_Common->va("inva%i_prox", i + 1));
-		}
-
-		hsb_items[0] = g_SoftwareRenderer->Draw_PicFromWad("sb_wsuit");
-		hsb_items[1] = g_SoftwareRenderer->Draw_PicFromWad("sb_eshld");
-	}
-
-	if (rogue)
-	{
-		rsb_invbar[0] = g_SoftwareRenderer->Draw_PicFromWad("r_invbar1");
-		rsb_invbar[1] = g_SoftwareRenderer->Draw_PicFromWad("r_invbar2");
-
-		rsb_weapons[0] = g_SoftwareRenderer->Draw_PicFromWad("r_lava");
-		rsb_weapons[1] = g_SoftwareRenderer->Draw_PicFromWad("r_superlava");
-		rsb_weapons[2] = g_SoftwareRenderer->Draw_PicFromWad("r_gren");
-		rsb_weapons[3] = g_SoftwareRenderer->Draw_PicFromWad("r_multirock");
-		rsb_weapons[4] = g_SoftwareRenderer->Draw_PicFromWad("r_plasma");
-
-		rsb_items[0] = g_SoftwareRenderer->Draw_PicFromWad("r_shield1");
-		rsb_items[1] = g_SoftwareRenderer->Draw_PicFromWad("r_agrav1");
-
-		// PGM 01/19/97 - team color border
-		rsb_teambord = g_SoftwareRenderer->Draw_PicFromWad("r_teambord");
-		// PGM 01/19/97 - team color border
-
-		rsb_ammo[0] = g_SoftwareRenderer->Draw_PicFromWad("r_ammolava");
-		rsb_ammo[1] = g_SoftwareRenderer->Draw_PicFromWad("r_ammomulti");
-		rsb_ammo[2] = g_SoftwareRenderer->Draw_PicFromWad("r_ammoplasma");
-
-
-	}
-
-#endif
-
-
 }
 
 
@@ -1153,7 +1009,11 @@ void Sbar_Draw (void)
 		if (cl.items & IT_INVULNERABILITY)
 		{
 			Sbar_DrawNum (24, 0, 666, 3, 1);
-			Sbar_DrawPic (0, 0, draw_disc);
+#ifdef GLQUAKE	// Missi (4/24/2023)
+			Sbar_DrawPic (0, 0, g_GLRenderer->GetLoadingDisc());
+#else
+			Sbar_DrawPic(0, 0, g_SoftwareRenderer->GetLoadingDisc());
+#endif
 		}
 		else
 		{

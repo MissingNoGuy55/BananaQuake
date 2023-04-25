@@ -152,7 +152,6 @@ void CSoftwareRenderer::R_MakeSky (void)
 	r_skymade = 1;
 }
 
-
 /*
 =================
 R_GenSkyTile

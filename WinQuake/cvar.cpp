@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 
 cvar_t	*cvar_vars;
-char	*cvar_null_string = "";
+char	*cvar_null_string;
 
 /*
 ============
@@ -120,7 +120,11 @@ void Cvar_Set (const char *var_name, const char *value)
 	char str[64];
 
 	Q_strcpy (str, value);
+#ifdef _WIN32
 	var->string = _strdup(str);
+#else
+    var->string = strdup(str);
+#endif
 	var->value = Q_atof (str);
 	if (var->server && changed)
 	{
@@ -178,7 +182,11 @@ void Cvar_RegisterVariable (cvar_t *variable)
 
 	oldstr = variable->string;
 	//variable->string = mainzone->Z_Malloc<const char>(Q_strlen(variable->string) + 1);
+#ifdef _WIN32
 	variable->string = _strdup(oldstr);
+#else
+    variable->string = strdup(oldstr);
+#endif
 	variable->value = Q_atof(variable->string);
 
 // link the variable in

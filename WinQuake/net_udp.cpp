@@ -33,6 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/filio.h>
 #endif
 
+#ifdef __linux__
+#include <arpa/inet.h>
+#endif
+
 #ifdef NeXT
 #include <libcmt.h>
 #endif
@@ -60,7 +64,7 @@ int UDP_Init (void)
 	struct qsockaddr addr;
 	char *colon;
 	
-	if (COM_CheckParm ("-noudp"))
+	if (g_Common->COM_CheckParm ("-noudp"))
 		return -1;
 
 	// determine my name & address
@@ -104,7 +108,7 @@ void UDP_Shutdown (void)
 
 //=============================================================================
 
-void UDP_Listen (qboolean state)
+void UDP_Listen(bool state)
 {
 	// enable listening
 	if (state)
@@ -129,20 +133,27 @@ int UDP_OpenSocket (int port)
 {
 	int newsocket;
 	struct sockaddr_in address;
-	qboolean _true = true;
+	bool didit = true;
 
 	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 		return -1;
 
-	if (ioctl (newsocket, FIONBIO, (char *)&_true) == -1)
+	if (ioctl (newsocket, FIONBIO, (char *)&didit) == -1)
 		goto ErrorReturn;
 
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(port);
+#ifdef _WIN32   // Missi (4/22/23)
 	if( bind (newsocket, (void *)&address, sizeof(address)) == -1)
 		goto ErrorReturn;
-
+#elif __linux__
+    
+    sockaddr sockaddress;
+    
+	if( bind (newsocket, &sockaddress, sizeof(address)) == -1)
+		goto ErrorReturn;    
+#endif
 	return newsocket;
 
 ErrorReturn:
@@ -244,10 +255,14 @@ int UDP_CheckNewConnections (void)
 
 int UDP_Read (int socket, byte *buf, int len, struct qsockaddr *addr)
 {
-	int addrlen = sizeof (struct qsockaddr);
 	int ret;
-
+#ifdef _WIN32   // Missi (4/22/2023)
+    int addrlen = sizeof (struct qsockaddr);
 	ret = recvfrom (socket, buf, len, 0, (struct sockaddr *)addr, &addrlen);
+#elif __linux__
+    socklen_t addrlen = sizeof (struct qsockaddr);
+   	ret = recvfrom (socket, buf, len, 0, (struct sockaddr *)addr, &addrlen); 
+#endif
 	if (ret == -1 && (errno == EWOULDBLOCK || errno == ECONNREFUSED))
 		return 0;
 	return ret;
@@ -332,15 +347,24 @@ int UDP_StringToAddr (char *string, struct qsockaddr *addr)
 
 int UDP_GetSocketAddr (int socket, struct qsockaddr *addr)
 {
-	int addrlen = sizeof(struct qsockaddr);
 	unsigned int a;
 
 	Q_memset(addr, 0, sizeof(struct qsockaddr));
+#ifdef _WIN32
+    int addrlen = sizeof(struct qsockaddr);
 	getsockname(socket, (struct sockaddr *)addr, &addrlen);
+#elif __linux__
+    socklen_t addrlen = sizeof(struct qsockaddr);
+    getsockname(socket, (struct sockaddr *)addr, &addrlen);
+#endif
 	a = ((struct sockaddr_in *)addr)->sin_addr.s_addr;
+#ifdef _WIN32
 	if (a == 0 || a == inet_addr("127.0.0.1"))
 		((struct sockaddr_in *)addr)->sin_addr.s_addr = myAddr;
-
+#elif __linux__
+	if (a == 0 || a == inet_addr("127.0.0.1"))
+		((struct sockaddr_in *)addr)->sin_addr.s_addr = myAddr;    
+#endif
 	return 0;
 }
 

@@ -33,10 +33,6 @@ typedef struct {
 
 static rectdesc_t	r_rectdesc;
 
-byte		*draw_chars;				// 8*8 graphic characters
-CQuakePic	*draw_disc;
-CQuakePic	*draw_backtile;
-
 //=============================================================================
 /* Support Routines */
 
@@ -278,7 +274,7 @@ void CSoftwareRenderer::Draw_DebugChar (char num)
 	byte			*dest;
 	byte			*source;
 	int				drawline;	
-	extern byte		*draw_chars;
+	//extern byte		*draw_chars;
 	int				row, col;
 
 	if (!vid.direct)

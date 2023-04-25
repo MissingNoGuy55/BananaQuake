@@ -148,7 +148,11 @@ inline CQVector<T, S>& CQVector<T, S>::operator=(CQVector<T, S>& other)
 template<class T, class S>
 void CQVector<T, S>::Construct(T* element)
 {
+#ifdef _WIN32
 	new (element) T;
+#elif __linux__
+	element = new T;
+#endif
 }
 
 template<class T, class S>

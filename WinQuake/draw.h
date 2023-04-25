@@ -21,11 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // draw.h -- these are the only functions outside the refresh allowed
 // to touch the vid buffer
 
-#pragma once
+// Missi: no longer needed (4/24/2023)
+// extern	CQuakePic *draw_disc;	// also used on sbar
 
-extern	CQuakePic *draw_disc;	// also used on sbar
-
-class CSoftwareRenderer
+class CSoftwareRenderer : public CCoreRenderer
 {
 public:
 
@@ -58,6 +57,19 @@ public:
 	void R_MakeSky(void);
 
 	int dummy;
+
+	byte* draw_chars;				// 8*8 graphic characters
+	CQuakePic* draw_disc;
+	CQuakePic* draw_backtile;
+
+	CQuakePic* GetLoadingDisc() const { return draw_disc; }
+	CQuakePic* GetBackTile() const { return draw_backtile; }
+
+	virtual CSoftwareRenderer* GetRenderer() { return dynamic_cast<CSoftwareRenderer*>(g_CoreRenderer); } 
+
+private:
+
+	CSoftwareRenderer(const CSoftwareRenderer& src);
 
 };
 

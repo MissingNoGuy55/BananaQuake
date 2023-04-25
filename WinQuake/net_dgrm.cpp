@@ -578,7 +578,7 @@ static void Test_Poll(void)
 
 static void Test_f (void)
 {
-	char	*host;
+	char	host[256];
 	int		n;
 	int		max = MAX_SCOREBOARD;
 	struct qsockaddr sendaddr;
@@ -586,7 +586,7 @@ static void Test_f (void)
 	if (testInProgress)
 		return;
 
-	host = Cmd_Argv (1);
+	Q_strncpy(host, Cmd_Argv(1), sizeof(host));
 
 	if (host && hostCacheCount)
 	{
@@ -707,14 +707,14 @@ Done:
 
 static void Test2_f (void)
 {
-	char	*host;
+	char		host[256];
 	int		n;
 	struct qsockaddr sendaddr;
 
 	if (test2InProgress)
 		return;
 
-	host = Cmd_Argv (1);
+	Q_strncpy(host, Cmd_Argv (1), sizeof(host));
 
 	if (host && hostCacheCount)
 	{

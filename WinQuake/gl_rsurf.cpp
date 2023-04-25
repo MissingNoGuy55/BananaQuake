@@ -314,8 +314,8 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, theRect->t, 
 					BLOCK_WIDTH, theRect->h, gl_lightmap_format, GL_UNSIGNED_BYTE,
 					lightmaps+(i* BLOCK_HEIGHT + theRect->t) *BLOCK_WIDTH*lightmap_bytes);
-				theRect->l = BLOCK_WIDTH;
-				theRect->t = BLOCK_HEIGHT;
+				theRect->l = (unsigned char)BLOCK_WIDTH;
+				theRect->t = (unsigned char)BLOCK_HEIGHT;
 				theRect->h = 0;
 				theRect->w = 0;
 			}
@@ -416,8 +416,8 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, theRect->t, 
 				BLOCK_WIDTH, theRect->h, gl_lightmap_format, GL_UNSIGNED_BYTE,
 				lightmaps+(i* BLOCK_HEIGHT + theRect->t) *BLOCK_WIDTH*lightmap_bytes);
-			theRect->l = BLOCK_WIDTH;
-			theRect->t = BLOCK_HEIGHT;
+			theRect->l = (unsigned char)BLOCK_WIDTH;
+			theRect->t = (unsigned char)BLOCK_HEIGHT;
 			theRect->h = 0;
 			theRect->w = 0;
 		}
@@ -573,8 +573,8 @@ void CGLRenderer::R_BlendLightmaps (void)
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, theRect->t, 
 				BLOCK_WIDTH, theRect->h, gl_lightmap_format, GL_UNSIGNED_BYTE,
 				lightmaps+(i* BLOCK_HEIGHT + theRect->t) *BLOCK_WIDTH*lightmap_bytes);
-			theRect->l = BLOCK_WIDTH;
-			theRect->t = BLOCK_HEIGHT;
+			theRect->l = (unsigned char)BLOCK_WIDTH;
+			theRect->t = (unsigned char)BLOCK_HEIGHT;
 			theRect->h = 0;
 			theRect->w = 0;
 		}
@@ -1498,8 +1498,8 @@ void CGLRenderer::GL_BuildLightmaps (void)
 		if (!allocated[i][0])
 			break;		// no more used
 		lightmap_modified[i] = false;
-		lightmap_rectchange[i].l = BLOCK_WIDTH;
-		lightmap_rectchange[i].t = BLOCK_HEIGHT;
+		lightmap_rectchange[i].l = (unsigned char)BLOCK_WIDTH;
+		lightmap_rectchange[i].t = (unsigned char)BLOCK_HEIGHT;
 		lightmap_rectchange[i].w = 0;
 		lightmap_rectchange[i].h = 0;
 		

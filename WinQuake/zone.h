@@ -90,10 +90,19 @@ Zone block
 #include "sys.h"
 #endif
 
+#ifdef __linux__
+#include "strl_fn.h"
+#include "console.h"
+#include "cvar.h"
+#include "cmd.h"
+#endif
+
 #define	DYNAMIC_SIZE	0xc000
 
 #define	ZONEID	0x1d4a11
 #define MINFRAGMENT	64
+
+extern cvar_s zone_debug;
 
 template<class T, class I = int>
 class CMemBlock
@@ -334,7 +343,11 @@ void CMemZone::Z_Free(T* ptr)
 	if (!ptr)
 		Sys_Error("Z_Free: NULL pointer");
 	
+
 	block = (CMemBlock<T> *) ((byte*)ptr - sizeof(CMemBlock<T>));
+
+	SDL_assert(block->tag != 0 && block->id == ZONEID);
+
 	if (block->id != ZONEID)
 		Sys_Error("Z_Free: freed a pointer without ZONEID");
 	if (block->tag == 0)
@@ -596,7 +609,7 @@ void CMemCache::Cache_Print(void)
 {
 #ifdef QUAKE_GAME
 	CMemCacheSystem* cd;
-	for (cd = cache_head.next; cd != cache_head; cd = cd->next)
+	for (cd = cache_head.next; cd != &cache_head; cd = cd->next)   // Missi (4/21/2023)
 	{
 		Con_Printf("%8i : %s\n", cd->size, cd->name);
 	}

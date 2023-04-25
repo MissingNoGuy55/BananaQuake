@@ -21,16 +21,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+#include <errno.h>
+
 CCommon* g_Common;
 CFileSystem* g_FileSystem;
 cache_user_s* loadcache;
 
 #define NUM_SAFE_ARGVS  7
 
-static char*     largv[MAX_NUM_ARGVS + NUM_SAFE_ARGVS + 1];
-static char*     argvdummy = "";
+static char*			largv[MAX_NUM_ARGVS + NUM_SAFE_ARGVS + 1];
+static const char*		argvdummy;
 
-static char*     safeargvs[NUM_SAFE_ARGVS] =
+static const char*     safeargvs[NUM_SAFE_ARGVS] =
 	{"-stdvid", "-nolan", "-nosound", "-nocdaudio", "-nojoy", "-nomouse", "-dibonly"};
 
 
@@ -442,15 +444,19 @@ float Q_atof (const char *str)
 #else
 #define	snprintf_func		snprintf
 #define	vsnprintf_func		vsnprintf
-#define	vsnprintf_s_func	vsnprintf_s
+// #define	vsnprintf_s_func	vsnprintf_s
 #endif
 
 int q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args)
 {
 	int		ret;
-
+#ifndef WIN64
+	ret = snprintf_func(str, len, format, args);
+#elif WIN64
 	ret = vsnprintf_s_func(str, size, len, format, args);
-
+#else
+	ret = snprintf_func(str, len, format, args);    
+#endif
 	if (ret < 0)
 		ret = (int)size;
 	if (size == 0)	/* no buffer */
@@ -1208,12 +1214,12 @@ void CCommon::COM_InitArgv (int argc, char **argv)
 	// case we need to add these, so we don't need an overflow check
 		for (i=0 ; i<NUM_SAFE_ARGVS ; i++)
 		{
-			largv[com_argc] = safeargvs[i];
+            Q_strlcpy(largv[com_argc], safeargvs[i], strlen(safeargvs[i]));
+			// largv[com_argc] = safeargvs[i];
 			com_argc++;
 		}
 	}
 
-	largv[com_argc] = argvdummy;
 	com_argv = largv;
 
 	if (g_Common->COM_CheckParm ("-rogue"))
@@ -1291,7 +1297,7 @@ const char* CCommon::va(const char *format, ...)
 	return string;  
 }
 
-char* CCommon::va_unsafe(char* format, ...)
+char* CCommon::va_unsafe ( char* format, ... )
 {
 	va_list         argptr;
 	static char             string[1024];
@@ -1515,9 +1521,11 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 					if (strchr(filename, '/') || strchr(filename, '\\'))
 						continue;
 				}
-
+#ifdef _WIN32
 				sprintf_s(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
-
+#else
+  				sprintf(netpath, "%s/%s", search->filename, filename);              
+#endif
 				if (!(Sys_FileType(netpath) & FS_ENT_FILE))
 					continue;
 
@@ -1536,7 +1544,7 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 					else
 						sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath + 2);
 #else
-					sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
+					sprintf(cachepath, "%s%s", com_cachedir, netpath);
 #endif
 
 					cachetime = Sys_FileTime(cachepath);

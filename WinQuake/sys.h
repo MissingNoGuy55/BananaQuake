@@ -1,3 +1,5 @@
+#pragma once
+
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -33,22 +35,21 @@ int Sys_FileOpenWrite (const char *path);
 int Sys_FileType(const char* path);
 void Sys_FileClose (int handle);
 void Sys_FileSeek (int handle, int position);
-/*
-#ifdef _WIN32
+
 template<typename T>
-int Sys_FileRead (int handle, T *dest, int count);
-#else
-int Sys_FileRead(int handle, void* dest, int count);
-#endif
-*/
+int Sys_FileRead (int handle, T *dest, size_t count);
 
 #ifdef _WIN32
 #include "sys_win.h"
 #endif
 
+#ifdef __linux__
+#include "sys_linux.h"
+#endif
+
 int Sys_FileWrite (int handle, void *data, int count);
-int	Sys_FileTime (char *path);
-void Sys_mkdir (char *path);
+int	Sys_FileTime (const char *path);
+void Sys_mkdir (const char *path);
 
 //
 // memory protection
@@ -63,7 +64,7 @@ void Sys_DebugLog(char *file, char *fmt, ...);
 void Sys_Error (const char *error, ...);
 // an error will cause the entire program to exit
 
-void Sys_Printf (char *fmt, ...);
+void Sys_Printf (const char *fmt, ...);
 // send text to the console
 
 void Sys_Quit (void);

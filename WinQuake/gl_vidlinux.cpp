@@ -25,15 +25,29 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdio.h>
 #include <signal.h>
 
-#include <asm/io.h>
+// Missi: no longer present (4/21/2023)
+#include <sys/io.h>
+
 #include <dlfcn.h>
 
+#include "svgalib/src/vga.h"
+#include "svgalib/src/mouse/vgamouse.h"
+#include "src/svgalib/src/keyboard/vgakeyboard.h"
+
 /*#include "vga.h" */
+
+// Missi: no longer present (4/21/2023)
+/*
 #include "vgakeyboard.h"
 #include "vgamouse.h"
+*/
+
+#include "SDL_keyboard.h"
+#include "SDL_mouse.h"
 
 #include "quakedef.h"
 #include "GL/fxmesa.h"
+#include "mesa/3dfx/glide3/include/sst1vid.h"
 
 #define WARP_WIDTH              320
 #define WARP_HEIGHT             200
@@ -47,9 +61,11 @@ unsigned char d_15to8table[65536];
 
 int num_shades=32;
 
+viddef_t	vid;				// global video state
+
 struct
 {
-	char *name;
+	const char *name;
 	int num;
 } mice[] =
 {
@@ -122,9 +138,9 @@ void (*qglColorTableEXT) (int, int, int, int, int, const void *);
 
 static float vid_gamma = 1.0;
 
-qboolean is8bit = false;
-qboolean isPermedia = false;
-qboolean gl_mtexable = false;
+bool is8bit = false;
+bool isPermedia = false;
+bool gl_mtexable = false;
 
 /*-----------------------------------------------------------------------*/
 void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height)
@@ -223,7 +239,7 @@ void	VID_SetPalette (unsigned char *palette)
 	FILE *f;
 	char s[255];
 	int dist, bestdist;
-	static qboolean palflag = false;
+	static bool palflag = false;
 
 //
 // 8 8 8 encoding
@@ -272,7 +288,7 @@ void CheckMultiTextureExtensions(void)
 {
 	void *prjobj;
 
-	if (strstr(gl_extensions, "GL_SGIS_multitexture ") && !COM_CheckParm("-nomtex")) {
+	if (strstr(gl_extensions, "GL_SGIS_multitexture ") && !g_Common->COM_CheckParm("-nomtex")) {
 		Con_Printf("Found GL_SGIS_multitexture...\n");
 
 		if ((prjobj = dlopen(NULL, RTLD_LAZY)) == NULL) {
@@ -280,8 +296,11 @@ void CheckMultiTextureExtensions(void)
 			return;
 		}
 
-		qglMTexCoord2fSGIS = (void *) dlsym(prjobj, "glMTexCoord2fSGIS");
-		qglSelectTextureSGIS = (void *) dlsym(prjobj, "glSelectTextureSGIS");
+		void* texCoord = (void*)&qglMTexCoord2fSGIS;
+        void* selTex = (void*)&qglSelectTextureSGIS;
+		
+		texCoord = (void *) dlsym(prjobj, "glMTexCoord2fSGIS");
+		selTex = (void *) dlsym(prjobj, "glSelectTextureSGIS");
 
 		if (qglMTexCoord2fSGIS && qglSelectTextureSGIS) {
 			Con_Printf("Multitexture extensions found.\n");
@@ -300,14 +319,14 @@ GL_Init
 */
 void GL_Init (void)
 {
-	gl_vendor = glGetString (GL_VENDOR);
+	gl_vendor = (const char*)glGetString (GL_VENDOR);
 	Con_Printf ("GL_VENDOR: %s\n", gl_vendor);
-	gl_renderer = glGetString (GL_RENDERER);
+	gl_renderer = (const char*)glGetString (GL_RENDERER);
 	Con_Printf ("GL_RENDERER: %s\n", gl_renderer);
 
-	gl_version = glGetString (GL_VERSION);
+	gl_version = (const char*)glGetString (GL_VERSION);
 	Con_Printf ("GL_VERSION: %s\n", gl_version);
-	gl_extensions = glGetString (GL_EXTENSIONS);
+	gl_extensions = (const char*)glGetString (GL_EXTENSIONS);
 	Con_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
 
 //	Con_Printf ("%s %s\n", gl_renderer, gl_version);
@@ -366,7 +385,7 @@ void Init_KBD(void)
 {
 	int i;
 
-	if (COM_CheckParm("-nokbd")) UseKeyboard = 0;
+	if (g_Common->COM_CheckParm("-nokbd")) UseKeyboard = 0;
 
 	if (UseKeyboard)
 	{
@@ -482,22 +501,22 @@ void Init_KBD(void)
 #define NUM_RESOLUTIONS 16
 
 static int resolutions[NUM_RESOLUTIONS][3]={ 
-	320,200,  GR_RESOLUTION_320x200,
-	320,240,  GR_RESOLUTION_320x240,
-	400,256,  GR_RESOLUTION_400x256,
-	400,300,  GR_RESOLUTION_400x300,
-	512,384,  GR_RESOLUTION_512x384,
-	640,200,  GR_RESOLUTION_640x200,
-	640,350,  GR_RESOLUTION_640x350,
-	640,400,  GR_RESOLUTION_640x400,
-	640,480,  GR_RESOLUTION_640x480,
-	800,600,  GR_RESOLUTION_800x600,
-	960,720,  GR_RESOLUTION_960x720,
-	856,480,  GR_RESOLUTION_856x480,
-	512,256,  GR_RESOLUTION_512x256,
-	1024,768, GR_RESOLUTION_1024x768,
-	1280,1024,GR_RESOLUTION_1280x1024,
-	1600,1200,GR_RESOLUTION_1600x1200
+    {   320,200,  GR_RESOLUTION_320x200     },
+	{   320,240,  GR_RESOLUTION_320x240    },
+	{   400,256,  GR_RESOLUTION_400x256    },
+	{   400,300,  GR_RESOLUTION_400x300    },
+	{   512,384,  GR_RESOLUTION_512x384    },
+	{   640,200,  GR_RESOLUTION_640x200    },
+	{   640,350,  GR_RESOLUTION_640x350    },
+	{   640,400,  GR_RESOLUTION_640x400    },
+	{   640,480,  GR_RESOLUTION_640x480    },
+	{   800,600,  GR_RESOLUTION_800x600    },
+	{   960,720,  GR_RESOLUTION_960x720    },
+	{   856,480,  GR_RESOLUTION_856x480    },
+	{   512,256,  GR_RESOLUTION_512x256    },
+	{   1024,768, GR_RESOLUTION_1024x768   },
+	{   1280,1024,GR_RESOLUTION_1280x1024  },
+	{   1600,1200,GR_RESOLUTION_1600x1200  }
 };
 
 int findres(int *width, int *height)
@@ -516,7 +535,7 @@ int findres(int *width, int *height)
 	return GR_RESOLUTION_640x480;
 }
 
-qboolean VID_Is8bit(void)
+bool VID_Is8bit(void)
 {
 	return is8bit;
 }
@@ -527,7 +546,7 @@ void VID_Init8bitPalette(void)
 	int i;
 	void *prjobj;
 
-	if (COM_CheckParm("-no8bit"))
+	if (g_Common->COM_CheckParm("-no8bit"))
 		return;
 
 	if ((prjobj = dlopen(NULL, RTLD_LAZY)) == NULL) {
@@ -535,8 +554,11 @@ void VID_Init8bitPalette(void)
 		return;
 	}
 
+	void* setPalette = (void*)&qgl3DfxSetPaletteEXT;
+	void* colorTable = (void*)&qglColorTableEXT;
+	
 	if (strstr(gl_extensions, "3DFX_set_global_palette") &&
-		(qgl3DfxSetPaletteEXT = dlsym(prjobj, "gl3DfxSetPaletteEXT")) != NULL) {
+		(setPalette = dlsym(prjobj, "gl3DfxSetPaletteEXT")) != NULL) {
 		GLubyte table[256][4];
 		char *oldpal;
 
@@ -554,7 +576,7 @@ void VID_Init8bitPalette(void)
 		is8bit = true;
 
 	} else if (strstr(gl_extensions, "GL_EXT_shared_texture_palette") &&
-		(qglColorTableEXT = dlsym(prjobj, "glColorTableEXT")) != NULL) {
+		(colorTable = dlsym(prjobj, "glColorTableEXT")) != NULL) {
 		char thePalette[256*3];
 		char *oldPalette, *newPalette;
 
@@ -582,14 +604,14 @@ static void Check_Gamma (unsigned char *pal)
 	unsigned char	palette[768];
 	int		i;
 
-	if ((i = COM_CheckParm("-gamma")) == 0) {
+	if ((i = g_Common->COM_CheckParm("-gamma")) == 0) {
 		if ((gl_renderer && strstr(gl_renderer, "Voodoo")) ||
 			(gl_vendor && strstr(gl_vendor, "3Dfx")))
 			vid_gamma = 1;
 		else
 			vid_gamma = 0.7; // default to 0.7 on non-3dfx hardware
 	} else
-		vid_gamma = Q_atof(com_argv[i+1]);
+		vid_gamma = Q_atof(g_Common->com_argv[i+1]);
 
 	for (i=0 ; i<768 ; i++)
 	{
@@ -621,7 +643,7 @@ void VID_Init(unsigned char *palette)
 	
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
-	vid.colormap = host_colormap;
+	vid.colormap = host->host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 
 // interpret command-line params
@@ -634,13 +656,13 @@ void VID_Init(unsigned char *palette)
 	attribs[4] = 1;
 	attribs[5] = FXMESA_NONE;
 
-	if ((i = COM_CheckParm("-width")) != 0)
-		width = atoi(com_argv[i+1]);
-	if ((i = COM_CheckParm("-height")) != 0)
-		height = atoi(com_argv[i+1]);
+	if ((i = g_Common->COM_CheckParm("-width")) != 0)
+		width = atoi(g_Common->com_argv[i+1]);
+	if ((i = g_Common->COM_CheckParm("-height")) != 0)
+		height = atoi(g_Common->com_argv[i+1]);
 
-	if ((i = COM_CheckParm("-conwidth")) != 0)
-		vid.conwidth = Q_atoi(com_argv[i+1]);
+	if ((i = g_Common->COM_CheckParm("-conwidth")) != 0)
+		vid.conwidth = Q_atoi(g_Common->com_argv[i+1]);
 	else
 		vid.conwidth = 640;
 
@@ -652,8 +674,8 @@ void VID_Init(unsigned char *palette)
 	// pick a conheight that matches with correct aspect
 	vid.conheight = vid.conwidth*3 / 4;
 
-	if ((i = COM_CheckParm("-conheight")) != 0)
-		vid.conheight = Q_atoi(com_argv[i+1]);
+	if ((i = g_Common->COM_CheckParm("-conheight")) != 0)
+		vid.conheight = Q_atoi(g_Common->com_argv[i+1]);
 	if (vid.conheight < 200)
 		vid.conheight = 200;
 
@@ -682,7 +704,7 @@ void VID_Init(unsigned char *palette)
 
 	GL_Init();
 
-	sprintf (gldir, "%s/glquake", com_gamedir);
+	sprintf (gldir, "%s/glquake", g_Common->com_gamedir);
 	Sys_mkdir (gldir);
 
 	Check_Gamma(palette);
@@ -707,21 +729,26 @@ void Force_CenterView_f (void)
 	cl.viewangles[PITCH] = 0;
 }
 
+typedef void (*mousehandler)(int buttonstate, int dx, int dy);
 
-void mousehandler(int buttonstate, int dx, int dy)
+void mousehandler_func(int buttonstate, int dx, int dy)
 {
 	mouse_buttonstate = buttonstate;
 	mx += dx;
 	my += dy;
 }
 
+static mousehandler s_MouseHandler = mousehandler_func;
+
 void IN_Init(void)
 {
 
 	int mtype;
-	char *mousedev;
+	char mousedev[256];
 	int mouserate;
 
+    memset(mousedev, 0, sizeof(mousedev));
+    
 	if (UseMouse)
 	{
 
@@ -734,15 +761,23 @@ void IN_Init(void)
 
 		mtype = vga_getmousetype();
 
-		mousedev = "/dev/mouse";
-		if (getenv("MOUSEDEV")) mousedev = getenv("MOUSEDEV");
-		if (COM_CheckParm("-mdev"))
-			mousedev = com_argv[COM_CheckParm("-mdev")+1];
-
+        snprintf(mousedev, sizeof(mousedev), "/dev/mouse");
+        
+		// mousedev = "/dev/mouse";
+		if (getenv("MOUSEDEV"))
+        {
+            snprintf(mousedev, sizeof(mousedev), "%s", getenv("MOUSEDEV"));
+            // mousedev = getenv("MOUSEDEV");
+        }
+		if (g_Common->COM_CheckParm("-mdev"))
+        {
+            snprintf(mousedev, sizeof(mousedev), "%s", g_Common->com_argv[g_Common->COM_CheckParm("-mdev")+1]);
+			// mousedev = g_Common->com_argv[g_Common->COM_CheckParm("-mdev")+1];
+        }
 		mouserate = 1200;
 		if (getenv("MOUSERATE")) mouserate = atoi(getenv("MOUSERATE"));
-		if (COM_CheckParm("-mrate"))
-			mouserate = atoi(com_argv[COM_CheckParm("-mrate")+1]);
+		if (g_Common->COM_CheckParm("-mrate"))
+			mouserate = atoi(g_Common->com_argv[g_Common->COM_CheckParm("-mrate")+1]);
 
 		if (mouse_init(mousedev, mtype, mouserate))
 		{
@@ -750,7 +785,7 @@ void IN_Init(void)
 			UseMouse = 0;
 		}
 		else
-			mouse_seteventhandler(mousehandler);
+			mouse_seteventhandler((void*)mousehandler_func);
 
 	}
 

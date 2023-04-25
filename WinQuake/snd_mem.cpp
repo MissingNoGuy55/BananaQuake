@@ -30,7 +30,7 @@ byte *S_Alloc (int size);
 ResampleSfx
 ================
 */
-void CSoundSystemWin::ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
+void CSoundInternal::ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 {
 	int		outcount;
 	int		srcsample;
@@ -93,7 +93,7 @@ void CSoundSystemWin::ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *da
 S_LoadSound
 ==============
 */
-sfxcache_t * CSoundSystemWin::S_LoadSound (sfx_t *s)
+sfxcache_t * CSoundInternal::S_LoadSound (sfx_t *s)
 {
     char	namebuffer[256];
 	byte	*data;
@@ -188,7 +188,7 @@ int GetLittleLong(void)
 	return val;
 }
 
-void FindNextChunk(char *name)
+void FindNextChunk(const char *name)
 {
 	while (1)
 	{
@@ -216,7 +216,7 @@ void FindNextChunk(char *name)
 	}
 }
 
-void FindChunk(char *name)
+void FindChunk(const char *name)
 {
 	last_chunk = iff_data;
 	FindNextChunk (name);
@@ -235,7 +235,7 @@ void DumpChunks(void)
 		data_p += 4;
 		iff_chunk_len = GetLittleLong();
 #ifndef WIN64
-		Con_Printf ("0x%x : %s (%d)\n", (int)(data_p - 4), str, iff_chunk_len);
+		Con_Printf ("0x%x : %s (%d)\n", (size_t)(data_p - 4), str, iff_chunk_len);
 #else
 		Con_Printf ("0x%x : %s (%d)\n", (long long)(data_p - 4), str, iff_chunk_len);
 #endif
@@ -248,7 +248,7 @@ void DumpChunks(void)
 GetWavinfo
 ============
 */
-wavinfo_t CSoundSystemWin::GetWavinfo (char *name, byte *wav, int wavlength)
+wavinfo_t CSoundInternal::GetWavinfo (char *name, byte *wav, int wavlength)
 {
 	wavinfo_t	info;
 	int     i;

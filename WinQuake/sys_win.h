@@ -48,11 +48,7 @@ bool	WinNT;
 //bool		sc_return_on_enter = false;
 
 template<typename T>
-#ifndef WIN64
-int Sys_FileRead(int handle, T* dest, int count)
-#else
 int Sys_FileRead(int handle, T* dest, size_t count)
-#endif
 {
 #ifndef QUAKE_TOOLS
 	int		t, x;

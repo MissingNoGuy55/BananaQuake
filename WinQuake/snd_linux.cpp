@@ -27,14 +27,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/wait.h>
 #include <linux/soundcard.h>
 #include <stdio.h>
+#include "snd_linux.h"
 #include "quakedef.h"
 
 int audio_fd;
 int snd_inited;
 
+CSoundSystemLinux* g_SoundSystem;
+
 static int tryrates[] = { 11025, 22051, 44100, 8000 };
 
-qboolean SNDDMA_Init(void)
+bool CSoundSystemLinux::SNDDMA_Init(void)
 {
 
 	int rc;
@@ -96,8 +99,8 @@ qboolean SNDDMA_Init(void)
 
     s = getenv("QUAKE_SOUND_SAMPLEBITS");
     if (s) shm->samplebits = atoi(s);
-	else if ((i = COM_CheckParm("-sndbits")) != 0)
-		shm->samplebits = atoi(com_argv[i+1]);
+	else if ((i = g_Common->COM_CheckParm("-sndbits")) != 0)
+		shm->samplebits = atoi(g_Common->com_argv[i+1]);
 	if (shm->samplebits != 16 && shm->samplebits != 8)
     {
         ioctl(audio_fd, SNDCTL_DSP_GETFMTS, &fmt);
@@ -107,8 +110,8 @@ qboolean SNDDMA_Init(void)
 
     s = getenv("QUAKE_SOUND_SPEED");
     if (s) shm->speed = atoi(s);
-	else if ((i = COM_CheckParm("-sndspeed")) != 0)
-		shm->speed = atoi(com_argv[i+1]);
+	else if ((i = g_Common->COM_CheckParm("-sndspeed")) != 0)
+		shm->speed = atoi(g_Common->com_argv[i+1]);
     else
     {
         for (i=0 ; i<sizeof(tryrates)/4 ; i++)
@@ -118,9 +121,9 @@ qboolean SNDDMA_Init(void)
 
     s = getenv("QUAKE_SOUND_CHANNELS");
     if (s) shm->channels = atoi(s);
-	else if ((i = COM_CheckParm("-sndmono")) != 0)
+	else if ((i = g_Common->COM_CheckParm("-sndmono")) != 0)
 		shm->channels = 1;
-	else if ((i = COM_CheckParm("-sndstereo")) != 0)
+	else if ((i = g_Common->COM_CheckParm("-sndstereo")) != 0)
 		shm->channels = 2;
     else shm->channels = 2;
 
@@ -224,7 +227,7 @@ qboolean SNDDMA_Init(void)
 
 }
 
-int SNDDMA_GetDMAPos(void)
+int CSoundSystemLinux::SNDDMA_GetDMAPos(void)
 {
 
 	struct count_info count;
@@ -247,7 +250,7 @@ int SNDDMA_GetDMAPos(void)
 
 }
 
-void SNDDMA_Shutdown(void)
+void CSoundSystemLinux::SNDDMA_Shutdown(void)
 {
 	if (snd_inited)
 	{
@@ -263,7 +266,7 @@ SNDDMA_Submit
 Send sound to device if buffer isn't really the dma buffer
 ===============
 */
-void SNDDMA_Submit(void)
+void CSoundSystemLinux::SNDDMA_Submit(void)
 {
 }
 

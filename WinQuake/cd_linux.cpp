@@ -35,12 +35,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-static qboolean cdValid = false;
-static qboolean	playing = false;
-static qboolean	wasPlaying = false;
-static qboolean	initialized = false;
-static qboolean	enabled = true;
-static qboolean playLooping = false;
+static bool cdValid = false;
+static bool	playing = false;
+static bool	wasPlaying = false;
+static bool	initialized = false;
+static bool	enabled = true;
+static bool playLooping = false;
 static float	cdvolume;
 static byte 	remap[100];
 static byte		playTrack;
@@ -93,19 +93,19 @@ static int CDAudio_GetAudioDiskInfo(void)
 }
 
 
-void CDAudio_Play(byte track, qboolean looping)
+int CDAudio_Play(byte track, bool looping)
 {
 	struct cdrom_tocentry entry;
 	struct cdrom_ti ti;
 
 	if (cdfile == -1 || !enabled)
-		return;
+		return -1;
 	
 	if (!cdValid)
 	{
 		CDAudio_GetAudioDiskInfo();
 		if (!cdValid)
-			return;
+			return -1;
 	}
 
 	track = remap[track];
@@ -113,7 +113,7 @@ void CDAudio_Play(byte track, qboolean looping)
 	if (track < 1 || track > maxTrack)
 	{
 		Con_DPrintf("CDAudio: Bad track number %u.\n", track);
-		return;
+		return -1;
 	}
 
 	// don't try to play a non-audio track
@@ -122,18 +122,18 @@ void CDAudio_Play(byte track, qboolean looping)
     if ( ioctl(cdfile, CDROMREADTOCENTRY, &entry) == -1 )
 	{
 		Con_DPrintf("ioctl cdromreadtocentry failed\n");
-		return;
+		return -1;
 	}
 	if (entry.cdte_ctrl == CDROM_DATA_TRACK)
 	{
 		Con_Printf("CDAudio: track %i is not audio\n", track);
-		return;
+		return -1;
 	}
 
 	if (playing)
 	{
 		if (playTrack == track)
-			return;
+			return -1;
 		CDAudio_Stop();
 	}
 
@@ -145,7 +145,7 @@ void CDAudio_Play(byte track, qboolean looping)
 	if ( ioctl(cdfile, CDROMPLAYTRKIND, &ti) == -1 ) 
     {
 		Con_DPrintf("ioctl cdromplaytrkind failed\n");
-		return;
+		return -1;
     }
 
 	if ( ioctl(cdfile, CDROMRESUME) == -1 ) 
@@ -157,6 +157,8 @@ void CDAudio_Play(byte track, qboolean looping)
 
 	if (cdvolume == 0.0)
 		CDAudio_Pause ();
+    
+    return 0;
 }
 
 
@@ -209,7 +211,7 @@ void CDAudio_Resume(void)
 
 static void CD_f (void)
 {
-	char	*command;
+	const char	*command = NULL;
 	int		ret;
 	int		n;
 
@@ -373,11 +375,11 @@ int CDAudio_Init(void)
 	if (cls.state == ca_dedicated)
 		return -1;
 
-	if (COM_CheckParm("-nocdaudio"))
+	if (g_Common->COM_CheckParm("-nocdaudio"))
 		return -1;
 
-	if ((i = COM_CheckParm("-cddev")) != 0 && i < com_argc - 1) {
-		strncpy(cd_dev, com_argv[i + 1], sizeof(cd_dev));
+	if ((i = g_Common->COM_CheckParm("-cddev")) != 0 && i < g_Common->com_argc - 1) {
+		strncpy(cd_dev, g_Common->com_argv[i + 1], sizeof(cd_dev));
 		cd_dev[sizeof(cd_dev) - 1] = 0;
 	}
 

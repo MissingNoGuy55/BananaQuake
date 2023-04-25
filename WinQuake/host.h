@@ -5,11 +5,11 @@
 template<typename T = byte>
 struct quakeparms_t
 {
-	char* basedir;
-	char* cachedir;		// for development over ISDN lines
-	char* userdir;
+	const char* basedir;
+	const char* cachedir;		// for development over ISDN lines
+	const char* userdir;
 	int		argc;
-	char** argv;
+	char**	argv;
 	T		membase;
 #ifndef WIN64
 	int		memsize;
@@ -29,7 +29,7 @@ public:
 
 	quakeparms_t<byte*> host_parms;	// Missi: needed an address pointer (6/4/2022)
 
-	//cvar_t		sys_ticrate;
+	// cvar_t		sys_ticrate;
 	cvar_t		sys_nostdout;
 	//cvar_t		developer;
 

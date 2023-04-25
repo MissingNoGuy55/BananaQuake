@@ -119,7 +119,7 @@ void SCR_EraseCenterString (void)
 		y = 48;
 
 	scr_copytop = 1;
-	g_SoftwareRenderer->Draw_TileClear (0, y,vid.width, 8*scr_erase_lines);
+	ResolveRenderer()->Draw_TileClear (0, y,vid.width, 8*scr_erase_lines);
 }
 
 void SCR_DrawCenterString (void)
@@ -153,7 +153,7 @@ void SCR_DrawCenterString (void)
 		x = (vid.width - l*8)/2;
 		for (j=0 ; j<l ; j++, x+=8)
 		{
-			g_SoftwareRenderer->Draw_Character (x, y, start[j]);
+			ResolveRenderer()->Draw_Character (x, y, start[j]);
 			if (!remaining--)
 				return;
 		}
@@ -329,9 +329,9 @@ void SCR_Init (void)
 	Cmd_AddCommand ("sizeup",SCR_SizeUp_f);
 	Cmd_AddCommand ("sizedown",SCR_SizeDown_f);
 
-	scr_ram = g_SoftwareRenderer->Draw_PicFromWad ("ram");
-	scr_net = g_SoftwareRenderer->Draw_PicFromWad ("net");
-	scr_turtle = g_SoftwareRenderer->Draw_PicFromWad ("turtle");
+	scr_ram = ResolveRenderer()->Draw_PicFromWad ("ram");
+	scr_net = ResolveRenderer()->Draw_PicFromWad ("net");
+	scr_turtle = ResolveRenderer()->Draw_PicFromWad ("turtle");
 
 	scr_initialized = true;
 }
@@ -351,7 +351,7 @@ void SCR_DrawRam (void)
 	if (!r_cache_thrash)
 		return;
 
-	g_SoftwareRenderer->Draw_Pic (scr_vrect.x+32, scr_vrect.y, scr_ram);
+	ResolveRenderer()->Draw_Pic (scr_vrect.x+32, scr_vrect.y, scr_ram);
 }
 
 /*
@@ -376,7 +376,7 @@ void SCR_DrawTurtle (void)
 	if (count < 3)
 		return;
 
-	g_SoftwareRenderer->Draw_Pic (scr_vrect.x, scr_vrect.y, scr_turtle);
+	ResolveRenderer()->Draw_Pic (scr_vrect.x, scr_vrect.y, scr_turtle);
 }
 
 /*
@@ -391,7 +391,7 @@ void SCR_DrawNet (void)
 	if (cls.demoplayback)
 		return;
 
-	g_SoftwareRenderer->Draw_Pic (scr_vrect.x+64, scr_vrect.y, scr_net);
+	ResolveRenderer()->Draw_Pic (scr_vrect.x+64, scr_vrect.y, scr_net);
 }
 
 /*
@@ -409,8 +409,8 @@ void SCR_DrawPause (void)
 	if (!cl.paused)
 		return;
 
-	pic = g_SoftwareRenderer->Draw_CachePic ("gfx/pause.lmp");
-	g_SoftwareRenderer->Draw_Pic ( (vid.width - pic->width)/2,
+	pic = ResolveRenderer()->Draw_CachePic ("gfx/pause.lmp");
+	ResolveRenderer()->Draw_Pic ( (vid.width - pic->width)/2,
 		(vid.height - 48 - pic->height)/2, pic);
 }
 
@@ -428,8 +428,8 @@ void SCR_DrawLoading (void)
 	if (!scr_drawloading)
 		return;
 		
-	pic = g_SoftwareRenderer->Draw_CachePic ("gfx/loading.lmp");
-	g_SoftwareRenderer->Draw_Pic ( (vid.width - pic->width)/2,
+	pic = ResolveRenderer()->Draw_CachePic ("gfx/loading.lmp");
+	ResolveRenderer()->Draw_Pic ( (vid.width - pic->width)/2,
 		(vid.height - 48 - pic->height)/2, pic);
 }
 
@@ -480,13 +480,13 @@ void SCR_SetUpToDrawConsole (void)
 	if (clearconsole++ < vid.numpages)
 	{
 		scr_copytop = 1;
-		g_SoftwareRenderer->Draw_TileClear (0,(int)scr_con_current,vid.width, vid.height - (int)scr_con_current);
+		ResolveRenderer()->Draw_TileClear (0,(int)scr_con_current,vid.width, vid.height - (int)scr_con_current);
 		Sbar_Changed ();
 	}
 	else if (clearnotify++ < vid.numpages)
 	{
 		scr_copytop = 1;
-		g_SoftwareRenderer->Draw_TileClear (0,0,vid.width, con_notifylines);
+		ResolveRenderer()->Draw_TileClear (0,0,vid.width, con_notifylines);
 	}
 	else
 		con_notifylines = 0;
@@ -722,7 +722,7 @@ void SCR_DrawNotifyString (void)
 				break;
 		x = (vid.width - l*8)/2;
 		for (j=0 ; j<l ; j++, x+=8)
-			g_SoftwareRenderer->Draw_Character (x, y, start[j]);	
+			ResolveRenderer()->Draw_Character (x, y, start[j]);	
 			
 		y += 8;
 
@@ -875,7 +875,7 @@ void SCR_UpdateScreen (void)
 	if (scr_fullupdate++ < vid.numpages)
 	{	// clear the entire screen
 		scr_copyeverything = 1;
-		g_SoftwareRenderer->Draw_TileClear (0,0,vid.width,vid.height);
+		ResolveRenderer()->Draw_TileClear (0,0,vid.width,vid.height);
 		Sbar_Changed ();
 	}
 
@@ -899,7 +899,7 @@ void SCR_UpdateScreen (void)
 	if (scr_drawdialog)
 	{
 		Sbar_Draw ();
-		g_SoftwareRenderer->Draw_FadeScreen ();
+		ResolveRenderer()->Draw_FadeScreen ();
 		SCR_DrawNotifyString ();
 		scr_copyeverything = true;
 	}

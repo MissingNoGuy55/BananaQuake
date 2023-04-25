@@ -280,14 +280,19 @@ LONG CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 static void CD_f (void)
 {
-	char	*command;
+	char		cmd[256];
+	const char	*command;
 	int		ret;
 	int		n;
 
 	if (Cmd_Argc() < 2)
 		return;
 
-	command = Cmd_Argv (1);
+	memset(cmd, 0, sizeof(cmd));
+
+	snprintf(cmd, sizeof(cmd), "%s", Cmd_Argv(1));
+
+	command = cmd;
 
 	if (Q_strcasecmp(command, "on") == 0)
 	{

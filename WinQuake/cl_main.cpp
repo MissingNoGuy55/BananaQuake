@@ -145,7 +145,7 @@ CL_EstablishConnection
 Host should be either "local" or a net address to be passed on
 =====================
 */
-void CL_EstablishConnection (char *inhost)
+void CL_EstablishConnection ( const char* inhost )
 {
 	if (cls.state == ca_dedicated)
 		return;
@@ -155,7 +155,11 @@ void CL_EstablishConnection (char *inhost)
 
 	CL_Disconnect ();
 
-	cls.netcon = NET_Connect (inhost);
+	char thehost[256];
+	memset(thehost, 0, sizeof(thehost));
+	snprintf(thehost, sizeof(thehost), "%s", inhost);
+
+	cls.netcon = NET_Connect (thehost);
 	if (!cls.netcon)
 		host->Host_Error ("CL_Connect: connect failed\n");
 	Con_DPrintf ("CL_EstablishConnection: connected to %s\n", host);

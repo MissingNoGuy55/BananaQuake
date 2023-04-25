@@ -726,28 +726,30 @@ void Mod_LoadFaces (lump_t *l)
 			out->samples = loadmodel->lightdata + i;
 		
 	// set the drawing flags flag
-		
-		if (!Q_strncmp(out->texinfo->texture->name,"sky",3))	// sky
+	
+		if (cls.state != ca_dedicated)
 		{
-			out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
-#ifndef QUAKE2
-			g_GLRenderer->GL_SubdivideSurface (out);	// cut up polygon for warps
-#endif
-			continue;
-		}
-		
-		if (!Q_strncmp(out->texinfo->texture->name,"*",1))		// turbulent
-		{
-			out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
-			for (i=0 ; i<2 ; i++)
+			if (!Q_strncmp(out->texinfo->texture->name, "sky", 3))	// sky
 			{
-				out->extents[i] = 16384;
-				out->texturemins[i] = -8192;
+				out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
+#ifndef QUAKE2
+				g_GLRenderer->GL_SubdivideSurface(out);	// cut up polygon for warps
+#endif
+				continue;
 			}
-			g_GLRenderer->GL_SubdivideSurface (out);	// cut up polygon for warps
-			continue;
-		}
 
+			if (!Q_strncmp(out->texinfo->texture->name, "*", 1))		// turbulent
+			{
+				out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
+				for (i = 0; i < 2; i++)
+				{
+					out->extents[i] = 16384;
+					out->texturemins[i] = -8192;
+				}
+				g_GLRenderer->GL_SubdivideSurface(out);	// cut up polygon for warps
+				continue;
+			}
+		}
 	}
 }
 
@@ -1097,7 +1099,8 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	Mod_LoadVertexes (&header->lumps[LUMP_VERTEXES]);
 	Mod_LoadEdges (&header->lumps[LUMP_EDGES]);
 	Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
-	Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
+	if (cls.state != ca_dedicated)
+		Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
 	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);
 	Mod_LoadPlanes (&header->lumps[LUMP_PLANES]);
 	Mod_LoadTexinfo (&header->lumps[LUMP_TEXINFO]);
@@ -1370,13 +1373,17 @@ T* Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 				pheader->texels[i] = texels - (byte *)pheader;
 				memcpy (texels, (byte *)(pskintype + 1), s);
 	//		}
-			sprintf (name, "%s_%i", loadmodel->name, i);
-			pheader->gltextures[i][0] =
-			pheader->gltextures[i][1] =
-			pheader->gltextures[i][2] =
-			pheader->gltextures[i][3] =
-				g_GLRenderer->GL_LoadTexture (loadmodel, name, pheader->skinwidth,
-				pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), offset, TEXPREF_MIPMAP);
+
+			if (cls.state != ca_dedicated)
+			{
+				sprintf(name, "%s_%i", loadmodel->name, i);
+				pheader->gltextures[i][0] =
+					pheader->gltextures[i][1] =
+					pheader->gltextures[i][2] =
+					pheader->gltextures[i][3] =
+					g_GLRenderer->GL_LoadTexture(loadmodel, name, pheader->skinwidth,
+						pheader->skinheight, SRC_INDEXED, (byte*)(pskintype + 1), offset, TEXPREF_MIPMAP);
+			}
 			pskintype = (daliasskintype_t *)((byte *)(pskintype+1) + s);
 		} else {
 			// animating skin group.  yuck.
@@ -1396,9 +1403,12 @@ T* Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 						memcpy (texels, (byte *)(pskintype), s);
 					}
 					sprintf (name, "%s_%i_%i", loadmodel->name, i,j);
-					pheader->gltextures[i][j&3] =
-						g_GLRenderer->GL_LoadTexture (loadmodel, name, pheader->skinwidth, 
-						pheader->skinheight, SRC_INDEXED,(byte *)(pskintype), offset, TEXPREF_MIPMAP);
+					if (cls.state != ca_dedicated)
+					{
+						pheader->gltextures[i][j & 3] =
+							g_GLRenderer->GL_LoadTexture(loadmodel, name, pheader->skinwidth,
+								pheader->skinheight, SRC_INDEXED, (byte*)(pskintype), offset, TEXPREF_MIPMAP);
+					}
 					pskintype = (daliasskintype_t *)((byte *)(pskintype) + s);
 			}
 			k = j;
@@ -1619,8 +1629,11 @@ T* Mod_LoadSpriteFrame (T* pin, mspriteframe_t **ppframe, int framenum)
 	pspriteframe->left = origin[0];
 	pspriteframe->right = width + origin[0];
 
-	sprintf (name, "%s_%i", loadmodel->name, framenum);
-	pspriteframe->gltexture = g_GLRenderer->GL_LoadTexture (loadmodel, name, width, height, SRC_INDEXED, (byte *)(pinframe + 1), offset, TEXPREF_ALPHA | TEXPREF_MIPMAP);
+	if (cls.state != ca_dedicated)
+	{
+		sprintf(name, "%s_%i", loadmodel->name, framenum);
+		pspriteframe->gltexture = g_GLRenderer->GL_LoadTexture(loadmodel, name, width, height, SRC_INDEXED, (byte*)(pinframe + 1), offset, TEXPREF_ALPHA | TEXPREF_MIPMAP);
+	}
 
 	return (T *)((byte *)pinframe + sizeof (dspriteframe_t) + size);
 }

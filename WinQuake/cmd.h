@@ -1,3 +1,5 @@
+#pragma once
+
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -92,7 +94,7 @@ const char 	*Cmd_CompleteCommand (const char *partial);
 // returns NULL if nothing fits
 
 int		Cmd_Argc (void);
-char	*Cmd_Argv (int arg);
+const char	*Cmd_Argv (int arg);
 const char	*Cmd_Args (void);
 // The functions that execute commands get their parameters with these
 // functions. Cmd_Argv () will return an empty string, not a NULL

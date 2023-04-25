@@ -468,10 +468,6 @@ model_t* Mod_LoadModel(model_t* mod, bool crash)
 	//
 	// because the world is so huge, load it one piece at a time
 	//
-	if (!crash)
-	{
-
-	}
 
 	//
 	// load the file
@@ -495,7 +491,7 @@ model_t* Mod_LoadModel(model_t* mod, bool crash)
 	// fill it in
 	//
 
-	// call the apropriate loader
+	// call the appropriate loader
 	mod->needload = false;
 
 	switch (LittleLong(*(unsigned*)buf))

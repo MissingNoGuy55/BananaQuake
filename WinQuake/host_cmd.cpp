@@ -909,17 +909,25 @@ Host_Name_f
 */
 void Host_Name_f (void)
 {
-	char	*newName;
+	char	newName[16];
+	const char* pszNewName = NULL;
+	memset(newName, 0, sizeof(newName));
 
 	if (Cmd_Argc () == 1)
 	{
 		Con_Printf ("\"name\" is \"%s\"\n", cl_name.string);
 		return;
 	}
-	if (Cmd_Argc () == 2)
-		newName = Cmd_Argv(1);	
+
+	if (Cmd_Argc() == 2)
+	{
+		snprintf(newName, sizeof(newName), "%s", Cmd_Argv(1));
+		pszNewName = newName;
+	}
 	else
+	{
 		strcat(newName, Cmd_Args());
+	}
 	newName[15] = 0;
 
 	if (cmd_source == src_command)
@@ -1519,7 +1527,7 @@ Host_Give_f
 */
 void Host_Give_f (void)
 {
-	char	*t;
+	char	t[256];
 	int		v, w;
 	eval_t	*val;
 
@@ -1532,7 +1540,7 @@ void Host_Give_f (void)
 	if (pr_global_struct->deathmatch && !host_client->privileged)
 		return;
 
-	t = Cmd_Argv(1);
+	Q_strncpy(t, Cmd_Argv(1), sizeof(t));
 	v = atoi (Cmd_Argv(2));
 	
 	switch (t[0])

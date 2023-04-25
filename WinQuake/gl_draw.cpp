@@ -37,12 +37,12 @@ cvar_t		gl_texturemode = {"gl_texturemode", ""};
 cvar_t		gl_fullbrights = {"gl_fullbrights", "0"};
 GLint		gl_hardware_maxsize;
 
-byte		*draw_chars;				// 8*8 graphic characters
-CQuakePic			*draw_disc;
-CQuakePic			*draw_backtile;
+//byte                *draw_chars;				// 8*8 graphic characters
+//CQuakePic			*draw_disc;
+//CQuakePic			*draw_backtile;
 
-CGLTexture*			translate_texture;
-CGLTexture*			char_texture;
+//CGLTexture*			translate_texture;
+//CGLTexture*			char_texture;
 
 byte		conback_buffer[sizeof(CQuakePic)];
 CQuakePic	*conback = (CQuakePic*)&conback_buffer;
@@ -55,11 +55,12 @@ int		gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
 int		gl_filter_max = GL_LINEAR;
 
 
-int		texels;
+static int		texels;
 
 CGLTexture	CGLRenderer::gltextures[MAX_GLTEXTURES];
 CGLTexture* CGLRenderer::free_gltextures;
 CGLTexture* CGLRenderer::active_gltextures;
+CGLTexture* CGLRenderer::lightmap_textures;
 byte		CGLRenderer::lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];// [MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
 static int	numgltextures;
 
@@ -73,8 +74,8 @@ unsigned int d_8to24table_pants[256];
 
 bool gl_texture_NPOT = false;
 
-CGLTexture* CGLRenderer::char_texture = NULL;
-CGLTexture* CGLRenderer::translate_texture = NULL;
+CGLTexture* CGLRenderer::char_texture;
+CGLTexture* CGLRenderer::translate_texture;
 
 int			CGLRenderer::allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
 int			CGLRenderer::lightmap_count;
@@ -84,10 +85,15 @@ glRect_t	CGLRenderer::lightmap_rectchange[MAX_LIGHTMAPS];
 
 CGLRenderer::CGLRenderer()
 {
-
-	int i = 0;
-
 	active_lightmaps = 0;
+
+	memset(d_8to24table_fbright, 0, sizeof(d_8to24table_fbright));
+	memset(d_8to24table_fbright_fence, 0, sizeof(d_8to24table_fbright_fence));
+	memset(d_8to24table_nobright, 0, sizeof(d_8to24table_nobright));
+	memset(d_8to24table_nobright_fence, 0, sizeof(d_8to24table_nobright_fence));
+	memset(d_8to24table_conchars, 0, sizeof(d_8to24table_conchars));
+	memset(d_8to24table_shirt, 0, sizeof(d_8to24table_shirt));
+	memset(d_8to24table_pants, 0, sizeof(d_8to24table_pants));
 
 	memset(allocated, 0, sizeof(allocated));
 	memset(blocklights, 0, sizeof(blocklights));
@@ -101,18 +107,23 @@ CGLRenderer::CGLRenderer()
 	lightmap_count = 0;
 	last_lightmap_allocated = 0;
 
-	lightmap_textures = NULL;
-	translate_texture = NULL;
-	char_texture = NULL;
+	draw_chars = NULL;
+	draw_disc = NULL;
+	draw_backtile = NULL;
 
-	free_gltextures = g_MemCache->Hunk_AllocName<CGLTexture>(MAX_GLTEXTURES * sizeof(CGLTexture), "gltextures");
+	lightmap_textures = NULL;
+	/*translate_texture = NULL;
+	char_texture = NULL;*/
+
+	free_gltextures = g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture) * MAX_GLTEXTURES, "gltextures");
 	active_gltextures = NULL;
+	int i;
+
 	for (i = 0; i < MAX_GLTEXTURES - 1; i++)
 		free_gltextures[i].next = &free_gltextures[i + 1];
 	free_gltextures[i].next = NULL;
 
 	numgltextures = 0;
-
 }
 
 CGLRenderer::CGLRenderer(const CGLRenderer& src)
@@ -130,8 +141,25 @@ CGLRenderer::CGLRenderer(const CGLRenderer& src)
 	lightmap_bytes = 0;
 
 	lightmap_textures = NULL;
-	translate_texture = NULL;
-	char_texture = NULL;
+	/*translate_texture = NULL;
+	char_texture = NULL;*/
+
+	skytexturenum = 0;
+	lightmap_bytes = 0;
+	lightmap_count = 0;
+	last_lightmap_allocated = 0;
+
+	lightmap_textures = NULL;
+	
+	free_gltextures = g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture) * MAX_GLTEXTURES, "gltextures");
+	active_gltextures = NULL;
+	int i;
+
+	for (i = 0; i < MAX_GLTEXTURES - 1; i++)
+		free_gltextures[i].next = &free_gltextures[i + 1];
+	free_gltextures[i].next = NULL;
+
+	numgltextures = 0;
 }
 
 CGLRenderer::~CGLRenderer()
@@ -151,6 +179,20 @@ CGLRenderer::~CGLRenderer()
 	lightmap_textures = NULL;
 	translate_texture = NULL;
 	char_texture = NULL;
+
+	skytexturenum = 0;
+	lightmap_bytes = 0;
+	lightmap_count = 0;
+	last_lightmap_allocated = 0;
+
+	lightmap_textures = NULL;
+	translate_texture = NULL;
+	char_texture = NULL;
+
+	free_gltextures = NULL;
+	active_gltextures = NULL;
+
+	numgltextures = 0;
 }
 
 typedef struct
@@ -247,17 +289,11 @@ void CGLRenderer::GL_Bind (CGLTexture* tex)
 	currenttexture = tex;
 
 	glBindTexture(GL_TEXTURE_2D, (GLuint)tex->texnum);
-
-	//#ifdef _WIN32
-//	bindTexFunc (GL_TEXTURE_2D, texnum);
-//#else
-//	glBindTexture(GL_TEXTURE_2D, texnum);
-//#endif
 }
 
 CGLTexture* CGLRenderer::GL_NewTexture()
 {
-	CGLTexture* glt;
+	CGLTexture* glt = NULL;
 
 	if (numgltextures == MAX_GLTEXTURES)
 		Sys_Error("numgltextures == MAX_GLTEXTURES\n");
@@ -298,7 +334,6 @@ int CGLRenderer::Scrap_AllocBlock (int w, int h, int *x, int *y)
 {
 	int		i, j;
 	int		best, best2;
-	int		bestx;
 	int		texnum;
 
 	for (texnum=0 ; texnum<MAX_SCRAPS ; texnum++)
@@ -336,7 +371,7 @@ int CGLRenderer::Scrap_AllocBlock (int w, int h, int *x, int *y)
 	return -1;
 }
 
-int	scrap_uploads;
+static int	scrap_uploads;
 
 void CGLRenderer::Scrap_Upload (void)
 {
@@ -345,8 +380,9 @@ void CGLRenderer::Scrap_Upload (void)
 
 	scrap_uploads++;
 
-	for (i=0 ; i<MAX_SCRAPS ; i++) {
-		sprintf(name, "scrap%i", i);
+	for (i=0 ; i<MAX_SCRAPS ; i++)
+	{
+		snprintf(name, sizeof(name), "scrap%i", i);
 		scrap_textures[i] = GL_LoadTexture(NULL, name, BLOCK_WIDTH, BLOCK_HEIGHT, SRC_INDEXED, scrap_texels[i],
 			(src_offset_t)scrap_texels[i], TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
 		/*g_GLRenderer->GL_Bind(scrap_textures[i]);
@@ -639,19 +675,18 @@ void CGLRenderer::Draw_Init (void)
 	CQuakePic* cb =	NULL;
 	byte	*dest = NULL, *src = NULL;
 	int		x = 0, y = 0;
-	char	ver[40] = "";
-	COpenGLPic gl;
+	char	ver[40];
 	int		start = 0;
 	byte	*ncdata = NULL;
 	int		f = 0, fstep = 0;
 	size_t	s = 0;
 	uintptr_t offset;
 
-	//gltexturevector.SetCount(0);
-
 	Cvar_RegisterVariable (&gl_nobind);
 	Cvar_RegisterVariable (&gl_max_size);
 	Cvar_RegisterVariable (&gl_picmip);
+
+	memset(ver, 0, sizeof(ver));
 
 	// 3dfx can only handle 256 wide textures
 	if (!Q_strncasecmp ((char *)gl_renderer, "3dfx",4) ||
@@ -711,10 +746,6 @@ smoothly scrolled off.
 */
 void CGLRenderer::Draw_Character (int x, int y, int num)
 {
-	byte			*dest;
-	byte			*source;
-	unsigned short	*pusdest;
-	int				drawline;	
 	int				row, col;
 	float			frow, fcol, size;
 
@@ -729,11 +760,11 @@ void CGLRenderer::Draw_Character (int x, int y, int num)
 	row = num>>4;
 	col = num&15;
 
-	frow = row*0.0625;
-	fcol = col*0.0625;
-	size = 0.0625;
+	frow = row*0.0625f;
+	fcol = col*0.0625f;
+	size = 0.0625f;
 
-	g_GLRenderer->GL_Bind (char_texture);
+	GL_Bind (char_texture);
 
 	glBegin (GL_QUADS);
 	glTexCoord2f (fcol, frow);
@@ -782,9 +813,6 @@ Draw_AlphaPic
 */
 void CGLRenderer::Draw_AlphaPic (int x, int y, CQuakePic *pic, float alpha)
 {
-	byte			*dest, *source;
-	unsigned short	*pusdest;
-	int				v, u;
 	COpenGLPic		*gl;
 
 	if (scrap_dirty)
@@ -846,10 +874,6 @@ Draw_TransPic
 */
 void CGLRenderer::Draw_TransPic (int x, int y, CQuakePic *pic)
 {
-	byte	*dest, *source, tbyte;
-	unsigned short	*pusdest;
-	int				v, u;
-
 	if (x < 0 || (unsigned)(x + pic->width) > vid.width || y < 0 ||
 		 (unsigned)(y + pic->height) > vid.height)
 	{
@@ -995,7 +1019,7 @@ void CGLRenderer::Draw_FadeScreen (void)
 {
 	glEnable (GL_BLEND);
 	glDisable (GL_TEXTURE_2D);
-	glColor4f (0, 0, 0, 0.8);
+	glColor4f (0, 0, 0, 0.8f);
 	glBegin (GL_QUADS);
 
 	glVertex2f (0,0);
@@ -1113,8 +1137,6 @@ GL_FreeTexture
 void CGLRenderer::GL_FreeTexture(CGLTexture* kill)
 {
 	CGLTexture* glt, *next;
-
-checktex:
 
 	if (kill == NULL)
 	{
@@ -1857,8 +1879,6 @@ CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, 
 	CQuakePic*		qpic = NULL;
 	byte*			out = data;
 	int				CRCBlock;
-	byte			padbyte;
-	unsigned int*	usepal;
 	char			id[64] = {};
 	int				len	= 0;
 	bool			padh = false, padw = false;
@@ -1868,17 +1888,17 @@ CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, 
 
 	switch (format)
 	{
-	case SRC_INDEXED:
-		CRCBlock = g_CRCManager->CRC_Block(data, width * height);
-		break;
-	case SRC_LIGHTMAP:
-		CRCBlock = g_CRCManager->CRC_Block(data, width * height * lightmap_bytes);
-		break;
-	case SRC_RGBA:
-		CRCBlock = g_CRCManager->CRC_Block(data, width * height * 4);
-		break;
-	default: /* not reachable but avoids compiler warnings */
-		CRCBlock = 0;
+		case SRC_INDEXED:
+			CRCBlock = g_CRCManager->CRC_Block(data, width * height);
+			break;
+		case SRC_LIGHTMAP:
+			CRCBlock = g_CRCManager->CRC_Block(data, width * height * lightmap_bytes);
+			break;
+		case SRC_RGBA:
+			CRCBlock = g_CRCManager->CRC_Block(data, width * height * 4);
+			break;
+		default: /* not reachable but avoids compiler warnings */
+			CRCBlock = 0;
 	}
 
 	if ((flags & TEXPREF_OVERWRITE) && (glt = GL_FindTexture(owner, identifier)))
@@ -1959,17 +1979,50 @@ void CGLRenderer::GL_SelectTexture (GLenum target)
 	oldtarget = target;
 }
 
-CGLTexture::CGLTexture() : height(0), width(0), mipmap(false), texnum(0), checksum(0), next(NULL)
+CGLTexture::CGLTexture() : height(0), 
+	width(0), 
+	mipmap(false), 
+	texnum(0), 
+	checksum(0),
+	flags(0),
+	next(NULL),
+	owner(NULL),
+	source_format(SRC_NONE),
+	source_offset(NULL),
+	source_width(0),
+	source_height(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
 
-CGLTexture::CGLTexture(CQuakePic qpic, float des_sl, float des_tl, float des_sh, float des_th) : height(qpic.height), width(qpic.width), mipmap(false), texnum(0), checksum(0), next(NULL)
+CGLTexture::CGLTexture(CQuakePic qpic, float des_sl, float des_tl, float des_sh, float des_th) : height(0),
+	width(0),
+	mipmap(false),
+	texnum(0),
+	checksum(0),
+	flags(0),
+	next(NULL),
+	owner(NULL),
+	source_format(SRC_NONE),
+	source_offset(NULL),
+	source_width(0),
+	source_height(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
 
-CGLTexture::CGLTexture(const CGLTexture& obj) : height(0), width(0), mipmap(false), texnum(0), checksum(0), next(NULL)
+CGLTexture::CGLTexture(const CGLTexture& obj) : height(0),
+	width(0),
+	mipmap(false),
+	texnum(0),
+	checksum(0),
+	flags(0),
+	next(NULL),
+	owner(NULL),
+	source_format(SRC_NONE),
+	source_offset(NULL),
+	source_width(0),
+	source_height(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }

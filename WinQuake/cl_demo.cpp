@@ -244,8 +244,13 @@ void CL_Record_f (void)
 // start the map up
 //
 	if (c > 2)
-		Cmd_ExecuteString (g_Common->va_unsafe("map %s", Cmd_Argv(2)), src_command);
-	
+    {
+        char buf[256];
+        memset(buf, 0, sizeof(buf));
+        snprintf(buf, sizeof(buf), "map %s", Cmd_Argv(2));
+        Cmd_ExecuteString (buf, src_command);
+	//	Cmd_ExecuteString (g_Common->va_unsafe("map %s", Cmd_Argv(2)), src_command);
+    }
 //
 // open the demo file
 //

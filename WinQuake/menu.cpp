@@ -113,11 +113,7 @@ Draws one solid graphics character
 */
 void M_DrawCharacter (int cx, int line, int num)
 {
-#ifdef GLQUAKE
-	g_GLRenderer->Draw_Character ( cx + ((vid.width - 320)>>1), line, num);
-#else
-	g_SoftwareRenderer->Draw_Character(cx + ((vid.width - 320) >> 1), line, num);
-#endif
+	ResolveRenderer()->Draw_Character ( cx + ((vid.width - 320)>>1), line, num);
 }
 
 void M_Print (int cx, int cy, const char *str)
@@ -142,20 +138,12 @@ void M_PrintWhite (int cx, int cy, const char *str)
 
 void M_DrawTransPic (int x, int y, CQuakePic *pic)
 {
-#ifdef GLQUAKE
-	g_GLRenderer->Draw_TransPic (x + ((vid.width - 320)>>1), y, pic);
-#else
-	g_SoftwareRenderer->Draw_TransPic (x + ((vid.width - 320)>>1), y, pic);
-#endif
+	ResolveRenderer()->Draw_TransPic (x + ((vid.width - 320)>>1), y, pic);
 }
 
 void M_DrawPic (int x, int y, CQuakePic *pic)
 {
-#ifdef GLQUAKE
-	g_GLRenderer->Draw_Pic (x + ((vid.width - 320)>>1), y, pic);
-#else
-	g_SoftwareRenderer->Draw_Pic (x + ((vid.width - 320)>>1), y, pic);
-#endif
+	ResolveRenderer()->Draw_Pic (x + ((vid.width - 320)>>1), y, pic);
 }
 
 byte identityTable[256];
@@ -188,11 +176,7 @@ void M_BuildTranslationTable(int top, int bottom)
 
 void M_DrawTransPicTranslate (int x, int y, CQuakePic *pic)
 {
-#ifdef GLQUAKE
-	g_GLRenderer->Draw_TransPicTranslate (x + ((vid.width - 320)>>1), y, pic, translationTable);
-#else
-	g_SoftwareRenderer->Draw_TransPicTranslate (x + ((vid.width - 320)>>1), y, pic, translationTable);
-#endif
+	ResolveRenderer()->Draw_TransPicTranslate (x + ((vid.width - 320)>>1), y, pic, translationTable);
 }
 
 
@@ -206,30 +190,19 @@ void M_DrawTextBox (int x, int y, int width, int lines)
 	cx = x;
 	cy = y;
 
-#ifdef GLQUAKE
-	p = g_GLRenderer->Draw_CachePic ("gfx/box_tl.lmp");
-#else
-	p = g_SoftwareRenderer->Draw_CachePic ("gfx/box_tl.lmp");
-#endif
+	p = ResolveRenderer()->Draw_CachePic ("gfx/box_tl.lmp");
 
 	M_DrawTransPic (cx, cy, p);
 
-#ifdef GLQUAKE
-	p = g_GLRenderer->Draw_CachePic ("gfx/box_ml.lmp");
-#else
-	p = g_SoftwareRenderer->Draw_CachePic ("gfx/box_ml.lmp");
-#endif
+	p = ResolveRenderer()->Draw_CachePic ("gfx/box_ml.lmp");
+
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
 		M_DrawTransPic (cx, cy, p);
 	}
 
-#ifdef GLQUAKE
-	p = g_GLRenderer->Draw_CachePic ("gfx/box_bl.lmp");
-#else
-	p = g_SoftwareRenderer->Draw_CachePic ("gfx/box_bl.lmp");
-#endif
+	p = ResolveRenderer()->Draw_CachePic ("gfx/box_bl.lmp");
 	
 	M_DrawTransPic (cx, cy+8, p);
 
@@ -238,31 +211,23 @@ void M_DrawTextBox (int x, int y, int width, int lines)
 	while (width > 0)
 	{
 		cy = y;
-#ifdef GLQUAKE
-		p = g_GLRenderer->Draw_CachePic ("gfx/box_tm.lmp");
+
+		p = ResolveRenderer()->Draw_CachePic ("gfx/box_tm.lmp");
 		M_DrawTransPic (cx, cy, p);
-		p = g_GLRenderer->Draw_CachePic ("gfx/box_mm.lmp");
-#else
-		p = g_SoftwareRenderer->Draw_CachePic("gfx/box_tm.lmp");
-		M_DrawTransPic(cx, cy, p);
-		p = g_SoftwareRenderer->Draw_CachePic("gfx/box_mm.lmp");
-#endif
+		p = ResolveRenderer()->Draw_CachePic ("gfx/box_mm.lmp");
+
 		for (n = 0; n < lines; n++)
 		{
 			cy += 8;
+
 			if (n == 1)
-#ifdef GLQUAKE
-				p = g_GLRenderer->Draw_CachePic ("gfx/box_mm2.lmp");
-#else
-				p = g_SoftwareRenderer->Draw_CachePic ("gfx/box_mm2.lmp");
-#endif
+				p = ResolveRenderer()->Draw_CachePic ("gfx/box_mm2.lmp");
+
 			M_DrawTransPic (cx, cy, p);
 		}
-#ifdef GLQUAKE
-		p = g_GLRenderer->Draw_CachePic ("gfx/box_bm.lmp");
-#else
-		p = g_SoftwareRenderer->Draw_CachePic ("gfx/box_bm.lmp");
-#endif
+
+		p = ResolveRenderer()->Draw_CachePic ("gfx/box_bm.lmp");
+
 		M_DrawTransPic (cx, cy+8, p);
 		width -= 2;
 		cx += 16;
@@ -271,15 +236,9 @@ void M_DrawTextBox (int x, int y, int width, int lines)
 	// draw right side
 	cy = y;
 
-#ifdef GLQUAKE
-	p = g_GLRenderer->Draw_CachePic ("gfx/box_tr.lmp");
+	p = ResolveRenderer()->Draw_CachePic ("gfx/box_tr.lmp");
 	M_DrawTransPic (cx, cy, p);
-	p = g_GLRenderer->Draw_CachePic ("gfx/box_mr.lmp");
-#else
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/box_tr.lmp");
-	M_DrawTransPic(cx, cy, p);
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/box_mr.lmp");
-#endif
+	p = ResolveRenderer()->Draw_CachePic ("gfx/box_mr.lmp");
 
 	for (n = 0; n < lines; n++)
 	{
@@ -287,11 +246,7 @@ void M_DrawTextBox (int x, int y, int width, int lines)
 		M_DrawTransPic (cx, cy, p);
 	}
 
-#ifdef GLQUAKE
-	p = g_GLRenderer->Draw_CachePic ("gfx/box_br.lmp");
-#else
-	p = g_SoftwareRenderer->Draw_CachePic ("gfx/box_br.lmp");
-#endif
+	p = ResolveRenderer()->Draw_CachePic ("gfx/box_br.lmp");
 
 	M_DrawTransPic (cx, cy+8, p);
 }
@@ -356,31 +311,15 @@ void M_Main_Draw (void)
 	int		f = 0;
 	CQuakePic	*p = NULL;
 
-
-#ifdef GLQUAKE
-	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
-	p = g_GLRenderer->Draw_CachePic ("gfx/ttl_main.lmp");
-#else
-	M_DrawTransPic(16, 4, g_SoftwareRenderer->Draw_CachePic("gfx/qplaque.lmp"));
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/ttl_main.lmp");
-#endif
-
+	M_DrawTransPic (16, 4, ResolveRenderer()->Draw_CachePic ("gfx/qplaque.lmp") );
+	p = ResolveRenderer()->Draw_CachePic ("gfx/ttl_main.lmp");
 
 	M_DrawPic ( (320-p->width)/2, 4, p);
+	M_DrawTransPic (72, 32, ResolveRenderer()->Draw_CachePic ("gfx/mainmenu.lmp") );
 
-
-#ifdef GLQUAKE
-	M_DrawTransPic (72, 32, g_GLRenderer->Draw_CachePic ("gfx/mainmenu.lmp") );
-#else
-	M_DrawTransPic(72, 32, g_SoftwareRenderer->Draw_CachePic("gfx/mainmenu.lmp"));
-#endif
 	f = (int)(host_time * 10)%6;
 
-#ifdef GLQUAKE
-	M_DrawTransPic (54, 32 + m_main_cursor * 20,g_GLRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
-#else
-	M_DrawTransPic (54, 32 + m_main_cursor * 20, g_SoftwareRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
-#endif
+	M_DrawTransPic (54, 32 + m_main_cursor * 20,ResolveRenderer()->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
 }
 
 
@@ -456,23 +395,14 @@ void M_SinglePlayer_Draw (void)
 	int		f;
 	CQuakePic	*p;
 
-#ifdef GLQUAKE
-	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
-	p = g_GLRenderer->Draw_CachePic ("gfx/ttl_sgl.lmp");
+	M_DrawTransPic (16, 4, ResolveRenderer()->Draw_CachePic ("gfx/qplaque.lmp") );
+	p = ResolveRenderer()->Draw_CachePic ("gfx/ttl_sgl.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
-	M_DrawTransPic (72, 32, g_GLRenderer->Draw_CachePic ("gfx/sp_menu.lmp") );
-#else
-	M_DrawTransPic(16, 4, g_SoftwareRenderer->Draw_CachePic("gfx/qplaque.lmp"));
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/ttl_sgl.lmp");
-	M_DrawPic((320 - p->width) / 2, 4, p);
-	M_DrawTransPic(72, 32, g_SoftwareRenderer->Draw_CachePic("gfx/sp_menu.lmp"));
-#endif
+	M_DrawTransPic (72, 32, ResolveRenderer()->Draw_CachePic ("gfx/sp_menu.lmp") );
+
 	f = (int)(host_time * 10)%6;
-#ifdef GLQUAKE
-	M_DrawTransPic (54, 32 + m_singleplayer_cursor * 20, g_GLRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
-#else
-	M_DrawTransPic (54, 32 + m_singleplayer_cursor * 20, g_SoftwareRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
-#endif
+
+	M_DrawTransPic (54, 32 + m_singleplayer_cursor * 20, ResolveRenderer()->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
 }
 
 
@@ -589,11 +519,7 @@ void M_Load_Draw (void)
 	int		i;
 	CQuakePic	*p;
 
-#ifdef GLQUAKE
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_load.lmp");
-#else
-	p = g_SoftwareRenderer->Draw_CachePic ("gfx/p_load.lmp");
-#endif
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_load.lmp");
 
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
@@ -610,11 +536,7 @@ void M_Save_Draw (void)
 	int		i;
 	CQuakePic	*p;
 
-#ifdef GLQUAKE
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_save.lmp");
-#else
-	p = g_SoftwareRenderer->Draw_CachePic ("gfx/p_save.lmp");
-#endif
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_save.lmp");
 
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
@@ -720,25 +642,15 @@ void M_MultiPlayer_Draw (void)
 	int		f;
 	CQuakePic	*p;
 
-#ifdef GLQUAKE
-	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
+	M_DrawTransPic (16, 4, ResolveRenderer()->Draw_CachePic ("gfx/qplaque.lmp") );
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_multi.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
-	M_DrawTransPic (72, 32, g_GLRenderer->Draw_CachePic ("gfx/mp_menu.lmp") );
-#else
-	M_DrawTransPic(16, 4, g_SoftwareRenderer->Draw_CachePic("gfx/qplaque.lmp"));
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/p_multi.lmp");
-	M_DrawPic((320 - p->width) / 2, 4, p);
-	M_DrawTransPic(72, 32, g_SoftwareRenderer->Draw_CachePic("gfx/mp_menu.lmp"));
-#endif
+	M_DrawTransPic (72, 32, ResolveRenderer()->Draw_CachePic ("gfx/mp_menu.lmp") );
 
 	f = (int)(host_time * 10)%6;
 
-#ifdef GLQUAKE
-	M_DrawTransPic (54, 32 + m_multiplayer_cursor * 20, g_GLRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
-#else
-	M_DrawTransPic (54, 32 + m_multiplayer_cursor * 20, g_SoftwareRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
-#endif
+	M_DrawTransPic (54, 32 + m_multiplayer_cursor * 20, ResolveRenderer()->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
+
 	if (serialAvailable || ipxAvailable || tcpipAvailable)
 		return;
 	M_PrintWhite ((320/2) - ((27*8)/2), 148, "No Communications Available");
@@ -816,13 +728,10 @@ void M_Menu_Setup_f (void)
 void M_Setup_Draw (void)
 {
 	CQuakePic	*p;
-#ifdef GLQUAKE
-	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
-#else
-	M_DrawTransPic(16, 4, g_SoftwareRenderer->Draw_CachePic("gfx/qplaque.lmp"));
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/p_multi.lmp");
-#endif
+
+	M_DrawTransPic (16, 4, ResolveRenderer()->Draw_CachePic ("gfx/qplaque.lmp") );
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_multi.lmp");
+
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
 	M_Print (64, 40, "Hostname");
@@ -838,15 +747,11 @@ void M_Setup_Draw (void)
 
 	M_DrawTextBox (64, 140-8, 14, 1);
 	M_Print (72, 140, "Accept Changes");
-#ifdef GLQUAKE
-	p = g_GLRenderer->Draw_CachePic ("gfx/bigbox.lmp");
+
+	p = ResolveRenderer()->Draw_CachePic ("gfx/bigbox.lmp");
 	M_DrawTransPic (160, 64, p);
-	p = g_GLRenderer->Draw_CachePic ("gfx/menuplyr.lmp");
-#else
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/bigbox.lmp");
-	M_DrawTransPic(160, 64, p);
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/menuplyr.lmp");
-#endif
+	p = ResolveRenderer()->Draw_CachePic ("gfx/menuplyr.lmp");
+
 	M_BuildTranslationTable(setup_top*16, setup_bottom*16);
 	M_DrawTransPicTranslate (172, 72, p);
 
@@ -976,7 +881,7 @@ int	m_net_cursor;
 int m_net_items;
 int m_net_saveHeight;
 
-char *net_helpMessage [] =
+const char *net_helpMessage [] =
 {
 /* .........1.........2.... */
   "                        ",
@@ -1019,13 +924,8 @@ void M_Net_Draw (void)
 	int		f;
 	CQuakePic	*p;
 
-#ifdef GLQUAKE
-	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
-#else
-	M_DrawTransPic(16, 4, g_SoftwareRenderer->Draw_CachePic("gfx/qplaque.lmp"));
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/p_multi.lmp");
-#endif
+	M_DrawTransPic (16, 4, ResolveRenderer()->Draw_CachePic ("gfx/qplaque.lmp") );
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_multi.lmp");
 
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
@@ -1033,18 +933,14 @@ void M_Net_Draw (void)
 
 	if (serialAvailable)
 	{
-#ifdef GLQUAKE
-		p = g_GLRenderer->Draw_CachePic ("gfx/netmen1.lmp");
-#else
-		p = g_SoftwareRenderer->Draw_CachePic ("gfx/netmen1.lmp");
-#endif
+		p = ResolveRenderer()->Draw_CachePic ("gfx/netmen1.lmp");
 	}
 	else
 	{
 #ifdef _WIN32
 		p = NULL;
 #else
-		p = g_GLRenderer->Draw_CachePic ("gfx/dim_modm.lmp");
+		p = ResolveRenderer()->Draw_CachePic ("gfx/dim_modm.lmp");
 #endif
 	}
 
@@ -1055,18 +951,14 @@ void M_Net_Draw (void)
 
 	if (serialAvailable)
 	{
-#ifdef GLQUAKE
-		p = g_GLRenderer->Draw_CachePic ("gfx/netmen2.lmp");
-#else
-		p = g_SoftwareRenderer->Draw_CachePic("gfx/netmen2.lmp");
-#endif
+		p = ResolveRenderer()->Draw_CachePic ("gfx/netmen2.lmp");
 	}
 	else
 	{
 #ifdef _WIN32
 		p = NULL;
 #else
-		p = g_GLRenderer->Draw_CachePic ("gfx/dim_drct.lmp");
+		p = ResolveRenderer()->Draw_CachePic ("gfx/dim_drct.lmp");
 #endif
 	}
 
@@ -1075,45 +967,27 @@ void M_Net_Draw (void)
 
 	f += 19;
 
-#ifdef GLQUAKE
 	if (ipxAvailable)
-		p = g_GLRenderer->Draw_CachePic ("gfx/netmen3.lmp");
+		p = ResolveRenderer()->Draw_CachePic ("gfx/netmen3.lmp");
 	else
-		p = g_GLRenderer->Draw_CachePic ("gfx/dim_ipx.lmp");
-#else
-	if (ipxAvailable)
-		p = g_SoftwareRenderer->Draw_CachePic("gfx/netmen3.lmp");
-	else
-		p = g_SoftwareRenderer->Draw_CachePic("gfx/dim_ipx.lmp");
-#endif
+		p = ResolveRenderer()->Draw_CachePic ("gfx/dim_ipx.lmp");
 
 	M_DrawTransPic (72, f, p);
 
 	f += 19;
 
-#ifdef GLQUAKE
 	if (tcpipAvailable)
-		p = g_GLRenderer->Draw_CachePic ("gfx/netmen4.lmp");
+		p = ResolveRenderer()->Draw_CachePic ("gfx/netmen4.lmp");
 	else
-		p = g_GLRenderer->Draw_CachePic ("gfx/dim_tcp.lmp");
-#else
-	if (tcpipAvailable)
-		p = g_SoftwareRenderer->Draw_CachePic("gfx/netmen4.lmp");
-	else
-		p = g_SoftwareRenderer->Draw_CachePic("gfx/dim_tcp.lmp");
-#endif
+		p = ResolveRenderer()->Draw_CachePic ("gfx/dim_tcp.lmp");
 
 	M_DrawTransPic (72, f, p);
 
 	if (m_net_items == 5)	// JDC, could just be removed
 	{
 		f += 19;
-		
-#ifdef GLQUAKE	
-		p = g_GLRenderer->Draw_CachePic ("gfx/netmen5.lmp");
-#else
-		p = g_SoftwareRenderer->Draw_CachePic ("gfx/netmen5.lmp");
-#endif
+
+		p = ResolveRenderer()->Draw_CachePic ("gfx/netmen5.lmp");
 
 		M_DrawTransPic (72, f, p);
 	}
@@ -1127,11 +1001,8 @@ void M_Net_Draw (void)
 	M_Print (f, 166, net_helpMessage[m_net_cursor*4+3]);
 
 	f = (int)(host_time * 10)%6;
-#ifdef GLQUAKE	
-	M_DrawTransPic (54, 32 + m_net_cursor * 20, g_GLRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
-#else
-	M_DrawTransPic (54, 32 + m_net_cursor * 20, g_SoftwareRenderer->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
-#endif
+
+	M_DrawTransPic (54, 32 + m_net_cursor * 20, ResolveRenderer()->Draw_CachePic( g_Common->va("gfx/menudot%i.lmp", f+1 ) ) );
 }
 
 
@@ -1342,13 +1213,8 @@ void M_Options_Draw (void)
 	float		r;
 	CQuakePic	*p;
 
-#ifdef GLQUAKE
-	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_option.lmp");
-#else
-	M_DrawTransPic(16, 4, g_SoftwareRenderer->Draw_CachePic("gfx/qplaque.lmp"));
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/p_option.lmp");
-#endif
+	M_DrawTransPic (16, 4, ResolveRenderer()->Draw_CachePic ("gfx/qplaque.lmp") );
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_option.lmp");
 
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
@@ -1399,6 +1265,12 @@ void M_Options_Draw (void)
 		M_DrawCheckbox (220, 136, _windowed_mouse.value);
 	}
 #endif
+#elif __linux__
+	if (modestate == MS_WINDOWED)
+	{
+		M_Print(16, 136, "             Use Mouse");
+		M_DrawCheckbox(220, 136, _windowed_mouse.value);
+	}
 #endif
 
 // cursor
@@ -1484,7 +1356,7 @@ void M_Options_Key (int k)
 //=============================================================================
 /* KEYS MENU */
 
-char *bindnames[][2] =
+static const char *bindnames[][2] =
 {
 {"+attack", 		"attack"},
 {"impulse 10", 		"change weapon"},
@@ -1503,7 +1375,8 @@ char *bindnames[][2] =
 {"+mlook", 			"mouse look"},
 {"+klook", 			"keyboard look"},
 {"+moveup",			"swim up"},
-{"+movedown",		"swim down"}
+{"+movedown",		"swim down"},
+{"+mouselook",		"mouse look"}
 };
 
 #define	NUMCOMMANDS	(sizeof(bindnames)/sizeof(bindnames[0]))
@@ -1519,7 +1392,7 @@ void M_Menu_Keys_f (void)
 }
 
 
-void M_FindKeysForCommand (char *command, int *twokeys)
+void M_FindKeysForCommand (const char *command, int *twokeys)
 {
 	int		count;
 	int		j;
@@ -1545,7 +1418,7 @@ void M_FindKeysForCommand (char *command, int *twokeys)
 	}
 }
 
-void M_UnbindCommand (char *command)
+void M_UnbindCommand (const char *command)
 {
 	int		j;
 	int		l;
@@ -1568,15 +1441,11 @@ void M_Keys_Draw (void)
 {
 	int		i, l;
 	int		keys[2];
-	char	*name;
+	const char	*name = NULL;
 	int		x, y;
 	CQuakePic	*p;
 
-#ifdef GLQUAKE
-	p = g_GLRenderer->Draw_CachePic ("gfx/ttl_cstm.lmp");
-#else
-	p = g_SoftwareRenderer->Draw_CachePic ("gfx/ttl_cstm.lmp");
-#endif
+	p = ResolveRenderer()->Draw_CachePic ("gfx/ttl_cstm.lmp");
 
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
@@ -1721,11 +1590,7 @@ void M_Menu_Help_f (void)
 
 void M_Help_Draw (void)
 {
-#ifdef GLQUAKE
-	M_DrawPic (0, 0, g_GLRenderer->Draw_CachePic ( g_Common->va("gfx/help%i.lmp", help_page)) );
-#else
-	M_DrawPic(0, 0, g_SoftwareRenderer->Draw_CachePic(g_Common->va("gfx/help%i.lmp", help_page)));
-#endif
+	M_DrawPic (0, 0, ResolveRenderer()->Draw_CachePic ( g_Common->va("gfx/help%i.lmp", help_page)) );
 }
 
 
@@ -1762,7 +1627,7 @@ int		m_quit_prevstate;
 bool	wasInMenus;
 
 #ifndef	_WIN32
-char *quitMessage [] = 
+static const char *quitMessage [] = 
 {
 /* .........1.........2.... */
   "  Are you gonna quit    ",
@@ -1867,7 +1732,6 @@ void M_Quit_Draw (void)
 	const char* bquake_string = "  BananaQuake version %4.2f by\n";
 	const int bquake_stringlen = strlen(bquake_string);
 	char	ver[32];
-	va_list args;
 
 	snprintf(ver, sizeof(ver), bquake_string, BANANAQUAKE_VERSION);
 
@@ -1969,16 +1833,11 @@ void M_SerialConfig_Draw (void)
 {
 	CQuakePic	*p;
 	int		basex;
-	char	*startJoin;
-	char	*directModem;
+	const char	*startJoin = NULL;
+	const char	*directModem = NULL;
 
-#ifdef GLQUAKE
-	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
-#else
-	M_DrawTransPic(16, 4, g_SoftwareRenderer->Draw_CachePic("gfx/qplaque.lmp"));
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/p_multi.lmp");
-#endif
+	M_DrawTransPic (16, 4, ResolveRenderer()->Draw_CachePic ("gfx/qplaque.lmp") );
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_multi.lmp");
 
 	basex = (320-p->width)/2;
 	M_DrawPic (basex, 4, p);
@@ -2228,13 +2087,8 @@ void M_ModemConfig_Draw (void)
 	CQuakePic	*p;
 	int		basex;
 
-#ifdef GLQUAKE
-	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
-#else
-	M_DrawTransPic (16, 4, g_SoftwareRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
-	p = g_SoftwareRenderer->Draw_CachePic ("gfx/p_multi.lmp");
-#endif
+	M_DrawTransPic (16, 4, ResolveRenderer()->Draw_CachePic ("gfx/qplaque.lmp") );
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_multi.lmp");
 
 	basex = (320-p->width)/2;
 	M_DrawPic (basex, 4, p);
@@ -2317,8 +2171,11 @@ void M_ModemConfig_Key (int key)
 		}
 
 		if (modemConfig_cursor == 4)
-		{
-			(*SetModemConfig) (0, g_Common->va_unsafe("%c", modemConfig_dialing), modemConfig_clear, modemConfig_init, modemConfig_hangup);
+		{   
+            char modemConfig[1];
+            snprintf(modemConfig, sizeof(modemConfig), "%c", modemConfig_dialing);
+            
+			(*SetModemConfig) (0, modemConfig, modemConfig_clear, modemConfig_init, modemConfig_hangup);
 			m_entersound = true;
 			M_Menu_SerialConfig_f ();
 		}
@@ -2417,16 +2274,11 @@ void M_LanConfig_Draw (void)
 {
 	CQuakePic	*p;
 	int		basex;
-	char	*startJoin;
-	char	*protocol;
+	const char	*startJoin = NULL;
+	const char	*protocol = NULL;
 
-#ifdef GLQUAKE
-	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
-#else
-	M_DrawTransPic(16, 4, g_SoftwareRenderer->Draw_CachePic("gfx/qplaque.lmp"));
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/p_multi.lmp");
-#endif
+	M_DrawTransPic (16, 4, ResolveRenderer()->Draw_CachePic ("gfx/qplaque.lmp") );
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_multi.lmp");
 
 	basex = (320-p->width)/2;
 	M_DrawPic (basex, 4, p);
@@ -2593,8 +2445,8 @@ void M_LanConfig_Key (int key)
 
 typedef struct
 {
-	char	*name;
-	char	*description;
+	const char	*name;
+	const char	*description;
 } level_t;
 
 level_t		levels[] =
@@ -2698,7 +2550,7 @@ level_t		roguelevels[] =
 
 typedef struct
 {
-	char	*description;
+	const char	*description;
 	int		firstLevel;
 	int		levels;
 } episode_t;
@@ -2762,13 +2614,8 @@ void M_GameOptions_Draw (void)
 	CQuakePic	*p;
 	int		x;
 
-#ifdef GLQUAKE
-	M_DrawTransPic (16, 4, g_GLRenderer->Draw_CachePic ("gfx/qplaque.lmp") );
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
-#else
-	M_DrawTransPic(16, 4, g_SoftwareRenderer->Draw_CachePic("gfx/qplaque.lmp"));
-	p = g_SoftwareRenderer->Draw_CachePic("gfx/p_multi.lmp");
-#endif	
+	M_DrawTransPic (16, 4, ResolveRenderer()->Draw_CachePic ("gfx/qplaque.lmp") );
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_multi.lmp");
 	
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
@@ -2787,7 +2634,7 @@ void M_GameOptions_Draw (void)
 	M_Print (0, 72, "        Teamplay");
 	if (rogue)
 	{
-		char *msg;
+		const char *msg = NULL;
 
 		switch((int)teamplay.value)
 		{
@@ -2803,7 +2650,7 @@ void M_GameOptions_Draw (void)
 	}
 	else
 	{
-		char *msg;
+		const char *msg = NULL;
 
 		switch((int)teamplay.value)
 		{
@@ -3075,11 +2922,7 @@ void M_Search_Draw (void)
 	CQuakePic	*p;
 	int x;
 
-#ifdef GLQUAKE
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
-#else
-	p = g_SoftwareRenderer->Draw_CachePic ("gfx/p_multi.lmp");
-#endif
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_multi.lmp");
 
 	M_DrawPic ( (320-p->width)/2, 4, p);
 	x = (320/2) - ((12*8)/2) + 4;
@@ -3158,11 +3001,7 @@ void M_ServerList_Draw (void)
 		slist_sorted = true;
 	}
 
-#ifdef GLQUAKE
-	p = g_GLRenderer->Draw_CachePic ("gfx/p_multi.lmp");
-#else
-	p = g_SoftwareRenderer->Draw_CachePic ("gfx/p_multi.lmp");
-#endif
+	p = ResolveRenderer()->Draw_CachePic ("gfx/p_multi.lmp");
 
 	M_DrawPic ( (320-p->width)/2, 4, p);
 	for (n = 0; n < hostCacheCount; n++)
@@ -3257,21 +3096,13 @@ void M_Draw (void)
 
 		if (scr_con_current)
 		{
-#ifdef GLQUAKE
-			g_GLRenderer->Draw_ConsoleBackground (vid.height);
-#else
-			g_SoftwareRenderer->Draw_ConsoleBackground (vid.height);
-#endif
+			ResolveRenderer()->Draw_ConsoleBackground (vid.height);
 			VID_UnlockBuffer ();
 			g_SoundSystem->S_ExtraUpdate ();
 			VID_LockBuffer ();
 		}
 		else
-#ifdef GLQUAKE
-			g_GLRenderer->Draw_FadeScreen ();
-#else
-			g_SoftwareRenderer->Draw_FadeScreen();
-#endif
+			ResolveRenderer()->Draw_FadeScreen ();
 		scr_fullupdate = 0;
 	}
 	else

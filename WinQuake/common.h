@@ -22,8 +22,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef COMMON_H
 #define COMMON_H
 
+#ifdef __linux__
+#include "sys.h"
+#endif
+
 #if !defined BYTE_DEFINED
-typedef unsigned char 		byte;
+typedef unsigned char byte;
 #define BYTE_DEFINED 1
 #endif
 
@@ -72,7 +76,7 @@ void InsertLinkAfter (link_t *l, link_t *after);
 // ent = STRUCT_FROM_LINK(link,entity_t,order)
 // FIXME: remove this mess!
 
-#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (int)&(((t *)0)->m)))
+#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (size_t)&(((t *)0)->m)))     // Missi: changed to size_t (4/22/2023)
 
 //============================================================================
 
@@ -336,15 +340,17 @@ Allways appends a 0 byte.
 ============
 */
 
-#ifdef QUAKE_TOOLS
+
 #include "zone.h"
-#endif
 
 template<typename T>
-inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
+T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id);
+
+template<typename T>
+T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 {
 	int	 h;
-	T*	buf;
+	T* buf;
 	char	base[32];
 	int	len;
 
@@ -396,24 +402,24 @@ inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 	else
 		((byte*)buf)[len] = 0;
 
-//#ifndef QUAKE_TOOLS	// Missi: more garbage for QCC (12/2/2022)
-//#ifndef GLQUAKE
-//	g_SoftwareRenderer->Draw_BeginDisc();
-//#else
-//	g_GLRenderer->Draw_BeginDisc();
-//#endif
-//#endif
+	//#ifndef QUAKE_TOOLS	// Missi: more garbage for QCC (12/2/2022)
+	//#ifndef GLQUAKE
+	//	g_SoftwareRenderer->Draw_BeginDisc();
+	//#else
+	//	g_GLRenderer->Draw_BeginDisc();
+	//#endif
+	//#endif
 
 	Sys_FileRead(h, buf, len);
 	g_Common->COM_CloseFile(h);
 
-//#ifdef QUAKE_GAME
-//#ifndef GLQUAKE
-//	g_SoftwareRenderer->Draw_EndDisc();
-//#else
-//	g_GLRenderer->Draw_EndDisc();
-//#endif
-//#endif
+	//#ifdef QUAKE_GAME
+	//#ifndef GLQUAKE
+	//	g_SoftwareRenderer->Draw_EndDisc();
+	//#else
+	//	g_GLRenderer->Draw_EndDisc();
+	//#endif
+	//#endif
 
 	return buf;
 }

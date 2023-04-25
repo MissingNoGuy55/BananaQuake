@@ -24,9 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #ifndef _MSC_VER
 #include <unistd.h>
-#endif
 #include <fcntl.h>
-#include <io.h>
+#endif
 #include "quakedef.h"
 
 int 		con_linewidth;
@@ -214,7 +213,7 @@ void Con_Init (void)
 {
 #define MAXGAMEDIRLEN	1000
 	char	temp[MAXGAMEDIRLEN+1];
-	char	*t2 = "/qconsole.log";
+	static const char	*t2 = "/qconsole.log";
 
 	con_debuglog = g_Common->COM_CheckParm("-condebug");
 
@@ -223,7 +222,11 @@ void Con_Init (void)
 		if (strlen (g_Common->com_gamedir) < (MAXGAMEDIRLEN - strlen (t2)))
 		{
 			sprintf (temp, "%s%s", g_Common->com_gamedir, t2);
+#ifdef _WIN32
 			_unlink (temp);
+#else
+            unlink (temp);
+#endif
 		}
 	}
 
@@ -355,15 +358,27 @@ void Con_DebugLog(const char *file, const char *fmt, ...)
 {
     va_list argptr; 
     static char data[1024];
-    int fd;
-	int fw;
     
     va_start(argptr, fmt);
     vsprintf(data, fmt, argptr);
     va_end(argptr);
-    fd = _open(file, O_WRONLY | O_CREAT | O_APPEND, 0666);
-    fw = _write(fd, data, strlen(data));
-    _close(fd);
+#ifdef __linux__
+    int fd = 0;
+	int fw = 0;
+    fd = open(file, O_WRONLY | O_CREAT | O_APPEND, 0666);
+    fw = write(fd, data, strlen(data));
+    close(fd);
+#elif _WIN32
+	FILE* fd = NULL;
+	int fw = 0;
+	fopen_s(&fd, file, "w+t"); // O_WRONLY | O_CREAT | O_APPEND, 0666);
+
+	if (!fd)
+		return;
+
+	fw = fwrite(data, sizeof(char), strlen(data), fd);
+	fclose(fd);
+#endif
 }
 
 
@@ -383,7 +398,7 @@ void Con_Printf (const char *fmt, ...)
 	static bool	inupdate;
 
 	va_start (argptr,fmt);
-	q_vsnprintf_s(msg, sizeof(msg)+1, MAXPRINTMSG, fmt,argptr);
+	vsnprintf(msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 	
 // also echo to debugging console
@@ -506,11 +521,7 @@ void Con_DrawInput (void)
 
 	for (i = 0; i < con_linewidth; i++)
 	{
-#ifndef GLQUAKE
-		g_SoftwareRenderer->Draw_Character((i + 1) << 3, con_vislines - 16, text[i]);
-#else
-		g_GLRenderer->Draw_Character((i + 1) << 3, con_vislines - 16, text[i]);
-#endif
+		ResolveRenderer()->Draw_Character((i + 1) << 3, con_vislines - 16, text[i]);
 	}
 // remove cursor
 	key_lines[edit_line][key_linepos] = 0;
@@ -550,11 +561,7 @@ void Con_DrawNotify (void)
 
 		for (x = 0; x < con_linewidth; x++)
 		{
-#ifndef GLQUAKE
-			g_SoftwareRenderer->Draw_Character((x + 1) << 3, v, text[x]);
-#else
-			g_GLRenderer->Draw_Character((x + 1) << 3, v, text[x]);
-#endif
+			ResolveRenderer()->Draw_Character((x + 1) << 3, v, text[x]);
 		}
 		v += 8;
 	}
@@ -566,25 +573,13 @@ void Con_DrawNotify (void)
 		scr_copytop = 1;
 	
 		x = 0;
-#ifndef GLQUAKE
-		g_SoftwareRenderer->Draw_String (8, v, "say:");
-#else
-		g_GLRenderer->Draw_String(8, v, "say:");
-#endif
+		ResolveRenderer()->Draw_String (8, v, "say:");
 		while(chat_buffer[x])
 		{
-#ifndef GLQUAKE
-			g_SoftwareRenderer->Draw_Character ( (x+5)<<3, v, chat_buffer[x]);
-#else
-			g_GLRenderer->Draw_Character((x + 5) << 3, v, chat_buffer[x]);
-#endif
+			ResolveRenderer()->Draw_Character ( (x+5)<<3, v, chat_buffer[x]);
 			x++;
 		}
-#ifndef GLQUAKE
-		g_SoftwareRenderer->Draw_Character ( (x+5)<<3, v, 10+((int)(host->realtime*con_cursorspeed)&1));
-#else
-		g_GLRenderer->Draw_Character((x + 5) << 3, v, 10 + ((int)(host->realtime * con_cursorspeed) & 1));
-#endif
+		ResolveRenderer()->Draw_Character ( (x+5)<<3, v, 10+((int)(host->realtime*con_cursorspeed)&1));
 		v += 8;
 	}
 	
@@ -612,11 +607,7 @@ void Con_DrawConsole (int lines, bool drawinput)
 
 // draw the background
 
-#ifndef GLQUAKE
-	g_SoftwareRenderer->Draw_ConsoleBackground (lines);
-#else
-	g_GLRenderer->Draw_ConsoleBackground(lines);
-#endif
+	ResolveRenderer()->Draw_ConsoleBackground (lines);
 
 // draw the text
 	con_vislines = lines;
@@ -633,11 +624,7 @@ void Con_DrawConsole (int lines, bool drawinput)
 
 		for (x = 0; x < con_linewidth; x++)
 		{
-#ifndef GLQUAKE
-			g_SoftwareRenderer->Draw_Character((x + 1) << 3, y, text[x]);
-#else
-			g_GLRenderer->Draw_Character((x + 1) << 3, y, text[x]);
-#endif
+			ResolveRenderer()->Draw_Character((x + 1) << 3, y, text[x]);
 		}
 	}
 

@@ -36,10 +36,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <windows.h>
 #endif
 
+#ifdef _WIN32
 #include <SDL_opengl.h>
+#endif
 
-//#include <GL/gl.h>
-//#include <GL/glu.h>
+#ifdef __linux__
+#include <GL/gl.h>
+#include <GL/glu.h>
+#endif
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
@@ -187,12 +191,11 @@ extern unsigned int d_8to24table_shirt[256];
 extern unsigned int d_8to24table_pants[256];
 extern unsigned char d_15to8table[65536];
 
-class CGLRenderer
+class CGLRenderer : public CCoreRenderer
 {
 public:
 
 	CGLRenderer();
-	CGLRenderer(const CGLRenderer& src);
 	~CGLRenderer();
 
 	void GL_AlphaEdgeFix(byte* data, int width, int height);
@@ -330,9 +333,7 @@ public:
 	void R_RenderDynamicLightmaps(msurface_t* fa);
 	void R_TimeRefresh_f(void);
 	void R_MarkLeaves(void);
-
 	void R_TranslatePlayerSkin(int playernum);
-
 	void R_DrawSequentialPoly(msurface_t* s);
 	void R_Mirror(void);
 	void R_RenderDlight(dlight_t* light);
@@ -343,7 +344,6 @@ public:
 
 	void GL_DisableMultitexture(void);
 	void GL_EnableMultitexture(void);
-
 	void GL_SetFrustum(float fovx, float fovy);
 
 	void R_MirrorChain(msurface_t* s);
@@ -356,40 +356,29 @@ public:
 	void R_RotateForEntity(entity_t* e);
 
 	void GL_DrawAliasFrame(aliashdr_t* paliashdr, int posenum);
-
 	void GL_DrawAliasShadow(aliashdr_t* paliashdr, int posenum);
 
-
-
-
 	void R_SetupAliasFrame(int frame, aliashdr_t* paliashdr);
-
-
-
-
 	void R_DrawEntitiesOnList(void);
-
-
-
 	void R_PolyBlend(void);
-
-
 	int SignbitsForPlane(mplane_t* out);
-
-
 	void R_SetFrustum(void);
 
 
 	void MYgluPerspective(GLdouble fovy, GLdouble aspect,
 		GLdouble zNear, GLdouble zFar);
 
-
-
 	void R_SetupGL(void);
-
 	void R_Clear(void);
 
+	virtual CGLRenderer* GetRenderer() { return dynamic_cast<CGLRenderer*>(g_CoreRenderer); }
+
+	CQuakePic* GetLoadingDisc() const { return draw_disc; }
+	CQuakePic* GetBackTile() const { return draw_backtile; }
+
 private:
+
+	CGLRenderer(const CGLRenderer& src);
 
 	int			skytexturenum;
 
@@ -410,9 +399,9 @@ private:
 
 	int		lightmap_bytes;		// 1, 2, or 4
 
-	CGLTexture* lightmap_textures;
+	static CGLTexture* lightmap_textures;
 
-	unsigned		blocklights[BLOCK_WIDTH*BLOCK_HEIGHT*3];
+	unsigned	blocklights[BLOCK_WIDTH*BLOCK_HEIGHT*3];
 	int			active_lightmaps;
 
 	static CGLTexture* free_gltextures;
@@ -421,7 +410,11 @@ private:
 	static CGLTexture* translate_texture;
 	static CGLTexture* char_texture;
 
-	int last_lightmap_allocated = 0;
+	int last_lightmap_allocated;
+
+	byte* draw_chars;				// 8*8 graphic characters
+	CQuakePic* draw_disc;
+	CQuakePic* draw_backtile;
 
 };
 
@@ -439,7 +432,6 @@ class CGLTexture
 public:
 	CGLTexture();
 	CGLTexture(CQuakePic qpic, float sl = 0, float tl = 0, float sh = 0, float th = 0);
-	CGLTexture(const CGLTexture& obj);
 	~CGLTexture();
 
 	CGLTexture*			next;
@@ -457,6 +449,9 @@ public:
 
 	unsigned int		checksum;
 	unsigned int		flags;
+
+private:
+	CGLTexture(const CGLTexture& obj);
 
 };
 
@@ -555,9 +550,10 @@ void R_TranslatePlayerSkin (int playernum);
 #define    TEXTURE0_SGIS				0x835E
 #define    TEXTURE1_SGIS				0x835F
 
-#ifndef _WIN32
-#define APIENTRY /* */
-#endif
+// Missi: commented out (4/21/2023)
+// #ifndef _WIN32
+// #define APIENTRY /* */
+// #endif
 
 typedef void (APIENTRY *lpMTexFUNC) (GLenum, GLfloat, GLfloat);
 typedef void (APIENTRY *lpSelTexFUNC) (GLenum);

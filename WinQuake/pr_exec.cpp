@@ -47,7 +47,7 @@ int			pr_xstatement;
 
 int		pr_argc;
 
-char *pr_opnames[] =
+static const char *pr_opnames[] =
 {
 "DONE",
 

@@ -39,23 +39,6 @@ static float	basemip[NUM_MIPS-1] = {1.0, 0.5*0.8, 0.25*0.8};
 
 extern int			d_aflatcolor;
 
-// Missi: bleh! put this somewhere else (12/1/2022)
-
-CCoreRenderer::CCoreRenderer() : solidskytexture(NULL)
-{
-	solidskytexture = NULL;
-	alphaskytexture = NULL;
-	speedscale = 1.0f;
-}
-
-CCoreRenderer::CCoreRenderer(const CCoreRenderer& src)
-{
-	solidskytexture = NULL;
-	alphaskytexture = NULL;
-	speedscale = 1.0f;
-}
-
-
 /*
 ===============
 D_Init

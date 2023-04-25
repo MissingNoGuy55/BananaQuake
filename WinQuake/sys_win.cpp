@@ -517,7 +517,7 @@ void Sys_Error (const char *error, ...)
 }
 
 
-void Sys_Printf (char *fmt, ...)
+void Sys_Printf (const char *fmt, ...)
 {
 	va_list		argptr;
 	char		text[1024];
@@ -554,7 +554,7 @@ void Sys_Quit (void)
 	exit (0);
 }
 
-int	Sys_FileTime(char* path)
+int	Sys_FileTime(const char* path)
 {
 	FILE* f;
 	errno_t err;

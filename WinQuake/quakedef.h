@@ -53,7 +53,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdlib.h>
 #include <setjmp.h>
 // #include <dsound.h>
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include <SDL.h>
 
 
@@ -223,13 +225,13 @@ typedef uintptr_t src_offset_t;
 // Use for multiplayer testing only - VERY dangerous!!!
 // #define IDGODS
 
-#include "utils.h"
 #include "common.h"
-#include "bspfile.h"
+#include "BSPFILE.H"
 #include "vid.h"
 #include "sys.h"
 #include "zone.h"
 #include "mathlib.h"
+#include "utils.h"
 
 typedef struct
 {
@@ -242,9 +244,7 @@ typedef struct
 	int		effects;
 } entity_state_t;
 
-
 #include "wad.h"
-#include "draw.h"
 #include "cvar.h"
 #include "screen.h"
 #include "net.h"
@@ -257,6 +257,8 @@ typedef struct
 #include "progs.h"
 #include "server.h"
 #include "strl_fn.h"	// Missi (1/10/2023)
+#include "cfgfile.h"	// Missi (1/10/2023)
+#include "draw.h"		// Missi: moved from below draw.h due to CSoftwareRenderer being defined there (4/24/2023)
 
 #ifdef GLQUAKE
 #include "gl_model.h"
@@ -272,7 +274,7 @@ typedef struct
 #include "view.h"
 #include "menu.h"
 #include "crc.h"
-#ifndef QUAKE_TOOLS
+#ifdef QUAKE_GAME
 #include "cdaudio.h"
 #include "bgmusic.h"
 #endif
@@ -299,10 +301,25 @@ extern CQuakeHost* host;
 // chase
 //
 extern	cvar_t	chase_active;
-extern	cvar_t	zone_debug;	// Missi: for calling Z_Print
 
 double Sys_DoubleTime();
 
 void Chase_Init (void);
 void Chase_Reset (void);
 void Chase_Update (void);
+
+// Missi: this is gross, but it's better than doing #ifdef to everything that these rely on... (4/24/2023)
+
+#ifdef GLQUAKE
+template<typename T = CGLRenderer>
+#else
+template<typename T = CSoftwareRenderer>
+#endif
+T* ResolveRenderer()
+{
+#ifdef GLQUAKE
+	return g_GLRenderer;
+#else
+	return g_SoftwareRenderer;
+#endif
+}

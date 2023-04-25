@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-char *svc_strings[] =
+static const char *svc_strings[] =
 {
 	"svc_bad",
 	"svc_nop",
@@ -312,7 +312,7 @@ void CL_ParseServerInfo (void)
 #ifndef GLQUAKE
 	g_CoreRenderer->R_NewMap();
 #else
-	g_GLRenderer->R_NewMap();
+	ResolveRenderer()->R_NewMap();
 #endif
 	
 	g_MemCache->Hunk_Check ();		// make sure nothing is hurt

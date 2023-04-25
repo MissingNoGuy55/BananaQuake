@@ -24,6 +24,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //define	PASSAGES
 
+CCoreRenderer::CCoreRenderer() : solidskytexture(NULL)
+{
+	solidskytexture = NULL;
+	alphaskytexture = NULL;
+	speedscale = 1.0f;
+	warpface = NULL;
+	memset(blocklights, 0, sizeof(blocklights));
+}
+
+CCoreRenderer::CCoreRenderer(const CCoreRenderer& src)
+{
+	solidskytexture = NULL;
+	alphaskytexture = NULL;
+	speedscale = 1.0f;
+	warpface = NULL;
+	memset(blocklights, 0, sizeof(blocklights));
+}
+
 void		*colormap;
 vec3_t		viewlightvec;
 alight_t	r_viewlighting = {128, 192, viewlightvec};

@@ -230,6 +230,8 @@ public:
 
 	static unsigned		blocklights[BLOCK_WIDTH * BLOCK_HEIGHT * 3];
 
+	virtual CCoreRenderer* GetRenderer() { return this; }
+
 private:
 
 	CCoreRenderer(const CCoreRenderer& src);

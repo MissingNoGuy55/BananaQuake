@@ -154,7 +154,7 @@ extern int			net_numsockets;
 
 typedef struct
 {
-	char		*name;
+	const char		*name;
 	bool	initialized;
 	int			controlSock;
 	int			(*Init) (void);
@@ -183,7 +183,7 @@ extern net_landriver_t	net_landrivers[MAX_NET_DRIVERS];
 
 typedef struct
 {
-	char		*name;
+	const char		*name;
 	bool	initialized;
 	int			(*Init) (void);
 	void		(*Listen) (bool state);

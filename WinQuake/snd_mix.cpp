@@ -46,7 +46,7 @@ portable_samplepair_t	s_rawsamples[MAX_RAW_SAMPLES];
 // void Snd_WriteLinearBlastStereo16 (void);
 
 // #if	!id386
-void CSoundSystemWin::Snd_WriteLinearBlastStereo16 (void)
+void CSoundDMA::Snd_WriteLinearBlastStereo16 (void)
 {
 	int		i;
 	int		val;
@@ -72,7 +72,7 @@ void CSoundSystemWin::Snd_WriteLinearBlastStereo16 (void)
 }
 // endif
 
-void CSoundSystemWin::S_TransferStereo16 (int endtime)
+void CSoundDMA::S_TransferStereo16 (int endtime)
 {
 	int		lpos;
 	int		lpaintedtime;
@@ -103,7 +103,7 @@ void CSoundSystemWin::S_TransferStereo16 (int endtime)
 	}
 }
 
-void CSoundSystemWin::S_TransferPaintBuffer(int endtime)
+void CSoundDMA::S_TransferPaintBuffer(int endtime)
 {
 	int	out_idx, out_mask;
 	int	count, step, val;
@@ -361,7 +361,7 @@ CHANNEL MIXING
 ===============================================================================
 */
 
-void CSoundSystemWin::S_PaintChannels(int endtime)
+void CSoundDMA::S_PaintChannels(int endtime)
 {
 	int		i;
 	int		end, ltime, count;
@@ -474,7 +474,7 @@ void CSoundSystemWin::S_PaintChannels(int endtime)
 	}
 }
 
-void CSoundSystemWin::SND_InitScaletable (void)
+void CSoundDMA::SND_InitScaletable (void)
 {
 	int		i, j;
 	int		scale;
@@ -499,7 +499,7 @@ void CSoundSystemWin::SND_InitScaletable (void)
 
 // #if	!id386
 
-void CSoundSystemWin::SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count, int paintbufferstart)
+void CSoundDMA::SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count, int paintbufferstart)
 {
 	int 	data;
 	int		*lscale, *rscale;
@@ -531,7 +531,7 @@ void CSoundSystemWin::SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int 
 // #endif	// !id386
 
 
-void CSoundSystemWin::SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count, int paintbufferstart)
+void CSoundDMA::SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count, int paintbufferstart)
 {
 	int	data;
 	int	left, right;

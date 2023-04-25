@@ -343,7 +343,7 @@ void Cmd_Alias_f (void)
 	cmdalias_t	*a;
 	char		cmd[1024];
 	int			i, c;
-	char		*s;
+	const char		*s = NULL;
 
 	if (Cmd_Argc() == 1)
 	{
@@ -412,7 +412,7 @@ struct cmd_function_t
 
 int			cmd_argc;
 char		*cmd_argv[MAX_ARGS];
-char		*cmd_null_string = "";
+const char		*cmd_null_string = "";
 const char		*cmd_args = NULL;
 
 cmd_source_t	cmd_source;
@@ -456,7 +456,7 @@ int		Cmd_Argc (void)
 Cmd_Argv
 ============
 */
-char	*Cmd_Argv (int arg)
+const char	*Cmd_Argv (int arg)
 {
 	if ( (unsigned)arg >= cmd_argc )
 		return cmd_null_string;
@@ -472,7 +472,6 @@ const char		*Cmd_Args (void)
 {
 	return cmd_args;
 }
-
 
 /*
 ============
@@ -523,9 +522,7 @@ void Cmd_TokenizeString (const char *text)
 			cmd_argc++;
 		}
 	}
-	
 }
-
 
 /*
 ============
@@ -541,7 +538,7 @@ void	Cmd_AddCommand (const char *cmd_name, xcommand_t function)
 		Sys_Error ("Cmd_AddCommand after host_initialized");
 		
 // fail if the command is a variable name
-	if (Cvar_VariableString(cmd_name)[0])
+	if ((Cvar_VariableString(cmd_name)) && Cvar_VariableString(cmd_name)[0])
 	{
 		Con_Printf ("Cmd_AddCommand: %s already defined as a var\n", cmd_name);
 		return;
