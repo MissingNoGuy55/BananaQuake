@@ -21,13 +21,14 @@ RPM_RELEASE=5
 ifneq (,$(findstring alpha,$(shell uname -m)))
 ARCH=axp
 else
-ARCH=i386
+#ARCH=i386
+ARCH=x86_64
 endif
 NOARCH=noarch
 
 MOUNT_DIR=/QuakeCPP/WinQuake
 MASTER_DIR=/QuakeCPP/QuakeMaster
-MESA_DIR=/usr/local/src/Mesa-2.6
+MESA_DIR=/usr/src/mesa
 TDFXGL_DIR = /home/zoid/3dfxgl
 
 BUILD_DEBUG_DIR=debug$(ARCH)$(LIBC++)
@@ -46,8 +47,20 @@ SVGALDFLAGS=-lvga
 XLDFLAGS=-L/usr/X11R6/lib -lX11 -lXext -lXxf86dga
 XCPPFLAGS=-DX11
 
-GLLDFLAGS=-L/usr/X11/lib -L/usr/local/lib -lGL -lX11 -lXext -ldl -lXxf86dga -lXxf86vm -lm
-GLCPPFLAGS= -DGLQUAKE -I$(MESA_DIR)/include -I/usr/include/glide -I$(MOUNT_DIR)/sdl2/include
+# old linker stuff:
+# -lGL -lGLU -lGLX
+
+GLLDFLAGS=-L/usr/X11/lib -L/usr/local/lib/ -L/usr/lib/ -lX11 -lXext -ldl -lXxf86dga -lXxf86vm -lSDL2 -lm
+GLINCLUDES=-I$(MESA_DIR)/include \
+	-I/usr/include/glide \
+	-I/usr/include/SDL2 \
+	-I/usr/src/glide/h5/glide3/src/ \
+	-I/usr/src/glide/swlibs/fxmisc/ \
+	-I/usr/src/glide/h5/incsrc/ \
+	-I$(MOUNT_DIR)/svgalib/include/ \
+	-I$(MOUNT_DIR)/
+
+GLCPPFLAGS= -DGLQUAKE $(GLINCLUDES)
 
 DO_CC=$(CC) $(CPPFLAGS) -o $@ -c $<
 DO_DEBUG_CC=$(CC) $(DEBUG_CPPFLAGS) -o $@ -c $<
@@ -91,6 +104,7 @@ targets: $(TARGETS)
 #############################################################################
 
 SQUAKE_OBJS = \
+	$(BUILDDIR)/squake/cfgfile.o \
 	$(BUILDDIR)/squake/cl_demo.o \
 	$(BUILDDIR)/squake/cl_input.o \
 	$(BUILDDIR)/squake/cl_main.o \
@@ -201,6 +215,9 @@ $(BUILDDIR)/squake/cl_parse.o : ./cl_parse.cpp
 	$(DO_CC)
 
 $(BUILDDIR)/squake/cl_tent.o :  ./cl_tent.cpp
+	$(DO_CC)
+
+$(BUILDDIR)/squake/cfgfile.o :  ./cfgfile.cpp
 	$(DO_CC)
 
 $(BUILDDIR)/squake/chase.o :    ./chase.cpp
@@ -470,6 +487,7 @@ GLQUAKE_OBJS= \
 	$(BUILDDIR)/glquake/cl_main.o \
 	$(BUILDDIR)/glquake/cl_parse.o \
 	$(BUILDDIR)/glquake/cl_tent.o \
+	$(BUILDDIR)/glquake/cfgfile.o \
 	$(BUILDDIR)/glquake/chase.o \
 	$(BUILDDIR)/glquake/cmd.o \
 	$(BUILDDIR)/glquake/common.o \
@@ -531,7 +549,10 @@ GLSVGA_OBJS=$(BUILDDIR)/glquake/gl_vidlinux.o
 GLX_OBJS=$(BUILDDIR)/glquake/gl_vidlinuxglx.o
 
 $(BUILDDIR)/bin/glquake : $(GLQUAKE_OBJS) $(GLSVGA_OBJS)
-	$(CC) $(CPPFLAGS) -o $@ $(GLQUAKE_OBJS) $(GLSVGA_OBJS) $(SVGALDFLAGS) $(LDFLAGS)
+	$(CC) $(CPPFLAGS) -o $@ $(GLQUAKE_OBJS) $(GLSVGA_OBJS) $(LDFLAGS)
+
+$(BUILDDIR)/glquake/cfgfile.o :  	./cfgfile.cpp
+	$(DO_GL_CC)
 
 $(BUILDDIR)/glquake/cl_demo.o :      ./cl_demo.cpp
 	$(DO_GL_CC)

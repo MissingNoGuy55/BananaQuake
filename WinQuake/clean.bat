@@ -1,7 +1,10 @@
 rmdir /s /q debug
 rmdir /s /q release
+rmdir /s /q debugi386
 rmdir /s /q debug_gl
+rmdir /s /q debug_gl_64
 rmdir /s /q release_gl
+rmdir /s /q release_gl_64
 rmdir /s /q x64
 
 rmdir /s /q gas2masm\debug
@@ -18,3 +21,4 @@ del WinQuake.plg
 del WinQuake.ncb
 del WinQuake.stt
 
+del /s *.ipch
