@@ -14,14 +14,10 @@ Name=GCC
 
 [CustomDefinesAndIncludes][ProjectPath0][Defines]
 GLQUAKE=1
-QUAKE_GAME=1
 
 [CustomDefinesAndIncludes][ProjectPath0][Includes]
-1=/home/missi/Dropbox/private_stuff/game_projects/QuakeCPP/WinQuake/sdl2/include
-2=/home/missi/Dropbox/private_stuff/game_projects/QuakeCPP/WinQuake
-3=/usr/src/glide/h5/glide3/src/
-4=/usr/src/glide/swlibs/fxmisc/
-5=/home/missi/Dropbox/private_stuff/game_projects/QuakeCPP/WinQuake/scitech-mgl/include/
+1=/usr/include/SDL2
+2=/home/missi/Dropbox/private_stuff/game_projects/QuakeCPP/WinQuake/
 
 [MakeBuilder]
 Default Target=build_debug
