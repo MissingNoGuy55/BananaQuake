@@ -19,13 +19,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // net_dgrm.c
 
+
 // This is enables a simple IP banning mechanism
 #define BAN_TEST
 
 #ifdef BAN_TEST
 #if defined(_WIN32)
 #include <windows.h>
-#elif defined (NeXT)
+#elif defined (NeXT) || defined (__linux__)
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #else
@@ -48,7 +49,7 @@ struct sockaddr_in
     char			sin_zero[8];
 };
 char *inet_ntoa(struct in_addr in);
-unsigned long inet_addr(const char *cp);
+in_addr inet_addr(const char *cp);
 #endif
 #endif	// BAN_TEST
 

@@ -51,13 +51,6 @@ cvar_t	fraglimit;
 cvar_t	timelimit;
 cvar_t	pausable;
 
-//extern CCoreRenderer* g_CoreRenderer;
-//#ifdef GLQUAKE
-//extern CGLRenderer* g_GLRenderer;
-//#else
-//extern CSoftwareRenderer* g_SoftwareRenderer;
-//#endif
-
 /*
 ================
 Host_EndGame
@@ -461,10 +454,11 @@ CQuakeHost::CQuakeHost() :
 	msg_suppress_1(false),
 	current_skill(0),
 	isDedicated(false),
+    minimum_memory(0),
 	oldrealtime(0),
-	host_hunklevel(0)
+    host_hunklevel(0)
 {
-	memset(&host_parms, 0, sizeof(host_parms));
+    memset(&host_parms, 0, sizeof(host_parms));
 }
 
 CQuakeHost::CQuakeHost(quakeparms_t<byte*> parms) :
@@ -478,8 +472,9 @@ CQuakeHost::CQuakeHost(quakeparms_t<byte*> parms) :
 	msg_suppress_1(false),
 	current_skill(0),
 	isDedicated(false),
+    minimum_memory(0),
 	oldrealtime(0),
-	host_hunklevel(0)
+    host_hunklevel(0)
 {
 #ifdef __linux__
 	host_parms.basedir = parms.basedir ? parms.basedir : strdup("");
@@ -862,10 +857,10 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	if (SDL_Init(0) < 0)
 		Sys_Error("Couldn't initialize SDL");
 
-	if (standard_quake)
-		minimum_memory = MINIMUM_MEMORY;
+    if (standard_quake)
+        minimum_memory = MINIMUM_MEMORY;
 	else
-		minimum_memory = MINIMUM_MEMORY_LEVELPAK;
+        minimum_memory = MINIMUM_MEMORY_LEVELPAK;
 
 	if (g_Common->COM_CheckParm ("-minmemory"))
 		parms.memsize = minimum_memory;
@@ -913,9 +908,12 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		IN_Init ();
 #endif
 
-#ifndef GLQUAKE
+#if (GLQUAKE) && (_WIN32)
 		SDL_setenv("SDL_AudioDriver", "directsound", 1);
 		g_SoundSystem = new CSoundSystemWin;
+#elif (GLQUAKE) && (__linux__)
+        SDL_setenv("SDL_AudioDriver", "directsound", 1);
+        g_SoundSystem = new CSoundSystemLinux;
 #endif
 		VID_Init (host_basepal);
 		g_CoreRenderer = new CCoreRenderer;		// needed even for dedicated servers

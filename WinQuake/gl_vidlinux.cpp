@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "svgalib/src/vga.h"
 #include "svgalib/src/mouse/vgamouse.h"
-#include "src/svgalib/src/keyboard/vgakeyboard.h"
+#include "svgalib/src/keyboard/vgakeyboard.h"
 
 /*#include "vga.h" */
 

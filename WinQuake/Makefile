@@ -5,6 +5,8 @@
 #
 # ELF only
 #
+# Missi: edited for BananaQuake (4/26/2023)
+#
 
 BASEVERSION=1.09
 VERSION=$(BASEVERSION)$(LIBC++)
@@ -17,6 +19,18 @@ RPM_RELEASE=5
 # else
 # LIBC++=
 # endif
+
+### Enable/Disable codecs for streaming music support
+USE_CODEC_WAVE=1
+USE_CODEC_FLAC=0
+USE_CODEC_MP3=1
+USE_CODEC_VORBIS=1
+USE_CODEC_OPUS=0
+# either xmp or mikmod (or modplug)
+USE_CODEC_MIKMOD=0
+USE_CODEC_XMP=0
+USE_CODEC_MODPLUG=0
+USE_CODEC_UMX=0
 
 ifneq (,$(findstring alpha,$(shell uname -m)))
 ARCH=axp
@@ -39,6 +53,7 @@ EGCS=/bin/g++
 CC=$(EGCS)
 
 BASE_CPPFLAGS=-Dstricmp=strcasecmp
+BASE_CPPFLAGS += $(call check_g++,-std=gnu11,)
 RELEASE_CPPFLAGS=$(BASE_CPPFLAGS) -g -mpentiumpro -O6 -ffast-math -funroll-loops \
 	-fomit-frame-pointer -fexpensive-optimizations
 DEBUG_CPPFLAGS=$(BASE_CPPFLAGS) -g
@@ -47,20 +62,73 @@ SVGALDFLAGS=-lvga
 XLDFLAGS=-L/usr/X11R6/lib -lX11 -lXext -lXxf86dga
 XCPPFLAGS=-DX11
 
+CODECLIBS  :=
+ifeq ($(USE_CODEC_WAVE),1)
+BASE_CPPFLAGS+= -DUSE_CODEC_WAVE
+endif
+ifeq ($(USE_CODEC_FLAC),1)
+BASE_CPPFLAGS+= -DUSE_CODEC_FLAC
+CODECLIBS+= -lFLAC
+endif
+ifeq ($(USE_CODEC_OPUS),1)
+# opus and opusfile put their *.h under <includedir>/opus,
+# but they include the headers without the opus directory
+# prefix and rely on pkg-config. ewww...
+BASE_CPPFLAGS+= -DUSE_CODEC_OPUS
+BASE_CPPFLAGS+= $(shell $(PKG_CONFIG) --cflags opusfile)
+CODECLIBS+= $(shell $(PKG_CONFIG) --libs   opusfile)
+endif
+ifeq ($(USE_CODEC_VORBIS),1)
+BASE_CPPFLAGS+= -DUSE_CODEC_VORBIS $(cpp_vorbisdec)
+CODECLIBS+= $(lib_vorbisdec)
+endif
+ifeq ($(USE_CODEC_MP3),1)
+BASE_CPPFLAGS+= -DUSE_CODEC_MP3
+CODECLIBS+= $(lib_mp3dec)
+endif
+ifeq ($(USE_CODEC_MIKMOD),1)
+BASE_CPPFLAGS+= -DUSE_CODEC_MIKMOD
+CODECLIBS+= -lmikmod
+endif
+ifeq ($(USE_CODEC_XMP),1)
+BASE_CPPFLAGS+= -DUSE_CODEC_XMP
+CODECLIBS+= -lxmp
+endif
+ifeq ($(USE_CODEC_MODPLUG),1)
+BASE_CPPFLAGS+= -DUSE_CODEC_MODPLUG
+CODECLIBS+= -lmodplug
+endif
+ifeq ($(USE_CODEC_UMX),1)
+BASE_CPPFLAGS+= -DUSE_CODEC_UMX
+endif
+
 # old linker stuff:
 # -lGL -lGLU -lGLX
 
-GLLDFLAGS=-L/usr/X11/lib -L/usr/local/lib/ -L/usr/lib/ -lX11 -lXext -ldl -lXxf86dga -lXxf86vm -lSDL2 -lm
-GLINCLUDES=-I$(MESA_DIR)/include \
-	-I/usr/include/glide \
-	-I/usr/include/SDL2 \
-	-I/usr/src/glide/h5/glide3/src/ \
-	-I/usr/src/glide/swlibs/fxmisc/ \
-	-I/usr/src/glide/h5/incsrc/ \
-	-I$(MOUNT_DIR)/svgalib/include/ \
-	-I$(MOUNT_DIR)/
+#	-I/usr/include/glide \
+	-I/usr/src/glide/h5/glide3/src \
+	-I/usr/src/glide/swlibs/fxmisc \
+	-I/usr/src/glide/h5/incsrc \
+	
+#	-lX11 \
+	-lXext \
+	-ldl \
+	-lXxf86dga \
+	-lXxf86vm \
 
-GLCPPFLAGS= -DGLQUAKE $(GLINCLUDES)
+# -L/usr/X11/lib \
+	
+GLLIBINCLUDE=-L/usr/lib/$(ARCH)-linux-gnu
+	
+GLLIBLINK=-lSDL2 \
+-lm
+
+GLINCLUDES=-I/usr/include/SDL2 \
+-I/usr/include/vlc
+	
+GLOPTS:=-DGLQUAKE
+	
+GLCPPFLAGS= $(GLOPTS) $(GLINCLUDES)
 
 DO_CC=$(CC) $(CPPFLAGS) -o $@ -c $<
 DO_DEBUG_CC=$(CC) $(DEBUG_CPPFLAGS) -o $@ -c $<
@@ -482,6 +550,7 @@ $(BUILDDIR)/squake/sys_dosa.o : ./sys_dosa.s
 #############################################################################
 
 GLQUAKE_OBJS= \
+	$(BUILDDIR)/glquake/bgmusic.o \
 	$(BUILDDIR)/glquake/cl_demo.o \
 	$(BUILDDIR)/glquake/cl_input.o \
 	$(BUILDDIR)/glquake/cl_main.o \
@@ -523,6 +592,8 @@ GLQUAKE_OBJS= \
 	$(BUILDDIR)/glquake/pr_exec.o \
 	$(BUILDDIR)/glquake/r_part.o \
 	$(BUILDDIR)/glquake/sbar.o \
+	$(BUILDDIR)/glquake/strlcat.o \
+	$(BUILDDIR)/glquake/strlcpy.o \
 	$(BUILDDIR)/glquake/sv_main.o \
 	$(BUILDDIR)/glquake/sv_phys.o \
 	$(BUILDDIR)/glquake/sv_move.o \
@@ -533,6 +604,7 @@ GLQUAKE_OBJS= \
 	$(BUILDDIR)/glquake/world.o \
 	$(BUILDDIR)/glquake/cd_linux.o \
 	$(BUILDDIR)/glquake/sys_linux.o \
+	$(BUILDDIR)/glquake/snd_codec.o \
 	$(BUILDDIR)/glquake/snd_dma.o \
 	$(BUILDDIR)/glquake/snd_mem.o \
 	$(BUILDDIR)/glquake/snd_mix.o \
@@ -548,9 +620,14 @@ GLSVGA_OBJS=$(BUILDDIR)/glquake/gl_vidlinux.o
 
 GLX_OBJS=$(BUILDDIR)/glquake/gl_vidlinuxglx.o
 
-$(BUILDDIR)/bin/glquake : $(GLQUAKE_OBJS) $(GLSVGA_OBJS)
-	$(CC) $(CPPFLAGS) -o $@ $(GLQUAKE_OBJS) $(GLSVGA_OBJS) $(LDFLAGS)
+# $(GLSVGA_OBJS)
 
+$(BUILDDIR)/bin/glquake : $(GLQUAKE_OBJS)
+	$(CC) $(GLCPPFLAGS) -o $@ $(GLQUAKE_OBJS) $(LDFLAGS) $(CODECLIBS) $(GLLIBINCLUDE) $(GLLIBLINK)
+
+$(BUILDDIR)/glquake/bgmusic.o :  	./bgmusic.cpp
+	$(DO_GL_CC)	
+	
 $(BUILDDIR)/glquake/cfgfile.o :  	./cfgfile.cpp
 	$(DO_GL_CC)
 
@@ -576,7 +653,7 @@ $(BUILDDIR)/glquake/cmd.o :          ./cmd.cpp
 	$(DO_GL_CC)
 
 $(BUILDDIR)/glquake/common.o :       ./common.cpp
-	$(DO_GL_DEBUG_CC)
+	$(DO_GL_CC)
 
 $(BUILDDIR)/glquake/console.o :      ./console.cpp
 	$(DO_GL_CC)
@@ -672,6 +749,15 @@ $(BUILDDIR)/glquake/r_part.o :       ./r_part.cpp
 	$(DO_GL_CC)
 
 $(BUILDDIR)/glquake/sbar.o :         ./sbar.cpp
+	$(DO_GL_CC)
+	
+$(BUILDDIR)/glquake/snd_codec.o :         ./snd_codec.cpp
+	$(DO_GL_CC)
+	
+$(BUILDDIR)/glquake/strlcat.o :         ./strlcat.cpp
+	$(DO_GL_CC)
+	
+$(BUILDDIR)/glquake/strlcpy.o :         ./strlcpy.cpp
 	$(DO_GL_CC)
 
 $(BUILDDIR)/glquake/sv_main.o :      ./sv_main.cpp

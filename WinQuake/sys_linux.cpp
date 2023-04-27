@@ -173,7 +173,7 @@ Sys_FileTime
 returns -1 if not present
 ============
 */
-int	Sys_FileTime (char *path)
+int	Sys_FileTime (const char *path)
 {
 	struct	stat	buf;
 	
@@ -184,12 +184,12 @@ int	Sys_FileTime (char *path)
 }
 
 
-void Sys_mkdir (char *path)
+void Sys_mkdir (const char *path)
 {
     mkdir (path, 0777);
 }
 
-int Sys_FileOpenRead (char *path, int *handle)
+int Sys_FileOpenRead (const char *path, int *handle)
 {
 	int	h;
 	struct stat	fileinfo;
@@ -206,7 +206,7 @@ int Sys_FileOpenRead (char *path, int *handle)
 	return fileinfo.st_size;
 }
 
-int Sys_FileOpenWrite (char *path)
+int Sys_FileOpenWrite (const char *path)
 {
 	int     handle;
 
@@ -236,7 +236,7 @@ void Sys_FileSeek (int handle, int position)
 	lseek (handle, position, SEEK_SET);
 }
 
-void Sys_DebugLog(char *file, char *fmt, ...)
+void Sys_DebugLog(const char *file, const char *fmt, ...)
 {
     va_list argptr; 
     static char data[1024];
@@ -289,6 +289,11 @@ double Sys_FloatTime (void)
     }
 
     return (tp.tv_sec - secbase) + tp.tv_usec/1000000.0;
+}
+
+double Sys_DoubleTime()
+{
+	return SDL_GetTicks() / 1000.0f;
 }
 
 // =======================================================================
@@ -366,6 +371,8 @@ int main (int c, char **v)
 	g_Common->COM_InitArgv(c, v);
 	parms.argc = g_Common->com_argc;
 	parms.argv = g_Common->com_argv;
+
+    host = new CQuakeHost;
 
 #ifdef GLQUAKE
 	parms.memsize = 16*1024*1024;

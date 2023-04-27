@@ -43,6 +43,8 @@ int paintedtime;
 int s_rawend;
 portable_samplepair_t	s_rawsamples[MAX_RAW_SAMPLES];
 
+volatile dma_t* CSoundInternal::shm;
+
 // void Snd_WriteLinearBlastStereo16 (void);
 
 // #if	!id386
@@ -329,19 +331,19 @@ static void S_LowpassFilter(int* data, int stride, int count,
 	switch ((int)snd_filterquality.value)
 	{
 	case 1:
-		M = 126; bw = 0.900; break;
+		M = 126; bw = 0.900f; break;
 	case 2:
-		M = 150; bw = 0.915; break;
+		M = 150; bw = 0.915f; break;
 	case 3:
-		M = 174; bw = 0.930; break;
+		M = 174; bw = 0.930f; break;
 	case 4:
-		M = 198; bw = 0.945; break;
+		M = 198; bw = 0.945f; break;
 	case 5:
 	default:
-		M = 222; bw = 0.960; break;
+		M = 222; bw = 0.960f; break;
 	}
 
-	f_c = (bw * 11025 / 2.0) / 44100.0;
+	f_c = (bw * 11025 / 2.0f) / 44100.0f;
 
 	S_UpdateFilter(memory, M, f_c);
 	S_ApplyFilter(memory, data, stride, count);

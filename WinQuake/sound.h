@@ -128,7 +128,7 @@ public:
 	static void ResampleSfx(sfx_t* sfx, int inrate, int inwidth, byte* data);
 
 	// pointer should go away
-	static volatile dma_t* shm;
+    static volatile dma_t* shm;
 	dma_t sn;
 	vec_t		sound_nominal_clip_dist;
 
@@ -302,8 +302,8 @@ public:
 	void S_AmbientOff(void);
 	void S_AmbientOn(void);
 
-	void SNDDMA_LockBuffer(void);
-	void SNDDMA_UnlockBuffer(void);
+	/*void SNDDMA_LockBuffer(void);
+	void SNDDMA_UnlockBuffer(void);*/
 
 	void S_BlockSound(void);
 	void S_UnblockSound(void);

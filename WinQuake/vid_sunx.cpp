@@ -41,7 +41,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t		m_filter = {"m_filter","0", true};
 
-qboolean        mouse_avail;
+bool        mouse_avail;
 int             mouse_buttons=3;
 int             mouse_oldbuttonstate;
 int             mouse_buttonstate;
@@ -49,7 +49,7 @@ float   mouse_x, mouse_y;
 float   old_mouse_x, old_mouse_y;
 int p_mouse_x;
 int p_mouse_y;
-qboolean	mouse_grabbed = false; // we grab it when console is up
+bool	mouse_grabbed = false; // we grab it when console is up
 
 int		VGA_width, VGA_height, VGA_rowbytes, VGA_bufferrowbytes, VGA_planar;
 byte	*VGA_pagebase;
@@ -81,11 +81,11 @@ typedef struct
 } modedesc_t;
 
 extern void M_Menu_Options_f (void);
-extern void M_Print (int cx, int cy, char *str);
-extern void M_PrintWhite (int cx, int cy, char *str);
+extern void M_Print (int cx, int cy, const char *str);
+extern void M_PrintWhite (int cx, int cy, const char *str);
 extern void M_DrawCharacter (int cx, int line, int num);
-extern void M_DrawTransPic (int x, int y, qpic_t *pic);
-extern void M_DrawPic (int x, int y, qpic_t *pic);
+extern void M_DrawTransPic (int x, int y, CQuakePic *pic);
+extern void M_DrawPic (int x, int y, CQuakePic *pic);
 
 extern int sb_updates;
 extern int x_root, y_root; // root window relative mouse coords
@@ -110,16 +110,16 @@ int		vid_buffersize;
 PointerMotionMask | EnterWindowMask | LeaveWindowMask | VisibilityChangeMask | \
 ExposureMask | StructureNotifyMask )
 
-qboolean				x_fullscreen = true;
+bool				x_fullscreen = true;
 Display					*x_disp = NULL;
 int						x_screen, x_screen_width, x_screen_height;
 int				x_center_width, x_center_height;
 int						x_std_event_mask = STD_EVENT_MASK;
 Window					x_win, x_root_win;
-qboolean				mouse_in_window = false;
+bool				mouse_in_window = false;
 int				global_dx, global_dy;
 
-static qboolean			doShm;
+static bool			doShm;
 static Colormap			x_cmap;
 static GC				x_gc;
 static Visual			*x_vis;
@@ -130,7 +130,7 @@ static Atom				aWMDelete = 0;
 static int				x_shmeventtype;
 //static XShmSegmentInfo	x_shminfo;
 
-static qboolean			oktodraw = false;
+static bool			oktodraw = false;
 
 int XShmQueryExtension(Display *);
 int XShmGetEventBase(Display *);
@@ -219,15 +219,15 @@ PIXEL24 xlib_rgb24(int r,int g,int b)
 
 void st2_fixup( XImage *framebuf, int x, int y, int width, int height)
 {
-	int xi,yi;
+    int yi;
 	unsigned char *src;
 	PIXEL16 *dest;
-	register int count, n;
+    int count, n;
 
 	if( (x<0)||(y<0) )return;
 
 	for (yi = y; yi < (y+height); yi++) {
-		src = &framebuf->data [yi * framebuf->bytes_per_line];
+        src = (unsigned char*)&framebuf->data [yi * framebuf->bytes_per_line];
 
 		// Duff's Device
 		count = width;
@@ -258,12 +258,12 @@ void st3_fixup( XImage *framebuf, int x, int y, int width, int height)
 	int xi,yi;
 	unsigned char *src;
 	PIXEL24 *dest;
-	register int count, n;
+    int count, n;
 
 	if( (x<0)||(y<0) )return;
 
 	for (yi = y; yi < (y+height); yi++) {
-		src = &framebuf->data [yi * framebuf->bytes_per_line];
+        src = (unsigned char*)&framebuf->data [yi * framebuf->bytes_per_line];
 
 		// Duff's Device
 		count = width;
@@ -394,7 +394,7 @@ void ResetFrameBuffer(void)
 
 	if (x_framebuffer[0])
 	{
-		Z_Free(x_framebuffer[0]->data);
+        mainzone->Z_Free(x_framebuffer[0]->data);
 //		Z_Free(d_pzbuffer);
 		free(x_framebuffer[0]);
 	}
@@ -405,7 +405,7 @@ void ResetFrameBuffer(void)
 
 //	d_pzbuffer = (unsigned short *) Z_Malloc(vid.width*vid.height*
 //		sizeof(*d_pzbuffer));
-	d_pzbuffer = (short *) Hunk_HighAllocName(vid.width*vid.height*
+    d_pzbuffer = (short *) g_MemCache->Hunk_HighAllocName<short>(vid.width*vid.height*
 		sizeof(*d_pzbuffer), "zbuff");
 
 	x_framebuffer[0] = XCreateImage(	x_disp,
@@ -413,7 +413,7 @@ void ResetFrameBuffer(void)
 		x_visinfo->depth,
 		ZPixmap,
 		0,
-		Z_Malloc(mem),
+        mainzone->Z_Malloc<char>(mem),
 		vid.width, vid.height,
 		32,
 		0);
@@ -433,7 +433,7 @@ void ResetSharedFrameBuffers(void)
 
 //	if (d_pzbuffer)
 //		Z_Free(d_pzbuffer);
-	d_pzbuffer = Hunk_HighAllocName(vid.width*vid.height*sizeof(*d_pzbuffer),"zbuff");
+    d_pzbuffer = g_MemCache->Hunk_HighAllocName<short>(vid.width*vid.height*sizeof(*d_pzbuffer),"zbuff");
 
 	for (frm=0 ; frm<2 ; frm++)
 	{
@@ -472,16 +472,16 @@ void ResetSharedFrameBuffers(void)
 
 		// attach to the shared memory segment
 		x_shminfo[frm].shmaddr =
-			(void *) shmat(x_shminfo[frm].shmid, 0, 0);
+            (char*)(void *) shmat(x_shminfo[frm].shmid, 0, 0);
 
-		printf("VID: shared memory id=%d, addr=0x%x\n", x_shminfo[frm].shmid,
-			(int) x_shminfo[frm].shmaddr);
+        printf("VID: shared memory id=%d, addr=0x%s\n", x_shminfo[frm].shmid,
+            x_shminfo[frm].shmaddr);
 
 		x_framebuffer[frm]->data = x_shminfo[frm].shmaddr;
 
 	// get the X server to attach to it
 
-		if (!XShmAttach(x_disp, &x_shminfo[frm]))
+        if (!XShmAttach(x_disp, &x_shminfo[frm]))
 			Sys_Error("VID: XShmAttach() failed\n");
 		XSync(x_disp, 0);
 		shmctl(x_shminfo[frm].shmid, IPC_RMID, 0);
@@ -492,12 +492,9 @@ void ResetSharedFrameBuffers(void)
 
 void VID_MenuDraw( void )
 {
-    qpic_t		*p;
-    char		*ptr;
-    int			i, j, column, row, dup;
-    char		temp[100];
+    CQuakePic		*p;
 
-    p = Draw_CachePic ("gfx/vidmodes.lmp");
+    p = ResolveRenderer()->Draw_CachePic ("gfx/vidmodes.lmp");
     M_DrawPic ( (320-p->width)/2, 4, p);
 	M_Print (4*8, 36 + MAX_COLUMN_SIZE * 8 + 8, "Video mode switching unavailable");
 	M_Print (9*8, 36 + MAX_COLUMN_SIZE * 8 + 8*6, "Press any key...");
@@ -530,7 +527,7 @@ void VID_SetWindowTitle( Window win, char *pszName )
     wmHints->flags = StateHint;
     XSetWMProperties( x_disp, win, &textprop, &textprop,
 					  // Only put WM_COMMAND property on first window.
-					  com_argv, com_argc, NULL, NULL, NULL );
+                      g_Common->com_argv, g_Common->com_argc, NULL, NULL, NULL );
     XFree( wmHints );
 
     aWMDelete = XInternAtom( x_disp, "WM_DELETE_WINDOW", False );
@@ -541,7 +538,7 @@ void VID_SetWindowTitle( Window win, char *pszName )
 // VID_FullScreen - open the window in full screen mode
 //
 
-qboolean VID_FullScreen( Window win )
+bool VID_FullScreen( Window win )
 {
     MotifWmHints    hints;
     XWindowChanges  changes;
@@ -570,7 +567,7 @@ void	VID_Init (unsigned char *palette)
 {
 
 	int pnum, i;
-	XVisualInfo template;
+    XVisualInfo template_t;
 	int num_visuals;
 	int template_mask;
 
@@ -582,14 +579,14 @@ void	VID_Init (unsigned char *palette)
 	vid.height = 200;
 	vid.aspect = 1.0;
 	vid.numpages = 2;
-	vid.colormap = host_colormap;
+    vid.colormap = host->host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 	//vid.cbits = VID_CBITS;
 	//vid.grades = VID_GRADES;
 
 	srandom(getpid());
 
-	verbose=COM_CheckParm("-verbose");
+    verbose=g_Common->COM_CheckParm("-verbose");
 
 // open the display
 	x_disp = XOpenDisplay(0);
@@ -631,12 +628,12 @@ void	VID_Init (unsigned char *palette)
 //	XSynchronize(x_disp, True);
 
 // check for command-line window size
-	if ((pnum=COM_CheckParm("-winsize")))
+    if ((pnum=g_Common->COM_CheckParm("-winsize")))
 	{
-		if (pnum >= com_argc-2)
+        if (pnum >= g_Common->com_argc-2)
 			Sys_Error("VID: -winsize <width> <height>\n");
-		vid.width = Q_atoi(com_argv[pnum+1]);
-		vid.height = Q_atoi(com_argv[pnum+2]);
+        vid.width = Q_atoi(g_Common->com_argv[pnum+1]);
+        vid.height = Q_atoi(g_Common->com_argv[pnum+2]);
 		if (!vid.width || !vid.height)
 			Sys_Error("VID: Bad window width/height\n");
 	}
@@ -644,11 +641,11 @@ void	VID_Init (unsigned char *palette)
 	template_mask = 0;
 
 // specify a visual id
-	if ((pnum=COM_CheckParm("-visualid")))
+    if ((pnum=g_Common->COM_CheckParm("-visualid")))
 	{
-		if (pnum >= com_argc-1)
+        if (pnum >= g_Common->com_argc-1)
 			Sys_Error("VID: -visualid <id#>\n");
-		template.visualid = Q_atoi(com_argv[pnum+1]);
+        template_t.visualid = Q_atoi(g_Common->com_argv[pnum+1]);
 		template_mask = VisualIDMask;
 	}
 
@@ -657,31 +654,31 @@ void	VID_Init (unsigned char *palette)
 	{
 		int screen;
 		screen = XDefaultScreen(x_disp);
-		template.visualid =
+        template_t.visualid =
 			XVisualIDFromVisual(XDefaultVisual(x_disp, screen));
 		template_mask = VisualIDMask;
 	}
 
 // pick a visual- warn if more than one was available
-	x_visinfo = XGetVisualInfo(x_disp, template_mask, &template, &num_visuals);
+    x_visinfo = XGetVisualInfo(x_disp, template_mask, &template_t, &num_visuals);
 	if (num_visuals > 1)
 	{
-		printf("Found more than one visual id at depth %d:\n", template.depth);
+        printf("Found more than one visual id at depth %d:\n", template_t.depth);
 		for (i=0 ; i<num_visuals ; i++)
 			printf("	-visualid %d\n", (int)(x_visinfo[i].visualid));
 	}
 	else if (num_visuals == 0)
 	{
 		if (template_mask == VisualIDMask)
-			Sys_Error("VID: Bad visual id %d\n", template.visualid);
+            Sys_Error("VID: Bad visual id %d\n", template_t.visualid);
 		else
-			Sys_Error("VID: No visuals at depth %d\n", template.depth);
+            Sys_Error("VID: No visuals at depth %d\n", template_t.depth);
 	}
 
 	if (verbose)
 	{
 		printf("Using visualid %d:\n", (int)(x_visinfo->visualid));
-		printf("	class %d\n", x_visinfo->class);
+        printf("	class %d\n", x_visinfo->c_class);
 		printf("	screen %d\n", x_visinfo->screen);
 		printf("	depth %d\n", x_visinfo->depth);
 		printf("	red_mask 0x%x\n", (int)(x_visinfo->red_mask));
@@ -718,7 +715,7 @@ void	VID_Init (unsigned char *palette)
 			attribmask,
 			&attribs );
 
-		if (x_visinfo->class != TrueColor)
+        if (x_visinfo->c_class != TrueColor)
 			XFreeColormap(x_disp, tmpcmap);
 
 	}
@@ -727,12 +724,12 @@ void	VID_Init (unsigned char *palette)
 	{
 
 	// create and upload the palette
-		if (x_visinfo->class == PseudoColor)
+        if (x_visinfo->c_class == PseudoColor)
 		{
 			x_cmap = XCreateColormap(x_disp, x_win, x_vis, AllocAll);
 			VID_SetPalette(palette);
 			XSetWindowColormap(x_disp, x_win, x_cmap);
-		}
+        }
 
 	}
 
@@ -787,8 +784,8 @@ void	VID_Init (unsigned char *palette)
 
 	current_framebuffer = 0;
 	vid.rowbytes = x_framebuffer[0]->bytes_per_line;
-	vid.buffer = x_framebuffer[0]->data;
-	vid.conbuffer = x_framebuffer[0]->data;
+    vid.buffer = (unsigned char*)x_framebuffer[0]->data;
+    vid.conbuffer = (unsigned char*)x_framebuffer[0]->data;
 	vid.conrowbytes = vid.rowbytes;
 	vid.conwidth = vid.width;
 	vid.conheight = vid.height;
@@ -821,7 +818,7 @@ void VID_SetPalette(unsigned char *palette)
 		st2d_8to24table[i]= xlib_rgb24(palette[i*3], palette[i*3+1],palette[i*3+2]);
 	}
 
-	if (x_visinfo->class == PseudoColor && x_visinfo->depth == 8)
+    if (x_visinfo->c_class == PseudoColor && x_visinfo->depth == 8)
 	{
 		if (palette != current_palette)
 			memcpy(current_palette, palette, 768);
@@ -976,7 +973,7 @@ void GetEvent(void)
 			sb_updates = 0;
 			break;
 		case ClientMessage:
-			if (x_event.xclient.data.l[0] == aWMDelete) Host_Quit_f();
+            if (x_event.xclient.data.l[0] == aWMDelete) host->Host_Quit_f();
 			break;
 		case EnterNotify:
 			mouse_in_window = true;
@@ -1042,7 +1039,7 @@ void	VID_Update (vrect_t *rects)
 		else
 			ResetFrameBuffer();
 		vid.rowbytes = x_framebuffer[0]->bytes_per_line;
-		vid.buffer = x_framebuffer[current_framebuffer]->data;
+        vid.buffer = (unsigned char*)x_framebuffer[current_framebuffer]->data;
 		vid.conbuffer = vid.buffer;
 		vid.conwidth = vid.width;
 		vid.conheight = vid.height;
@@ -1077,7 +1074,7 @@ printf("update: %d,%d (%d,%d)\n", rects->x, rects->y, rects->width, rects->heigh
 		}
 //		printf("%lf\n", (double)(gethrtime()-s)/1.0e9);
 		current_framebuffer = !current_framebuffer;
-		vid.buffer = x_framebuffer[current_framebuffer]->data;
+        vid.buffer = (unsigned char*)x_framebuffer[current_framebuffer]->data;
 		vid.conbuffer = vid.buffer;
 		XSync(x_disp, False);
 		
@@ -1191,7 +1188,7 @@ char *Sys_ConsoleInput (void)
 void IN_Init (void)
 {
 	Cvar_RegisterVariable (&m_filter);
-	if ( COM_CheckParm ("-nomouse") )
+    if ( g_Common->COM_CheckParm ("-nomouse") )
 		return;
 	mouse_x = mouse_y = 0.0;
 	mouse_avail = 1;

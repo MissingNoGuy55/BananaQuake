@@ -1266,11 +1266,7 @@ void M_Options_Draw (void)
 	}
 #endif
 #elif __linux__
-	if (modestate == MS_WINDOWED)
-	{
-		M_Print(16, 136, "             Use Mouse");
-		M_DrawCheckbox(220, 136, _windowed_mouse.value);
-	}
+
 #endif
 
 // cursor

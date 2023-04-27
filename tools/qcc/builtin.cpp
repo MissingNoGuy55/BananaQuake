@@ -2435,8 +2435,7 @@ void PF_aim (void)
 		if (teamplay.value && ent->v.team > 0 && ent->v.team == check->v.team)
 			continue;	// don't aim at teammate
 		for (j=0 ; j<3 ; j++)
-			end[j] = check->v.origin[j]
-			+ 0.5*(check->v.mins[j] + check->v.maxs[j]);
+			end[j] = check->v.origin[j] + 0.5f * (check->v.mins[j] + check->v.maxs[j]);
 		VectorSubtract (end, start, dir);
 		VectorNormalize (dir);
 		dist = DotProduct (dir, pr_global_struct->v_forward);
@@ -2528,7 +2527,7 @@ sizebuf_t *WriteDest (void)
 	int		dest;
 	edict_t	*ent;
 
-	dest = G_FLOAT(OFS_PARM0);
+	dest = (int)G_FLOAT(OFS_PARM0);
 	switch (dest)
 	{
 	case MSG_BROADCAST:
@@ -2557,22 +2556,22 @@ sizebuf_t *WriteDest (void)
 
 void PF_WriteByte (void)
 {
-	MSG_WriteByte (WriteDest(), G_FLOAT(OFS_PARM1));
+	MSG_WriteByte (WriteDest(), (byte)G_FLOAT(OFS_PARM1));
 }
 
 void PF_WriteChar (void)
 {
-	MSG_WriteChar (WriteDest(), G_FLOAT(OFS_PARM1));
+	MSG_WriteChar (WriteDest(), (char)G_FLOAT(OFS_PARM1));
 }
 
 void PF_WriteShort (void)
 {
-	MSG_WriteShort (WriteDest(), G_FLOAT(OFS_PARM1));
+	MSG_WriteShort (WriteDest(), (short)G_FLOAT(OFS_PARM1));
 }
 
 void PF_WriteLong (void)
 {
-	MSG_WriteLong (WriteDest(), G_FLOAT(OFS_PARM1));
+	MSG_WriteLong (WriteDest(), (long)G_FLOAT(OFS_PARM1));
 }
 
 void PF_WriteAngle (void)
@@ -2617,9 +2616,9 @@ void PF_makestatic (void)
 
 	MSG_WriteByte (&sv.signon, SV_ModelIndex(PR_GetString(ent->v.model)));
 
-	MSG_WriteByte (&sv.signon, ent->v.frame);
-	MSG_WriteByte (&sv.signon, ent->v.colormap);
-	MSG_WriteByte (&sv.signon, ent->v.skin);
+	MSG_WriteByte (&sv.signon, (int)ent->v.frame);
+	MSG_WriteByte (&sv.signon, (int)ent->v.colormap);
+	MSG_WriteByte (&sv.signon, (int)ent->v.skin);
 	for (i=0 ; i<3 ; i++)
 	{
 		MSG_WriteCoord(&sv.signon, ent->v.origin[i]);

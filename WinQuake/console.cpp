@@ -45,7 +45,7 @@ char		*con_text=0;
 cvar_t		con_notifytime = {"con_notifytime","3"};		//seconds
 
 #define	NUM_CON_TIMES 4
-float		con_times[NUM_CON_TIMES];	// realtime time the line was generated
+double		con_times[NUM_CON_TIMES];	// realtime time the line was generated
 								// for transparent notify lines
 
 int			con_vislines;
@@ -370,7 +370,7 @@ void Con_DebugLog(const char *file, const char *fmt, ...)
     close(fd);
 #elif _WIN32
 	FILE* fd = NULL;
-	int fw = 0;
+	size_t fw = 0;
 	fopen_s(&fd, file, "w+t"); // O_WRONLY | O_CREAT | O_APPEND, 0666);
 
 	if (!fd)
@@ -540,7 +540,7 @@ void Con_DrawNotify (void)
 	int		x, v;
 	char	*text;
 	int		i;
-	float	time;
+	double	time;
 	extern char chat_buffer[];
 
 	v = 0;

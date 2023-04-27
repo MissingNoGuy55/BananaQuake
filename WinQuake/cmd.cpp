@@ -532,7 +532,6 @@ Cmd_AddCommand
 void	Cmd_AddCommand (const char *cmd_name, xcommand_t function)
 {
 	cmd_function_t	*cmd = NULL;
-	int				i;
 
 	if (host->host_initialized)	// because hunk allocation would get stomped
 		Sys_Error ("Cmd_AddCommand after host_initialized");

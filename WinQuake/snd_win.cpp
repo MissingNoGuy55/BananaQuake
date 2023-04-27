@@ -44,7 +44,7 @@ int	sample16;
 int	snd_sent, snd_completed;
 
 CSoundSystemWin* g_SoundSystem;
-SDL_AudioDeviceID g_SoundDeviceID;
+// SDL_AudioDeviceID g_SoundDeviceID;
 
 //dma_t CSoundInternal::sn = { NULL };
 volatile dma_t* CSoundInternal::shm = NULL;
@@ -198,16 +198,6 @@ how many sample are required to fill it up.
 int CSoundSystemWin::SNDDMA_GetDMAPos(void)
 {
 	return shm->samplepos;
-}
-
-void CSoundSystemWin::SNDDMA_LockBuffer(void)
-{
-	SDL_LockAudioDevice(g_SoundDeviceID);
-}
-
-void CSoundSystemWin::SNDDMA_UnlockBuffer(void)
-{
-	SDL_UnlockAudioDevice(g_SoundDeviceID);
 }
 
 /*

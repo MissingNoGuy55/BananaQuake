@@ -575,12 +575,12 @@ void CSoftwareRenderer::Draw_ConsoleBackground (int lines)
 	dest = conback->datavec.Base() + 320*186 + 320 - 11 - 8*strlen(ver);
 #elif defined(X11)
 	sprintf (ver, "(X11 Quake %2.2f) %4.2f", (float)X11_VERSION, (float)VERSION);
-	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
+    dest = conback->datavec.Base() + 320*186 + 320 - 11 - 8*strlen(ver);
 #elif defined(__linux__)
 	sprintf (ver, "(Linux Quake %2.2f) %4.2f", (float)LINUX_VERSION, (float)VERSION);
-	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
+    dest = conback->datavec.Base() + 320*186 + 320 - 11 - 8*strlen(ver);
 #else
-	dest = conback->data + 320 - 43 + 320*186;
+    dest = conback->datavec.Base() + 320 - 43 + 320*186;
 	sprintf (ver, "%4.2f", VERSION);
 #endif
 

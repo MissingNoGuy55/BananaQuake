@@ -51,8 +51,8 @@ extern int				x_screen, x_screen_width, x_screen_height;
 extern int			x_center_height, x_center_width;
 extern int				x_std_event_mask;
 extern Window			x_win, x_root_win;
-extern qboolean			x_fullscreen;
-extern qboolean			x_focus;
+extern bool             x_fullscreen;
+extern bool             x_focus;
 extern int			global_dx, global_dy;
 //
 // globals
@@ -68,11 +68,13 @@ int					x_root_old, y_root_old;
 static int				x_mouse_num, x_mouse_denom, x_mouse_thresh;
 
 
-static qboolean x_grabbed = false;
+static bool x_grabbed = false;
 
 //
 // IN_CenterMouse - center the mouse in the screen
 //
+
+static void CheckMouseState(void);
 
 void IN_CenterMouse( void )
 {
@@ -93,39 +95,39 @@ void IN_CenterMouse( void )
 //
 static void CheckMouseState(void)
 {
-	if (x_focus && _windowed_mouse.value && !x_grabbed) {
-		x_grabbed = true;
-		printf("fooling with mouse!\n");
-		if (XGetPointerControl( x_disp, &x_mouse_num, &x_mouse_denom, &x_mouse_thresh ))
-			printf( "XGetPointerControl failed!\n" );
-		//printf( "mouse %d/%d thresh %d\n", x_mouse_num, x_mouse_denom, x_mouse_thresh );
+    if (x_focus && _windowed_mouse.value && !x_grabbed) {
+        x_grabbed = true;
+        printf("fooling with mouse!\n");
+        if (XGetPointerControl( x_disp, &x_mouse_num, &x_mouse_denom, &x_mouse_thresh ))
+            printf( "XGetPointerControl failed!\n" );
+        //printf( "mouse %d/%d thresh %d\n", x_mouse_num, x_mouse_denom, x_mouse_thresh );
 
-		// make input rawer
-		XAutoRepeatOff(x_disp);
-		XGrabKeyboard(x_disp, x_win, True, GrabModeAsync, GrabModeAsync, CurrentTime);
-		XGrabPointer(x_disp, x_win, True, 
-			     PointerMotionMask | ButtonPressMask | ButtonReleaseMask, 
-			     GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
+        // make input rawer
+        XAutoRepeatOff(x_disp);
+        XGrabKeyboard(x_disp, x_win, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+        XGrabPointer(x_disp, x_win, True,
+                 PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
+                 GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
 
 //		if (XChangePointerControl( x_disp, True, True, 1, MOUSE_SCALE, x_mouse_thresh ))
 //			printf( "XChangePointerControl failed!\n" );
 
-		IN_CenterMouse();
+        IN_CenterMouse();
 
-		// safe initial values
-		x_root = x_root_old = vid.width >> 1;
-		y_root = y_root_old = vid.height >> 1;
-	} else if (x_grabbed && (!_windowed_mouse.value || !x_focus)) {
-		printf("fooling with mouse!\n");
-		x_grabbed = false;
-		// undo mouse warp
-		if (XChangePointerControl( x_disp, True, True, x_mouse_num, x_mouse_denom, x_mouse_thresh ))
-			printf( "XChangePointerControl failed!\n" );
+        // safe initial values
+        x_root = x_root_old = vid.width >> 1;
+        y_root = y_root_old = vid.height >> 1;
+    } else if (x_grabbed && (!_windowed_mouse.value || !x_focus)) {
+        printf("fooling with mouse!\n");
+        x_grabbed = false;
+        // undo mouse warp
+        if (XChangePointerControl( x_disp, True, True, x_mouse_num, x_mouse_denom, x_mouse_thresh ))
+            printf( "XChangePointerControl failed!\n" );
 
-		XUngrabPointer( x_disp, CurrentTime );
-		XUngrabKeyboard( x_disp, CurrentTime );
-		XAutoRepeatOn( x_disp );
-	}
+        XUngrabPointer( x_disp, CurrentTime );
+        XUngrabKeyboard( x_disp, CurrentTime );
+        XAutoRepeatOn( x_disp );
+    }
 }
 
 

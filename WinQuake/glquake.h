@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // disable data conversion warnings
 
+#pragma once
+#ifdef _MSC_VER
 #pragma warning(disable : 4244)     // MIPS
 #pragma warning(disable : 4136)     // X86
 
@@ -27,22 +29,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #pragma warning(disable : 4051)     // ALPHA
-  
+#endif
 //#include <GL/glew.h>
 
 #define	GL_UNUSED_TEXTURE	(~(GLuint)0)
 
 #ifdef _WIN32
 #include <windows.h>
-#endif
-
-#ifdef _WIN32
-#include <SDL_opengl.h>
-#endif
-
-#ifdef __linux__
-#include <GL/gl.h>
-#include <GL/glu.h>
 #endif
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);

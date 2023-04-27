@@ -146,7 +146,7 @@ void InsertLinkAfter (link_t *l, link_t *after)
 ============================================================================
 */
 
-void Q_memset (void *dest, int fill, int count)
+void Q_memset (void *dest, int fill, size_t count)
 {
 	int             i;
 
@@ -162,7 +162,7 @@ void Q_memset (void *dest, int fill, int count)
 			((byte *)dest)[i] = fill;
 }
 
-void Q_memcpy (void *dest, const void *src, int count)
+void Q_memcpy (void *dest, const void *src, size_t count)
 {
 	int             i;
 
@@ -177,7 +177,7 @@ void Q_memcpy (void *dest, const void *src, int count)
 			((byte *)dest)[i] = ((byte *)src)[i];
 }
 
-int Q_memcmp (void *m1, void *m2, int count)
+int Q_memcmp (void *m1, void *m2, size_t count)
 {
 	while(count)
 	{
@@ -197,7 +197,7 @@ void Q_strcpy (char *dest, const char *src)
 	*dest++ = 0;
 }
 
-void Q_strncpy (char *dest, const char *src, int count)
+void Q_strncpy (char *dest, const char *src, size_t count)
 {
 	while (*src && count--)
 	{
@@ -248,7 +248,7 @@ int Q_strcmp (const char *s1, const char*s2)
 	return -1;
 }
 
-int Q_strncmp (const char*s1, const char*s2, int count)
+int Q_strncmp (const char*s1, const char*s2, size_t count)
 {
 	while (1)
 	{
@@ -265,7 +265,7 @@ int Q_strncmp (const char*s1, const char*s2, int count)
 	return -1;
 }
 
-int Q_strncasecmp (const char *s1, const char *s2, int n)
+int Q_strncasecmp (const char *s1, const char *s2, size_t n)
 {
 	int             c1, c2;
 	
@@ -1523,11 +1523,12 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 				}
 #ifdef _WIN32
 				sprintf_s(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
+
+                if (!(Sys_FileType(netpath) & FS_ENT_FILE))
+                    continue;
 #else
   				sprintf(netpath, "%s/%s", search->filename, filename);              
 #endif
-				if (!(Sys_FileType(netpath) & FS_ENT_FILE))
-					continue;
 
 				/*findtime = Sys_FileTime(netpath);
 				if (findtime == -1)

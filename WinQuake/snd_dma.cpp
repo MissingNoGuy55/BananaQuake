@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "in_win.h"
 #include "snd_codec.h"
-#include "bgmusic.h"
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -65,6 +64,8 @@ vec3_t listener_forward = {};
 vec3_t listener_right = {};
 vec3_t listener_up = {};
 sfx_t* CSoundInternal::known_sfx[MAX_SFX] = { (sfx_t*)calloc(1, sizeof(sfx_t)) };
+
+SDL_AudioDeviceID g_SoundDeviceID;
 
 // ====================================================================
 // User-setable variables
@@ -386,7 +387,7 @@ SND_Spatialize
 void CSoundDMA::SND_Spatialize(channel_t *ch)
 {
     vec_t dot;
-    vec_t ldist, rdist, dist;
+    vec_t dist;
     vec_t lscale, rscale, scale;
     vec3_t source_vec;
 	sfx_t *snd;
@@ -915,7 +916,9 @@ void CSoundDMA::S_ExtraUpdate (void)
 {
 
 #ifndef QUAKE_TOOLS
+#ifdef _WIN32
 	IN_Accumulate ();
+#endif
 #endif
 
 	if (snd_noextraupdate.value)
@@ -955,6 +958,16 @@ void CSoundInternal::S_Update_(void)
 
  	g_SoundSystem->SNDDMA_Submit ();
 
+}
+
+void CSoundDMA::SNDDMA_LockBuffer(void)
+{
+	SDL_LockAudioDevice(g_SoundDeviceID);
+}
+
+void CSoundDMA::SNDDMA_UnlockBuffer(void)
+{
+	SDL_UnlockAudioDevice(g_SoundDeviceID);
 }
 
 /*

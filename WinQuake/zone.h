@@ -878,7 +878,8 @@ T* CMemCache::Cache_Alloc(cache_user_s* c, int size, char* name)
 		cs = Cache_TryAlloc<T>(size, false);
 		if (cs)
 		{
-			Q_strlcpy(cs->name, name, sizeof(cs->name) - 1);
+            // FIXME: Missi: Q_strlcpy cannot be used here due to how it's defined (4/26/2023)
+			Q_strncpy(cs->name, name, sizeof(cs->name) - 1);
 			c->data = (byte*)(cs + 1);
 			cs->user = c;
 			break;
@@ -984,7 +985,7 @@ T* CMemCache::Hunk_AllocName(int size, const char* name)
 
 	h->size = size;
 	h->sentinal = HUNK_SENTINAL;
-	Q_strlcpy(h->name, name, 24);
+	Q_strncpy(h->name, name, sizeof(h->name));
 
 	return (T*)(h + 1);
 }

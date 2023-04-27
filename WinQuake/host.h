@@ -41,15 +41,15 @@ public:
 	double		realtime;			// not bounded in any way, changed at
 											// start of every frame, never reset
 
-	 bool		msg_suppress_1;		// suppresses resolution and cache size console output
+    bool		msg_suppress_1;		// suppresses resolution and cache size console output
 											//  an fullscreen DIB focus gain/loss
-	 int			current_skill;		// skill level for currently loaded level (in case
+    int			current_skill;		// skill level for currently loaded level (in case
 											//  the user changes the cvar while the level is
 											//  running, this reflects the level actually in use)
 
-	 bool		isDedicated;
+    bool		isDedicated;
 
-	 int			minimum_memory;
+    int			minimum_memory;
 
 	void Host_ClearMemory(void);
 	bool Host_FilterTime(float time);
