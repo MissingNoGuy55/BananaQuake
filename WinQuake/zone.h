@@ -1178,10 +1178,10 @@ void CMemBlock<T, I>::Grow(int num)
 	if (IsExternallyAllocated())
 		return;
 
-#ifdef QUAKE_GAME // Missi: MORE QCC garbage (11/3/2022)
+
 	if (!num)
 		Con_Printf("CMemBlock::Grow called with 0 grow size!\n");
-#endif
+
 	// Make sure we have at least numallocated + num allocations.
 	// Use the grow rules specified for this memory (in m_nGrowSize)
 	int nAllocationRequested = size + num;
@@ -1250,15 +1250,11 @@ inline int CMemBlock<T, I>::CalcNewAllocationCount(int nAllocationCount, int nGr
 
 		while (nAllocationCount < nNewSize)
 		{
-#ifndef _X360
-			nAllocationCount *= 2;
-#else
 			int nNewAllocationCount = (nAllocationCount * 9) / 8; // 12.5 %
 			if (nNewAllocationCount > nAllocationCount)
 				nAllocationCount = nNewAllocationCount;
 			else
 				nAllocationCount *= 2;
-#endif
 		}
 	}
 

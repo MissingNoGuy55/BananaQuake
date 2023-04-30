@@ -43,8 +43,6 @@ int paintedtime;
 int s_rawend;
 portable_samplepair_t	s_rawsamples[MAX_RAW_SAMPLES];
 
-volatile dma_t* CSoundInternal::shm;
-
 // void Snd_WriteLinearBlastStereo16 (void);
 
 // #if	!id386

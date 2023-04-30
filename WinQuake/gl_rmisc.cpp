@@ -20,11 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_misc.c
 
 #include "quakedef.h"
-#include "gl_draw.h"
-#include "gl_rsurf.h"
-#include "gl_vidnt.h"
-#include "r_part.h"
-#include "utils.h"
 
 /*
 ==================
@@ -113,6 +108,8 @@ void CGLRenderer::R_Envmap_f (void)
 	byte*	buffer = g_MemCache->Hunk_Alloc<byte>(256*256*4);	// Missi (3/8/2022)
 	char	name[1024];
 
+    memset(name, 0, sizeof(name));
+    
 	glDrawBuffer  (GL_FRONT);
 	glReadBuffer  (GL_FRONT);
 	envmap = true;

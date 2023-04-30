@@ -64,10 +64,10 @@ D_DrawSkyScans8
 */
 void CSoftwareRenderer::D_DrawSkyScans8 (espan_t *pspan)
 {
-	int				count, spancount, u, v;
-	unsigned char	*pdest;
-	fixed16_t		s, t, snext, tnext, sstep, tstep;
-	int				spancountminus1;
+	int				count = 0, spancount = 0, u = 0, v = 0;
+	unsigned char	*pdest = NULL;
+	fixed16_t		s = 0, t = 0, snext = 0, tnext = 0, sstep = 0, tstep = 0;
+	int				spancountminus1 = 0;
 
 	sstep = 0;	// keep compiler happy
 	tstep = 0;	// ditto

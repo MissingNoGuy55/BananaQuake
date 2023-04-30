@@ -18,51 +18,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-// draw.c -- this is the only file outside the refresh that touches the
+// gl_draw.cpp -- this is the only file outside the refresh that touches the
 // vid buffer
 
 #include "quakedef.h"
-#include "gl_vidnt.h"
-#include "gl_draw.h"
-#include <utility>
 
-#define GL_COLOR_INDEX8_EXT     0x80E5
+// Missi: already defined in GL.h in Windows and SDL_OpenGL_glext.h (4/29/2023)
+//#define GL_COLOR_INDEX8_EXT     0x80E5
 
-extern unsigned char d_15to8table[65536];
-
-cvar_t		gl_nobind = {"gl_nobind", "0"};
-cvar_t		gl_max_size = {"gl_max_size", "1024"};
-cvar_t		gl_picmip = {"gl_picmip", "0"};
-cvar_t		gl_texturemode = {"gl_texturemode", ""};
-cvar_t		gl_fullbrights = {"gl_fullbrights", "0"};
-GLint		gl_hardware_maxsize;
-
-//byte                *draw_chars;				// 8*8 graphic characters
-//CQuakePic			*draw_disc;
-//CQuakePic			*draw_backtile;
-
-//CGLTexture*			translate_texture;
-//CGLTexture*			char_texture;
-
-byte		conback_buffer[sizeof(CQuakePic)];
-CQuakePic	*conback = (CQuakePic*)&conback_buffer;
-
-int		gl_lightmap_format = 4;
-int		gl_solid_format = 3;
-int		gl_alpha_format = 4;
-
-int		gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
-int		gl_filter_max = GL_LINEAR;
-
-
-static int		texels;
-
-CGLTexture	CGLRenderer::gltextures[MAX_GLTEXTURES];
-CGLTexture* CGLRenderer::free_gltextures;
-CGLTexture* CGLRenderer::active_gltextures;
-CGLTexture* CGLRenderer::lightmap_textures;
-byte		CGLRenderer::lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];// [MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
-static int	numgltextures;
+// unsigned char d_15to8table[65536];
 
 unsigned int d_8to24table_fbright[256];
 unsigned int d_8to24table_fbright_fence[256];
@@ -74,6 +38,30 @@ unsigned int d_8to24table_pants[256];
 
 bool gl_texture_NPOT = false;
 
+static cvar_t		gl_nobind = {"gl_nobind", "0"};
+static cvar_t		gl_picmip = {"gl_picmip", "0"};
+static cvar_t		gl_texturemode = {"gl_texturemode", ""};
+
+cvar_t		gl_max_size = {"gl_max_size", "1024"};
+cvar_t		gl_fullbrights = {"gl_fullbrights", "0"};
+GLint		gl_hardware_maxsize;
+
+//byte				*draw_chars;				// 8*8 graphic characters
+//CQuakePic			*draw_disc;
+//CQuakePic			*draw_backtile;
+
+//CGLTexture*		translate_texture;
+//CGLTexture*		char_texture;
+
+static byte	conback_buffer[sizeof(CQuakePic)];
+CQuakePic	*conback = (CQuakePic*)&conback_buffer;
+
+CGLTexture	CGLRenderer::gltextures[MAX_GLTEXTURES];
+CGLTexture* CGLRenderer::free_gltextures;
+CGLTexture* CGLRenderer::active_gltextures;
+CGLTexture* CGLRenderer::lightmap_textures;
+byte		CGLRenderer::lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];// [MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
+
 CGLTexture* CGLRenderer::char_texture;
 CGLTexture* CGLRenderer::translate_texture;
 
@@ -82,6 +70,9 @@ int			CGLRenderer::lightmap_count;
 glpoly_t*	CGLRenderer::lightmap_polys[MAX_LIGHTMAPS];
 bool		CGLRenderer::lightmap_modified[MAX_LIGHTMAPS];
 glRect_t	CGLRenderer::lightmap_rectchange[MAX_LIGHTMAPS];
+
+int			CGLRenderer::gl_filter_min;
+int			CGLRenderer::gl_filter_max;
 
 CGLRenderer::CGLRenderer()
 {
@@ -111,9 +102,13 @@ CGLRenderer::CGLRenderer()
 	draw_disc = NULL;
 	draw_backtile = NULL;
 
+	skychain = NULL;
+	waterchain = NULL;
+
+	gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
+	gl_filter_max = GL_LINEAR;
+
 	lightmap_textures = NULL;
-	/*translate_texture = NULL;
-	char_texture = NULL;*/
 
 	free_gltextures = g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture) * MAX_GLTEXTURES, "gltextures");
 	active_gltextures = NULL;
@@ -124,42 +119,12 @@ CGLRenderer::CGLRenderer()
 	free_gltextures[i].next = NULL;
 
 	numgltextures = 0;
-}
+	texels = 0;
 
-CGLRenderer::CGLRenderer(const CGLRenderer& src)
-{
-	active_lightmaps = 0;
+	gl_lightmap_format = 4;
+	gl_solid_format = 3;
+	gl_alpha_format = 4;
 
-	memset(allocated, 0, sizeof(allocated));
-	memset(blocklights, 0, sizeof(blocklights));
-	memset(lightmaps, 0, sizeof(lightmaps));
-	memset(lightmap_modified, 0, sizeof(lightmap_modified));
-	memset(lightmap_polys, 0, sizeof(lightmap_polys));
-	memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
-
-	skytexturenum = 0;
-	lightmap_bytes = 0;
-
-	lightmap_textures = NULL;
-	/*translate_texture = NULL;
-	char_texture = NULL;*/
-
-	skytexturenum = 0;
-	lightmap_bytes = 0;
-	lightmap_count = 0;
-	last_lightmap_allocated = 0;
-
-	lightmap_textures = NULL;
-	
-	free_gltextures = g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture) * MAX_GLTEXTURES, "gltextures");
-	active_gltextures = NULL;
-	int i;
-
-	for (i = 0; i < MAX_GLTEXTURES - 1; i++)
-		free_gltextures[i].next = &free_gltextures[i + 1];
-	free_gltextures[i].next = NULL;
-
-	numgltextures = 0;
 }
 
 CGLRenderer::~CGLRenderer()
@@ -201,6 +166,7 @@ typedef struct
 	int	minfilter;
 	const char* name;
 } glmode_t;
+
 static glmode_t glmodes[] = {
 	{GL_NEAREST, GL_NEAREST,		"GL_NEAREST"},
 	{GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST,	"GL_NEAREST_MIPMAP_NEAREST"},
@@ -212,8 +178,6 @@ static glmode_t glmodes[] = {
 
 #define NUM_GLMODES (int)(sizeof(glmodes)/sizeof(glmodes[0]))
 static int glmode_idx = NUM_GLMODES - 1;
-
-static GLenum	currenttarget = GL_TEXTURE0_ARB;
 
 unsigned* CGLRenderer::GL_8to32(byte* in, int pixels, unsigned int* usepal)
 {
@@ -230,7 +194,7 @@ unsigned* CGLRenderer::GL_8to32(byte* in, int pixels, unsigned int* usepal)
 
 /*
 ===============
-GL_AlphaEdgeFix
+CGLRenderer::GL_AlphaEdgeFix
 
 eliminate pink edges on sprites, etc.
 operates in place on 32bit data
@@ -319,9 +283,11 @@ CGLTexture* CGLRenderer::GL_NewTexture()
 =============================================================================
 */
 
-#define	MAX_SCRAPS		2
-// #define	BLOCK_WIDTH		256
-// #define	BLOCK_HEIGHT	256
+static constexpr short MAX_SCRAPS = 2;
+
+//#define	MAX_SCRAPS		2
+//#define	BLOCK_WIDTH		256
+//#define	BLOCK_HEIGHT	256
 
 static int			scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
 static byte			scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT*4];
@@ -396,23 +362,20 @@ void CGLRenderer::Scrap_Upload (void)
 
 typedef struct cachepic_s
 {
-	char		name[MAX_QPATH] = {};
-	CQuakePic		pic = {};
-	byte		padding[32] = {};	// for appended glpic
+	char		name[MAX_QPATH];
+	CQuakePic		pic;
+	byte		padding[32];	// for appended glpic
 } cachepic_t;
 
 #define	MAX_CACHED_PICS		128
-cachepic_t	menu_cachepics[MAX_CACHED_PICS];
-int			menu_numcachepics;
+static cachepic_t	menu_cachepics[MAX_CACHED_PICS];
+static int			menu_numcachepics;
 
-byte		menuplyr_pixels[4096];
-
-int		pic_texels;
-int		pic_count;
+static byte		menuplyr_pixels[4096];
 
 /*
 ================
-GL_Pad -- return smallest power of two greater than or equal to s
+CGLRenderer::GL_Pad -- return smallest power of two greater than or equal to s
 ================
 */
 int CGLRenderer::GL_Pad(int s)
@@ -425,7 +388,7 @@ int CGLRenderer::GL_Pad(int s)
 
 /*
 ===============
-GL_SafeTextureSize -- return a size with hardware and user prefs in mind
+CGLRenderer::GL_SafeTextureSize -- return a size with hardware and user prefs in mind
 ===============
 */
 int CGLRenderer::GL_SafeTextureSize(int s)
@@ -440,7 +403,7 @@ int CGLRenderer::GL_SafeTextureSize(int s)
 
 /*
 ================
-GL_PadConditional -- only pad if a texture of that size would be padded. (used for tex coords)
+CGLRenderer::GL_PadConditional -- only pad if a texture of that size would be padded. (used for tex coords)
 ================
 */
 int CGLRenderer::GL_PadConditional(int s)
@@ -451,6 +414,11 @@ int CGLRenderer::GL_PadConditional(int s)
 		return s;
 }
 
+/*
+===============
+CGLRenderer::Draw_PicFromWad
+===============
+*/
 CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 {
 	CQuakePic* p = NULL;
@@ -503,14 +471,14 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 	//memset(&p->datavec, 0, sizeof(p->datavec));
 
 	p->datavec.AddMultipleToTail(sizeof(COpenGLPic), (byte*)&gl);
-
+    
 	return p;
 }
 
 
 /*
 ================
-Draw_CachePic
+CGLRenderer::Draw_CachePic
 ================
 */
 CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
@@ -518,11 +486,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	cachepic_t		*pic = NULL;
 	int				i = 0;
 	qpicbuf_t		*qpicbuf = NULL;
-	byte			*qpictemp = NULL;
-	byte			*qpicdata = NULL;
 	COpenGLPic		gl;
-	size_t			qpictemp_len = 0;
-	uintptr_t		offset = 0;
 
 	for (pic=menu_cachepics, i=0 ; i<menu_numcachepics ; pic++, i++)
 		if (!strcmp (path, pic->name))
@@ -530,8 +494,9 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 
 	if (menu_numcachepics == MAX_CACHED_PICS)
 		Sys_Error ("menu_numcachepics == MAX_CACHED_PICS");
+
 	menu_numcachepics++;
-	Q_strcpy (pic->name, path);
+	Q_strncpy (pic->name, path, sizeof(pic->name));
 
 //
 // load the pic from disk
@@ -565,7 +530,11 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
  	return &pic->pic;
 }
 
-
+/*
+===============
+CGLRenderer::Draw_CharToConback
+===============
+*/
 void CGLRenderer::Draw_CharToConback (int num, byte *dest)
 {
 	int		row, col;
@@ -592,13 +561,13 @@ void CGLRenderer::Draw_CharToConback (int num, byte *dest)
 
 /*
 ===============
-Draw_TextureMode_f
+CGLRenderer::Draw_TextureMode_f
 ===============
 */
 void CGLRenderer::Draw_TextureMode_f (void)
 {
 	int		i;
-	CGLTexture	*glt;
+	CGLTexture	*glt = NULL;
 
 	if (Cmd_Argc() == 1)
 	{
@@ -662,36 +631,22 @@ void CGLRenderer::Draw_TextureMode_f (void)
 	}
 }
 
-#define TRANSFER_DATA(a, b) 
-
 /*
 ===============
-Draw_Init
+CGLRenderer::Draw_Init
 ===============
 */
 void CGLRenderer::Draw_Init (void)
 {
-	int			i = 0;
-	CQuakePic* cb =	NULL;
-	byte	*dest = NULL, *src = NULL;
-	int		x = 0, y = 0;
 	char	ver[40];
 	int		start = 0;
-	byte	*ncdata = NULL;
-	int		f = 0, fstep = 0;
-	size_t	s = 0;
-	uintptr_t offset;
+	uintptr_t offset = 0;
 
 	Cvar_RegisterVariable (&gl_nobind);
 	Cvar_RegisterVariable (&gl_max_size);
 	Cvar_RegisterVariable (&gl_picmip);
 
 	memset(ver, 0, sizeof(ver));
-
-	// 3dfx can only handle 256 wide textures
-	if (!Q_strncasecmp ((char *)gl_renderer, "3dfx",4) ||
-		strstr((char *)gl_renderer, "Glide"))
-		Cvar_Set ("gl_max_size", "256");
 
 	Cmd_AddCommand ("gl_texturemode", &CGLRenderer::Draw_TextureMode_f);
 
@@ -733,11 +688,9 @@ void CGLRenderer::Draw_Init (void)
 	draw_backtile = Draw_PicFromWad ("backtile");
 }
 
-
-
 /*
 ================
-Draw_Character
+CGLRenderer::Draw_Character
 
 Draws one 8*8 graphics character with 0 being transparent.
 It can be clipped to the top of the screen to allow the console to be
@@ -770,20 +723,20 @@ void CGLRenderer::Draw_Character (int x, int y, int num)
 	glTexCoord2f (fcol, frow);
 	glVertex2f (x, y);
 	glTexCoord2f (fcol + size, frow);
-	glVertex2f (x+8, y);
+	glVertex2f (x + 8, y);
 	glTexCoord2f (fcol + size, frow + size);
-	glVertex2f (x+8, y+8);
+	glVertex2f (x + 8, y + 8);
 	glTexCoord2f (fcol, frow + size);
-	glVertex2f (x, y+8);
+	glVertex2f (x, y + 8);
 	glEnd ();
 }
 
 /*
 ================
-Draw_String
+CGLRenderer::Draw_String
 ================
 */
-void CGLRenderer::Draw_String (int x, int y, char *str)
+void CGLRenderer::Draw_String (int x, int y, const char *str)
 {
 	while (*str)
 	{
@@ -795,7 +748,7 @@ void CGLRenderer::Draw_String (int x, int y, char *str)
 
 /*
 ================
-Draw_DebugChar
+CGLRenderer::Draw_DebugChar
 
 Draws a single character directly to the upper right corner of the screen.
 This is for debugging lockups by drawing different chars in different parts
@@ -808,7 +761,7 @@ void CGLRenderer::Draw_DebugChar (char num)
 
 /*
 =============
-Draw_AlphaPic
+CGLRenderer::Draw_AlphaPic
 =============
 */
 void CGLRenderer::Draw_AlphaPic (int x, int y, CQuakePic *pic, float alpha)
@@ -842,7 +795,7 @@ void CGLRenderer::Draw_AlphaPic (int x, int y, CQuakePic *pic, float alpha)
 
 /*
 =============
-Draw_Pic
+CGLRenderer::Draw_Pic
 =============
 */
 void CGLRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
@@ -869,7 +822,7 @@ void CGLRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 
 /*
 =============
-Draw_TransPic
+CGLRenderer::Draw_TransPic
 =============
 */
 void CGLRenderer::Draw_TransPic (int x, int y, CQuakePic *pic)
@@ -886,7 +839,7 @@ void CGLRenderer::Draw_TransPic (int x, int y, CQuakePic *pic)
 
 /*
 =============
-Draw_TransPicTranslate
+CGLRenderer::Draw_TransPicTranslate
 
 Only used for the player color selection menu
 =============
@@ -938,7 +891,7 @@ void CGLRenderer::Draw_TransPicTranslate (int x, int y, CQuakePic *pic, byte *tr
 
 /*
 ================
-Draw_ConsoleBackground
+CGLRenderer::Draw_ConsoleBackground
 
 ================
 */
@@ -955,7 +908,7 @@ void CGLRenderer::Draw_ConsoleBackground (int lines)
 
 /*
 =============
-Draw_TileClear
+CGLRenderer::Draw_TileClear
 
 This repeats a 64*64 tile graphic to fill the screen around a sized down
 refresh window.
@@ -984,7 +937,7 @@ void CGLRenderer::Draw_TileClear (int x, int y, int w, int h)
 
 /*
 =============
-Draw_Fill
+CGLRenderer::Draw_Fill
 
 Fills a box of pixels with a single color
 =============
@@ -1011,7 +964,7 @@ void CGLRenderer::Draw_Fill (int x, int y, int w, int h, int c)
 
 /*
 ================
-Draw_FadeScreen
+CGLRenderer::Draw_FadeScreen
 
 ================
 */
@@ -1039,7 +992,7 @@ void CGLRenderer::Draw_FadeScreen (void)
 
 /*
 ================
-Draw_BeginDisc
+CGLRenderer::Draw_BeginDisc
 
 Draws the little blue disc in the corner of the screen.
 Call before beginning any disc IO.
@@ -1057,7 +1010,7 @@ void CGLRenderer::Draw_BeginDisc (void)
 
 /*
 ================
-Draw_EndDisc
+CGLRenderer::Draw_EndDisc
 
 Erases the disc icon.
 Call after completing any disc IO
@@ -1069,7 +1022,7 @@ void CGLRenderer::Draw_EndDisc (void)
 
 /*
 ================
-GL_Set2D
+CGLRenderer::GL_Set2D
 
 Setup as if the screen was 320*200
 ================
@@ -1098,7 +1051,7 @@ void CGLRenderer::GL_Set2D (void)
 
 /*
 ================
-GL_FindTexture
+CGLRenderer::GL_FindTexture
 ================
 */
 CGLTexture* CGLRenderer::GL_FindTexture (model_t* model, const char *identifier)
@@ -1131,7 +1084,7 @@ void CGLRenderer::GL_FreeTextureForModel(model_t* mod)
 
 /*
 ================
-GL_FreeTexture
+CGLRenderer::GL_FreeTexture
 ================
 */
 void CGLRenderer::GL_FreeTexture(CGLTexture* kill)
@@ -1176,7 +1129,7 @@ void CGLRenderer::GL_FreeTexture(CGLTexture* kill)
 
 /*
 ================
-GL_DeleteTexture -- ericw
+CGLRenderer::GL_DeleteTexture -- ericw
 
 Wrapper around glDeleteTextures that also clears the given texture number
 from our per-TMU cached texture binding table.
@@ -1195,7 +1148,7 @@ void CGLRenderer::GL_DeleteTexture(CGLTexture* texture)
 
 /*
 ================
-GL_MipMapW
+CGLRenderer::GL_MipMapW
 ================
 */
 unsigned* CGLRenderer::GL_MipMapW(unsigned* data, int width, int height)
@@ -1219,7 +1172,7 @@ unsigned* CGLRenderer::GL_MipMapW(unsigned* data, int width, int height)
 
 /*
 ================
-GL_MipMapH
+CGLRenderer::GL_MipMapH
 ================
 */
 
@@ -1248,7 +1201,7 @@ unsigned* CGLRenderer::GL_MipMapH(unsigned* data, int width, int height)
 
 /*
 ================
-GL_ResampleTexture
+CGLRenderer::GL_ResampleTexture
 ================
 */
 unsigned* CGLRenderer::GL_ResampleTexture (unsigned *in, int inwidth, int inheight, bool alpha)
@@ -1306,10 +1259,10 @@ unsigned* CGLRenderer::GL_ResampleTexture (unsigned *in, int inwidth, int inheig
 
 /*
 ================
-GL_Resample8BitTexture -- JACK
+CGLRenderer::GL_Resample8BitTexture -- JACK
 ================
 */
-void CGLRenderer::GL_Resample8BitTexture (unsigned char *in, int inwidth, int inheight, unsigned char *out,  int outwidth, int outheight)
+void CGLRenderer::GL_Resample8BitTexture (byte *in, int inwidth, int inheight, byte*out,  int outwidth, int outheight)
 {
 	int		i, j;
 	unsigned	char *inrow;
@@ -1337,7 +1290,7 @@ void CGLRenderer::GL_Resample8BitTexture (unsigned char *in, int inwidth, int in
 
 /*
 ================
-GL_MipMap
+CGLRenderer::GL_MipMap
 
 Operates in place, quartering the size of the texture
 ================
@@ -1364,7 +1317,7 @@ void CGLRenderer::GL_MipMap (byte *in, int width, int height)
 
 /*
 ================
-GL_MipMap8Bit
+CGLRenderer::GL_MipMap8Bit
 
 Mipping for 8 bit textures
 ================
@@ -1425,7 +1378,7 @@ void CGLRenderer::GL_SetFilterModes(CGLTexture* glt)
 
 /*
 ===============
-GL_Upload8
+CGLRenderer::GL_Upload8
 ===============
 */
 void CGLRenderer::GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha)
@@ -1478,7 +1431,7 @@ void CGLRenderer::GL_Upload8(byte* data, int width, int height, bool mipmap, boo
 
 /*
 ===============
-GL_Upload32
+CGLRenderer::GL_Upload32
 ===============
 */
 void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned* data)
@@ -1554,7 +1507,7 @@ void CGLRenderer::GL_Upload32 (CGLTexture* tex, unsigned* data)
 
 /*
 ================
-GL_PadImageW -- return image with width padded up to power-of-two dimentions
+CGLRenderer::GL_PadImageW -- return image with width padded up to power-of-two dimentions
 ================
 */
 byte* CGLRenderer::GL_PadImageW(byte* in, int width, int height, byte padbyte)
@@ -1582,7 +1535,7 @@ byte* CGLRenderer::GL_PadImageW(byte* in, int width, int height, byte padbyte)
 
 /*
 ================
-GL_PadImageH -- return image with height padded up to power-of-two dimentions
+CGLRenderer::GL_PadImageH -- return image with height padded up to power-of-two dimentions
 ================
 */
 byte* CGLRenderer::GL_PadImageH(byte* in, int width, int height, byte padbyte)
@@ -1608,7 +1561,7 @@ byte* CGLRenderer::GL_PadImageH(byte* in, int width, int height, byte padbyte)
 
 /*
 ===============
-GL_PadEdgeFixW -- special case of AlphaEdgeFix for textures that only need it because they were padded
+CGLRenderer::GL_PadEdgeFixW -- special case of AlphaEdgeFix for textures that only need it because they were padded
 
 operates in place on 32bit data, and expects unpadded height and width values
 ===============
@@ -1646,7 +1599,7 @@ void CGLRenderer::GL_PadEdgeFixW(byte* data, int width, int height)
 
 /*
 ===============
-GL_PadEdgeFixH -- special case of AlphaEdgeFix for textures that only need it because they were padded
+CGLRenderer::GL_PadEdgeFixH -- special case of AlphaEdgeFix for textures that only need it because they were padded
 
 operates in place on 32bit data, and expects unpadded height and width values
 ===============
@@ -1686,7 +1639,7 @@ void CGLRenderer::GL_PadEdgeFixH(byte* data, int width, int height)
 
 /*
 ================
-GL_LoadImage32 -- handles 32bit source data
+CGLRenderer::GL_LoadImage32 -- handles 32bit source data
 ================
 */
 void CGLRenderer::GL_LoadImage32(CGLTexture* glt, unsigned* data)
@@ -1754,7 +1707,7 @@ void CGLRenderer::GL_LoadImage32(CGLTexture* glt, unsigned* data)
 
 /*
 ================
-GL_LoadImage8 -- handles 8bit source data, then passes it to LoadImage32
+CGLRenderer::GL_LoadImage8 -- handles 8bit source data, then passes it to LoadImage32
 ================
 */
 void CGLRenderer::GL_LoadImage8(CGLTexture* glt, byte* data)
@@ -1851,7 +1804,7 @@ void CGLRenderer::GL_LoadImage8(CGLTexture* glt, byte* data)
 
 /*
 ================
-GL_LoadLightmap -- handles lightmap data
+CGLRenderer::GL_LoadLightmap -- handles lightmap data
 ================
 */
 void CGLRenderer::GL_LoadLightmap(CGLTexture* glt, byte* data)
@@ -1866,22 +1819,15 @@ void CGLRenderer::GL_LoadLightmap(CGLTexture* glt, byte* data)
 
 /*
 ================
-GL_LoadTexture -- Missi: revised (3/18/2022)
+CGLRenderer::GL_LoadTexture -- Missi: revised (3/18/2022)
 
-Loads an OpenGL texture via string ID or byte data. Can take an empty string or NULL if you don't need a name.
+Loads an OpenGL texture via string ID or byte data. Can take an empty string if you don't need a name.
 ================
 */
 CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, int width, int height, enum srcformat_t format, byte* data, uintptr_t offset, int flags)
 {
-	int				i = 0, p = 0, s = 0, l = 0, m = 0; // -- Missi
 	CGLTexture*		glt = NULL;
-	COpenGLPic*		gl = NULL;
-	CQuakePic*		qpic = NULL;
-	byte*			out = data;
 	int				CRCBlock;
-	char			id[64] = {};
-	int				len	= 0;
-	bool			padh = false, padw = false;
 	int				mark = 0;
 
 // Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
@@ -1951,7 +1897,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, 
 
 /*
 ================
-GL_LoadPicTexture
+CGLRenderer::GL_LoadPicTexture
 ================
 */
 CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic)
@@ -1979,50 +1925,47 @@ void CGLRenderer::GL_SelectTexture (GLenum target)
 	oldtarget = target;
 }
 
-CGLTexture::CGLTexture() : height(0), 
-	width(0), 
-	mipmap(false), 
-	texnum(0), 
-	checksum(0),
-	flags(0),
-	next(NULL),
-	owner(NULL),
-	source_format(SRC_NONE),
-	source_offset(NULL),
+CGLTexture::CGLTexture() :  next(NULL),
+    owner(NULL),
+    width(0),
+    height(0),
+    mipmap(false),
 	source_width(0),
-	source_height(0)
+    source_height(0),
+    source_format(SRC_NONE),
+    source_offset((uintptr_t)0),
+    checksum(0),
+    flags(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
 
-CGLTexture::CGLTexture(CQuakePic qpic, float des_sl, float des_tl, float des_sh, float des_th) : height(0),
-	width(0),
-	mipmap(false),
-	texnum(0),
-	checksum(0),
-	flags(0),
-	next(NULL),
-	owner(NULL),
-	source_format(SRC_NONE),
-	source_offset(NULL),
-	source_width(0),
-	source_height(0)
+CGLTexture::CGLTexture(CQuakePic qpic, float des_sl, float des_tl, float des_sh, float des_th) : next(NULL),
+    owner(NULL),
+    width(0),
+    height(0),
+    mipmap(false),
+    source_width(0),
+    source_height(0),
+    source_format(SRC_NONE),
+    source_offset((uintptr_t)0),
+    checksum(0),
+    flags(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
 
-CGLTexture::CGLTexture(const CGLTexture& obj) : height(0),
-	width(0),
-	mipmap(false),
-	texnum(0),
-	checksum(0),
-	flags(0),
-	next(NULL),
-	owner(NULL),
-	source_format(SRC_NONE),
-	source_offset(NULL),
-	source_width(0),
-	source_height(0)
+CGLTexture::CGLTexture(const CGLTexture& obj) : next(NULL),
+    owner(NULL),
+    width(0),
+    height(0),
+    mipmap(false),
+    source_width(0),
+    source_height(0),
+    source_format(SRC_NONE),
+    source_offset((uintptr_t)0),
+    checksum(0),
+    flags(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }

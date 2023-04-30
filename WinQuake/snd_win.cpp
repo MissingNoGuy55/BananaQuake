@@ -47,7 +47,7 @@ CSoundSystemWin* g_SoundSystem;
 // SDL_AudioDeviceID g_SoundDeviceID;
 
 //dma_t CSoundInternal::sn = { NULL };
-volatile dma_t* CSoundInternal::shm = NULL;
+volatile dma_t* CSoundInternal::shm;
 
 static int	buffersize;
 

@@ -20,10 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_main.c
 
 #include "quakedef.h"
-#include "gl_rmain.h"
-#include "gl_rlight.h"
-#include "gl_rsurf.h"
-#include "r_part.h"
 
 entity_t	r_worldentity;
 
@@ -99,8 +95,6 @@ cvar_t	gl_nocolors = {"gl_nocolors","0"};
 cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","0"};
 cvar_t	gl_reporttjunctions = {"gl_reporttjunctions","0"};
 cvar_t	gl_doubleeyes = {"gl_doubleeys", "1"};
-
-extern	cvar_t	gl_ztrick;
 
 int skytexturenum;
 

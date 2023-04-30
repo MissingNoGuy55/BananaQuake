@@ -908,11 +908,11 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		IN_Init ();
 #endif
 
-#if (GLQUAKE) && (_WIN32)
+#if (_WIN32) && !(GLQUAKE)
 		SDL_setenv("SDL_AudioDriver", "directsound", 1);
 		g_SoundSystem = new CSoundSystemWin;
-#elif (GLQUAKE) && (__linux__)
-        SDL_setenv("SDL_AudioDriver", "directsound", 1);
+#elif (__linux__)
+        SDL_setenv("SDL_AudioDriver", "alsa", 1);
         g_SoundSystem = new CSoundSystemLinux;
 #endif
 		VID_Init (host_basepal);

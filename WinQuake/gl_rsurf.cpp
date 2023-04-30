@@ -1412,9 +1412,9 @@ with all the surfaces from all brush models
 */
 void CGLRenderer::GL_BuildLightmaps (void)
 {
-	int		i, j;
-	model_t	*m;
-	extern bool isPermedia;
+	int		i = 0, j = 0;
+	model_t	*m = NULL;
+	bool isPermedia = false;
 
 	//memset (allocated, 0, sizeof(allocated));
 

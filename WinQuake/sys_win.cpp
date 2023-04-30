@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2023 Stephen Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -61,8 +62,8 @@ static HANDLE	heventParent;
 static HANDLE	heventChild;
 #endif
 
-unsigned int ceil_cw, single_cw, full_cw, cw, pushed_cw;
-unsigned int fpenv[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+static unsigned int ceil_cw, single_cw, full_cw, cw, pushed_cw;
+static unsigned int fpenv[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 
 //void MaskExceptions (void);
@@ -526,10 +527,26 @@ void Sys_Printf (const char *fmt, ...)
 	if (isDedicated)
 	{
 		va_start (argptr,fmt);
-		q_vsnprintf_s(text, sizeof(text), 1024, fmt, argptr);
+		Q_vsnprintf_s(text, sizeof(text), 1024, fmt, argptr);
 		va_end (argptr);
 
 		WriteFile(houtput, text, strlen (text), &dummy, NULL);	
+	}
+}
+
+void Sys_Warning(const char* fmt, ...)
+{
+	va_list		argptr;
+	char		text[1024];
+	DWORD		dummy;
+
+	if (isDedicated)
+	{
+		va_start(argptr, fmt);
+		Q_vsnprintf_s(text, sizeof(text), 1024, fmt, argptr);
+		va_end(argptr);
+
+		WriteFile(houtput, text, strlen(text), &dummy, NULL);
 	}
 }
 
@@ -652,6 +669,7 @@ double Sys_FloatTime (void)
     return curtime;
 }
 */
+
 double Sys_DoubleTime()
 {
 	return SDL_GetTicks() / 1000.0f;

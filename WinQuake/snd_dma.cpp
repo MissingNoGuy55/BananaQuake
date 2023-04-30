@@ -92,10 +92,14 @@ void CSoundDMA::S_AmbientOn (void)
 	snd_ambient = true;
 }
 
-
 void CSoundInternal::S_SoundInfo_f(void)
 {
-	if (!sound_started || !shm)
+	g_SoundSystem->S_SoundInfo();
+}
+
+void CSoundInternal::S_SoundInfo()
+{
+    if (!sound_started || !shm)
 	{
 		Con_Printf ("sound system not started\n");
 		return;
@@ -111,7 +115,6 @@ void CSoundInternal::S_SoundInfo_f(void)
 	Con_Printf("%5d total_channels\n", total_channels);
 }
 
-
 /*
 ================
 S_Startup
@@ -122,13 +125,11 @@ void CSoundDMA::S_Startup (void)
 {
 	if (!snd_initialized)
 		return;
-
-#ifdef __linux__
-    sound_started = g_SoundSystem->SNDDMA_Init();
-#else
-	sound_started = g_SoundSystem->SNDDMA_Init(&sn);
+#ifdef _WIN32
+        sound_started = g_SoundSystem->SNDDMA_Init(&sn);
+#elif __linux__
+        sound_started = g_SoundSystem->SNDDMA_Init();
 #endif
-    
 	if (!sound_started)
 	{
 		Con_Printf("Failed initializing sound\n");
@@ -994,8 +995,6 @@ CSoundInternal::CSoundInternal() : snd_blocked(0),
 
 	for (int i = 0; i < MAX_SFX; i++)
 		known_sfx[i] = (sfx_t*)calloc(1, sizeof(sfx_t));
-	
-	shm = NULL;
 
 	memset(&listener_origin, 0, sizeof(vec3_t));
 	memset(&listener_forward, 0, sizeof(vec3_t));
@@ -1022,7 +1021,7 @@ void CSoundInternal::S_Play(void)
 		}
 		else
 			Q_strcpy(name, Cmd_Argv(i));
-		sfx = S_PrecacheSound(name);
+		sfx = g_SoundSystem->S_PrecacheSound(name);
 		g_SoundSystem->S_StartSound(hash++, 0, sfx, listener_origin, 1.0, 1.0);
 		i++;
 	}

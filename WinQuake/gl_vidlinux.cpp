@@ -56,7 +56,7 @@ static fxMesaContext fc = NULL;
 #define stringify(m) { #m, m }
 
 unsigned short	d_8to16table[256];
-unsigned	d_8to24table[256];
+unsigned int	d_8to24table[256];
 unsigned char d_15to8table[65536];
 
 int num_shades=32;
@@ -360,7 +360,7 @@ GL_BeginRendering
 
 =================
 */
-void GL_BeginRendering (int *x, int *y, int *width, int *height)
+void CGLRenderer::GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
 	extern cvar_t gl_clear;
 
@@ -375,7 +375,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 }
 
 
-void GL_EndRendering (void)
+void CGLRenderer::GL_EndRendering (void)
 {
 	glFlush();
 	fxMesaSwapBuffers();

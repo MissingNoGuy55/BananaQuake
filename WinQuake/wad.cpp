@@ -71,7 +71,7 @@ void W_LoadWadFile (const char *filename)
 	unsigned		i;
 	int				infotableofs;
 	
-	wad_base = COM_LoadHunkFile<byte> (filename, NULL);
+        wad_base = COM_LoadHunkFile<byte> (filename, NULL);
 	if (!wad_base)
 		Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
 

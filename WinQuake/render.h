@@ -22,21 +22,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define	MAXCLIPPLANES	11
 
+/*
 #define	TOP_RANGE		16			// soldier uniform colors
 #define	BOTTOM_RANGE	96
+*/
+
+constexpr short TOP_RANGE = 16;
+constexpr short BOTTOM_RANGE = 96;
 
 /*
 #define	BLOCK_WIDTH		256
 #define	BLOCK_HEIGHT	256
 */
 
-constexpr long BLOCK_WIDTH = 256;
-constexpr long BLOCK_HEIGHT = 256;
+constexpr short BLOCK_WIDTH = 256;
+constexpr short BLOCK_HEIGHT = 256;
 
-constexpr long LMBLOCK_WIDTH = 256;
-constexpr long LMBLOCK_HEIGHT = 256;
+constexpr short LMBLOCK_WIDTH = 256;
+constexpr short LMBLOCK_HEIGHT = 256;
 
-#define	MAX_LIGHTMAPS	64
+constexpr short MAX_LIGHTMAPS = 64;
 
 //=============================================================================
 

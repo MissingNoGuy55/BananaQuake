@@ -67,6 +67,8 @@ void Sys_Error (const char *error, ...);
 void Sys_Printf (const char *fmt, ...);
 // send text to the console
 
+void Sys_Warning(const char* fmt, ...);
+
 void Sys_Quit (void);
 
 double Sys_FloatTime (void);

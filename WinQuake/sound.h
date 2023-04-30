@@ -116,16 +116,17 @@ public:
 	static void S_PlayVol(void);
 	static void S_SoundList(void);
 	static void S_StopAllSoundsC(void);
-	virtual void S_Update_();
+	void S_Update_();
 	static void S_StopAllSounds(bool clear);
 	static void S_SoundInfo_f(void);
+    void S_SoundInfo();
 
-	static sfx_t* S_PrecacheSound(const char* sample);
-	static sfx_t* S_FindName(const char* name);
-	static sfxcache_t* S_LoadSound(sfx_t* s);
+	sfx_t* S_PrecacheSound(const char* sample);
+	sfx_t* S_FindName(const char* name);
+	sfxcache_t* S_LoadSound(sfx_t* s);
 
 	static wavinfo_t GetWavinfo(char* name, byte* wav, int wavlength);
-	static void ResampleSfx(sfx_t* sfx, int inrate, int inwidth, byte* data);
+	void ResampleSfx(sfx_t* sfx, int inrate, int inwidth, byte* data);
 
 	// pointer should go away
     static volatile dma_t* shm;
@@ -320,6 +321,72 @@ public:
 };
 #endif
 
+#ifdef __APPLE__
+class CSoundSystemMac : public CSoundDMA
+{
+public:
+
+	typedef void (*snd_callback)(void);
+
+	CSoundSystemMac() {};
+
+	// Global crap
+
+	unsigned long		gSndBufSize = 0;
+
+	void SND_PaintChannelFrom8(channel_t* ch, sfxcache_t* sc, int endtime, int paintbufferstart);
+	void SND_PaintChannelFrom16(channel_t* ch, sfxcache_t* sc, int endtime, int paintbufferstart);
+
+	// picks a channel based on priorities, empty slots, number of channels
+	channel_t* SND_PickChannel(int entnum, int entchannel);
+
+	// spatializes a channel
+	void SND_Spatialize(channel_t* ch);
+
+	// initializes cycling through a DMA buffer and returns information on it
+	bool SNDDMA_Init(dma_t* dma);
+
+	// gets the current DMA position
+	int SNDDMA_GetDMAPos(void);
+
+	// shutdown the DMA xfer.
+	void SNDDMA_Shutdown(void);
+
+	//void S_LocalSound(const char* s);
+	void ResampleSfx(sfx_t* sfx, int inrate, int inwidth, byte* data);
+	sfxcache_t* S_LoadSound(sfx_t* s);
+
+	//wavinfo_t GetWavinfo(char* name, byte* wav, int wavlength);
+
+	void SND_InitScaletable(void);
+	void SNDDMA_Submit(void);
+
+#ifdef QUAKE_GAME
+	static void paint_audio(void* unused, Uint8* stream, int len);
+#else
+	static void paint_audio(void* unused, byte* stream, int len);
+#endif
+	void S_AmbientOff(void);
+	void S_AmbientOn(void);
+
+	/*void SNDDMA_LockBuffer(void);
+	void SNDDMA_UnlockBuffer(void);*/
+
+	void S_BlockSound(void);
+	void S_UnblockSound(void);
+
+	void S_CheckMDMAMusic();
+
+	/*
+	*  Global variables. Must be visible to window-procedure function
+	*  so it can unlock and free the data block after it has been played.
+	*/
+
+// void GetCaps(void) { this->GetCaps(); };
+
+};
+#endif
+
 #ifdef __linux__
 class CSoundSystemLinux : public CSoundDMA
 {
@@ -331,7 +398,7 @@ public:
 
 	// Global crap
 
-	bool SNDDMA_Init(void);
+	bool SNDDMA_Init(dma_t* dma);
     int SNDDMA_GetDMAPos(void);
     void SNDDMA_Shutdown(void);
     void SNDDMA_Submit(void);
@@ -368,7 +435,7 @@ extern vec3_t		listener_right;
 extern vec3_t		listener_up;
 //extern volatile dma_t *shm;
 //extern volatile dma_t sn;
-extern vec_t sound_nominal_clip_dist;
+extern vec_t		sound_nominal_clip_dist;
 
 extern	cvar_t	loadas8bit;
 extern	cvar_t	bgmvolume;
@@ -388,7 +455,10 @@ extern int		snd_blocked;
 extern CSoundSystemWin* g_SoundSystem;
 #elif __linux__
 extern CSoundSystemLinux* g_SoundSystem;
+#elif __APPLE__
+extern CSoundSystemMac* g_SoundSystem;
 #endif
+
 extern SDL_AudioDeviceID g_SoundDeviceID;
 
 #endif

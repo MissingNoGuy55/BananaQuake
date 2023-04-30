@@ -53,7 +53,6 @@ public:
 
 	CQuakePic();
 	CQuakePic(byte& mem);
-	CQuakePic(const CQuakePic& src);
 
 	/*CQuakePic& operator=(void* src);
 	CQuakePic& operator=(const void* src);*/
@@ -66,6 +65,10 @@ public:
 								// See the comment in CGLRenderer::Draw_PicFromWad (12/8/2022)
 	CQVector<byte>	datavec;
 
+private:
+
+	CQuakePic(const CQuakePic& src);
+
 };
 
 typedef struct qpicbuf_s
@@ -74,11 +77,6 @@ typedef struct qpicbuf_s
 	int		height;
 	byte	data[1];
 } qpicbuf_t;
-
-struct CQuakePicVector
-{
-	CQVector<byte>	data;
-};
 
 typedef struct
 {

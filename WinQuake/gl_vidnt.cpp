@@ -115,7 +115,7 @@ HWND WINAPI InitializeWindow (HINSTANCE hInstance, int nCmdShow);
 viddef_t	vid;				// global video state
 
 unsigned short	d_8to16table[256];
-unsigned	d_8to24table[256];
+unsigned int	d_8to24table[256];
 unsigned char d_15to8table[65536];
 
 float		gldepthmin, gldepthmax;
@@ -707,11 +707,11 @@ void GL_Init (void)
 
 /*
 =================
-GL_BeginRendering
+CGLRenderer::GL_BeginRendering
 
 =================
 */
-void GL_BeginRendering (int *x, int *y, int *width, int *height)
+void CGLRenderer::GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
 	extern cvar_t gl_clear;
 
@@ -726,7 +726,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 }
 
 
-void GL_EndRendering (void)
+void CGLRenderer::GL_EndRendering (void)
 {
 	if (!scr_skipupdate || block_drawing)
 		SwapBuffers(maindc);
@@ -891,7 +891,7 @@ void VID_SetDefaultMode (void)
 }
 
 
-void	VID_Shutdown (void)
+void VID_Shutdown (void)
 {
    	HGLRC hRC;
    	HDC	  hDC;
@@ -931,23 +931,23 @@ BOOL bSetupPixelFormat(HDC hDC)
 {
     static PIXELFORMATDESCRIPTOR pfd = {
 	sizeof(PIXELFORMATDESCRIPTOR),	// size of this pfd
-	1,				// version number
-	PFD_DRAW_TO_WINDOW 		// support window
-	|  PFD_SUPPORT_OPENGL 	// support OpenGL
-	|  PFD_DOUBLEBUFFER ,	// double buffered
-	PFD_TYPE_RGBA,			// RGBA type
-	24,				// 24-bit color depth
-	0, 0, 0, 0, 0, 0,		// color bits ignored
-	0,				// no alpha buffer
-	0,				// shift bit ignored
-	0,				// no accumulation buffer
-	0, 0, 0, 0, 			// accum bits ignored
-	32,				// 32-bit z-buffer	
-	0,				// no stencil buffer
-	0,				// no auxiliary buffer
-	PFD_MAIN_PLANE,			// main layer
-	0,				// reserved
-	0, 0, 0				// layer masks ignored
+	1,								// version number
+	PFD_DRAW_TO_WINDOW 				// support window
+	|  PFD_SUPPORT_OPENGL 			// support OpenGL
+	|  PFD_DOUBLEBUFFER ,			// double buffered
+	PFD_TYPE_RGBA,					// RGBA type
+	24,								// 24-bit color depth
+	0, 0, 0, 0, 0, 0,				// color bits ignored
+	0,								// no alpha buffer
+	0,								// shift bit ignored
+	0,								// no accumulation buffer
+	0, 0, 0, 0, 					// accum bits ignored
+	32,								// 32-bit z-buffer	
+	0,								// no stencil buffer
+	0,								// no auxiliary buffer
+	PFD_MAIN_PLANE,					// main layer
+	0,								// reserved
+	0, 0, 0							// layer masks ignored
     };
     int pixelformat;
 
@@ -1127,7 +1127,6 @@ void AppActivate(BOOL fActive, BOOL minimize)
 	}
 }
 
-
 /* main window procedure */
 LONG WINAPI MainWndProc (
     HWND    hWnd,
@@ -1254,7 +1253,6 @@ LONG WINAPI MainWndProc (
     return lRet;
 }
 
-
 /*
 =================
 VID_NumModes
@@ -1264,7 +1262,6 @@ int VID_NumModes (void)
 {
 	return nummodes;
 }
-
 	
 /*
 =================
@@ -1279,7 +1276,6 @@ vmode_t *VID_GetModePtr (int modenum)
 	else
 		return &badmode;
 }
-
 
 /*
 =================
@@ -1310,7 +1306,6 @@ char *VID_GetModeDescription (int mode)
 
 	return pinfo;
 }
-
 
 // KJB: Added this to return the mode driver name in description for console
 
@@ -1347,7 +1342,6 @@ char *VID_GetExtModeDescription (int mode)
 	return pinfo;
 }
 
-
 /*
 =================
 VID_DescribeCurrentMode_f
@@ -1357,7 +1351,6 @@ void VID_DescribeCurrentMode_f (void)
 {
 	Con_Printf ("%s\n", VID_GetExtModeDescription (vid_modenum));
 }
-
 
 /*
 =================
@@ -1372,7 +1365,6 @@ void VID_NumModes_f (void)
 	else
 		Con_Printf ("%d video modes are available\n", nummodes);
 }
-
 
 /*
 =================
@@ -1392,7 +1384,6 @@ void VID_DescribeMode_f (void)
 
 	leavecurrentmode = t;
 }
-
 
 /*
 =================
@@ -1419,7 +1410,6 @@ void VID_DescribeModes_f (void)
 
 	leavecurrentmode = t;
 }
-
 
 void VID_InitDIB (HINSTANCE hInstance)
 {
@@ -1475,7 +1465,6 @@ void VID_InitDIB (HINSTANCE hInstance)
 
 	nummodes = 1;
 }
-
 
 /*
 =================
@@ -1626,8 +1615,6 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 bool VID_Is8bit() {
 	return is8bit;
 }
-
-#define GL_SHARED_TEXTURE_PALETTE_EXT 0x81FB
 
 void VID_Init8bitPalette() 
 {
@@ -1789,7 +1776,7 @@ void	VID_Init (unsigned char *palette)
 				else if (g_Common->COM_CheckParm("-h"))
 					height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-h") + 1]);
 
-			// if they want to force it, add the specified mode to the list
+				// if they want to force it, add the specified mode to the list
 				if (g_Common->COM_CheckParm("-force") && (nummodes < MAX_MODE_LIST))
 				{
 					modelist[nummodes].type = MS_FULLDIB;

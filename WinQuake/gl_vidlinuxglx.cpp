@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 
-#include <X11/extensions/xf86dga.h>
+#include <X11/extensions/Xxf86dga.h>    // Missi (4/30/2023)
 #include <X11/extensions/xf86vmode.h>
 
 #define WARP_WIDTH              320
@@ -52,13 +52,13 @@ static GLXContext ctx = NULL;
 
 
 unsigned short	d_8to16table[256];
-unsigned		d_8to24table[256];
+unsigned int	d_8to24table[256];
 unsigned char	d_15to8table[65536];
 
 cvar_t	vid_mode = {"vid_mode","0",false};
  
-static qboolean        mouse_avail;
-static qboolean        mouse_active;
+static bool        mouse_avail;
+static bool        mouse_active;
 static int   mx, my;
 static int	old_mouse_x, old_mouse_y;
 
@@ -66,8 +66,8 @@ static cvar_t in_mouse = {"in_mouse", "1", false};
 static cvar_t in_dgamouse = {"in_dgamouse", "1", false};
 static cvar_t m_filter = {"m_filter", "0"};
 
-qboolean dgamouse = false;
-qboolean vidmode_ext = false;
+bool dgamouse = false;
+bool vidmode_ext = false;
 
 static int win_x, win_y;
 
@@ -76,7 +76,7 @@ static int scr_width, scr_height;
 static XF86VidModeModeInfo **vidmodes;
 static int default_dotclock_vidmode;
 static int num_vidmodes;
-static qboolean vidmode_active = false;
+static bool vidmode_active = false;
 
 /*-----------------------------------------------------------------------*/
 
@@ -103,9 +103,9 @@ void (*qgl3DfxSetPaletteEXT) (GLuint *);
 
 static float vid_gamma = 1.0;
 
-qboolean is8bit = false;
-qboolean isPermedia = false;
-qboolean gl_mtexable = false;
+bool is8bit = false;
+bool isPermedia = false;
+bool gl_mtexable = false;
 
 /*-----------------------------------------------------------------------*/
 void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height)
@@ -285,7 +285,7 @@ static void install_grabs(void)
 	if (in_dgamouse.value) {
 		int MajorVersion, MinorVersion;
 
-		if (!XF86DGAQueryVersion(dpy, &MajorVersion, &MinorVersion)) { 
+        if (!XF86DGAQueryVersion(dpy, &MajorVersion, &MinorVersion)) {
 			// unable to query, probalby not supported
 			Con_Printf( "Failed to detect XF86DGA Mouse\n" );
 			in_dgamouse.value = 0;
@@ -334,7 +334,7 @@ static void HandleEvents(void)
 	XEvent event;
 	KeySym ks;
 	int b;
-	qboolean dowarp = false;
+	bool dowarp = false;
 	int mwx = vid.width/2;
 	int mwy = vid.height/2;
 
@@ -543,7 +543,7 @@ void CheckMultiTextureExtensions(void)
 {
 	void *prjobj;
 
-	if (strstr(gl_extensions, "GL_SGIS_multitexture ") && !COM_CheckParm("-nomtex")) {
+	if (strstr(gl_extensions, "GL_SGIS_multitexture ") && !g_Common->COM_CheckParm("-nomtex")) {
 		Con_Printf("Found GL_SGIS_multitexture...\n");
 
 		if ((prjobj = dlopen(NULL, RTLD_LAZY)) == NULL) {
@@ -551,8 +551,8 @@ void CheckMultiTextureExtensions(void)
 			return;
 		}
 
-		qglMTexCoord2fSGIS = (void *) dlsym(prjobj, "glMTexCoord2fSGIS");
-		qglSelectTextureSGIS = (void *) dlsym(prjobj, "glSelectTextureSGIS");
+		qglMTexCoord2fSGIS = (lpMTexFUNC) dlsym(prjobj, "glMTexCoord2fSGIS");
+		qglSelectTextureSGIS = (lpSelTexFUNC) dlsym(prjobj, "glSelectTextureSGIS");
 
 		if (qglMTexCoord2fSGIS && qglSelectTextureSGIS) {
 			Con_Printf("Multitexture extensions found.\n");
@@ -564,6 +564,27 @@ void CheckMultiTextureExtensions(void)
 	}
 }
 
+static const char* GL_MakeNiceExtensionsList()
+{
+    const char* list = (const char*)glGetString (GL_EXTENSIONS);
+    static char silly[65535];
+    int i = 0;
+    
+    do
+    {
+        if (*list == ' ')
+            silly[i] = '\n';
+        
+        silly[i] = *list++;
+        i++;
+    }
+    while (*list);
+        
+    char* real_list = silly;
+    
+    return real_list;
+}
+
 /*
 ===============
 GL_Init
@@ -571,14 +592,16 @@ GL_Init
 */
 void GL_Init (void)
 {
-	gl_vendor = glGetString (GL_VENDOR);
+	gl_vendor = (const char*)glGetString (GL_VENDOR);
 	Con_Printf ("GL_VENDOR: %s\n", gl_vendor);
-	gl_renderer = glGetString (GL_RENDERER);
+	gl_renderer = (const char*)glGetString (GL_RENDERER);
 	Con_Printf ("GL_RENDERER: %s\n", gl_renderer);
 
-	gl_version = glGetString (GL_VERSION);
+	gl_version = (const char*)glGetString (GL_VERSION);
 	Con_Printf ("GL_VERSION: %s\n", gl_version);
-	gl_extensions = glGetString (GL_EXTENSIONS);
+    
+    gl_extensions = GL_MakeNiceExtensionsList();
+    
 	Con_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
 
 //	Con_Printf ("%s %s\n", gl_renderer, gl_version);
@@ -612,7 +635,7 @@ GL_BeginRendering
 
 =================
 */
-void GL_BeginRendering (int *x, int *y, int *width, int *height)
+void CGLRenderer::GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
 	extern cvar_t gl_clear;
 
@@ -627,30 +650,50 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 }
 
 
-void GL_EndRendering (void)
+void CGLRenderer::GL_EndRendering (void)
 {
 	glFlush();
 	glXSwapBuffers(dpy, win);
 }
 
-qboolean VID_Is8bit(void)
+bool VID_Is8bit(void)
 {
 	return is8bit;
 }
+
+struct export_vtable {
+   void (*helloworld)(GLuint*);
+};
+
+struct export_vtable2 {
+   void (*helloworld)(int, int, int, int, int, const void*);
+};
 
 void VID_Init8bitPalette(void) 
 {
 	// Check for 8bit Extensions and initialize them.
 	int i;
 	void *prjobj;
-
+    
+    export_vtable* vtable1 = NULL;
+    export_vtable2* vtable2 = NULL;
+    
 	if ((prjobj = dlopen(NULL, RTLD_LAZY)) == NULL) {
 		Con_Printf("Unable to open symbol list for main program.\n");
 		return;
 	}
 
-	if (strstr(gl_extensions, "3DFX_set_global_palette") &&
-		(qgl3DfxSetPaletteEXT = dlsym(prjobj, "gl3DfxSetPaletteEXT")) != NULL) {
+	vtable1 = (export_vtable*)dlsym(prjobj, "glColorTableEXT");
+	
+    if (vtable1)
+        qgl3DfxSetPaletteEXT = vtable1->helloworld;
+    
+    vtable2 = (export_vtable2*)dlsym(prjobj, "glSetPaletteEXT");
+	
+    if (vtable2)
+        qglColorTableEXT = vtable2->helloworld;
+    
+	/* if (strstr(gl_extensions, "3DFX_set_global_palette") && qgl3DfxSetPaletteEXT) {
 		GLubyte table[256][4];
 		char *oldpal;
 
@@ -667,8 +710,8 @@ void VID_Init8bitPalette(void)
 		qgl3DfxSetPaletteEXT((GLuint *)table);
 		is8bit = true;
 
-	} else if (strstr(gl_extensions, "GL_EXT_shared_texture_palette") &&
-		(qglColorTableEXT = dlsym(prjobj, "glColorTableEXT")) != NULL) {
+	} else */ if (strstr(gl_extensions, "GL_EXT_shared_texture_palette") &&
+		qglColorTableEXT) {
 		char thePalette[256*3];
 		char *oldPalette, *newPalette;
 
@@ -695,14 +738,14 @@ static void Check_Gamma (unsigned char *pal)
 	unsigned char	palette[768];
 	int		i;
 
-	if ((i = COM_CheckParm("-gamma")) == 0) {
+	if ((i = g_Common->COM_CheckParm("-gamma")) == 0) {
 		if ((gl_renderer && strstr(gl_renderer, "Voodoo")) ||
 			(gl_vendor && strstr(gl_vendor, "3Dfx")))
 			vid_gamma = 1;
 		else
 			vid_gamma = 0.7; // default to 0.7 on non-3dfx hardware
 	} else
-		vid_gamma = Q_atof(com_argv[i+1]);
+		vid_gamma = Q_atof(g_Common->com_argv[i+1]);
 
 	for (i=0 ; i<768 ; i++)
 	{
@@ -736,7 +779,7 @@ void VID_Init(unsigned char *palette)
 	unsigned long mask;
 	Window root;
 	XVisualInfo *visinfo;
-	qboolean fullscreen = true;
+	bool fullscreen = true;
 	int MajorVersion, MinorVersion;
 	int actualWidth, actualHeight;
 
@@ -748,23 +791,29 @@ void VID_Init(unsigned char *palette)
 	
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
-	vid.colormap = host_colormap;
+	vid.colormap = host->host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 
 // interpret command-line params
 
 // set vid parameters
-	if ((i = COM_CheckParm("-window")) != 0)
+	if ((i = g_Common->COM_CheckParm("-window")) != 0)
+		fullscreen = false;
+	if ((i = g_Common->COM_CheckParm("-sw")) != 0)
 		fullscreen = false;
 
-	if ((i = COM_CheckParm("-width")) != 0)
-		width = atoi(com_argv[i+1]);
+	if ((i = g_Common->COM_CheckParm("-width")) != 0)
+		width = atoi(g_Common->com_argv[i+1]);
+	else if (g_Common->COM_CheckParm("-w"))
+		height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-h") + 1]);
 
-	if ((i = COM_CheckParm("-height")) != 0)
-		height = atoi(com_argv[i+1]);
+	if ((i = g_Common->COM_CheckParm("-height")) != 0)
+		height = atoi(g_Common->com_argv[i+1]);
+	else if (g_Common->COM_CheckParm("-h"))
+		height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-h") + 1]);
 
-	if ((i = COM_CheckParm("-conwidth")) != 0)
-		vid.conwidth = Q_atoi(com_argv[i+1]);
+	if ((i = g_Common->COM_CheckParm("-conwidth")) != 0)
+		vid.conwidth = Q_atoi(g_Common->com_argv[i+1]);
 	else
 		vid.conwidth = 640;
 
@@ -776,8 +825,8 @@ void VID_Init(unsigned char *palette)
 	// pick a conheight that matches with correct aspect
 	vid.conheight = vid.conwidth*3 / 4;
 
-	if ((i = COM_CheckParm("-conheight")) != 0)
-		vid.conheight = Q_atoi(com_argv[i+1]);
+	if ((i = g_Common->COM_CheckParm("-conheight")) != 0)
+		vid.conheight = Q_atoi(g_Common->com_argv[i+1]);
 	if (vid.conheight < 200)
 		vid.conheight = 200;
 
@@ -894,13 +943,13 @@ void VID_Init(unsigned char *palette)
 
 	GL_Init();
 
-	sprintf (gldir, "%s/glquake", com_gamedir);
+	sprintf (gldir, "%s/glquake", g_Common->com_gamedir);
 	Sys_mkdir (gldir);
 
 	VID_SetPalette(palette);
 
 	// Check for 3DFX Extensions and initialize them.
-	VID_Init8bitPalette();
+	// VID_Init8bitPalette();
 
 	Con_SafePrintf ("Video mode %dx%d initialized.\n", width, height);
 

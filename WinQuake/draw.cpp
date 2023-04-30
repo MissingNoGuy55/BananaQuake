@@ -43,8 +43,8 @@ typedef struct cachepic_s
 } cachepic_t;
 
 #define	MAX_CACHED_PICS		128
-cachepic_t	menu_cachepics[MAX_CACHED_PICS];
-int			menu_numcachepics;
+static cachepic_t	menu_cachepics[MAX_CACHED_PICS];
+static int			menu_numcachepics;
 
 
 CQuakePic* CSoftwareRenderer::Draw_PicFromWad (const char *name)
@@ -87,14 +87,14 @@ CQuakePic* CSoftwareRenderer::Draw_CachePic (const char *path)
 
 	buf = g_MemCache->Cache_Check<qpicbuf_t>(&pic->cache);
 
-	if (buf)
+        if (buf)
 	{
-		dat->width = buf->width;
-		dat->height = buf->height;
-		dat->datavec.RemoveAll();
-		dat->datavec.AddMultipleToTail(buf->width*buf->height*4, (byte*)buf->data);
-		return dat;
-	}
+            dat->width = buf->width;
+            dat->height = buf->height;
+            dat->datavec.RemoveAll();
+            dat->datavec.AddMultipleToTail(buf->width*buf->height*4, (byte*)buf->data);
+            return dat;
+        }
 
 //
 // load the pic from disk
@@ -250,7 +250,7 @@ void CSoftwareRenderer::Draw_Character (int x, int y, int num)
 Draw_String
 ================
 */
-void CSoftwareRenderer::Draw_String (int x, int y, char *str)
+void CSoftwareRenderer::Draw_String (int x, int y, const char *str)
 {
 	while (*str)
 	{
@@ -564,24 +564,26 @@ void CSoftwareRenderer::Draw_ConsoleBackground (int lines)
 	byte			*src, *dest;
 	unsigned short	*pusdest;
 	int				f, fstep;
-	CQuakePic			*conback;
+        CQuakePic			*conback = NULL;
 	char			ver[100];
+
+        memset(ver, 0, sizeof(ver));
 
 	conback = Draw_CachePic ("gfx/conback.lmp");
 
 // hack the version number directly into the pic
 #ifdef _WIN32
-	sprintf (ver, "(WinQuake) %4.2f", (float)VERSION);
-	dest = conback->datavec.Base() + 320*186 + 320 - 11 - 8*strlen(ver);
+    snprintf (ver, sizeof(ver), "(WinQuake) %4.2f", (float)VERSION);
+    dest = conback->datavec.Base() + 320*186 + 320 - 11 - 8*strlen(ver);
 #elif defined(X11)
-	sprintf (ver, "(X11 Quake %2.2f) %4.2f", (float)X11_VERSION, (float)VERSION);
+    snprintf (ver, sizeof(ver), "(X11 Quake %2.2f) %4.2f", (float)X11_VERSION, (float)VERSION);
     dest = conback->datavec.Base() + 320*186 + 320 - 11 - 8*strlen(ver);
 #elif defined(__linux__)
-	sprintf (ver, "(Linux Quake %2.2f) %4.2f", (float)LINUX_VERSION, (float)VERSION);
+    snprintf (ver, sizeof(ver), "(Linux Quake %2.2f) %4.2f", (float)LINUX_VERSION, (float)VERSION);
     dest = conback->datavec.Base() + 320*186 + 320 - 11 - 8*strlen(ver);
 #else
     dest = conback->datavec.Base() + 320 - 43 + 320*186;
-	sprintf (ver, "%4.2f", VERSION);
+    snprintf (ver, sizeof(ver), "%4.2f", VERSION);
 #endif
 
 	for (x=0 ; x<strlen(ver) ; x++)

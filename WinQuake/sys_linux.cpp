@@ -91,7 +91,7 @@ void Sys_Printf (const char *fmt, ...)
 	unsigned char		*p;
 
 	va_start (argptr,fmt);
-	vsprintf (text,fmt,argptr);
+	vsnprintf(text, sizeof(text), fmt, argptr);
 	va_end (argptr);
 
 	if (strlen(text) > sizeof(text))
@@ -106,6 +106,19 @@ void Sys_Printf (const char *fmt, ...)
 			printf("[%02x]", *p);
 		else
 			putc(*p, stdout);
+	}
+}
+
+void Sys_Warning(const char* fmt, ...)
+{
+	va_list		argptr;
+	char		text[1024];
+
+	if (isDedicated)
+	{
+		va_start(argptr, fmt);
+		Q_vsnprintf_s(text, sizeof(text), 1024, fmt, argptr);
+		va_end(argptr);
 	}
 }
 
@@ -132,8 +145,8 @@ void Sys_Quit (void)
 
 void Sys_Init(void)
 {
-#if id386
-	Sys_SetFPCW();
+#if id386 && !(__linux__)
+    Sys_SetFPCW();
 #endif
 }
 
@@ -141,6 +154,7 @@ void Sys_Error (const char *error, ...)
 { 
     va_list     argptr;
     char        string[1024];
+    memset(string, 0, sizeof(string));
 
 // change stdin to non blocking
     fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~FNDELAY);
@@ -372,6 +386,8 @@ int main (int c, char **v)
 	parms.argc = g_Common->com_argc;
 	parms.argv = g_Common->com_argv;
 
+    g_Common = new CCommon;
+    g_FileSystem = new CFileSystem;
     host = new CQuakeHost;
 
 #ifdef GLQUAKE
@@ -383,7 +399,7 @@ int main (int c, char **v)
 	j = g_Common->COM_CheckParm("-mem");
 	if (j)
 		parms.memsize = (int) (Q_atof(g_Common->com_argv[j+1]) * 1024 * 1024);
-	parms.membase = (byte*)malloc (parms.memsize);
+    parms.membase = (byte*)malloc (parms.memsize);
 
 	parms.basedir = basedir;
 // caching is disabled by default, use -cachedir to enable

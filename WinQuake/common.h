@@ -26,6 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sys.h"
 #endif
 
+#ifdef __linux__
+#define _strdup strdup
+#endif
+
 #if !defined BYTE_DEFINED
 typedef unsigned char byte;
 #define BYTE_DEFINED 1
@@ -170,7 +174,7 @@ int Q_strncasecmp (const char *s1, const char *s2, size_t n);
 int	Q_atoi (const char *str);
 float Q_atof (const char *str);
 int q_vsnprintf(char* str, size_t size, const char* format, va_list args);
-int q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
+int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
 
 //============================================================================
 
@@ -235,14 +239,16 @@ public:
 
 	void COM_AddExtension(char* path, const char* extension, size_t len);	// Missi: copied from QuakeSpasm (1/10/2023)
 
-	char* COM_SkipPath (char *pathname);
+	char* COM_SkipPath (const char *pathname);
 	void COM_StripExtension (const char *in, char *out);
 	void COM_FileBase(const char* in, char* out, size_t outsize);
 	void COM_DefaultExtension (char *path, const char *extension);
 	const char* COM_FileGetExtension(const char* in);
 	bool COM_FileExists(const char* filename, uintptr_t* path_id);
-
+	static void COM_CopyFile(const char* netpath, char* cachepath);
 	void COM_WriteFile (const char *filename, void *data, int len);
+
+	static void COM_CreatePath(const char* path);
 	int COM_OpenFile (const char *filename, int *handle, uintptr_t* path_id);
 	static int COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id);
 	void COM_CloseFile (int h);
@@ -258,13 +264,15 @@ public:
 
 	static void COM_Path_f(void);
 
+	// Missi: buffer-safe varargs (4/30/2023)
 	const char	*va(const char *format, ...);
-	char* va_unsafe(char* format, ...);
+
 	// does a varargs printf into a temp buffer
+	// Missi: made into va_unsafe from va for backwards compatibility (4/30/2023)
+	char* va_unsafe(char* format, ...);
 
-	static	char		com_token[1024];
+    static	char	com_token[1024];
 	static	bool	com_eof;
-
 
 	static	int		com_argc;
 	static	char	**com_argv;
@@ -278,8 +286,8 @@ public:
 
 extern CCommon* g_Common;
 
-#define	FS_ENT_NONE		(0)
-#define	FS_ENT_FILE		(1 << 0)
+#define	FS_ENT_NONE			(0)
+#define	FS_ENT_FILE			(1 << 0)
 #define	FS_ENT_DIRECTORY	(1 << 1)
 
 // Missi: Repurposed QuakeSpasm filesystem stuff (1/1/2023)
@@ -344,10 +352,10 @@ Allways appends a 0 byte.
 #include "zone.h"
 
 template<typename T>
-T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id);
+inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id);
 
 template<typename T>
-T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
+inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 {
 	int	 h;
 	T* buf;

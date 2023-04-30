@@ -647,7 +647,7 @@ void	Cmd_ExecuteString (const char *text, cmd_source_t src)
 	
 // check cvars
 	if (!Cvar_Command ())
-		Con_Printf ("Unknown command \"%s\"\n", Cmd_Argv(0));
+		Con_Warning ("Unknown command \"%s\"\n", Cmd_Argv(0));
 	
 }
 

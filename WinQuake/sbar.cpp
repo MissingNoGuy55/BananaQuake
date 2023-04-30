@@ -64,6 +64,10 @@ void Sbar_MiniDeathmatchOverlay (void);
 void Sbar_DeathmatchOverlay (void);
 void M_DrawPic (int x, int y, CQuakePic *pic);
 
+#ifdef __GNUC__
+viddef_t vid;
+#endif
+
 /*
 ===============
 Sbar_ShowScores
@@ -278,17 +282,10 @@ Sbar_DrawTransPic
 */
 void Sbar_DrawTransPic (int x, int y, CQuakePic *pic)
 {
-#ifdef GLQUAKE
 	if (cl.gametype == GAME_DEATHMATCH)
-		g_GLRenderer->Draw_TransPic (x, y + (vid.height-SBAR_HEIGHT), pic);
+		ResolveRenderer()->Draw_TransPic (x, y + (vid.height-SBAR_HEIGHT), pic);
 	else
-		g_GLRenderer->Draw_TransPic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
-#else
-	if (cl.gametype == GAME_DEATHMATCH)
-		g_SoftwareRenderer->Draw_TransPic(x, y + (vid.height - SBAR_HEIGHT), pic);
-	else
-		g_SoftwareRenderer->Draw_TransPic(x + ((vid.width - 320) >> 1), y + (vid.height - SBAR_HEIGHT), pic);
-#endif
+		ResolveRenderer()->Draw_TransPic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
 }
 
 /*
@@ -300,17 +297,10 @@ Draws one solid graphics character
 */
 void Sbar_DrawCharacter (int x, int y, int num)
 {
-#ifdef GLQUAKE
 	if (cl.gametype == GAME_DEATHMATCH)
-		g_GLRenderer->Draw_Character ( x /*+ ((vid.width - 320)>>1) */ + 4 , y + vid.height-SBAR_HEIGHT, num);
+		ResolveRenderer()->Draw_Character ( x /*+ ((vid.width - 320)>>1) */ + 4 , y + vid.height-SBAR_HEIGHT, num);
 	else
-		g_GLRenderer->Draw_Character ( x + ((vid.width - 320)>>1) + 4 , y + vid.height-SBAR_HEIGHT, num);
-#else
-	if (cl.gametype == GAME_DEATHMATCH)
-		g_SoftwareRenderer->Draw_Character(x /*+ ((vid.width - 320)>>1) */ + 4, y + vid.height - SBAR_HEIGHT, num);
-	else
-		g_SoftwareRenderer->Draw_Character(x + ((vid.width - 320) >> 1) + 4, y + vid.height - SBAR_HEIGHT, num);
-#endif
+		ResolveRenderer()->Draw_Character ( x + ((vid.width - 320)>>1) + 4 , y + vid.height-SBAR_HEIGHT, num);
 }
 
 /*
@@ -320,17 +310,10 @@ Sbar_DrawString
 */
 void Sbar_DrawString (int x, int y, char *str)
 {
-#ifdef GLQUAKE
 	if (cl.gametype == GAME_DEATHMATCH)
-		g_GLRenderer->Draw_String (x /*+ ((vid.width - 320)>>1)*/, y+ vid.height-SBAR_HEIGHT, str);
+		ResolveRenderer()->Draw_String (x /*+ ((vid.width - 320)>>1)*/, y+ vid.height-SBAR_HEIGHT, str);
 	else
-		g_GLRenderer->Draw_String (x + ((vid.width - 320)>>1), y+ vid.height-SBAR_HEIGHT, str);
-#else
-	if (cl.gametype == GAME_DEATHMATCH)
-		g_SoftwareRenderer->Draw_String(x /*+ ((vid.width - 320)>>1)*/, y + vid.height - SBAR_HEIGHT, str);
-	else
-		g_SoftwareRenderer->Draw_String(x + ((vid.width - 320) >> 1), y + vid.height - SBAR_HEIGHT, str);
-#endif
+		ResolveRenderer()->Draw_String (x + ((vid.width - 320)>>1), y+ vid.height-SBAR_HEIGHT, str);
 }
 
 /*
@@ -465,7 +448,7 @@ void Sbar_UpdateScoreboard (void)
 	{
 		k = fragsort[i];
 		s = &cl.scores[k];
-		sprintf (&scoreboardtext[i][1], "%3i %s", s->frags, s->name);
+		snprintf (&scoreboardtext[i][1], sizeof(scoreboardtext[i]), "%3i %s", s->frags, s->name);
 
 		top = s->colors & 0xf0;
 		bottom = (s->colors & 15) <<4;
@@ -487,10 +470,10 @@ void Sbar_SoloScoreboard (void)
 	int		minutes, seconds, tens, units;
 	int		l;
 
-	sprintf (str,"Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+	snprintf (str, sizeof(str), "Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	Sbar_DrawString (8, 4, str);
 
-	sprintf (str,"Secrets :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
+	snprintf(str, sizeof(str), "Secrets :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
 	Sbar_DrawString (8, 12, str);
 
 // time
@@ -498,7 +481,7 @@ void Sbar_SoloScoreboard (void)
 	seconds = cl.time - (double)60*minutes; // Missi (11/19/2022)
 	tens = seconds / 10;
 	units = seconds - 10*tens;
-	sprintf (str,"Time :%3i:%i%i", minutes, tens, units);
+	snprintf (str, sizeof(str), "Time :%3i:%i%i", minutes, tens, units);
 	Sbar_DrawString (184, 4, str);
 
 // draw level name
@@ -688,7 +671,7 @@ void Sbar_DrawInventory (void)
 // ammo counts
 	for (i=0 ; i<4 ; i++)
 	{
-		sprintf (num, "%3i",cl.stats[STAT_SHELLS+i] );
+		snprintf (num, sizeof(num), "%3i",cl.stats[STAT_SHELLS+i] );
 		if (num[0] != ' ')
 			Sbar_DrawCharacter ( (6*i+1)*8 - 2, -24, 18 + num[0] - '0');
 		if (num[1] != ' ')
@@ -833,7 +816,7 @@ void Sbar_DrawFrags (void)
 #endif
 	// draw number
 		f = s->frags;
-		sprintf (num, "%3i",f);
+		snprintf (num, sizeof(num), "%3i",f);
 
 		Sbar_DrawCharacter ( (x+1)*8 , -24, num[0]);
 		Sbar_DrawCharacter ( (x+2)*8 , -24, num[1]);
@@ -896,7 +879,7 @@ void Sbar_DrawFace (void)
 
 		// draw number
 		f = s->frags;
-		sprintf (num, "%3i",f);
+		snprintf (num, sizeof(num), "%3i",f);
 
 		if (top==8)
 		{
@@ -1180,7 +1163,7 @@ void Sbar_DeathmatchOverlay (void)
 #endif
 	// draw number
 		f = s->frags;
-		sprintf (num, "%3i",f);
+		snprintf (num, sizeof(num), "%3i",f);
 
 #ifdef GLQUAKE
 		g_GLRenderer->Draw_Character ( x+8 , y, num[0]);
@@ -1297,7 +1280,7 @@ void Sbar_MiniDeathmatchOverlay (void)
 #endif
 	// draw number
 		f = s->frags;
-		sprintf (num, "%3i",f);
+		snprintf (num, sizeof(num), "%3i",f);
 
 #ifdef GLQUAKE
 		g_GLRenderer->Draw_Character ( x+8 , y, num[0]);

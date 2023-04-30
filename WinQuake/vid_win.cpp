@@ -101,7 +101,7 @@ int			vid_default = MODE_WINDOWED;
 static int	windowed_default;
 
 unsigned short	d_8to16table[256];
-unsigned	d_8to24table[256];
+unsigned int	d_8to24table[256];
 
 #ifndef QUAKE_TOOLS
 

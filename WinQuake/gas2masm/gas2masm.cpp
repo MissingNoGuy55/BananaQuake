@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2023 Stephen Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -110,13 +111,15 @@ int	numregs = sizeof (reglist) / sizeof (reglist[0]);
 
 //==============================================
 
-
 void emitanoperand (int tnum, char *type, int notdata)
 {
-	int		i, index, something_outside_parens, regfound;
+	int		i, something_outside_parens, regfound;
+	size_t	index;
 	int		parencount;
 	char	*pt;
 	char	temp[MAX_TOKEN_LENGTH+1];
+
+	memset(temp, 0, sizeof(temp));
 
 	pt = tokens[tnum];
 
@@ -125,7 +128,7 @@ void emitanoperand (int tnum, char *type, int notdata)
 	// register
 		for (i=0 ; i<numregs ; i++)
 		{
-			if (!strcmpi (pt, reglist[i].text))
+			if (!_strcmpi (pt, reglist[i].text))
 			{
 				printf ("%s", reglist[i].emit);
 				return;
@@ -225,7 +228,8 @@ void emitanoperand (int tnum, char *type, int notdata)
 	else
 	{
 	// must be a memory location
-		strcpy (temp, type);
+		strncpy (temp, type, sizeof(temp)-1);
+		temp[sizeof(temp)-1] = '\0';
 		index = strlen (temp);
 
 		if (notdata)
@@ -258,7 +262,8 @@ void emitanoperand (int tnum, char *type, int notdata)
 						if (!strnicmp (pt, reglist[i].text,
 							reglist[i].len))
 						{
-							strcpy (&temp[index], reglist[i].emit);
+							strncpy (&temp[index], reglist[i].emit, sizeof(temp)-1);
+							temp[sizeof(temp) - 1] = '\0';
 							index += strlen (reglist[i].emit);
 							pt += strlen (reglist[i].text) - 1;
 							regfound = 1;

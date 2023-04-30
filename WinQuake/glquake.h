@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma warning(disable : 4244)     // MIPS
 #pragma warning(disable : 4136)     // X86
 
+
 #ifdef WIN64
 #pragma warning(disable : 4267)		// Missi: x64 (12/5/2022)
 #endif
@@ -37,9 +38,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef _WIN32
 #include <windows.h>
 #endif
-
-void GL_BeginRendering (int *x, int *y, int *width, int *height);
-void GL_EndRendering (void);
 
 #ifdef _WIN32
 // Function prototypes for the Texture Object Extension routines
@@ -63,10 +61,7 @@ extern	int		texture_mode;
 
 extern	float	gldepthmin, gldepthmax;
 
-//void GL_Upload32 (unsigned *data, int width, int height,  bool mipmap, bool alpha);
-//void GL_Upload8 (byte *data, int width, int height,  bool mipmap, bool alpha);
-//int GL_LoadTexture (char *identifier, int width, int height, byte *data, bool mipmap, bool alpha);
-//int GL_FindTexture (char *identifier);
+extern cvar_t gl_ztrick;
 
 typedef struct
 {
@@ -221,7 +216,7 @@ public:
 
 	void Draw_Init(void);
 	void Draw_Character(int x, int y, int num);
-	void Draw_String(int x, int y, char* str);
+	void Draw_String(int x, int y, const char* str);
 	void Draw_DebugChar(char num);
 	void Draw_AlphaPic(int x, int y, CQuakePic* pic, float alpha);
 	void Draw_Pic(int x, int y, CQuakePic* pic);
@@ -234,6 +229,9 @@ public:
 	void Draw_BeginDisc(void);
 	void Draw_EndDisc(void);
 
+    void GL_BeginRendering (int *x, int *y, int *width, int *height);
+    void GL_EndRendering (void);
+    
 	void GL_Set2D(void);
 
 	CGLTexture* GL_FindTexture(model_t* model, const char* identifier);
@@ -246,7 +244,7 @@ public:
 
 	unsigned* GL_ResampleTexture(unsigned* in, int inwidth, int inheight, bool alpha);
 
-	void GL_Resample8BitTexture(unsigned char* in, int inwidth, int inheight, unsigned char* out, int outwidth, int outheight);
+	void GL_Resample8BitTexture(byte* in, int inwidth, int inheight, byte* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
 	CGLTexture* GL_LoadPicTexture(CQuakePic* pic);
 	byte* GL_PadImageW(byte* in, int width, int height, byte padbyte);
@@ -375,10 +373,10 @@ private:
 
 	int			skytexturenum;
 
-	static glpoly_t*		lightmap_polys[MAX_LIGHTMAPS];
+	static glpoly_t*	lightmap_polys[MAX_LIGHTMAPS];
 	static bool			lightmap_modified[MAX_LIGHTMAPS];
 	static glRect_t		lightmap_rectchange[MAX_LIGHTMAPS];
-	static int				lightmap_count;
+	static int			lightmap_count;
 
 	static int			allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];	// Missi: changed from a 2D array (12/6/2022)
 
@@ -387,8 +385,8 @@ private:
 	static	byte		lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
 
 	// For gl_texsort 0
-	msurface_t* skychain = NULL;
-	msurface_t* waterchain = NULL;
+	msurface_t* skychain;
+	msurface_t* waterchain;
 
 	int		lightmap_bytes;		// 1, 2, or 4
 
@@ -408,6 +406,17 @@ private:
 	byte* draw_chars;				// 8*8 graphic characters
 	CQuakePic* draw_disc;
 	CQuakePic* draw_backtile;
+
+	int	numgltextures;
+
+	static int		gl_filter_min;
+	static int		gl_filter_max;
+
+	int		texels;
+
+	int		gl_lightmap_format;
+	int		gl_solid_format;
+	int		gl_alpha_format;
 
 };
 
@@ -447,8 +456,6 @@ private:
 	CGLTexture(const CGLTexture& obj);
 
 };
-
-constexpr size_t crap = sizeof(CGLTexture);
 
 extern	bool	gl_texture_NPOT;
 extern	GLint	gl_hardware_maxsize;
@@ -543,10 +550,10 @@ void R_TranslatePlayerSkin (int playernum);
 #define    TEXTURE0_SGIS				0x835E
 #define    TEXTURE1_SGIS				0x835F
 
-// Missi: commented out (4/21/2023)
-// #ifndef _WIN32
-// #define APIENTRY /* */
-// #endif
+// Missi: modified (4/21/2023)
+#if !(_WIN32) && !defined APIENTRY
+#define APIENTRY /* */
+#endif
 
 typedef void (APIENTRY *lpMTexFUNC) (GLenum, GLfloat, GLfloat);
 typedef void (APIENTRY *lpSelTexFUNC) (GLenum);

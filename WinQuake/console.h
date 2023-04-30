@@ -35,6 +35,7 @@ void Con_Init (void);
 void Con_DrawConsole (int lines, bool drawinput);
 void Con_Print (const char *txt);
 void Con_Printf (const char *fmt, ...);
+void Con_Warning(const char *fmt, ...);
 void Con_DPrintf (const char *fmt, ...);
 void Con_SafePrintf (const char *fmt, ...);
 void Con_Clear_f (void);

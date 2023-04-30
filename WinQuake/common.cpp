@@ -447,7 +447,7 @@ float Q_atof (const char *str)
 // #define	vsnprintf_s_func	vsnprintf_s
 #endif
 
-int q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args)
+int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args)
 {
 	int		ret;
 #ifndef WIN64
@@ -855,17 +855,19 @@ void CCommon::COM_AddExtension(char* path, const char* extension, size_t len)
 /*
 ============
 COM_SkipPath
+
+Missi: modified (4/30/2023)
 ============
 */
-char* CCommon::COM_SkipPath (char *pathname)
+char* CCommon::COM_SkipPath (const char *pathname)
 {
 	char    *last;
 	
-	last = pathname;
+	last = _strdup(pathname);
 	while (*pathname)
 	{
 		if (*pathname=='/')
-			last = pathname+1;
+			last = _strdup(pathname+1);
 		pathname++;
 	}
 	return last;
@@ -1008,7 +1010,7 @@ COM_Parse
 Parse a token out of a string
 ==============
 */
-const char * CCommon::COM_Parse (const char *data)
+const char* CCommon::COM_Parse (const char *data)
 {
 	int             c;
 	int             len;
@@ -1282,16 +1284,16 @@ va
 
 does a varargs printf into a temp buffer, so I don't need to have
 varargs versions of all text functions.
-FIXME: make this buffer size safe someday
+Missi: made this buffer-size safe (4/30/2023)
 ============
 */
 const char* CCommon::va(const char *format, ...)
 {
-	va_list         argptr;
-	static char             string[1024];
+	va_list			argptr;
+	static char		string[1024];
 	
 	va_start (argptr, format);
-	vsprintf (string, format,argptr);
+	vsnprintf (string, sizeof(string), format,argptr);
 	va_end (argptr);
 
 	return string;  
@@ -1299,8 +1301,8 @@ const char* CCommon::va(const char *format, ...)
 
 char* CCommon::va_unsafe ( char* format, ... )
 {
-	va_list         argptr;
-	static char             string[1024];
+	va_list			argptr;
+	static char		string[1024];
 
 	va_start(argptr, format);
 	vsprintf(string, format, argptr);
@@ -1373,8 +1375,8 @@ The filename will be prefixed by the current game directory
 */
 void CCommon::COM_WriteFile (const char *filename, void *data, int len)
 {
-	int             handle;
-	char    name[MAX_OSPATH];
+	int		handle;
+	char	name[MAX_OSPATH];
 	
 	sprintf (name, "%s/%s", com_gamedir, filename);
 
@@ -1398,11 +1400,13 @@ COM_CreatePath
 Only used for CopyFile
 ============
 */
-void    COM_CreatePath (char *path)
+void CCommon::COM_CreatePath (const char *path)
 {
 	char    *ofs;
-	
-	for (ofs = path+1 ; *ofs ; ofs++)
+
+	ofs = _strdup(path);
+
+	for (; *ofs ; ofs++)
 	{
 		if (*ofs == '/')
 		{       // create the directory
@@ -1422,7 +1426,7 @@ Copies a file over from the net to the local cache, creating any directories
 needed.  This is for the convenience of developers using ISDN from home.
 ===========
 */
-void COM_CopyFile (char *netpath, char *cachepath)
+void CCommon::COM_CopyFile (const char *netpath, char *cachepath)
 {
 	int             in, out;
 	int             remaining, count;
@@ -1458,11 +1462,14 @@ Sets com_filesize and one of handle or file
 int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintptr_t* path_id)
 {
 	searchpath_t	*search = NULL;
-	char			netpath[MAX_OSPATH] = "";
-	char			cachepath[MAX_OSPATH] = "";
+    char			netpath[MAX_OSPATH];
+    char			cachepath[MAX_OSPATH];
 	pack_t			*pak = NULL;
 	int				i;
 	int				findtime = 0, cachetime = 0;
+
+    memset(netpath, 0, sizeof(netpath));
+    memset(cachepath, 0, sizeof(cachepath));
 
 	if (file && handle)
 		Sys_Error ("COM_FindFile: both handle and file set");
@@ -1475,14 +1482,6 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 // search through the path, one element at a time
 //
 	search = com_searchpaths;
-	if (proghack)
-	{	// gross hack to use quake 1 progs with quake 2 maps
-		if (!strcmp(filename, "progs.dat"))
-			search = search->next;
-	}
-
-	if (!strcmp(filename, "music/track06.ogg") && file)
-		Con_Printf("");
 
 	for (search = com_searchpaths; search; search = search->next)
 		{
@@ -1522,12 +1521,12 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 						continue;
 				}
 #ifdef _WIN32
-				sprintf_s(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
+				snprintf(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
 
                 if (!(Sys_FileType(netpath) & FS_ENT_FILE))
                     continue;
 #else
-  				sprintf(netpath, "%s/%s", search->filename, filename);              
+                snprintf(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
 #endif
 
 				/*findtime = Sys_FileTime(netpath);
@@ -1536,23 +1535,23 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 
 				// see if the file needs to be updated in the cache
 				if (!com_cachedir[0])
-					Q_strcpy(cachepath, netpath);
+					Q_strncpy(cachepath, netpath, MAX_OSPATH);
 				else
 				{
 #if defined(_WIN32)
 					if ((strlen(netpath) < 2) || (netpath[1] != ':'))
-						sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
+						snprintf(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
 					else
-						sprintf_s(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath + 2);
+						snprintf(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath + 2);
 #else
-					sprintf(cachepath, "%s%s", com_cachedir, netpath);
+                    snprintf(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
 #endif
 
 					cachetime = Sys_FileTime(cachepath);
 
 					if (cachetime < findtime)
 						COM_CopyFile(netpath, cachepath);
-					Q_strcpy(netpath, cachepath);
+					Q_strncpy(netpath, cachepath, MAX_OSPATH);
 				}
 
 				Sys_Printf("FindFile: %s\n", netpath);
@@ -1785,10 +1784,12 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 	int                             i = 0;
 	searchpath_t			*search = NULL;
 	pack_t                  *pak = NULL;
-	char                    pakfile[MAX_OSPATH] = {};
+    char                    pakfile[MAX_OSPATH];
 	uintptr_t				path_id = 0;
 
 	Q_strcpy (com_gamedir, dir);
+
+    memset(pakfile, 0, sizeof(pakfile));
 
 	// assign a path_id to this game directory
 	if (com_searchpaths)
@@ -1800,7 +1801,7 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 //
 	search = g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t));
 	search->path_id = path_id;
-	Q_strcpy (search->filename, dir);
+    Q_strncpy (search->filename, dir, sizeof(search->filename));
 	search->next = com_searchpaths;
 	com_searchpaths = search;
 
@@ -1809,7 +1810,7 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 //
 	for (i=0 ; ; i++)
 	{
-		sprintf (pakfile, "%s/pak%i.pak", dir, i);
+        sprintf (pakfile, "%s/PAK%i.PAK", dir, i);
 		pak = COM_LoadPackFile (pakfile);
 		if (!pak)
 			break;

@@ -151,7 +151,7 @@ void CQVector<T, S>::Construct(T* element)
 #ifdef _WIN32
 	new (element) T;
 #elif __linux__
-	element = new T;
+        element = new T;
 #endif
 }
 

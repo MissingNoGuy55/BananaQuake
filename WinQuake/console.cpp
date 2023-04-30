@@ -431,6 +431,62 @@ void Con_Printf (const char *fmt, ...)
 	}
 }
 
+void Con_Warning(const char *fmt, ...)
+{
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+	static bool	inupdate;
+
+	va_start(argptr, fmt);
+	vsnprintf(msg, sizeof(msg), fmt, argptr);
+	va_end(argptr);
+
+	// also echo to debugging console
+#ifndef _WIN32
+	Sys_Warning("\x1b[31m%s\x1b[0m", msg);	// also echo to debugging console
+#else
+	HANDLE stdhandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+	WORD saved_attributes;
+
+	/* Save current attributes */
+	GetConsoleScreenBufferInfo(stdhandle, &consoleInfo);
+	saved_attributes = consoleInfo.wAttributes;
+
+	SetConsoleTextAttribute(stdhandle, FOREGROUND_RED | FOREGROUND_INTENSITY | FOREGROUND_GREEN);
+	Sys_Warning("%s", msg);	// also echo to debugging console
+
+	/* Restore original attributes */
+	SetConsoleTextAttribute(stdhandle, saved_attributes);
+
+#endif
+	// log all messages to file
+	if (con_debuglog)
+		Con_DebugLog(g_Common->va("%s/qconsole.log", g_Common->com_gamedir), "%s", msg);
+
+	if (!con_initialized)
+		return;
+
+	if (cls.state == ca_dedicated)
+		return;		// no graphics mode
+
+	// write it to the scrollable buffer
+	Con_Print(msg);
+
+	// update the screen if the console is displayed
+	if (cls.signon != SIGNONS && !scr_disabled_for_loading)
+	{
+		// protect against infinite loop if something in SCR_UpdateScreen calls
+		// Con_Printd
+		if (!inupdate)
+		{
+			inupdate = true;
+			SCR_UpdateScreen();
+			inupdate = false;
+		}
+	}
+}
+
 /*
 ================
 Con_DPrintf
@@ -569,11 +625,13 @@ void Con_DrawNotify (void)
 
 	if (key_dest == key_message)
 	{
+        static char text[] = "say:";
+
 		clearnotify = 0;
 		scr_copytop = 1;
 	
 		x = 0;
-		ResolveRenderer()->Draw_String (8, v, "say:");
+        ResolveRenderer()->Draw_String (8, v, text);
 		while(chat_buffer[x])
 		{
 			ResolveRenderer()->Draw_Character ( (x+5)<<3, v, chat_buffer[x]);

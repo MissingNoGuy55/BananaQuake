@@ -851,7 +851,7 @@ void SCR_UpdateScreen (void)
 		return;				// not initialized yet
 
 
-	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
+	g_GLRenderer->GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	
 	//
 	// determine size of refresh window
@@ -923,6 +923,6 @@ void SCR_UpdateScreen (void)
 
 	V_UpdatePalette ();
 
-	GL_EndRendering ();
+	g_GLRenderer->GL_EndRendering ();
 }
 
