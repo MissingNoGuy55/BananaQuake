@@ -23,7 +23,8 @@ RPM_RELEASE=5
 ### Enable/Disable codecs for streaming music support
 USE_CODEC_WAVE=1
 USE_CODEC_FLAC=0
-USE_CODEC_MP3=1
+# vvvv Missi: was 1
+USE_CODEC_MP3=0
 USE_CODEC_VORBIS=1
 USE_CODEC_OPUS=0
 # either xmp or mikmod (or modplug)
@@ -79,7 +80,7 @@ BASE_CPPFLAGS+= $(shell $(PKG_CONFIG) --cflags opusfile)
 CODECLIBS+= $(shell $(PKG_CONFIG) --libs   opusfile)
 endif
 ifeq ($(USE_CODEC_VORBIS),1)
-BASE_CPPFLAGS+= -DUSE_CODEC_VORBIS $(cpp_vorbisdec)
+BASE_CPPFLAGS+= -DUSE_CODEC_VORBIS
 CODECLIBS+= $(lib_vorbisdec)
 endif
 ifeq ($(USE_CODEC_MP3),1)
@@ -118,25 +119,25 @@ endif
 
 # -L/usr/X11/lib \
 	
-GLLIBINCLUDE=-L/usr/lib/$(ARCH)-linux-gnu
+GLLIBINCLUDE=-L/usr/lib/$(ARCH)-linux-gnu -L/usr/local/lib
 	
-GLLIBLINK=-lSDL2 \
--lm
+GLLIBLINK=-lSDL2 -lm -lGL -lGLU -lX11 -lXext -lXxf86dga -lXxf86vm -lvorbis -lvorbisfile -ldl
 
-GLINCLUDES=-I/usr/include/SDL2 \
--I/usr/include/vlc
+GLINCLUDES=-I/usr/include/SDL2 -I/usr/include/vlc -I/usr/include/vorbis -I/QuakeCPP/WinQuake/mesa/3dfx/glide3/include/
 	
 GLOPTS:=-DGLQUAKE
 	
-GLCPPFLAGS= $(GLOPTS) $(GLINCLUDES)
+GLCPPFLAGS=$(GLINCLUDES)
 
 DO_CC=$(CC) $(CPPFLAGS) -o $@ -c $<
 DO_DEBUG_CC=$(CC) $(DEBUG_CPPFLAGS) -o $@ -c $<
-DO_GL_CC=$(CC) $(CPPFLAGS) $(GLCPPFLAGS) -o $@ -c $<
-DO_GL_DEBUG_CC=$(CC) $(DEBUG_CPPFLAGS) $(GLCPPFLAGS) -o $@ -c $<
+DO_GL_CC=$(CC) $(CPPFLAGS) $(GLOPTS) $(GLCPPFLAGS) -o $@ -c $<
+DO_GL_DEBUG_CC=$(CC) $(DEBUG_CPPFLAGS) $(GLOPTS) $(GLCPPFLAGS) -o $@ -c $<
 DO_O_CC=$(CC) -O $(CPPFLAGS) -o $@ -c $<
 DO_AS=$(CC) $(CPPFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
 DO_GL_AS=$(CC) $(CPPFLAGS) $(GLCPPFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
+
+$(info    DO_GL_CC is '$(DO_GL_CC)')
 
 #############################################################################
 # SETUP AND BUILD
@@ -574,6 +575,7 @@ GLQUAKE_OBJS= \
 	$(BUILDDIR)/glquake/gl_rsurf.o \
 	$(BUILDDIR)/glquake/gl_screen.o \
 	$(BUILDDIR)/glquake/gl_test.o \
+	$(BUILDDIR)/glquake/gl_vidlinuxglx.o \
 	$(BUILDDIR)/glquake/gl_warp.o \
 	\
 	$(BUILDDIR)/glquake/host.o \
@@ -609,16 +611,17 @@ GLQUAKE_OBJS= \
 	$(BUILDDIR)/glquake/snd_mem.o \
 	$(BUILDDIR)/glquake/snd_mix.o \
 	$(BUILDDIR)/glquake/snd_linux.o \
+	$(BUILDDIR)/glquake/snd_wave.o \
+	$(BUILDDIR)/glquake/snd_vorbis.o \
 	\
 	$(BUILDDIR)/glquake/math.o \
 	$(BUILDDIR)/glquake/worlda.o \
 	$(BUILDDIR)/glquake/snd_mixa.o \
-	$(BUILDDIR)/glquake/sys_dosa.o \
 	$(BUILDDIR)/glquake/utils.o
 
-GLSVGA_OBJS=$(BUILDDIR)/glquake/gl_vidlinux.o
+# GLSVGA_OBJS=$(BUILDDIR)/glquake/gl_vidlinux.o
 
-GLX_OBJS=$(BUILDDIR)/glquake/gl_vidlinuxglx.o
+# GLX_OBJS=$(BUILDDIR)/glquake/gl_vidlinuxglx.o
 
 # $(GLSVGA_OBJS)
 
@@ -694,9 +697,6 @@ $(BUILDDIR)/glquake/gl_screen.o :    ./gl_screen.cpp
 $(BUILDDIR)/glquake/gl_test.o :      ./gl_test.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/gl_vidlinux.o :  ./gl_vidlinux.cpp
-	$(DO_GL_CC)
-
 $(BUILDDIR)/glquake/gl_vidlinuxglx.o :  ./gl_vidlinuxglx.cpp
 	$(DO_GL_CC)
 
@@ -752,6 +752,12 @@ $(BUILDDIR)/glquake/sbar.o :         ./sbar.cpp
 	$(DO_GL_CC)
 	
 $(BUILDDIR)/glquake/snd_codec.o :         ./snd_codec.cpp
+	$(DO_GL_CC)
+	
+$(BUILDDIR)/glquake/snd_wave.o :         ./snd_wave.cpp
+	$(DO_GL_CC)
+	
+$(BUILDDIR)/glquake/snd_vorbis.o :         ./snd_vorbis.cpp
 	$(DO_GL_CC)
 	
 $(BUILDDIR)/glquake/strlcat.o :         ./strlcat.cpp
@@ -812,9 +818,6 @@ $(BUILDDIR)/glquake/worlda.o :       ./worlda.s
 	$(DO_GL_AS)
 
 $(BUILDDIR)/glquake/snd_mixa.o :     ./snd_mixa.s
-	$(DO_GL_AS)
-
-$(BUILDDIR)/glquake/sys_dosa.o :     ./sys_dosa.s
 	$(DO_GL_AS)
 
 #############################################################################
