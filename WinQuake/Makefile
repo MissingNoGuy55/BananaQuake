@@ -55,6 +55,7 @@ CC=$(EGCS)
 
 BASE_CPPFLAGS=-Dstricmp=strcasecmp
 BASE_CPPFLAGS += $(call check_g++,-std=gnu11,)
+
 RELEASE_CPPFLAGS=$(BASE_CPPFLAGS) -g -mpentiumpro -O6 -ffast-math -funroll-loops \
 	-fomit-frame-pointer -fexpensive-optimizations
 DEBUG_CPPFLAGS=$(BASE_CPPFLAGS) -g

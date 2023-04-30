@@ -21,9 +21,8 @@ else()
 		# X11
 		find_package(X11 REQUIRED CONFIG REQUIRED COMPONENTS X11)
 		find_package(Xext REQUIRED CONFIG REQUIRED COMPONENTS X11)
-		find_package(Xv REQUIRED CONFIG REQUIRED COMPONENTS X11)
-		find_package(Xpm REQUIRED CONFIG REQUIRED COMPONENTS X11)
-		find_package(Xt REQUIRED CONFIG REQUIRED COMPONENTS X11)
+
+                find_package(vorbis REQUIRED CONFIG REQUIRED COMPONENTS vorbis)
 
 	endif (UNIX)
 
@@ -407,7 +406,6 @@ d_zpoint.cpp
 draw.cpp
 host.cpp
 host_cmd.cpp
-in_sun.cpp
 keys.cpp
 mathlib.cpp
 menu.cpp
@@ -442,8 +440,6 @@ snd_codec.cpp
 snd_dma.cpp
 snd_mem.cpp
 snd_mix.cpp
-snd_mp3.cpp
-snd_mp3tag.cpp
 snd_vorbis.cpp
 snd_wave.cpp
 snd_linux.cpp
@@ -524,13 +520,12 @@ world.h
 zone.h
 )
 
-set(GLQUAKE_SOURCES
-math.s
+set(GLQUAKE_SOURCES math.s
 worlda.s
 snd_mixa.s
 
 bgmusic.cpp
-cd_win.cpp
+cd_linux.cpp
 chase.cpp
 cl_demo.cpp
 cl_input.cpp
@@ -539,7 +534,6 @@ cl_parse.cpp
 cl_tent.cpp
 cmd.cpp
 common.cpp
-conproc.cpp
 console.cpp
 crc.cpp
 cvar.cpp
@@ -557,7 +551,6 @@ gl_vidlinuxglx.cpp
 gl_warp.cpp
 host.cpp
 host_cmd.cpp
-in_win.cpp
 keys.cpp
 mathlib.cpp
 menu.cpp
@@ -577,8 +570,6 @@ snd_codec.cpp
 snd_dma.cpp
 snd_mem.cpp
 snd_mix.cpp
-snd_mp3.cpp
-snd_mp3tag.cpp
 snd_vorbis.cpp
 snd_wave.cpp
 snd_linux.cpp
@@ -851,6 +842,7 @@ if (UNIX)
 list(APPEND includepathLibraryWinQuake
     "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x86"
     "${CMAKE_CURRENT_SOURCE_DIR}/sdl2/include"
+    "/usr/local/lib"
 )
 endif (UNIX)
 
@@ -886,7 +878,9 @@ endif (UNIX)
 target_compile_definitions(bananaquakesoftware PUBLIC MGL40_COMPAT)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_VORBIS)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_WAVE)
+if (WIN32)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_MP3)
+endif (WIN32)
 target_compile_definitions(bananaquakesoftware PUBLIC DEBUG)
 target_compile_definitions(bananaquakesoftware PUBLIC _DEBUG)
 
@@ -897,7 +891,9 @@ target_include_directories(bananaquakesoftware PUBLIC
 target_compile_definitions(bananaquakeopengl PUBLIC GLQUAKE)
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_VORBIS)
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_WAVE)
+if (WIN32)
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_MP3)
+endif (WIN32)
 target_compile_definitions(bananaquakeopengl PUBLIC LINUX)
 target_compile_definitions(bananaquakeopengl PUBLIC DEBUG)
 target_compile_definitions(bananaquakeopengl PUBLIC _DEBUG)
@@ -974,26 +970,38 @@ endif()
 # Link to the actual SDL2 library. SDL2::SDL2 is the shared SDL library, SDL2::SDL2-static is the static SDL libarary.
 target_link_libraries(bananaquakesoftware SDL2::SDL2)
 
+if(TARGET SDL2::SDL2main)
+    target_link_libraries(bananaquakeopengl SDL2::SDL2main)
+endif()
+
+target_link_libraries(bananaquakeopengl SDL2::SDL2)
+
 if (UNIX)
+target_link_libraries(bananaquakesoftware m)
 target_link_libraries(bananaquakesoftware X11)
 target_link_libraries(bananaquakesoftware Xext)
-target_link_libraries(bananaquakesoftware Xv)
-target_link_libraries(bananaquakesoftware Xpm)
-target_link_libraries(bananaquakesoftware Xt)
+target_link_libraries(bananaquakesoftware Xxf86dga)
 
-set(BQUAKE_COMPILE_FLAGS "-m32")
-set(BQUAKE_LINKER_FLAGS "-m elf_i386")
+target_link_libraries(bananaquakeopengl X11)
+target_link_libraries(bananaquakeopengl Xext)
+target_link_libraries(bananaquakeopengl Xxf86dga)
+target_link_libraries(bananaquakeopengl Xxf86vm)
 
-target_compile_options(bananaquakesoftware PUBLIC ${BQUAKE_COMPILE_FLAGS})
-target_link_options(bananaquakesoftware PUBLIC ${BQUAKE_LINKER_FLAGS})
+target_link_libraries(bananaquakeopengl m)
+target_link_libraries(bananaquakeopengl dl)
+target_link_libraries(bananaquakeopengl vorbis)
+target_link_libraries(bananaquakeopengl vorbisfile)
 
-add_custom_command(TARGET bananaquakesoftware
-    # Run after sources have been compiled but before linking the binary or running the librarian or archiver tool of a static library. This is not defined for targets created by the add_custom_target() command
-    PRE_LINK
-    COMMAND ld -o "$<TARGET_FILE>.o" "$<TARGET_FILE:bananaquakesoftware>"
-    COMMENT "This command will be executed after building bar"
-    VERBATIM
-)
+target_link_libraries(bananaquakeopengl GL)
+
+SET(ASM_OPTIONS "-DELF -x assembler-with-cpp")
+SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
+
+target_compile_options(bananaquakesoftware PUBLIC "-Dstricmp=strcasecmp -g")
+target_compile_options(bananaquakeopengl PUBLIC "-Dstricmp=strcasecmp -g")
+
+# target_compile_options(bananaquakesoftware PUBLIC ${BQUAKE_COMPILE_FLAGS})
+# target_link_options(bananaquakesoftware PUBLIC ${BQUAKE_LINKER_FLAGS})
 
 endif (UNIX)
 
