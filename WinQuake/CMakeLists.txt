@@ -155,7 +155,7 @@ anorms.h
 asm_draw.h
 asm_i386.h
 bgmusic.h
-BSPFILE.H
+bspfile.h
 cdaudio.h
 client.h
 cmd.h
@@ -294,7 +294,7 @@ anorms.h
 asm_draw.h
 asm_i386.h
 bgmusic.h
-BSPFILE.H
+bspfile.h
 cdaudio.h
 client.h
 cmd.h
@@ -463,7 +463,7 @@ anorms.h
 asm_draw.h
 asm_i386.h
 bgmusic.h
-BSPFILE.H
+bspfile.h
 cdaudio.h
 client.h
 cmd.h
@@ -592,7 +592,7 @@ anorms.h
 asm_draw.h
 asm_i386.h
 bgmusic.h
-BSPFILE.H
+bspfile.h
 cdaudio.h
 client.h
 cmd.h
@@ -763,7 +763,7 @@ anorms.h
 asm_draw.h
 asm_i386.h
 bgmusic.h
-BSPFILE.H
+bspfile.h
 cdaudio.h
 client.h
 cmd.h
