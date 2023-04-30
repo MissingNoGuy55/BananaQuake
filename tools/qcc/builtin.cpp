@@ -502,6 +502,7 @@ SOUND
 ==================
 */
 
+#include <bgmusic.h>
 #include <cd_win.cpp>
 #include <snd_dma.cpp>
 #include <snd_mem.cpp>
