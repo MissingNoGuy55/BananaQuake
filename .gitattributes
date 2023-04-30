@@ -43,4 +43,7 @@
 *.res text
 *.rc text
 
+*.vcproj text
+*.vcxproj text
+
 *.sh text
