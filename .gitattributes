@@ -5,7 +5,29 @@
 *.tmp binary
 *.dll binary
 *.so binary
+*.lib binary
+*.exe binary
+*.ttf binary
+*.fon binary
+*.fnt binary
 
+*.pdb binary
+*.ncb binary
+
+*.bmp binary
+*.png binary
+*.tga binary
+*.tiff binary
+*.jpg binary
+*.gif binary
+*.ico binary
+
+*.cpp text
+*.h text
+*.c text
+*.cc text
+*.cxx text
+*.hpp text
 *.txt text
 *.cfg text
 *.res text
