@@ -1,5 +1,9 @@
 * text eol=lf
 
+*.tar binary
+*.gz binary
+*.tar.gz binary
+
 *.bsp binary
 *.dat binary
 *.tmp binary
@@ -13,6 +17,7 @@
 
 *.pdb binary
 *.ncb binary
+*.aps binary
 
 *.bmp binary
 *.png binary
@@ -21,6 +26,11 @@
 *.jpg binary
 *.gif binary
 *.ico binary
+
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.m4a binary
 
 *.cpp text
 *.h text
@@ -32,3 +42,5 @@
 *.cfg text
 *.res text
 *.rc text
+
+*.sh text
