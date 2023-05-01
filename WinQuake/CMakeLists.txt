@@ -37,8 +37,6 @@ project(bananaquake LANGUAGES CXX ASM)
 set(CMAKE_CXX_STANDARD 17)
 set(CXX_STANDARD_REQUIRED true)
 
-message("${CPPFLAGS}")
-
 SET(ASM_OPTIONS "-DELF -m32 -x assembler-with-cpp")
 SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 
@@ -64,6 +62,10 @@ worlda.s
 r_aclipa.s
 snd_mixa.s
 sys_dosa.s
+
+qe3.ico
+quake.ico
+winquake.rc
 
 bgmusic.cpp
 cd_win.cpp
@@ -220,6 +222,10 @@ set(GLQUAKE_SOURCES
 math.s
 worlda.s
 snd_mixa.s
+
+qe3.ico
+quake.ico
+winquake.rc
 
 bgmusic.cpp
 cd_win.cpp
@@ -378,6 +384,10 @@ r_aclipa.s
 snd_mixa.s
 sys_dosa.s
 
+qe3.ico
+quake.ico
+winquake.rc
+
 bgmusic.cpp
 cd_linux.cpp
 chase.cpp
@@ -523,6 +533,10 @@ zone.h
 set(GLQUAKE_SOURCES math.s
 worlda.s
 snd_mixa.s
+
+qe3.ico
+quake.ico
+winquake.rc
 
 bgmusic.cpp
 cd_linux.cpp
@@ -831,16 +845,21 @@ list(APPEND includepathWinQuake
 )
 
 if (WIN32)
-list(APPEND includepathLibraryWinQuake
+list(APPEND includepathLibraryWinQuakeSoftware
     "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x86"
     "${CMAKE_CURRENT_SOURCE_DIR}/scitech/lib/win32/vc"
+    "${CMAKE_CURRENT_BUILD_DIR}/sdl2/Debug"
+)
+
+list(APPEND includepathLibraryWinQuakeOpenGL
+    "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x86"
     "${CMAKE_CURRENT_BUILD_DIR}/sdl2/Debug"
 )
 endif (WIN32)
 
 if (UNIX)
 list(APPEND includepathLibraryWinQuake
-    "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x86"
+    "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x64"
     "${CMAKE_CURRENT_SOURCE_DIR}/sdl2/include"
     "/usr/local/lib"
 )
@@ -848,7 +867,7 @@ endif (UNIX)
 
 if (APPLE)
 list(APPEND includepathLibraryWinQuake
-    "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x86"
+    "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x64"
     "${CMAKE_CURRENT_SOURCE_DIR}/sdl2/include"
 )
 endif (APPLE)
@@ -904,12 +923,12 @@ target_include_directories(bananaquakeopengl PUBLIC
 
 #=================================================================
 
-target_link_directories(bananaquakesoftware PUBLIC ${includepathLibraryWinQuake})
-target_link_directories(bananaquakeopengl PUBLIC ${includepathLibraryWinQuake})
+target_link_directories(bananaquakesoftware PUBLIC ${includepathLibraryWinQuakeSoftware})
+target_link_directories(bananaquakeopengl PUBLIC ${includepathLibraryWinQuakeOpenGL})
 
 #=================================================================
 
-if (WIN32)
+if (MSVC)
 
 target_link_libraries(bananaquakesoftware mgllt.lib
 SDL2d.lib
@@ -945,11 +964,11 @@ glu32.lib
 odbc32.lib
 odbccp32.lib)
 
-endif (WIN32)
+endif (MSVC)
 
-if (WIN32)
+if (MSVC)
 target_link_options(bananaquakesoftware PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:-SAFESEH:NO>")
-endif (WIN32)
+endif (MSVC)
 
 if (MSVC)
 SET_TARGET_PROPERTIES(bananaquakesoftware PROPERTIES
@@ -959,6 +978,7 @@ LINK_FLAGS_DEBUG
 SET_TARGET_PROPERTIES(bananaquakeopengl PROPERTIES
 LINK_FLAGS_DEBUG
 "/NODEFAULTLIB:libc.lib")
+
 endif (MSVC)
 
 # SDL2::SDL2main may or may not be available. It is e.g. required by Windows GUI applications
@@ -975,6 +995,12 @@ if(TARGET SDL2::SDL2main)
 endif()
 
 target_link_libraries(bananaquakeopengl SDL2::SDL2)
+
+if (MSVC)
+
+target_compile_options(bananaquakeopengl PRIVATE "/MP")
+
+endif (MSVC)
 
 if (UNIX)
 target_link_libraries(bananaquakesoftware m)
