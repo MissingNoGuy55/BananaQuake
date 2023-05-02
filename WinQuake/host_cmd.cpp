@@ -1807,17 +1807,23 @@ void Host_Viewprev_f (void)
 /*
 ==================
 Host_Viewprev_f
+
+Missi: modified. removed the need for a second argument and added help text (5/1/2023)
 ==================
 */
 void Mod_GetPos(void)
 {
-	edict_t* e;
-	model_t* m;
-	const char* t;
-	int v;
+	edict_t* e = NULL;
+	model_t* m = NULL;
+	int v = 0;
 
-	t = Cmd_Argv(1);
-	v = atoi(Cmd_Argv(2));
+	v = atoi(Cmd_Argv(1));
+
+	if (!v)
+	{
+		Con_Printf("Usage: getpos (edict num)\n");
+		return;
+	}
 
 	e = EDICT_NUM(v);
 	if (!e)
