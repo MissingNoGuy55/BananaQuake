@@ -234,15 +234,30 @@ void Key_Console (int key)
 		return;
 	}
 
-	if (key == K_PGUP || key==K_MWHEELUP)
+	// Missi: Proper support for K_PGUP and K_PGDN (5/1/2023)
+	if (key == K_PGUP)
 	{
-		con_backscroll += 2;
-		if (con_backscroll > con_totallines - (vid.height>>3) - 1)
+		con_backscroll += 16;
+		if (con_backscroll > con_totallines - (int)(vid.height>>3) - 1)
 			con_backscroll = con_totallines - (vid.height>>3) - 1;
 		return;
 	}
+	else if (key == K_MWHEELUP)
+	{
+		con_backscroll += 2;
+		if (con_backscroll > con_totallines - (int)(vid.height >> 3) - 1)
+			con_backscroll = con_totallines - (vid.height >> 3) - 1;
+		return;
+	}
 
-	if (key == K_PGDN || key==K_MWHEELDOWN)
+	if (key == K_PGDN)
+	{
+		con_backscroll -= 16;
+		if (con_backscroll < 0)
+			con_backscroll = 0;
+		return;
+	}
+	else if (key==K_MWHEELDOWN)
 	{
 		con_backscroll -= 2;
 		if (con_backscroll < 0)
