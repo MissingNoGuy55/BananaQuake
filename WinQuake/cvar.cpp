@@ -118,6 +118,7 @@ void Cvar_Set (const char *var_name, const char *value)
 	var->string = "";	// free the old value string
 	
 	char str[64];
+	memset(str, 0, sizeof(str));
 
 	Q_strcpy (str, value);
 #ifdef _WIN32
@@ -142,7 +143,7 @@ void Cvar_SetValue (const char *var_name, float value)
 {
 	char	val[32];
 	
-	sprintf (val, "%f",value);
+	snprintf (val, sizeof(val), "%4.8f", value);
 	Cvar_Set (var_name, val);
 }
 

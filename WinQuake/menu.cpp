@@ -2622,7 +2622,7 @@ void M_GameOptions_Draw (void)
 	M_Print (160, 56, g_Common->va("%i", maxplayers) );
 
 	M_Print (0, 64, "        Game Type");
-	if (coop.value)
+	if (host->coop.value)
 		M_Print (160, 64, "Cooperative");
 	else
 		M_Print (160, 64, "Deathmatch");
@@ -2632,7 +2632,7 @@ void M_GameOptions_Draw (void)
 	{
 		const char *msg = NULL;
 
-		switch((int)teamplay.value)
+		switch((int)host->teamplay.value)
 		{
 			case 1: msg = "No Friendly Fire"; break;
 			case 2: msg = "Friendly Fire"; break;
@@ -2648,7 +2648,7 @@ void M_GameOptions_Draw (void)
 	{
 		const char *msg = NULL;
 
-		switch((int)teamplay.value)
+		switch((int)host->teamplay.value)
 		{
 			case 1: msg = "No Friendly Fire"; break;
 			case 2: msg = "Friendly Fire"; break;
@@ -2658,26 +2658,26 @@ void M_GameOptions_Draw (void)
 	}
 
 	M_Print (0, 80, "            Skill");
-	if (skill.value == 0)
+	if (host->skill.value == 0)
 		M_Print (160, 80, "Easy difficulty");
-	else if (skill.value == 1)
+	else if (host->skill.value == 1)
 		M_Print (160, 80, "Normal difficulty");
-	else if (skill.value == 2)
+	else if (host->skill.value == 2)
 		M_Print (160, 80, "Hard difficulty");
 	else
 		M_Print (160, 80, "Nightmare difficulty");
 
 	M_Print (0, 88, "       Frag Limit");
-	if (fraglimit.value == 0)
+	if (host->fraglimit.value == 0)
 		M_Print (160, 88, "none");
 	else
-		M_Print (160, 88, g_Common->va("%i frags", (int)fraglimit.value));
+		M_Print (160, 88, g_Common->va("%i frags", (int)host->fraglimit.value));
 
 	M_Print (0, 96, "       Time Limit");
-	if (timelimit.value == 0)
+	if (host->timelimit.value == 0)
 		M_Print (160, 96, "none");
 	else
-		M_Print (160, 96, g_Common->va("%i minutes", (int)timelimit.value));
+		M_Print (160, 96, g_Common->va("%i minutes", (int)host->timelimit.value));
 
 	M_Print (0, 112, "         Episode");
    //MED 01/06/97 added hipnotic episodes
@@ -2733,7 +2733,7 @@ void M_GameOptions_Draw (void)
 
 void M_NetStart_Change (int dir)
 {
-	int count;
+	int count = 0;
 
 	switch (gameoptions_cursor)
 	{
@@ -2750,43 +2750,47 @@ void M_NetStart_Change (int dir)
 		break;
 
 	case 2:
-		Cvar_SetValue ("coop", coop.value ? 0 : 1);
+		host->coop.value += dir;
+		Cvar_SetValue ("coop", host->coop.value);
 		break;
 
 	case 3:
+	{
 		if (rogue)
 			count = 6;
 		else
 			count = 2;
 
-		Cvar_SetValue ("teamplay", teamplay.value + dir);
-		if (teamplay.value > count)
-			Cvar_SetValue ("teamplay", 0);
-		else if (teamplay.value < 0)
-			Cvar_SetValue ("teamplay", count);
-		break;
+		float cf = host->teamplay.value + dir;
 
+		if (cf > count)
+			cf = 0;
+		else if (cf < 0)
+			cf = count;
+		Cvar_SetValue("teamplay", cf);
+		break;
+	}
 	case 4:
-		Cvar_SetValue ("skill", skill.value + dir);
-		if (skill.value > 3)
+		Cvar_SetValue ("skill", host->skill.value + dir);
+		if (host->skill.value > 3)
 			Cvar_SetValue ("skill", 0);
-		if (skill.value < 0)
+		if (host->skill.value < 0)
 			Cvar_SetValue ("skill", 3);
 		break;
 
 	case 5:
-		Cvar_SetValue ("fraglimit", fraglimit.value + dir*10);
-		if (fraglimit.value > 100)
+		Cvar_SetValue ("fraglimit", host->fraglimit.value + dir*10);
+		if (host->fraglimit.value > 100)
 			Cvar_SetValue ("fraglimit", 0);
-		if (fraglimit.value < 0)
+		if (host->fraglimit.value < 0)
 			Cvar_SetValue ("fraglimit", 100);
 		break;
 
 	case 6:
-		Cvar_SetValue ("timelimit", timelimit.value + dir*5);
-		if (timelimit.value > 60)
+		Cvar_SetValue ("timelimit", host->timelimit.value + dir*5);
+		if (host->timelimit.value > 60)
 			Cvar_SetValue ("timelimit", 0);
-		if (timelimit.value < 0)
+		if (host->timelimit.value < 0)
 			Cvar_SetValue ("timelimit", 60);
 		break;
 

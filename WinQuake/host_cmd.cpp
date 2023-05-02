@@ -730,7 +730,7 @@ void SaveGamestate()
 	fprintf (f, "%s\n", comment);
 //	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
 //		fprintf (f, "%f\n", svs.clients->spawn_parms[i]);
-	fprintf (f, "%f\n", skill.value);
+	fprintf (f, "%f\n", host->skill.value);
 	fprintf (f, "%s\n", sv.name);
 	fprintf (f, "%f\n", sv.time);
 
@@ -1069,7 +1069,7 @@ void Host_Say(bool teamonly)
 	{
 		if (!client || !client->active || !client->spawned)
 			continue;
-		if (teamplay.value && teamonly && client->edict->v.team != save->edict->v.team)
+		if (host->teamplay.value && teamonly && client->edict->v.team != save->edict->v.team)
 			continue;
 		
 		client;
@@ -1234,7 +1234,7 @@ void Host_Pause_f (void)
 		Cmd_ForwardToServer ();
 		return;
 	}
-	if (!pausable.value)
+	if (!host->pausable.value)
 		sv.SV_ClientPrintf ("Pause not allowed.\n");
 	else
 	{

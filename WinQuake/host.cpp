@@ -43,13 +43,13 @@ CGLRenderer* g_GLRenderer;
 CSoftwareRenderer* g_SoftwareRenderer;
 #endif
 
-cvar_t	teamplay;
-cvar_t	skill;
-cvar_t	deathmatch;
-cvar_t	coop;
-cvar_t	fraglimit;
-cvar_t	timelimit;
-cvar_t	pausable;
+//cvar_t	teamplay;
+//cvar_t	skill;
+//cvar_t	deathmatch;
+//cvar_t	coop;
+//cvar_t	fraglimit;
+//cvar_t	timelimit;
+//cvar_t	pausable;
 
 /*
 ================
