@@ -22,11 +22,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef COMMON_H
 #define COMMON_H
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__CYGWIN__)
 #include "sys.h"
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__CYGWIN__)
 #define _strdup strdup
 #define _stricmp stricmp
 #define _strnicmp strnicmp
@@ -334,7 +334,7 @@ template<typename T>
 void COM_LoadCacheFile (const char *path, struct cache_user_s *cu, uintptr_t* path_id);
 
 
-extern	struct cvar_s	registered;
+extern struct cvar_s	registered;
 
 extern bool		standard_quake, rogue, hipnotic;
 

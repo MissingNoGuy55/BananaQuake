@@ -442,9 +442,7 @@ void Con_Warning(const char *fmt, ...)
 	va_end(argptr);
 
 	// also echo to debugging console
-#ifndef _WIN32
-	Sys_Warning("\x1b[31m%s\x1b[0m", msg);	// also echo to debugging console
-#else
+#if defined(_WIN32)
 	HANDLE stdhandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 	WORD saved_attributes;
@@ -458,7 +456,8 @@ void Con_Warning(const char *fmt, ...)
 
 	/* Restore original attributes */
 	SetConsoleTextAttribute(stdhandle, saved_attributes);
-
+#elif defined(__linux__) || defined(__CYGWIN__)
+	Sys_Warning("\x1b[31m%s\x1b[0m", msg);	// also echo to debugging console
 #endif
 	// log all messages to file
 	if (con_debuglog)

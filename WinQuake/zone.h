@@ -90,19 +90,22 @@ Zone block
 #include "sys.h"
 #endif
 
-#ifdef __linux__
+#if defined (__linux__) || defined(__CYGWIN__)
 #include "strl_fn.h"
 #include "console.h"
 #include "cvar.h"
 #include "cmd.h"
 #endif
 
+void Con_Printf(const char* fmt, ...);
+void Sys_Error(const char* err, ...);
+
 #define	DYNAMIC_SIZE	0xc000
 
 #define	ZONEID	0x1d4a11
 #define MINFRAGMENT	64
 
-extern cvar_s zone_debug;
+extern struct cvar_s zone_debug;
 
 template<class T, class I = int>
 class CMemBlock

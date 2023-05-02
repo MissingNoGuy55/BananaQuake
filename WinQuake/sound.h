@@ -230,7 +230,7 @@ public:
 
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 class CSoundSystemWin : public CSoundDMA
 {
 public:
@@ -451,7 +451,7 @@ extern bool	snd_initialized;
 
 extern int		snd_blocked;
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 extern CSoundSystemWin* g_SoundSystem;
 #elif __linux__
 extern CSoundSystemLinux* g_SoundSystem;

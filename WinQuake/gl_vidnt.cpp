@@ -619,7 +619,7 @@ int		texture_mode = GL_LINEAR;
 
 int		texture_extension_number = 1;
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 void CheckMultiTextureExtensions(void) 
 {
 	if (strstr(gl_extensions, "GL_SGIS_multitexture ") && !g_Common->COM_CheckParm("-nomtex")) {
