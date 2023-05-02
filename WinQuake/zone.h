@@ -685,10 +685,6 @@ void CMemCache::Cache_FreeHigh(int new_high_hunk)
 
 	while (1)
 	{
-
-		// Missi: so this is a tricky one. with templates, it's always gonna expect the type it was compiled with,
-		// not an arbitrary void pointer. we have to run Cache_Init again to get a variant of cache_head with the
-		// new type
 		c = cache_head.prev;
 		if (c)
 		{
@@ -728,10 +724,6 @@ void CMemCache::Cache_FreeLow(int new_low_hunk)
 
 	while (1)
 	{
-
-		// Missi: so this is a tricky one. with templates, it's always gonna expect the type it was compiled with,
-		// not an arbitrary void pointer. we have to run Cache_Init again to get a variant of cache_head with the
-		// new type
 		c = cache_head.next;
 		if (c == &cache_head)
 			return;		// nothing in cache at all
