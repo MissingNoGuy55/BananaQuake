@@ -48,7 +48,8 @@ bool CSoundSystemLinux::SNDDMA_Init(dma_t* dma)
 	SDL_AudioSpec desired;
 	int		tmp, val;
 	char	drivername[128];
-
+    size_t  buffersize;
+    
     shm = g_MemCache->Hunk_AllocName<volatile dma_t>(sizeof(*shm), "shm");
 
 	snd_inited = 0;
@@ -112,18 +113,14 @@ bool CSoundSystemLinux::SNDDMA_Init(dma_t* dma)
 
 	Con_Printf ("SDL audio spec  : %d Hz, %d samples, %d channels\n",
 			desired.freq, desired.samples, desired.channels);
-#if defined(USE_SDL2)
-	{
-		const char *driver = SDL_GetCurrentAudioDriver();
-		const char *device = SDL_GetAudioDeviceName(0, SDL_FALSE);
-		q_snprintf(drivername, sizeof(drivername), "%s - %s",
-			driver != NULL ? driver : "(UNKNOWN)",
-			device != NULL ? device : "(UNKNOWN)");
-	}
-#else
-	if (SDL_AudioDriverName(drivername, sizeof(drivername)) == NULL)
-		strcpy(drivername, "(UNKNOWN)");
-#endif
+    
+
+    const char *driver = SDL_GetCurrentAudioDriver();
+    const char *device = SDL_GetAudioDeviceName(0, SDL_FALSE);
+    snprintf(drivername, sizeof(drivername), "%s - %s",
+        driver != NULL ? driver : "(UNKNOWN)",
+        device != NULL ? device : "(UNKNOWN)");
+
 	buffersize = shm->samples * (shm->samplebits / 8);
 	Con_Printf ("SDL audio driver: %s, %d bytes buffer\n", drivername, buffersize);
 
@@ -173,6 +170,48 @@ void CSoundSystemLinux::SNDDMA_Shutdown(void)
 		close(audio_fd);
 		snd_inited = 0;
 	}
+}
+
+void CSoundSystemLinux::paint_audio(void* unused, byte* stream, int len)
+{
+	int	pos, tobufend;
+	int	len1, len2;
+    size_t buffersize = 0;
+
+	if (!shm)
+	{	/* shouldn't happen, but just in case */
+		memset(stream, 0, len);
+		return;
+	}
+
+	pos = (shm->samplepos * (shm->samplebits / 8));
+	if (pos >= buffersize)
+		shm->samplepos = pos = 0;
+
+	tobufend = buffersize - pos;  /* bytes to buffer's end. */
+	len1 = len;
+	len2 = 0;
+
+	if (len1 > tobufend)
+	{
+		len1 = tobufend;
+		len2 = len - len1;
+	}
+
+	memcpy(stream, shm->buffer + pos, len1);
+
+	if (len2 <= 0)
+	{
+		shm->samplepos += (len1 / (shm->samplebits / 8));
+	}
+	else
+	{	/* wraparound? */
+		memcpy(stream + len1, shm->buffer, len2);
+		shm->samplepos = (len2 / (shm->samplebits / 8));
+	}
+
+	if (shm->samplepos >= buffersize)
+		shm->samplepos = 0;
 }
 
 /*

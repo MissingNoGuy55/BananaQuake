@@ -210,11 +210,6 @@ public:
 	void SND_InitScaletable(void);
 	void SNDDMA_Submit(void);
 
-#ifdef QUAKE_GAME
-	static void paint_audio(void* unused, Uint8* stream, int len);
-#else
-	static void paint_audio(void* unused, byte* stream, int len);
-#endif
 	void S_AmbientOff(void);
 	void S_AmbientOn(void);
 
@@ -402,6 +397,8 @@ public:
     int SNDDMA_GetDMAPos(void);
     void SNDDMA_Shutdown(void);
     void SNDDMA_Submit(void);
+    
+    static void paint_audio(void* unused, byte* stream, int len);
     
 	/*
 *  Global variables. Must be visible to window-procedure function

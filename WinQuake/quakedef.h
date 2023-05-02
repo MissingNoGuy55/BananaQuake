@@ -233,7 +233,7 @@ typedef uintptr_t src_offset_t;
 // #define IDGODS
 
 #include "common.h"
-#include "BSPFILE.H"
+#include "bspfile.h"
 #include "vid.h"
 #include "sys.h"
 #include "zone.h"

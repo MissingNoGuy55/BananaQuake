@@ -128,7 +128,7 @@ void CSoundDMA::S_Startup (void)
 #ifdef _WIN32
         sound_started = g_SoundSystem->SNDDMA_Init(&sn);
 #elif __linux__
-        sound_started = g_SoundSystem->SNDDMA_Init();
+        sound_started = g_SoundSystem->SNDDMA_Init(&sn);
 #endif
 	if (!sound_started)
 	{

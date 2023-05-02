@@ -114,7 +114,7 @@ void UDP_Listen(bool state)
 	if (state)
 	{
 		if (net_acceptsocket != -1)
-			return;
+            return;
 		if ((net_acceptsocket = UDP_OpenSocket (net_hostport)) == -1)
 			Sys_Error ("UDP_Listen: Unable to open accept socket\n");
 		return;
@@ -132,10 +132,10 @@ void UDP_Listen(bool state)
 int UDP_OpenSocket (int port)
 {
 	int newsocket;
-	struct sockaddr_in address;
+    struct sockaddr_in address;
 	bool didit = true;
 
-	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+    if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 		return -1;
 
 	if (ioctl (newsocket, FIONBIO, (char *)&didit) == -1)
@@ -145,14 +145,12 @@ int UDP_OpenSocket (int port)
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(port);
 #ifdef _WIN32   // Missi (4/22/23)
-	if( bind (newsocket, (void *)&address, sizeof(address)) == -1)
-		goto ErrorReturn;
+    if( bind (newsocket, (void *)&address, sizeof(address)) == -1)
+        goto ErrorReturn;
 #elif __linux__
-    
-    sockaddr sockaddress;
-    
-	if( bind (newsocket, &sockaddress, sizeof(address)) == -1)
-		goto ErrorReturn;    
+
+    if( bind (newsocket, (struct sockaddr *)&address, sizeof(address)) == -1)
+        goto ErrorReturn;
 #endif
 	return newsocket;
 
