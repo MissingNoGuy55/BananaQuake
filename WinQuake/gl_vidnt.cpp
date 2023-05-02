@@ -63,8 +63,7 @@ lmode_t	lowresmodes[] = {
 	{512, 384},
 };
 
-cvar_t  vid_width = {"vid_width", "640", true};
-cvar_t  vid_height = { "vid_height", "640", true};
+
 
 const char*		gl_vendor;
 const char*		gl_renderer;
@@ -88,23 +87,23 @@ static int		windowed_mouse;
 extern bool	mouseactive;  // from in_win.c
 static HICON	hIcon;
 
-int			DIBWidth, DIBHeight;
-RECT		WindowRect;
-DWORD		WindowStyle, ExWindowStyle;
+static int			DIBWidth, DIBHeight;
+static RECT			WindowRect;
+static DWORD		WindowStyle, ExWindowStyle;
 
 HWND	mainwindow, dibwindow;
 
-int			vid_modenum = NO_MODE;
-int			vid_realmode;
-int			vid_default = MODE_WINDOWED;
+static int	vid_modenum = NO_MODE;
+static int	vid_realmode;
+static int	vid_default = MODE_WINDOWED;
 static int	windowed_default;
-unsigned char	vid_curpal[256*3];
+static unsigned char	vid_curpal[256*3];
 static bool fullsbardraw = false;
 
 static float vid_gamma = 1.0;
 
-HGLRC	baseRC;
-HDC		maindc;
+static HGLRC	baseRC;
+static HDC		maindc;
 
 glvert_t glv;
 
@@ -130,7 +129,6 @@ void AppActivate(BOOL fActive, BOOL minimize);
 char *VID_GetModeDescription (int mode);
 void ClearAllStates (void);
 void VID_UpdateWindowStatus (void);
-void GL_Init (void);
 
 PROC QglArrayElementEXT;
 PROC QglColorPointerEXT;
@@ -140,7 +138,6 @@ PROC QglVertexPointerEXT;
 typedef void (APIENTRY *lp3DFXFUNC) (int, int, int, int, int, const void*);
 lp3DFXFUNC QglColorTableEXT;
 bool is8bit = false;
-bool isPermedia = false;
 bool gl_mtexable = false;
 
 //====================================
@@ -195,7 +192,6 @@ void D_EndDirectRect (int x, int y, int width, int height)
 
 void CenterWindow(HWND hWndCenter, int width, int height, BOOL lefttopjustify)
 {
-    RECT    rect;
     int     CenterX, CenterY;
 
 	CenterX = (GetSystemMetrics(SM_CXSCREEN) - width) / 2;
@@ -274,9 +270,9 @@ bool VID_SetWindowedMode (int modenum)
 	PatBlt(hdc,0,0,WindowRect.right,WindowRect.bottom,BLACKNESS);
 	ReleaseDC(dibwindow, hdc);
 
-	if (vid.conheight > modelist[modenum].height)
+	if (vid.conheight > (unsigned int)modelist[modenum].height)
 		vid.conheight = modelist[modenum].height;
-	if (vid.conwidth > modelist[modenum].width)
+	if (vid.conwidth > (unsigned int)modelist[modenum].width)
 		vid.conwidth = modelist[modenum].width;
 	vid.width = vid.conwidth;
 	vid.height = vid.conheight;
@@ -359,9 +355,9 @@ bool VID_SetFullDIBMode (int modenum)
 	PatBlt(hdc,0,0,WindowRect.right,WindowRect.bottom,BLACKNESS);
 	ReleaseDC(dibwindow, hdc);
 
-	if (vid.conheight > modelist[modenum].height)
+	if (vid.conheight > (unsigned int)modelist[modenum].height)
 		vid.conheight = modelist[modenum].height;
-	if (vid.conwidth > modelist[modenum].width)
+	if (vid.conwidth > (unsigned int)modelist[modenum].width)
 		vid.conwidth = modelist[modenum].width;
 	vid.width = vid.conwidth;
 	vid.height = vid.conheight;
@@ -386,7 +382,6 @@ int VID_SetMode (int modenum, unsigned char *palette)
 	int				original_mode, temp;
 	bool		stat;
     MSG				msg;
-	HDC				hdc;
 
 	if ((windowed && (modenum != 0)) ||
 		(!windowed && (modenum < 1)) ||
@@ -648,7 +643,7 @@ GL_Init
 Missi: modified. changed the printing functions to Con_SafePrintf (5/23/2022)
 ===============
 */
-void GL_Init (void)
+void CGLRenderer::GL_Init (void)
 {
 	gl_vendor = (const char*)glGetString(GL_VENDOR);
 	Con_Printf ("GL_VENDOR: %s\n", gl_vendor);
@@ -662,11 +657,8 @@ void GL_Init (void)
 
 //	Con_Printf ("%s %s\n", gl_renderer, gl_version);
 
-    if (strnicmp(gl_renderer,"PowerVR",7)==0)
-         fullsbardraw = true;
-
-    if (strnicmp(gl_renderer,"Permedia",8)==0)
-         isPermedia = true;
+    if (_strnicmp(gl_renderer,"PowerVR",7)==0)
+		fullsbardraw = true;
 
 	CheckTextureExtensions ();
 	CheckMultiTextureExtensions ();
@@ -676,7 +668,7 @@ void GL_Init (void)
 	glEnable(GL_TEXTURE_2D);
 
 	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.666);
+	glAlphaFunc(GL_GREATER, 0.666f);
 
 	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 	glShadeModel (GL_FLAT);
@@ -766,8 +758,7 @@ void	VID_SetPalette (unsigned char *palette)
 	unsigned short i = 0;
 	unsigned	*table = NULL;
 	FILE *f = NULL;
-	char s[255] = "";
-	HWND hDlg, hProgress;
+	HWND hDlg = NULL, hProgress = NULL;
 	float gamma = 0.f;
 
 //
@@ -817,11 +808,14 @@ void	VID_SetPalette (unsigned char *palette)
 
 	g_Common->COM_FOpenFile("gfx/palette.lmp", &f, NULL);
 	if (!f)
+	{
 		Sys_Error("Couldn't load gfx/palette.lmp");
+		return;
+	}
 
 	mark = g_MemCache->Hunk_LowMark();
 	pal = (byte*)g_MemCache->Hunk_Alloc<byte>(768);
-	fread(pal, 1, 768, f);
+	fread(pal, sizeof(byte), 768, f);
 	fclose(f);
 
 	//standard palette, 255 is transparent
@@ -1069,9 +1063,6 @@ void AppActivate(BOOL fActive, BOOL minimize)
 *
 ****************************************************************************/
 {
-	MSG msg;
-    HDC			hdc;
-    int			i, t;
 	static BOOL	sound_active;
 
 	ActiveApp = fActive;
@@ -1135,7 +1126,7 @@ LONG WINAPI MainWndProc (
     LPARAM  lParam)
 {
     LONG    lRet = 1;
-	int		fwKeys, xPos, yPos, fActive, fMinimized, temp;
+	int		fActive, fMinimized, temp;
 	extern unsigned int uiWheelMessage;
 
 	if ( uMsg == uiWheelMessage )
@@ -1414,8 +1405,8 @@ void VID_DescribeModes_f (void)
 void VID_InitDIB (HINSTANCE hInstance)
 {
 	WNDCLASS		wc;
-	HDC				hdc;
-	int				i;
+
+	memset(&wc, 0, sizeof(wc));
 
 	/* Register the frame class */
     wc.style         = 0;
@@ -1454,7 +1445,7 @@ void VID_InitDIB (HINSTANCE hInstance)
 	if (modelist[0].height < 240)
 		modelist[0].height = 240;
 
-	sprintf (modelist[0].modedesc, "%dx%d",
+	snprintf (modelist[0].modedesc, sizeof(modelist[0].modedesc), "%dx%d",
 			 modelist[0].width, modelist[0].height);
 
 	modelist[0].modenum = MODE_WINDOWED;
@@ -1474,7 +1465,7 @@ VID_InitFullDIB
 void VID_InitFullDIB (HINSTANCE hInstance)
 {
 	DEVMODE	devmode;
-	int		i, modenum, cmodes, originalnummodes, existingmode, numlowresmodes;
+	int		i, modenum, originalnummodes, existingmode, numlowresmodes;
 	int		j, bpp, done;
 	BOOL	stat;
 
@@ -1506,7 +1497,7 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 				modelist[nummodes].dib = 1;
 				modelist[nummodes].fullscreen = 1;
 				modelist[nummodes].bpp = devmode.dmBitsPerPel;
-				sprintf (modelist[nummodes].modedesc, "%dx%dx%d",
+				snprintf (modelist[nummodes].modedesc, sizeof(modelist[nummodes].modedesc), "%dx%dx%d",
 						 devmode.dmPelsWidth, devmode.dmPelsHeight,
 						 devmode.dmBitsPerPel);
 
@@ -1518,7 +1509,7 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 					{
 						modelist[nummodes].width >>= 1;
 						modelist[nummodes].halfscreen = 1;
-						sprintf (modelist[nummodes].modedesc, "%dx%dx%d",
+						snprintf (modelist[nummodes].modedesc, sizeof(modelist[nummodes].modedesc), "%dx%dx%d",
 								 modelist[nummodes].width,
 								 modelist[nummodes].height,
 								 modelist[nummodes].bpp);
@@ -1571,7 +1562,7 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 				modelist[nummodes].dib = 1;
 				modelist[nummodes].fullscreen = 1;
 				modelist[nummodes].bpp = devmode.dmBitsPerPel;
-				sprintf (modelist[nummodes].modedesc, "%dx%dx%d",
+				snprintf (modelist[nummodes].modedesc, sizeof(modelist[nummodes].modedesc), "%dx%dx%d",
 						 devmode.dmPelsWidth, devmode.dmPelsHeight,
 						 devmode.dmBitsPerPel);
 
@@ -1654,7 +1645,7 @@ static void Check_Gamma (unsigned char *pal)
 			(gl_vendor && strstr(gl_vendor, "3Dfx")))
 			vid_gamma = 1;
 		else
-			vid_gamma = 0.7; // default to 0.7 on non-3dfx hardware
+			vid_gamma = 0.7f; // default to 0.7 on non-3dfx hardware
 	} else
 		vid_gamma = Q_atof(g_Common->com_argv[i+1]);
 
@@ -1681,7 +1672,6 @@ void	VID_Init (unsigned char *palette)
 {
 	int		i, existingmode;
 	int		basenummodes = 0, width = 0, height = 0, bpp = 0, findbpp = 0, done = 0;
-	byte	*ptmp;
 	char	gldir[MAX_OSPATH];
 	HDC		hdc;
 	DEVMODE	devmode;
@@ -1714,7 +1704,8 @@ void	VID_Init (unsigned char *palette)
 
 	VID_InitFullDIB (global_hInstance);
 
-	if (g_Common->COM_CheckParm("-window") || g_Common->COM_CheckParm("-sw") || g_Common->COM_CheckParm("-windowed"))		// Missi: because I'm very tired of typing "-window"
+	// Missi: Source engine styled "-sw", "-w" and "-h" command support (5/1/2023)
+	if (g_Common->COM_CheckParm("-window") || g_Common->COM_CheckParm("-sw") || g_Common->COM_CheckParm("-windowed"))
 	{
 		hdc = GetDC (NULL);
 
@@ -1787,7 +1778,7 @@ void	VID_Init (unsigned char *palette)
 					modelist[nummodes].dib = 1;
 					modelist[nummodes].fullscreen = 1;
 					modelist[nummodes].bpp = bpp;
-					sprintf (modelist[nummodes].modedesc, "%dx%dx%d",
+					snprintf (modelist[nummodes].modedesc, sizeof(modelist[nummodes].modedesc), "%dx%dx%d",
 							 devmode.dmPelsWidth, devmode.dmPelsHeight,
 							 devmode.dmBitsPerPel);
 
@@ -1936,9 +1927,9 @@ void	VID_Init (unsigned char *palette)
     if (!wglMakeCurrent( maindc, baseRC ))
 		Sys_Error ("wglMakeCurrent failed");
 
-	GL_Init ();
+	g_GLRenderer->GL_Init ();
 
-	sprintf (gldir, "%s/glquake", g_Common->com_gamedir);
+	snprintf (gldir, sizeof(gldir), "%s/glquake", g_Common->com_gamedir);
 	Sys_mkdir (gldir);
 
 	vid_realmode = vid_modenum;
@@ -1992,7 +1983,7 @@ void VID_MenuDraw (void)
 {
 	CQuakePic		*p;
 	char		*ptr;
-	int			lnummodes, i, j, k, column, row, dup, dupmode;
+	int			lnummodes, i, k, column, row;
 	char		temp[100];
 	vmode_t		*pv;
 

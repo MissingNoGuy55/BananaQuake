@@ -1414,7 +1414,6 @@ void CGLRenderer::GL_BuildLightmaps (void)
 {
 	int		i = 0, j = 0;
 	model_t	*m = NULL;
-	bool isPermedia = false;
 
 	//memset (allocated, 0, sizeof(allocated));
 
@@ -1431,10 +1430,10 @@ void CGLRenderer::GL_BuildLightmaps (void)
 		texture_extension_number += MAX_LIGHTMAPS;
 	}
 
-	gl_lightmap_format = GL_LUMINANCE;
+	gl_lightmap_format = GL_RGBA;
 	// default differently on the Permedia
-	if (isPermedia)
-		gl_lightmap_format = GL_RGBA;
+	/*if (isPermedia)
+		gl_lightmap_format = GL_RGBA;*/
 
 	if (g_Common->COM_CheckParm ("-lm_1"))
 		gl_lightmap_format = GL_LUMINANCE;

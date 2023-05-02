@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef __linux__
 #define _strdup strdup
+#define _stricmp stricmp
+#define _strnicmp strnicmp
 #endif
 
 #if !defined BYTE_DEFINED

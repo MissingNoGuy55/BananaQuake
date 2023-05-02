@@ -102,6 +102,9 @@ CGLRenderer::CGLRenderer()
 	draw_disc = NULL;
 	draw_backtile = NULL;
 
+	char_texture = NULL;
+	translate_texture = NULL;
+
 	skychain = NULL;
 	waterchain = NULL;
 
@@ -124,7 +127,6 @@ CGLRenderer::CGLRenderer()
 	gl_lightmap_format = 4;
 	gl_solid_format = 3;
 	gl_alpha_format = 4;
-
 }
 
 CGLRenderer::~CGLRenderer()
@@ -140,15 +142,12 @@ CGLRenderer::~CGLRenderer()
 
 	skytexturenum = 0;
 	lightmap_bytes = 0;
-
-	lightmap_textures = NULL;
-	translate_texture = NULL;
-	char_texture = NULL;
-
-	skytexturenum = 0;
-	lightmap_bytes = 0;
 	lightmap_count = 0;
 	last_lightmap_allocated = 0;
+
+	draw_chars = NULL;
+	draw_disc = NULL;
+	draw_backtile = NULL;
 
 	lightmap_textures = NULL;
 	translate_texture = NULL;
@@ -168,12 +167,12 @@ typedef struct
 } glmode_t;
 
 static glmode_t glmodes[] = {
-	{GL_NEAREST, GL_NEAREST,		"GL_NEAREST"},
-	{GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST,	"GL_NEAREST_MIPMAP_NEAREST"},
-	{GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR,	"GL_NEAREST_MIPMAP_LINEAR"},
-	{GL_LINEAR,  GL_LINEAR,			"GL_LINEAR"},
-	{GL_LINEAR,  GL_LINEAR_MIPMAP_NEAREST,	"GL_LINEAR_MIPMAP_NEAREST"},
-	{GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,	"GL_LINEAR_MIPMAP_LINEAR"},
+	{GL_NEAREST,	GL_NEAREST,					"GL_NEAREST"},
+	{GL_NEAREST,	GL_NEAREST_MIPMAP_NEAREST,	"GL_NEAREST_MIPMAP_NEAREST"},
+	{GL_NEAREST,	GL_NEAREST_MIPMAP_LINEAR,	"GL_NEAREST_MIPMAP_LINEAR"},
+	{GL_LINEAR,		GL_LINEAR,					"GL_LINEAR"},
+	{GL_LINEAR,		GL_LINEAR_MIPMAP_NEAREST,	"GL_LINEAR_MIPMAP_NEAREST"},
+	{GL_LINEAR,		GL_LINEAR_MIPMAP_LINEAR,	"GL_LINEAR_MIPMAP_LINEAR"},
 };
 
 #define NUM_GLMODES (int)(sizeof(glmodes)/sizeof(glmodes[0]))

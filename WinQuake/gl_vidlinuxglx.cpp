@@ -797,6 +797,7 @@ void VID_Init(unsigned char *palette)
 // interpret command-line params
 
 // set vid parameters
+// Missi: Source engine styled "-sw", "-w" and "-h" command support (5/1/2023)
 	if ((i = g_Common->COM_CheckParm("-window")) != 0)
 		fullscreen = false;
 	if ((i = g_Common->COM_CheckParm("-sw")) != 0)

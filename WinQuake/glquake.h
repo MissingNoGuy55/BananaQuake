@@ -229,7 +229,9 @@ public:
 	void Draw_BeginDisc(void);
 	void Draw_EndDisc(void);
 
-    void GL_BeginRendering (int *x, int *y, int *width, int *height);
+	void GL_Init(void);
+
+	void GL_BeginRendering (int *x, int *y, int *width, int *height);
     void GL_EndRendering (void);
     
 	void GL_Set2D(void);
