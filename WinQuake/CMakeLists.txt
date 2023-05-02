@@ -930,7 +930,7 @@ target_link_directories(bananaquakeopengl PUBLIC ${includepathLibraryWinQuakeOpe
 
 if (MSVC)
 
-target_link_libraries(bananaquakesoftware mgllt.lib
+#[[target_link_libraries(bananaquakesoftware mgllt.lib
 SDL2d.lib
 libvorbisfile.lib
 libvorbis.lib
@@ -945,7 +945,7 @@ wsock32.lib
 opengl32.lib
 glu32.lib
 odbc32.lib
-odbccp32.lib)
+odbccp32.lib)]]
 
 target_link_libraries(bananaquakeopengl SDL2d.lib
 libvorbisfile.lib
