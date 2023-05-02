@@ -875,22 +875,22 @@ endif (APPLE)
 #=================================================================
 
 if (WIN32)
-add_executable(bananaquakesoftware WIN32 ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
+# add_executable(bananaquakesoftware WIN32 ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
 add_executable(bananaquakeopengl WIN32 ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
 endif (WIN32)
 
 if (UNIX)
-add_executable(bananaquakesoftware ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
+# add_executable(bananaquakesoftware ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
 add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
 endif(UNIX)
 
 if (APPLE)
-add_executable(bananaquakesoftware ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
+# add_executable(bananaquakesoftware ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
 add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
 endif(APPLE)
 
 #=================================================================
-
+#[[
 if (UNIX)
 target_compile_definitions(bananaquakesoftware PUBLIC LINUX)
 endif (UNIX)
@@ -906,7 +906,7 @@ target_compile_definitions(bananaquakesoftware PUBLIC _DEBUG)
 target_include_directories(bananaquakesoftware PUBLIC
     "${includepathWinQuake}"
 )
-
+]]
 target_compile_definitions(bananaquakeopengl PUBLIC GLQUAKE)
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_VORBIS)
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_WAVE)
@@ -923,7 +923,7 @@ target_include_directories(bananaquakeopengl PUBLIC
 
 #=================================================================
 
-target_link_directories(bananaquakesoftware PUBLIC ${includepathLibraryWinQuakeSoftware})
+#target_link_directories(bananaquakesoftware PUBLIC ${includepathLibraryWinQuakeSoftware})
 target_link_directories(bananaquakeopengl PUBLIC ${includepathLibraryWinQuakeOpenGL})
 
 #=================================================================
@@ -967,13 +967,13 @@ odbccp32.lib)
 endif (MSVC)
 
 if (MSVC)
-target_link_options(bananaquakesoftware PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:-SAFESEH:NO>")
+#target_link_options(bananaquakesoftware PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:-SAFESEH:NO>")
 endif (MSVC)
 
 if (MSVC)
-SET_TARGET_PROPERTIES(bananaquakesoftware PROPERTIES
-LINK_FLAGS_DEBUG
-"/NODEFAULTLIB:libc.lib")
+#SET_TARGET_PROPERTIES(bananaquakesoftware PROPERTIES
+#LINK_FLAGS_DEBUG
+#"/NODEFAULTLIB:libc.lib")
 
 SET_TARGET_PROPERTIES(bananaquakeopengl PROPERTIES
 LINK_FLAGS_DEBUG
@@ -984,11 +984,11 @@ endif (MSVC)
 # SDL2::SDL2main may or may not be available. It is e.g. required by Windows GUI applications
 if(TARGET SDL2::SDL2main)
     # It has an implicit dependency on SDL2 functions, so it MUST be added before SDL2::SDL2 (or SDL2::SDL2-static)
-    target_link_libraries(bananaquakesoftware SDL2::SDL2main)
+#    target_link_libraries(bananaquakesoftware SDL2::SDL2main)
 endif()
 
 # Link to the actual SDL2 library. SDL2::SDL2 is the shared SDL library, SDL2::SDL2-static is the static SDL libarary.
-target_link_libraries(bananaquakesoftware SDL2::SDL2)
+#target_link_libraries(bananaquakesoftware SDL2::SDL2)
 
 if(TARGET SDL2::SDL2main)
     target_link_libraries(bananaquakeopengl SDL2::SDL2main)
@@ -1003,10 +1003,10 @@ target_compile_options(bananaquakeopengl PRIVATE "/MP")
 endif (MSVC)
 
 if (UNIX)
-target_link_libraries(bananaquakesoftware m)
+#[[target_link_libraries(bananaquakesoftware m)
 target_link_libraries(bananaquakesoftware X11)
 target_link_libraries(bananaquakesoftware Xext)
-target_link_libraries(bananaquakesoftware Xxf86dga)
+target_link_libraries(bananaquakesoftware Xxf86dga)]]
 
 target_link_libraries(bananaquakeopengl X11)
 target_link_libraries(bananaquakeopengl Xext)
@@ -1019,11 +1019,12 @@ target_link_libraries(bananaquakeopengl vorbis)
 target_link_libraries(bananaquakeopengl vorbisfile)
 
 target_link_libraries(bananaquakeopengl GL)
+target_link_libraries(bananaquakeopengl GLU)
 
 SET(ASM_OPTIONS "-DELF -x assembler-with-cpp")
 SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 
-target_compile_options(bananaquakesoftware PUBLIC "-Dstricmp=strcasecmp -g")
+#target_compile_options(bananaquakesoftware PUBLIC "-Dstricmp=strcasecmp -g")
 target_compile_options(bananaquakeopengl PUBLIC "-Dstricmp=strcasecmp -g")
 
 # target_compile_options(bananaquakesoftware PUBLIC ${BQUAKE_COMPILE_FLAGS})
@@ -1033,6 +1034,6 @@ endif (UNIX)
 
 if (APPLE)
 
-target_link_libraries(bananaquakesoftware GL)
+#target_link_libraries(bananaquakesoftware GL)
 
 endif (APPLE)
