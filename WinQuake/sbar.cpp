@@ -992,11 +992,7 @@ void Sbar_Draw (void)
 		if (cl.items & IT_INVULNERABILITY)
 		{
 			Sbar_DrawNum (24, 0, 666, 3, 1);
-#ifdef GLQUAKE	// Missi (4/24/2023)
-			Sbar_DrawPic (0, 0, g_GLRenderer->GetLoadingDisc());
-#else
-			Sbar_DrawPic(0, 0, g_SoftwareRenderer->GetLoadingDisc());
-#endif
+			Sbar_DrawPic (0, 0, ResolveRenderer()->GetLoadingDisc());
 		}
 		else
 		{
