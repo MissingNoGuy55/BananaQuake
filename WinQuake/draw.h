@@ -56,8 +56,6 @@ public:
 
 	void R_MakeSky(void);
 
-	int dummy;
-
 	byte* draw_chars;				// 8*8 graphic characters
 	CQuakePic* draw_disc;
 	CQuakePic* draw_backtile;
@@ -65,12 +63,14 @@ public:
 	CQuakePic* GetLoadingDisc() const { return draw_disc; }
 	CQuakePic* GetBackTile() const { return draw_backtile; }
 
-	virtual CSoftwareRenderer* GetRenderer() { return dynamic_cast<CSoftwareRenderer*>(g_CoreRenderer); } 
-
 private:
 
 	CSoftwareRenderer(const CSoftwareRenderer& src);
 
 };
+
+//byte* draw_chars;				// 8*8 graphic characters
+//CQuakePic* draw_disc;
+//CQuakePic* draw_backtile;
 
 extern CSoftwareRenderer* g_SoftwareRenderer;

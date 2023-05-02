@@ -118,7 +118,7 @@ CQuakePic* CSoftwareRenderer::Draw_CachePic (const char *path)
 }
 
 
-CSoftwareRenderer::CSoftwareRenderer() : dummy(0)
+CSoftwareRenderer::CSoftwareRenderer() : draw_chars(NULL), draw_backtile(NULL), draw_disc(NULL)
 {
 }
 
