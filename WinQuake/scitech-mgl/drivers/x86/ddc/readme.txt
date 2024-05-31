@@ -1,1 +1,0 @@
-This file exists to ensure this directory is created by Perforce

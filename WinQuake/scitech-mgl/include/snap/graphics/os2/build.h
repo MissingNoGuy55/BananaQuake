@@ -1,2 +1,0 @@
-#define BUILD_NUMBER "506"
-#define BUILD_NUMBER_INT 506

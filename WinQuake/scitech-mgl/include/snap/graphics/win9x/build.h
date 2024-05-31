@@ -1,2 +1,0 @@
-#define BUILD_NUMBER "1368"
-#define BUILD_NUMBER_INT 1368
