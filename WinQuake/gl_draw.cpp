@@ -100,20 +100,20 @@ CGLRenderer::CGLRenderer()
 	lightmap_count = 0;
 	last_lightmap_allocated = 0;
 
-	draw_chars = NULL;
-	draw_disc = NULL;
-	draw_backtile = NULL;
+	draw_chars = nullptr;
+	draw_disc = nullptr;
+	draw_backtile = nullptr;
 
-	char_texture = NULL;
-	translate_texture = NULL;
+	char_texture = nullptr;
+	translate_texture = nullptr;
 
-	skychain = NULL;
-	waterchain = NULL;
+	skychain = nullptr;
+	waterchain = nullptr;
 
 	gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
 	gl_filter_max = GL_LINEAR;
 
-	lightmap_textures = NULL;
+	lightmap_textures = nullptr;
 
 	free_gltextures = g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture) * MAX_GLTEXTURES, "gltextures");
 	active_gltextures = nullptr;
