@@ -1004,6 +1004,9 @@ void CGLRenderer::R_RecursiveWorldNode (mnode_t *node)
 	double		d, dot;
 	vec3_t		mins, maxs;
 
+	if (!node)
+		return;
+
 	if (node->contents == CONTENTS_SOLID)
 		return;		// solid
 
@@ -1421,7 +1424,16 @@ void CGLRenderer::GL_BuildLightmaps (void)
 
 	//Spike -- wipe out all the lightmap data (johnfitz -- the gltexture objects were already freed by Mod_ClearAll)
 	if (lightmap_textures)
-		lightmap_textures = NULL;
+	{
+		memset(allocated, 0, sizeof(allocated));
+		memset(blocklights, 0, sizeof(blocklights));
+		memset(lightmaps, 0, sizeof(lightmaps));
+		memset(lightmap_modified, 0, sizeof(lightmap_modified));
+		memset(lightmap_polys, 0, sizeof(lightmap_polys));
+		memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
+		memset(lightmap_textures, 0, sizeof(*lightmap_textures) * lightmap_count);
+		lightmap_textures = nullptr;
+	}
 
 	if (!lightmap_textures)
 	{
@@ -1489,7 +1501,7 @@ void CGLRenderer::GL_BuildLightmaps (void)
 	//
 	// upload all lightmaps that were filled
 	//
-	for (i=0 ; i<MAX_LIGHTMAPS ; i++)
+	for (i=0 ; i<MAX_LIGHTMAPS ; i++, lightmap_count++)
 	{
 
 		char name[64];
