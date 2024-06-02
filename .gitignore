@@ -41,3 +41,4 @@
 #/tools/.vs
 #/tools/qcc/.vs
 /WinQuake/scitech-mgl/*
+/WinQuake/build/*
