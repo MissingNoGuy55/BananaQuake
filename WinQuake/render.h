@@ -41,7 +41,7 @@ constexpr short BLOCK_HEIGHT = 256;
 constexpr short LMBLOCK_WIDTH = 256;
 constexpr short LMBLOCK_HEIGHT = 256;
 
-constexpr short MAX_LIGHTMAPS = 64;
+constexpr short MAX_LIGHTMAPS = 512;		// Missi: was 64 (6/2/2024)
 
 //=============================================================================
 
