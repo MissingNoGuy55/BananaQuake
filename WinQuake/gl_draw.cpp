@@ -1985,5 +1985,4 @@ CGLTexture::CGLTexture(const CGLTexture& obj) : next(NULL),
 
 CGLTexture::~CGLTexture()
 {
-	memset(&pic.datavec, 0, sizeof(CQuakePic));
 }
