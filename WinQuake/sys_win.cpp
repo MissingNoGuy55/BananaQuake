@@ -1,6 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
-Copyright (C) 2021-2023 Stephen Schmiedeberg
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // sys_win.c -- Win32 system interface code
+
+#define SDL_MAIN_HANDLED
 
 #include "quakedef.h"
 #include "host.h"
@@ -54,7 +56,7 @@ static bool			isDedicated;
 static bool			sc_return_on_enter = false;
 static HANDLE		hinput, houtput;
 
-static char			*tracking_tag = "Clams & Mooses";
+static const char	*tracking_tag = "Clams & Mooses";
 
 static HANDLE	tevent;
 static HANDLE	hFile;
@@ -190,7 +192,7 @@ int Sys_FileOpenWrite (const char *path)
 	FILE	*f = NULL;
 	int		i = 0;
 	int		t = 0;
-	char*	p = "";
+	char	p[MAX_OSPATH];
 	errno_t err;
 #ifndef QUAKE_TOOLS
 	t = VID_ForceUnlockedAndReturnState ();
@@ -199,8 +201,8 @@ int Sys_FileOpenWrite (const char *path)
 
 	Q_strcpy(p, path);
 
-	err = fopen_s(&f, path, "wb");
-	if (!err)
+	err = fopen_s(&f, path, "w+b");
+	if (err)
 		Sys_Error ("Error opening %s: %s", path,strerror_s(p,strlen(path),errno));
 	sys_handles[i] = f;
 	
@@ -439,9 +441,9 @@ void Sys_Error (const char *error, ...)
 {
 	va_list		argptr;
 	char		text[1024], text2[1024];
-	char		*text3 = "Press Enter to exit\n";
-	char		*text4 = "***********************************\n";
-	char		*text5 = "\n";
+	const char		*text3 = "Press Enter to exit\n";
+	const char		*text4 = "***********************************\n";
+	const char		*text5 = "\n";
 	DWORD		dummy;
 	double		starttime;
 	static int	in_sys_error0 = 0;
@@ -837,7 +839,7 @@ WinMain
 HINSTANCE	global_hInstance;
 int			global_nCmdShow;
 char		*argv[MAX_NUM_ARGVS];
-static char	*empty_string = "";
+static const char	*empty_string = "";
 HWND		hwnd_dialog = {};
 
 
@@ -881,7 +883,8 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	parms.cachedir = NULL;
 
 	parms.argc = 1;
-	argv[0] = empty_string;
+	argv[0] = new char[1];
+	Q_strncpy(argv[0], empty_string, sizeof(*empty_string));
 
 	while (*lpCmdLine && (parms.argc < MAX_NUM_ARGVS))
 	{

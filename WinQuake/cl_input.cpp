@@ -54,13 +54,12 @@ kbutton_t	in_up, in_down;
 
 int			in_impulse;
 
-
 void KeyDown (kbutton_t *b)
 {
 	int		k;
 	const char	*c = NULL;
 
-	c = Cmd_Argv(1);
+	c = g_pCmds->Cmd_Argv(1);
 	if (c[0])
 		k = atoi(c);
 	else
@@ -89,7 +88,7 @@ void KeyUp (kbutton_t *b)
 	int		k;
 	const char	*c = NULL;
 	
-	c = Cmd_Argv(1);
+	c = g_pCmds->Cmd_Argv(1);
 	if (c[0])
 		k = atoi(c);
 	else
@@ -156,7 +155,7 @@ void IN_UseUp (void) {KeyUp(&in_use);}
 void IN_JumpDown (void) {KeyDown(&in_jump);}
 void IN_JumpUp (void) {KeyUp(&in_jump);}
 
-void IN_Impulse (void) {in_impulse=Q_atoi(Cmd_Argv(1));}
+void IN_Impulse (void) {in_impulse=Q_atoi(g_pCmds->Cmd_Argv(1));}
 
 /*
 ===============
@@ -408,41 +407,41 @@ CL_InitInput
 */
 void CL_InitInput (void)
 {
-	Cmd_AddCommand ("+moveup",IN_UpDown);
-	Cmd_AddCommand ("-moveup",IN_UpUp);
-	Cmd_AddCommand ("+movedown",IN_DownDown);
-	Cmd_AddCommand ("-movedown",IN_DownUp);
-	Cmd_AddCommand ("+left",IN_LeftDown);
-	Cmd_AddCommand ("-left",IN_LeftUp);
-	Cmd_AddCommand ("+right",IN_RightDown);
-	Cmd_AddCommand ("-right",IN_RightUp);
-	Cmd_AddCommand ("+forward",IN_ForwardDown);
-	Cmd_AddCommand ("-forward",IN_ForwardUp);
-	Cmd_AddCommand ("+back",IN_BackDown);
-	Cmd_AddCommand ("-back",IN_BackUp);
-	Cmd_AddCommand ("+lookup", IN_LookupDown);
-	Cmd_AddCommand ("-lookup", IN_LookupUp);
-	Cmd_AddCommand ("+lookdown", IN_LookdownDown);
-	Cmd_AddCommand ("-lookdown", IN_LookdownUp);
-	Cmd_AddCommand ("+strafe", IN_StrafeDown);
-	Cmd_AddCommand ("-strafe", IN_StrafeUp);
-	Cmd_AddCommand ("+moveleft", IN_MoveleftDown);
-	Cmd_AddCommand ("-moveleft", IN_MoveleftUp);
-	Cmd_AddCommand ("+moveright", IN_MoverightDown);
-	Cmd_AddCommand ("-moveright", IN_MoverightUp);
-	Cmd_AddCommand ("+speed", IN_SpeedDown);
-	Cmd_AddCommand ("-speed", IN_SpeedUp);
-	Cmd_AddCommand ("+attack", IN_AttackDown);
-	Cmd_AddCommand ("-attack", IN_AttackUp);
-	Cmd_AddCommand ("+use", IN_UseDown);
-	Cmd_AddCommand ("-use", IN_UseUp);
-	Cmd_AddCommand ("+jump", IN_JumpDown);
-	Cmd_AddCommand ("-jump", IN_JumpUp);
-	Cmd_AddCommand ("impulse", IN_Impulse);
-	Cmd_AddCommand ("+klook", IN_KLookDown);
-	Cmd_AddCommand ("-klook", IN_KLookUp);
-	Cmd_AddCommand ("+mlook", IN_MLookDown);
-	Cmd_AddCommand ("-mlook", IN_MLookUp);
+	g_pCmds->Cmd_AddCommand ("+moveup",IN_UpDown);
+	g_pCmds->Cmd_AddCommand ("-moveup",IN_UpUp);
+	g_pCmds->Cmd_AddCommand ("+movedown",IN_DownDown);
+	g_pCmds->Cmd_AddCommand ("-movedown",IN_DownUp);
+	g_pCmds->Cmd_AddCommand ("+left",IN_LeftDown);
+	g_pCmds->Cmd_AddCommand ("-left",IN_LeftUp);
+	g_pCmds->Cmd_AddCommand ("+right",IN_RightDown);
+	g_pCmds->Cmd_AddCommand ("-right",IN_RightUp);
+	g_pCmds->Cmd_AddCommand ("+forward",IN_ForwardDown);
+	g_pCmds->Cmd_AddCommand ("-forward",IN_ForwardUp);
+	g_pCmds->Cmd_AddCommand ("+back",IN_BackDown);
+	g_pCmds->Cmd_AddCommand ("-back",IN_BackUp);
+	g_pCmds->Cmd_AddCommand ("+lookup", IN_LookupDown);
+	g_pCmds->Cmd_AddCommand ("-lookup", IN_LookupUp);
+	g_pCmds->Cmd_AddCommand ("+lookdown", IN_LookdownDown);
+	g_pCmds->Cmd_AddCommand ("-lookdown", IN_LookdownUp);
+	g_pCmds->Cmd_AddCommand ("+strafe", IN_StrafeDown);
+	g_pCmds->Cmd_AddCommand ("-strafe", IN_StrafeUp);
+	g_pCmds->Cmd_AddCommand ("+moveleft", IN_MoveleftDown);
+	g_pCmds->Cmd_AddCommand ("-moveleft", IN_MoveleftUp);
+	g_pCmds->Cmd_AddCommand ("+moveright", IN_MoverightDown);
+	g_pCmds->Cmd_AddCommand ("-moveright", IN_MoverightUp);
+	g_pCmds->Cmd_AddCommand ("+speed", IN_SpeedDown);
+	g_pCmds->Cmd_AddCommand ("-speed", IN_SpeedUp);
+	g_pCmds->Cmd_AddCommand ("+attack", IN_AttackDown);
+	g_pCmds->Cmd_AddCommand ("-attack", IN_AttackUp);
+	g_pCmds->Cmd_AddCommand ("+use", IN_UseDown);
+	g_pCmds->Cmd_AddCommand ("-use", IN_UseUp);
+	g_pCmds->Cmd_AddCommand ("+jump", IN_JumpDown);
+	g_pCmds->Cmd_AddCommand ("-jump", IN_JumpUp);
+	g_pCmds->Cmd_AddCommand ("impulse", IN_Impulse);
+	g_pCmds->Cmd_AddCommand ("+klook", IN_KLookDown);
+	g_pCmds->Cmd_AddCommand ("-klook", IN_KLookUp);
+	g_pCmds->Cmd_AddCommand ("+mlook", IN_MLookDown);
+	g_pCmds->Cmd_AddCommand ("-mlook", IN_MLookUp);
 
 }
 

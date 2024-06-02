@@ -63,6 +63,7 @@ public:
 	void Host_EndGame(const char* message, ...);
 	void Host_Frame(float time);
 	static void Host_Quit_f(void);
+	static void Host_Status_f(void);
 	void Host_ClientCommands(const char* fmt, ...);
 	void Host_ShutdownServer(bool crash);
 

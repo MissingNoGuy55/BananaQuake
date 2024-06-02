@@ -432,14 +432,14 @@ void M_SinglePlayer_Key (int key)
 		switch (m_singleplayer_cursor)
 		{
 		case 0:
-			if (sv.active)
+			if (sv->active)
 				if (!SCR_ModalMessage("Are you sure you want to\nstart a new game?\n"))
 					break;
 			key_dest = key_game;
-			if (sv.active)
-				Cbuf_AddText ("disconnect\n");
-			Cbuf_AddText ("maxplayers 1\n");
-			Cbuf_AddText ("map start\n");
+			if (sv->active)
+				g_pCmdBuf->Cbuf_AddText ("disconnect\n");
+			g_pCmdBuf->Cbuf_AddText ("maxplayers 1\n");
+			g_pCmdBuf->Cbuf_AddText ("map start\n");
 			break;
 
 		case 1:
@@ -501,7 +501,7 @@ void M_Menu_Load_f (void)
 
 void M_Menu_Save_f (void)
 {
-	if (!sv.active)
+	if (!sv->active)
 		return;
 	if (cl.intermission)
 		return;
@@ -568,7 +568,7 @@ void M_Load_Key (int k)
 		SCR_BeginLoadingPlaque ();
 
 	// issue the load command
-		Cbuf_AddText (g_Common->va ("load s%i\n", load_cursor) );
+		g_pCmdBuf->Cbuf_AddText (g_Common->va ("load s%i\n", load_cursor) );
 		return;
 
 	case K_UPARROW:
@@ -601,7 +601,7 @@ void M_Save_Key (int k)
 	case K_ENTER:
 		m_state = m_none;
 		key_dest = key_game;
-		Cbuf_AddText (g_Common->va("save s%i\n", load_cursor));
+		g_pCmdBuf->Cbuf_AddText (g_Common->va("save s%i\n", load_cursor));
 		return;
 
 	case K_UPARROW:
@@ -818,11 +818,11 @@ forward:
 
 		// setup_cursor == 4 (OK)
 		if (Q_strcmp(cl_name.string, setup_myname) != 0)
-			Cbuf_AddText (g_Common->va ("name \"%s\"\n", setup_myname) );
+			g_pCmdBuf->Cbuf_AddText (g_Common->va ("name \"%s\"\n", setup_myname) );
 		if (Q_strcmp(hostname.string, setup_hostname) != 0)
 			Cvar_Set("hostname", setup_hostname);
 		if (setup_top != setup_oldtop || setup_bottom != setup_oldbottom)
-			Cbuf_AddText(g_Common->va ("color %i %i\n", setup_top, setup_bottom) );
+			g_pCmdBuf->Cbuf_AddText(g_Common->va ("color %i %i\n", setup_top, setup_bottom) );
 		m_entersound = true;
 		M_Menu_MultiPlayer_f ();
 		break;
@@ -1294,7 +1294,7 @@ void M_Options_Key (int k)
 			Con_ToggleConsole_f ();
 			break;
 		case 2:
-			Cbuf_AddText ("exec default.cfg\n");
+			g_pCmdBuf->Cbuf_AddText ("exec default.cfg\n");
 			break;
 		case 12:
 			M_Menu_Video_f ();
@@ -1500,7 +1500,7 @@ void M_Keys_Key (int k)
 		else if (k != '`')
 		{
 			sprintf (cmd, "bind \"%s\" \"%s\"\n", Key_KeynumToString (k), bindnames[keys_cursor][0]);
-			Cbuf_InsertText (cmd);
+			g_pCmdBuf->Cbuf_InsertText (cmd);
 		}
 
 		bind_grab = false;
@@ -2017,9 +2017,9 @@ forward:
 		m_state = m_none;
 
 		if (SerialConfig)
-			Cbuf_AddText (g_Common->va ("connect \"%s\"\n", serialConfig_phone));
+			g_pCmdBuf->Cbuf_AddText (g_Common->va ("connect \"%s\"\n", serialConfig_phone));
 		else
-			Cbuf_AddText ("connect\n");
+			g_pCmdBuf->Cbuf_AddText ("connect\n");
 		break;
 
 	case K_BACKSPACE:
@@ -2375,7 +2375,7 @@ void M_LanConfig_Key (int key)
 			m_return_onerror = true;
 			key_dest = key_game;
 			m_state = m_none;
-			Cbuf_AddText (g_Common->va ("connect \"%s\"\n", lanConfig_joinname) );
+			g_pCmdBuf->Cbuf_AddText (g_Common->va ("connect \"%s\"\n", lanConfig_joinname) );
 			break;
 		}
 
@@ -2877,18 +2877,18 @@ void M_GameOptions_Key (int key)
 		g_SoundSystem->S_LocalSound ("misc/menu2.wav");
 		if (gameoptions_cursor == 0)
 		{
-			if (sv.active)
-				Cbuf_AddText ("disconnect\n");
-			Cbuf_AddText ("listen 0\n");	// so host_netport will be re-examined
-			Cbuf_AddText (g_Common->va ("maxplayers %u\n", maxplayers) );
+			if (sv->active)
+				g_pCmdBuf->Cbuf_AddText ("disconnect\n");
+			g_pCmdBuf->Cbuf_AddText ("listen 0\n");	// so host_netport will be re-examined
+			g_pCmdBuf->Cbuf_AddText (g_Common->va ("maxplayers %u\n", maxplayers) );
 			SCR_BeginLoadingPlaque ();
 
 			if (hipnotic)
-				Cbuf_AddText (g_Common->va ("map %s\n", hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel].name) );
+				g_pCmdBuf->Cbuf_AddText (g_Common->va ("map %s\n", hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel].name) );
 			else if (rogue)
-				Cbuf_AddText (g_Common->va ("map %s\n", roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].name) );
+				g_pCmdBuf->Cbuf_AddText (g_Common->va ("map %s\n", roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].name) );
 			else
-				Cbuf_AddText (g_Common->va ("map %s\n", levels[episodes[startepisode].firstLevel + startlevel].name) );
+				g_pCmdBuf->Cbuf_AddText (g_Common->va ("map %s\n", levels[episodes[startepisode].firstLevel + startlevel].name) );
 
 			return;
 		}
@@ -3054,7 +3054,7 @@ void M_ServerList_Key (int k)
 		slist_sorted = false;
 		key_dest = key_game;
 		m_state = m_none;
-		Cbuf_AddText (g_Common->va ("connect \"%s\"\n", hostcache[slist_cursor].cname) );
+		g_pCmdBuf->Cbuf_AddText (g_Common->va ("connect \"%s\"\n", hostcache[slist_cursor].cname) );
 		break;
 
 	default:
@@ -3069,19 +3069,19 @@ void M_ServerList_Key (int k)
 
 void M_Init (void)
 {
-	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
+	g_pCmds->Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 
-	Cmd_AddCommand ("menu_main", M_Menu_Main_f);
-	Cmd_AddCommand ("menu_singleplayer", M_Menu_SinglePlayer_f);
-	Cmd_AddCommand ("menu_load", M_Menu_Load_f);
-	Cmd_AddCommand ("menu_save", M_Menu_Save_f);
-	Cmd_AddCommand ("menu_multiplayer", M_Menu_MultiPlayer_f);
-	Cmd_AddCommand ("menu_setup", M_Menu_Setup_f);
-	Cmd_AddCommand ("menu_options", M_Menu_Options_f);
-	Cmd_AddCommand ("menu_keys", M_Menu_Keys_f);
-	Cmd_AddCommand ("menu_video", M_Menu_Video_f);
-	Cmd_AddCommand ("help", M_Menu_Help_f);
-	Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
+	g_pCmds->Cmd_AddCommand ("menu_main", M_Menu_Main_f);
+	g_pCmds->Cmd_AddCommand ("menu_singleplayer", M_Menu_SinglePlayer_f);
+	g_pCmds->Cmd_AddCommand ("menu_load", M_Menu_Load_f);
+	g_pCmds->Cmd_AddCommand ("menu_save", M_Menu_Save_f);
+	g_pCmds->Cmd_AddCommand ("menu_multiplayer", M_Menu_MultiPlayer_f);
+	g_pCmds->Cmd_AddCommand ("menu_setup", M_Menu_Setup_f);
+	g_pCmds->Cmd_AddCommand ("menu_options", M_Menu_Options_f);
+	g_pCmds->Cmd_AddCommand ("menu_keys", M_Menu_Keys_f);
+	g_pCmds->Cmd_AddCommand ("menu_video", M_Menu_Video_f);
+	g_pCmds->Cmd_AddCommand ("help", M_Menu_Help_f);
+	g_pCmds->Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
 }
 
 
@@ -3286,10 +3286,10 @@ void M_ConfigureNetSubsystem(void)
 {
 // enable/disable net systems to match desired config
 
-	Cbuf_AddText ("stopdemo\n");
+	g_pCmdBuf->Cbuf_AddText ("stopdemo\n");
 	if (SerialConfig || DirectConfig)
 	{
-		Cbuf_AddText ("com1 enable\n");
+		g_pCmdBuf->Cbuf_AddText ("com1 enable\n");
 	}
 
 	if (IPXConfig || TCPIPConfig)

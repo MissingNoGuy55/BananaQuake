@@ -24,7 +24,7 @@
 typedef int	func_t;
 typedef int	string_t;
 
-typedef enum {ev_void, ev_string, ev_float, ev_vector, ev_entity, ev_field, ev_function, ev_pointer} etype_t;
+typedef enum {ev_void, ev_string, ev_float, ev_vector, ev_entity, ev_field, ev_function, ev_pointer, ev_cppvector} etype_t;
 
 
 #define	OFS_NULL		0
@@ -115,7 +115,18 @@ enum {
 	OP_OR,
 	
 	OP_BITAND,
-	OP_BITOR
+	OP_BITOR,
+
+	OP_SWITCH_F,
+	OP_SWITCH_FV,
+	OP_SWITCH_E,
+	OP_SWITCH_S,
+	OP_CASE,
+	OP_DEFAULT,
+	OP_BREAK,
+
+	OP_ARRAY_OPEN,
+	OP_ARRAY_CLOSE
 };
 
 

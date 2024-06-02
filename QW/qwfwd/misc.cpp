@@ -343,7 +343,7 @@ void Info_RemovePrefixedKeys (char *start, char prefix)
 	char	value[512];
 	char	*o;
 
-	s = start;
+	s = start;
 	while (1)
 	{
 		if (*s == '\\')

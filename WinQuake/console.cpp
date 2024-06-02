@@ -242,10 +242,10 @@ void Con_Init (void)
 //
 	Cvar_RegisterVariable (&con_notifytime);
 
-	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
-	Cmd_AddCommand ("messagemode", Con_MessageMode_f);
-	Cmd_AddCommand ("messagemode2", Con_MessageMode2_f);
-	Cmd_AddCommand ("clear", Con_Clear_f);
+	g_pCmds->Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
+	g_pCmds->Cmd_AddCommand ("messagemode", Con_MessageMode_f);
+	g_pCmds->Cmd_AddCommand ("messagemode2", Con_MessageMode2_f);
+	g_pCmds->Cmd_AddCommand ("clear", Con_Clear_f);
 	con_initialized = true;
 }
 
@@ -357,11 +357,13 @@ Con_DebugLog
 void Con_DebugLog(const char *file, const char *fmt, ...)
 {
     va_list argptr; 
-    static char data[1024];
+    static char data[8192];
     
+	// Missi: the use of vsprintf caused entire memory to get corrupted in Windows (9/12/2023)
     va_start(argptr, fmt);
     vsprintf(data, fmt, argptr);
     va_end(argptr);
+
 #ifdef __linux__
     int fd = 0;
 	int fw = 0;
@@ -371,7 +373,7 @@ void Con_DebugLog(const char *file, const char *fmt, ...)
 #elif _WIN32
 	FILE* fd = NULL;
 	size_t fw = 0;
-	fopen_s(&fd, file, "w+t"); // O_WRONLY | O_CREAT | O_APPEND, 0666);
+	fopen_s(&fd, file, "a+t"); // O_WRONLY | O_CREAT | O_APPEND, 0666);
 
 	if (!fd)
 		return;

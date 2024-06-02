@@ -111,9 +111,9 @@ void NET_Ban_f (void)
 
 	if (cmd_source == src_command)
 	{
-		if (!sv.active)
+		if (!sv->active)
 		{
-			Cmd_ForwardToServer ();
+			g_pCmds->Cmd_ForwardToServer ();
 			return;
 		}
 		print = Con_Printf;
@@ -125,7 +125,7 @@ void NET_Ban_f (void)
 		print = CQuakeServer::SV_ClientPrintf;
 	}
 
-	switch (Cmd_Argc ())
+	switch (g_pCmds->Cmd_Argc ())
 	{
 		case 1:
 			if (((struct in_addr *)&banAddr)->s_addr)
@@ -139,16 +139,16 @@ void NET_Ban_f (void)
 			break;
 
 		case 2:
-			if (Q_strcasecmp(Cmd_Argv(1), "off") == 0)
+			if (Q_strcasecmp(g_pCmds->Cmd_Argv(1), "off") == 0)
 				banAddr = 0x00000000;
 			else
-				banAddr = inet_addr(Cmd_Argv(1));
+				banAddr = inet_addr(g_pCmds->Cmd_Argv(1));
 			banMask = 0xffffffff;
 			break;
 
 		case 3:
-			banAddr = inet_addr(Cmd_Argv(1));
-			banMask = inet_addr(Cmd_Argv(2));
+			banAddr = inet_addr(g_pCmds->Cmd_Argv(1));
+			banMask = inet_addr(g_pCmds->Cmd_Argv(2));
 			break;
 
 		default:
@@ -476,7 +476,7 @@ void NET_Stats_f (void)
 {
 	qsocket_t	*s;
 
-	if (Cmd_Argc () == 1)
+	if (g_pCmds->Cmd_Argc () == 1)
 	{
 		Con_Printf("unreliable messages sent   = %i\n", unreliableMessagesSent);
 		Con_Printf("unreliable messages recv   = %i\n", unreliableMessagesReceived);
@@ -489,7 +489,7 @@ void NET_Stats_f (void)
 		Con_Printf("shortPacketCount           = %i\n", shortPacketCount);
 		Con_Printf("droppedDatagrams           = %i\n", droppedDatagrams);
 	}
-	else if (Q_strcmp(Cmd_Argv(1), "*") == 0)
+	else if (Q_strcmp(g_pCmds->Cmd_Argv(1), "*") == 0)
 	{
 		for (s = net_activeSockets; s; s = s->next)
 			PrintStats(s);
@@ -499,11 +499,11 @@ void NET_Stats_f (void)
 	else
 	{
 		for (s = net_activeSockets; s; s = s->next)
-			if (Q_strcasecmp(Cmd_Argv(1), s->address) == 0)
+			if (Q_strcasecmp(g_pCmds->Cmd_Argv(1), s->address) == 0)
 				break;
 		if (s == NULL)
 			for (s = net_freeSockets; s; s = s->next)
-				if (Q_strcasecmp(Cmd_Argv(1), s->address) == 0)
+				if (Q_strcasecmp(g_pCmds->Cmd_Argv(1), s->address) == 0)
 					break;
 		if (s == NULL)
 			return;
@@ -587,7 +587,7 @@ static void Test_f (void)
 	if (testInProgress)
 		return;
 
-	Q_strncpy(host, Cmd_Argv(1), sizeof(host));
+	Q_strncpy(host, g_pCmds->Cmd_Argv(1), sizeof(host));
 
 	if (host && hostCacheCount)
 	{
@@ -715,7 +715,7 @@ static void Test2_f (void)
 	if (test2InProgress)
 		return;
 
-	Q_strncpy(host, Cmd_Argv (1), sizeof(host));
+	Q_strncpy(host, g_pCmds->Cmd_Argv (1), sizeof(host));
 
 	if (host && hostCacheCount)
 	{
@@ -770,7 +770,7 @@ int Datagram_Init (void)
 	int csock;
 
 	myDriverLevel = net_driverlevel;
-	Cmd_AddCommand ("net_stats", NET_Stats_f);
+	g_pCmds->Cmd_AddCommand ("net_stats", NET_Stats_f);
 
 	if (g_Common->COM_CheckParm("-nolan"))
 		return -1;
@@ -785,10 +785,10 @@ int Datagram_Init (void)
 		}
 
 #ifdef BAN_TEST
-	Cmd_AddCommand ("ban", NET_Ban_f);
+	g_pCmds->Cmd_AddCommand ("ban", NET_Ban_f);
 #endif
-	Cmd_AddCommand ("test", Test_f);
-	Cmd_AddCommand ("test2", Test2_f);
+	g_pCmds->Cmd_AddCommand ("test", Test_f);
+	g_pCmds->Cmd_AddCommand ("test2", Test2_f);
 
 	return 0;
 }
@@ -875,7 +875,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 		dfunc.GetSocketAddr(acceptsock, &newaddr);
 		MSG_WriteString(&net_message, dfunc.AddrToString(&newaddr));
 		MSG_WriteString(&net_message, hostname.string);
-		MSG_WriteString(&net_message, sv.name);
+		MSG_WriteString(&net_message, sv->name);
 		MSG_WriteByte(&net_message, net_activeconnections);
 		MSG_WriteByte(&net_message, svs.maxclients);
 		MSG_WriteByte(&net_message, NET_PROTOCOL_VERSION);

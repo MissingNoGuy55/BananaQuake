@@ -749,74 +749,26 @@ void CGLRenderer::GL_EndRendering (void)
 
 void	VID_SetPalette (unsigned char *palette)
 {
-	byte	*pal = NULL, *src = NULL, *dst = NULL;
-	unsigned r = 0 ,g = 0, b = 0;
-	unsigned v = 0;
-	int     r1 = 0, g1 = 0, b1 = 0;
-	int		j = 0, k = 0, l = 0, m = 0;
+	byte	*pal = nullptr, *src = nullptr, *dst = nullptr;
 	int		mark = 0;
 	unsigned short i = 0;
-	unsigned	*table = NULL;
-	FILE *f = NULL;
-	HWND hDlg = NULL, hProgress = NULL;
-	float gamma = 0.f;
+	FILE *f = nullptr;
 
-//
-// 8 8 8 encoding
-//
-//	pal = palette;
-//	table = d_8to24table;
-//	for (i=0 ; i<256 ; i++)
-//	{
-//		r = pal[0];
-//		g = pal[1];
-//		b = pal[2];
-//		pal += 3;
-//		
-////		v = (255<<24) + (r<<16) + (g<<8) + (b<<0);
-////		v = (255<<0) + (r<<8) + (g<<16) + (b<<24);
-//		v = (255<<24) + (r<<0) + (g<<8) + (b<<16);
-//		*table++ = v;
-//	}
-//	d_8to24table[255] &= 0xffffff;	// 255 is transparent
-//
-//	// JACK: 3D distance calcs - k is last closest, l is the distance.
-//	// FIXME: Precalculate this and cache to disk.
-//	for (i=0; i < (1<<15); i++) {
-//		/* Maps
-//			000000000000000
-//			000000000011111 = Red  = 0x1F
-//			000001111100000 = Blue = 0x03E0
-//			111110000000000 = Grn  = 0x7C00
-//		*/
-//		r = ((i & 0x1F) << 3)+4;
-//		g = ((i & 0x03E0) >> 2)+4;
-//		b = ((i & 0x7C00) >> 7)+4;
-//		pal = (unsigned char *)d_8to24table;
-//		for (v=0,k=0,l=10000*10000; v<256; v++,pal+=4) {
-//			r1 = r-pal[0];
-//			g1 = g-pal[1];
-//			b1 = b-pal[2];
-//			j = (r1*r1)+(g1*g1)+(b1*b1);
-//			if (j<l) {
-//				k=v;
-//				l=j;
-//			}
-//		}
-//		d_15to8table[i]=k;
-//	}
-
-	g_Common->COM_FOpenFile("gfx/palette.lmp", &f, NULL);
+	// Missi: don't load the palette twice. this also prevents the gross "darkening" effect seen in GLQuake (5/31/2024)
+	/*g_Common->COM_FOpenFile("gfx/palette.lmp", &f, NULL);
 	if (!f)
 	{
 		Sys_Error("Couldn't load gfx/palette.lmp");
 		return;
-	}
+	}*/
 
 	mark = g_MemCache->Hunk_LowMark();
 	pal = (byte*)g_MemCache->Hunk_Alloc<byte>(768);
-	fread(pal, sizeof(byte), 768, f);
-	fclose(f);
+	
+	Q_memcpy(pal, host->host_basepal, 768);
+
+	//fread(pal, sizeof(byte), 768, f);
+	//fclose(f);
 
 	//standard palette, 255 is transparent
 	dst = (byte*)d_8to24table;
@@ -873,6 +825,7 @@ void	VID_SetPalette (unsigned char *palette)
 	d_8to24table_nobright_fence[255] = 0; // Alpha of zero.
 
 	//conchars palette, 0 and 255 are transparent
+	// Missi: FIXME: does not even work and makes all the characters blank (9/13/2023)
 	memcpy(d_8to24table_conchars, d_8to24table, 256 * 4);
 	((byte*)&d_8to24table_conchars[0])[3] = 0;
 
@@ -1289,7 +1242,7 @@ char *VID_GetModeDescription (int mode)
 	}
 	else
 	{
-		sprintf (temp, "Desktop resolution (%dx%d)",
+		snprintf (temp, sizeof(temp), "Desktop resolution (%dx%d)",
 				 modelist[MODE_FULLSCREEN_DEFAULT].width,
 				 modelist[MODE_FULLSCREEN_DEFAULT].height);
 		pinfo = temp;
@@ -1313,11 +1266,11 @@ char *VID_GetExtModeDescription (int mode)
 	{
 		if (!leavecurrentmode)
 		{
-			sprintf(pinfo,"%s fullscreen", pv->modedesc);
+			snprintf(pinfo, sizeof(pinfo), "%s fullscreen", pv->modedesc);
 		}
 		else
 		{
-			sprintf (pinfo, "Desktop resolution (%dx%d)",
+			snprintf(pinfo, sizeof(pinfo), "Desktop resolution (%dx%d)",
 					 modelist[MODE_FULLSCREEN_DEFAULT].width,
 					 modelist[MODE_FULLSCREEN_DEFAULT].height);
 		}
@@ -1325,9 +1278,9 @@ char *VID_GetExtModeDescription (int mode)
 	else
 	{
 		if (modestate == MS_WINDOWED)
-			sprintf(pinfo, "%s windowed", pv->modedesc);
+			snprintf(pinfo, sizeof(pinfo), "%s windowed", pv->modedesc);
 		else
-			sprintf(pinfo, "windowed");
+			snprintf(pinfo, sizeof(pinfo), "windowed");
 	}
 
 	return pinfo;
@@ -1366,7 +1319,7 @@ void VID_DescribeMode_f (void)
 {
 	int		t, modenum;
 	
-	modenum = Q_atoi (Cmd_Argv(1));
+	modenum = Q_atoi (g_pCmds->Cmd_Argv(1));
 
 	t = leavecurrentmode;
 	leavecurrentmode = 0;
@@ -1690,10 +1643,10 @@ void	VID_Init (unsigned char *palette)
 	Cvar_RegisterVariable (&_windowed_mouse);
 	Cvar_RegisterVariable (&gl_ztrick);
 
-	Cmd_AddCommand ("vid_nummodes", VID_NumModes_f);
-	Cmd_AddCommand ("vid_describecurrentmode", VID_DescribeCurrentMode_f);
-	Cmd_AddCommand ("vid_describemode", VID_DescribeMode_f);
-	Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
+	g_pCmds->Cmd_AddCommand ("vid_nummodes", VID_NumModes_f);
+	g_pCmds->Cmd_AddCommand ("vid_describecurrentmode", VID_DescribeCurrentMode_f);
+	g_pCmds->Cmd_AddCommand ("vid_describemode", VID_DescribeMode_f);
+	g_pCmds->Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
 
 	hIcon = LoadIcon (global_hInstance, MAKEINTRESOURCE (IDI_ICON2));
 
@@ -1984,7 +1937,6 @@ void VID_MenuDraw (void)
 	CQuakePic		*p;
 	char		*ptr;
 	int			lnummodes, i, k, column, row;
-	char		temp[100];
 	vmode_t		*pv;
 
 	p = g_GLRenderer->Draw_CachePic ("gfx/vidmodes.lmp");

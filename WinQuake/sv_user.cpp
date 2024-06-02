@@ -306,7 +306,7 @@ void CQuakeServer::SV_WaterMove (void)
 
 void CQuakeServer::SV_WaterJump (void)
 {
-	if (sv.time > sv_player->v.teleport_time
+	if (sv->time > sv_player->v.teleport_time
 	|| !sv_player->v.waterlevel)
 	{
 		sv_player->v.flags = (int)sv_player->v.flags & ~FL_WATERJUMP;
@@ -335,7 +335,7 @@ void CQuakeServer::SV_AirMove (void)
 	smove = cmd.sidemove;
 	
 // hack to not let you back into teleporter
-	if (sv.time < sv_player->v.teleport_time && fmove < 0)
+	if (sv->time < sv_player->v.teleport_time && fmove < 0)
 		fmove = 0;
 		
 	for (i=0 ; i<3 ; i++)
@@ -443,7 +443,7 @@ void CQuakeServer::SV_ReadClientMove (usercmd_t *move)
 	
 // read ping time
 	host_client->ping_times[host_client->num_pings%NUM_PING_TIMES]
-		= sv.time - MSG_ReadFloat ();
+		= sv->time - MSG_ReadFloat ();
 	host_client->num_pings++;
 
 // read current angles	
@@ -570,9 +570,9 @@ nextmsg:
 				else if (Q_strncasecmp(s, "ban", 3) == 0)
 					ret = 1;
 				if (ret == 2)
-					Cbuf_InsertText (s);
+					g_pCmdBuf->Cbuf_InsertText (s);
 				else if (ret == 1)
-					Cmd_ExecuteString (s, src_client);
+					g_pCmds->Cmd_ExecuteString (s, src_client);
 				else
 					Con_DPrintf("%s tried to %s\n", host_client->name, s);
 				break;
@@ -622,7 +622,7 @@ void CQuakeServer::SV_RunClients (void)
 		}
 
 // always pause in single player if in console or menus
-		if (!sv.paused && (svs.maxclients > 1 || key_dest == key_game) )
+		if (!sv->paused && (svs.maxclients > 1 || key_dest == key_game) )
 			SV_ClientThink ();
 	}
 }

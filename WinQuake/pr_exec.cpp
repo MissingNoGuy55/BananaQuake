@@ -114,6 +114,11 @@ static const char *pr_opnames[] =
   
 "IF",
 "IFNOT",
+"SWITCH",
+"CASE",
+"DEFAULT",
+"ARRAY_OPEN",
+"ARRAY_CLOSE",
   
 "CALL0",
 "CALL1",
@@ -352,6 +357,19 @@ The interpretation main loop
 ============================================================================
 */
 
+/*	
+	Missi: The comments on these are nonexistant and what they do is pretty much
+	left up to interpretation without comments. These seem to correspond to...:
+
+	Generally, opb and opa will only be used together with "opa = opb" or "opa == opb" declarations in QC, while opc is only used in
+	comparisons or arithmetic in C/C++ i.e "opc = (opa == opb)" to set the actual value. However, opb is always the set value in declarations only.
+
+	So...
+
+	opa: a passed argument or value
+	opb: resulting var (declarations only) or value to be compared against
+	opc: the value set from comparison or arithmetic (9/12/2023)
+*/
 #define opa ((eval_t*)&pr_globals[(unsigned short)st->a])
 #define opb ((eval_t*)&pr_globals[(unsigned short)st->b])
 #define opc ((eval_t*)&pr_globals[(unsigned short)st->c])
@@ -366,9 +384,18 @@ void PR_ExecuteProgram(func_t fnum)
 	eval_t* ptr = NULL;
 	dstatement_t* st = NULL;
 	dfunction_t* f = NULL, * newf = NULL;
-	int profile = 0, startprofile = 0;
-	edict_t* ed = NULL;
-	int		exitdepth = 0;
+	int			profile = 0, startprofile = 0;
+	edict_t*	ed = NULL;
+	int			exitdepth = 0;
+	float		switch_float = NULL;
+	string_t	switch_string = NULL;
+	edict_t*	switch_edict = NULL;
+	vec_t*		switch_vector = vec3_origin;
+
+	bool		switch_case = false;
+	bool		switch_case_default = false;
+	bool		switch_string_matched = false;
+	bool		switch_float_matched = false;
 
 	if (!fnum || fnum >= progs->numfunctions)
 	{
@@ -482,7 +509,7 @@ void PR_ExecuteProgram(func_t fnum)
 				opc->_float = !opa->function;
 				break;
 			case OP_NOT_ENT:
-				opc->_float = (PROG_TO_EDICT(opa->edict) == sv.edicts);
+				opc->_float = (PROG_TO_EDICT(opa->edict) == sv->edicts);
 				break;
 
 			case OP_EQ_F:
@@ -539,11 +566,11 @@ void PR_ExecuteProgram(func_t fnum)
 			case OP_STOREP_FLD:	// integers
 			case OP_STOREP_S:
 			case OP_STOREP_FNC:	// pointers
-				ptr = (eval_t*)((byte*)sv.edicts + opb->_int);
+				ptr = (eval_t*)((byte*)sv->edicts + opb->_int);
 				ptr->_int = opa->_int;
 				break;
 			case OP_STOREP_V:
-				ptr = (eval_t*)((byte*)sv.edicts + opb->_int);
+				ptr = (eval_t*)((byte*)sv->edicts + opb->_int);
 				ptr->vector[0] = opa->vector[0];
 				ptr->vector[1] = opa->vector[1];
 				ptr->vector[2] = opa->vector[2];
@@ -554,12 +581,12 @@ void PR_ExecuteProgram(func_t fnum)
 #ifdef PARANOID
 				NUM_FOR_EDICT(ed);	// Make sure it's in range
 #endif
-				if (ed == (edict_t*)sv.edicts && sv.state == ss_active)
+				if (ed == (edict_t*)sv->edicts && sv->state == ss_active)
 				{
 					pr_xstatement = st - pr_statements;
 					PR_RunError("assignment to world entity");
 				}
-				opc->_int = (byte*)((int*)&ed->v + opb->_int) - (byte*)sv.edicts;
+				opc->_int = (byte*)((int*)&ed->v + opb->_int) - (byte*)sv->edicts;
 				break;
 
 			case OP_LOAD_F:
@@ -648,6 +675,74 @@ void PR_ExecuteProgram(func_t fnum)
 				ed->v.frame = opa->_float;
 				ed->v.think = opb->function;
 				break;
+
+			case OP_SWITCH_F:
+			{
+				if (opa->_float)
+					switch_float = opa->_float;
+				break;
+			}
+
+			case OP_SWITCH_S:
+			{
+				if (opa->string)
+					switch_string = opa->string;
+				break;
+			}
+			
+			case OP_SWITCH_E:
+			{
+				if (opa->edict)
+					switch_edict = PROG_TO_EDICT(opa->edict);
+				break;
+			}
+
+			case OP_SWITCH_FV:
+			{
+				if (opa->vector)
+				{
+					switch_vector = opa->vector;
+				}
+				break;
+			}
+
+			case OP_CASE:
+			case OP_DEFAULT:
+			case OP_BREAK:
+			{
+				dstatement_t* matching_statement = NULL;
+
+				if ((opa->string &~ 0 && opa->string == switch_string))
+					matching_statement = st;
+
+				if (opa->_float == switch_float)
+					matching_statement = st;
+
+				if (opa->vector == switch_vector)
+					matching_statement = st;
+
+				if (opa->edict == EDICT_TO_PROG(switch_edict))
+					matching_statement = st;
+
+				if (!matching_statement)
+				{
+					st++;
+					bool didbreak = false;
+					while (!didbreak)
+					{
+						st++;
+						
+						switch (st->op)
+						{
+							case OP_CASE:
+							case OP_DEFAULT:
+							case OP_BREAK:
+								didbreak = true;
+						}
+					}
+				}
+				break;
+			}
 
 			default:
 				pr_xstatement = st - pr_statements;

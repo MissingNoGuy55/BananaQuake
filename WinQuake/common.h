@@ -22,9 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef COMMON_H
 #define COMMON_H
 
-#if defined(__linux__) || defined(__CYGWIN__)
 #include "sys.h"
-#endif
 
 #if defined(__linux__) || defined(__CYGWIN__)
 #define _strdup strdup
@@ -129,8 +127,8 @@ extern	bool		bigendien;
 
 extern	short	(*BigShort) (short l);
 extern	short	(*LittleShort) (short l);
-extern	int	(*BigLong) (int l);
-extern	int	(*LittleLong) (int l);
+extern	int		(*BigLong) (int l);
+extern	int		(*LittleLong) (int l);
 extern	float	(*BigFloat) (float l);
 extern	float	(*LittleFloat) (float l);
 
@@ -178,6 +176,7 @@ float Q_atof (const char *str);
 int q_vsnprintf(char* str, size_t size, const char* format, va_list args);
 int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
 
+void Q_FixSlashes(char* str, size_t size, char delimiter = '\\');
 //============================================================================
 
 //
@@ -359,12 +358,12 @@ inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id);
 template<typename T>
 inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 {
-	int	 h;
-	T* buf;
-	char	base[32];
-	int	len;
+	int	 h				= 0;
+	T* buf				= nullptr;
+	char base[32]		= {};
+	int	len				= 0;
 
-	buf = NULL;     // quiet compiler warning
+	buf = nullptr;     // quiet compiler warning
 
 	// look for it in the filesystem or pack files
 	len = g_Common->COM_OpenFile(path, &h, NULL);

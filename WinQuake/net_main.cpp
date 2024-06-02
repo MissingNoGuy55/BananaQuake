@@ -174,13 +174,13 @@ void NET_FreeQSocket(qsocket_t *sock)
 
 static void NET_Listen_f (void)
 {
-	if (Cmd_Argc () != 2)
+	if (g_pCmds->Cmd_Argc () != 2)
 	{
 		Con_Printf ("\"listen\" is \"%u\"\n", listening ? 1 : 0);
 		return;
 	}
 
-	listening = Q_atoi(Cmd_Argv(1)) ? true : false;
+	listening = Q_atoi(g_pCmds->Cmd_Argv(1)) ? true : false;
 
 	for (net_driverlevel=0 ; net_driverlevel<net_numdrivers; net_driverlevel++)
 	{
@@ -195,19 +195,19 @@ static void MaxPlayers_f (void)
 {
 	int 	n;
 
-	if (Cmd_Argc () != 2)
+	if (g_pCmds->Cmd_Argc () != 2)
 	{
 		Con_Printf ("\"maxplayers\" is \"%u\"\n", svs.maxclients);
 		return;
 	}
 
-	if (sv.active)
+	if (sv->active)
 	{
 		Con_Printf ("maxplayers can not be changed while a server is running.\n");
 		return;
 	}
 
-	n = Q_atoi(Cmd_Argv(1));
+	n = Q_atoi(g_pCmds->Cmd_Argv(1));
 	if (n < 1)
 		n = 1;
 	if (n > svs.maxclientslimit)
@@ -217,10 +217,10 @@ static void MaxPlayers_f (void)
 	}
 
 	if ((n == 1) && listening)
-		Cbuf_AddText ("listen 0\n");
+		g_pCmdBuf->Cbuf_AddText ("listen 0\n");
 
 	if ((n > 1) && (!listening))
-		Cbuf_AddText ("listen 1\n");
+		g_pCmdBuf->Cbuf_AddText ("listen 1\n");
 
 	svs.maxclients = n;
 	if (n == 1)
@@ -234,13 +234,13 @@ static void NET_Port_f (void)
 {
 	int 	n;
 
-	if (Cmd_Argc () != 2)
+	if (g_pCmds->Cmd_Argc () != 2)
 	{
 		Con_Printf ("\"port\" is \"%u\"\n", net_hostport);
 		return;
 	}
 
-	n = Q_atoi(Cmd_Argv(1));
+	n = Q_atoi(g_pCmds->Cmd_Argv(1));
 	if (n < 1 || n > 65534)
 	{
 		Con_Printf ("Bad value, must be between 1 and 65534\n");
@@ -253,8 +253,8 @@ static void NET_Port_f (void)
 	if (listening)
 	{
 		// force a change to the new port
-		Cbuf_AddText ("listen 0\n");
-		Cbuf_AddText ("listen 1\n");
+		g_pCmdBuf->Cbuf_AddText ("listen 0\n");
+		g_pCmdBuf->Cbuf_AddText ("listen 1\n");
 	}
 }
 
@@ -865,10 +865,10 @@ void NET_Init (void)
 	Cvar_RegisterVariable (&idgods);
 #endif
 
-	Cmd_AddCommand ("slist", NET_Slist_f);
-	Cmd_AddCommand ("listen", NET_Listen_f);
-	Cmd_AddCommand ("maxplayers", MaxPlayers_f);
-	Cmd_AddCommand ("port", NET_Port_f);
+	g_pCmds->Cmd_AddCommand ("slist", NET_Slist_f);
+	g_pCmds->Cmd_AddCommand ("listen", NET_Listen_f);
+	g_pCmds->Cmd_AddCommand ("maxplayers", MaxPlayers_f);
+	g_pCmds->Cmd_AddCommand ("port", NET_Port_f);
 
 	// initialize all the drivers
 	for (net_driverlevel=0 ; net_driverlevel<net_numdrivers ; net_driverlevel++)

@@ -56,7 +56,7 @@ float	LittleFloat (float l);
 
 extern	char		com_token[1024];
 extern	boolean		com_eof;
-
+
 char *COM_Parse (char *data);
 
 #endif

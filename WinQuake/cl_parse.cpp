@@ -151,7 +151,7 @@ void CL_KeepaliveMessage (void)
 	sizebuf_t	old;
 	byte		olddata[8192];
 	
-	if (sv.active)
+	if (sv->active)
 		return;		// no need if server is local
 	if (cls.demoplayback)
 		return;
@@ -207,8 +207,8 @@ void CL_ParseServerInfo (void)
 	const char	*str = NULL;
 	int		i = 0;
 	int		nummodels = 0, numsounds = 0;
-	static char	model_precache[MAX_MODELS][MAX_QPATH] = {};
-	static char	sound_precache[MAX_SOUNDS][MAX_QPATH] = {};
+	char	model_precache[MAX_MODELS][MAX_QPATH] = {};
+	char	sound_precache[MAX_SOUNDS][MAX_QPATH] = {};
 	
 	Con_DPrintf ("Serverinfo packet received.\n");
 //
@@ -808,7 +808,7 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_stufftext:
-			Cbuf_AddText (MSG_ReadString ());
+			g_pCmdBuf->Cbuf_AddText (MSG_ReadString ());
 			break;
 			
 		case svc_damage:
@@ -969,7 +969,7 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_sellscreen:
-			Cmd_ExecuteString ("help", src_command);
+			g_pCmds->Cmd_ExecuteString ("help", src_command);
 			break;
 		}
 	}

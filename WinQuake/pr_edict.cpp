@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sv_edict.c -- entity dictionary
 
 #include "quakedef.h"
+#include <vector>
 
 dprograms_t		*progs;
 dfunction_t* pr_functions;
@@ -38,7 +39,7 @@ CQVector<const char*> pr_knownstrings;
 
 unsigned short		pr_crc;
 
-int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,sizeof(void *)/4};
+int		type_size[9] = { 1,sizeof(string_t) / 4,1,3,1,1,sizeof(func_t) / 4,sizeof(void*) / 4, sizeof(std::vector<void*>) };
 
 ddef_t *ED_FieldAtOfs (int ofs);
 bool	ED_ParseEpair (void *base, ddef_t *key, char *s);
@@ -178,12 +179,12 @@ edict_t *ED_Alloc (void)
 	int			i;
 	edict_t		*e;
 
-	for ( i=svs.maxclients+1 ; i<sv.num_edicts ; i++)
+	for ( i=svs.maxclients+1 ; i<sv->num_edicts ; i++)
 	{
 		e = EDICT_NUM(i);
 		// the first couple seconds of server time can involve a lot of
 		// freeing and allocating, so relax the replacement policy
-		if (e->free && ( e->freetime < 2 || sv.time - e->freetime > 0.5 ) )
+		if (e->free && ( e->freetime < 2 || sv->time - e->freetime > 0.5 ) )
 		{
 			ED_ClearEdict (e);
 			return e;
@@ -193,7 +194,7 @@ edict_t *ED_Alloc (void)
 	if (i == MAX_EDICTS)
 		Sys_Error ("ED_Alloc: no free edicts");
 		
-	sv.num_edicts++;
+	sv->num_edicts++;
 	e = EDICT_NUM(i);
 	ED_ClearEdict (e);
 
@@ -210,7 +211,7 @@ FIXME: walk all entities and NULL out references to this entity
 */
 void ED_Free (edict_t *ed)
 {
-	sv.SV_UnlinkEdict (ed);		// unlink from world bsp
+	sv->SV_UnlinkEdict (ed);		// unlink from world bsp
 
 	ed->free = true;
 	ed->v.model = 0;
@@ -224,7 +225,7 @@ void ED_Free (edict_t *ed)
 	ed->v.nextthink = -1;
 	ed->v.solid = 0;
 	
-	ed->freetime = sv.time;
+	ed->freetime = sv->time;
 }
 
 //===========================================================================
@@ -625,8 +626,8 @@ void ED_PrintEdicts (void)
 {
 	int		i;
 	
-	Con_Printf ("%i entities\n", sv.num_edicts);
-	for (i=0 ; i<sv.num_edicts ; i++)
+	Con_Printf ("%i entities\n", sv->num_edicts);
+	for (i=0 ; i<sv->num_edicts ; i++)
 		ED_PrintNum (i);
 }
 
@@ -641,8 +642,8 @@ void ED_PrintEdict_f (void)
 {
 	int		i;
 	
-	i = Q_atoi (Cmd_Argv(1));
-	if (i >= sv.num_edicts)
+	i = Q_atoi (g_pCmds->Cmd_Argv(1));
+	if (i >= sv->num_edicts)
 	{
 		Con_Printf("Bad edict number\n");
 		return;
@@ -664,7 +665,7 @@ void ED_Count (void)
 	int		active, models, solid, step;
 
 	active = models = solid = step = 0;
-	for (i=0 ; i<sv.num_edicts ; i++)
+	for (i=0 ; i<sv->num_edicts ; i++)
 	{
 		ent = EDICT_NUM(i);
 		if (ent->free)
@@ -678,7 +679,7 @@ void ED_Count (void)
 			step++;
 	}
 
-	Con_Printf ("num_edicts:%3i\n", sv.num_edicts);
+	Con_Printf ("num_edicts:%3i\n", sv->num_edicts);
 	Con_Printf ("active    :%3i\n", active);
 	Con_Printf ("view      :%3i\n", models);
 	Con_Printf ("touch     :%3i\n", solid);
@@ -897,7 +898,7 @@ const char *ED_ParseEdict (const char *data, edict_t *ent)
 	init = false;
 
 // clear it
-	if (ent != sv.edicts)	// hack
+	if (ent != sv->edicts)	// hack
 		memset (&ent->v, 0, progs->entityfields * 4);
 
 // go through all the dictionary pairs
@@ -995,7 +996,7 @@ void ED_LoadFromFile (const char *data)
 	int			inhibit = 0;
 	dfunction_t	*func = NULL;
 
-	pr_global_struct->time = sv.time;
+	pr_global_struct->time = sv->time;
 	
 // parse ents
 	while (1)
@@ -1077,7 +1078,7 @@ void PR_LoadProgs (void)
 
 	g_CRCManager->CRC_Init (&pr_crc);
 
-	progs = COM_LoadHunkFile<dprograms_t> ("progs.dat", NULL);
+	progs = COM_LoadHunkFile<dprograms_t>("progs.dat", NULL);
 	if (!progs)
 		Sys_Error ("PR_LoadProgs: couldn't load progs.dat");
 	Con_DPrintf ("Programs occupy %iK.\n", g_Common->com_filesize/1024);
@@ -1171,10 +1172,10 @@ PR_Init
 */
 void PR_Init (void)
 {
-	Cmd_AddCommand ("edict", ED_PrintEdict_f);
-	Cmd_AddCommand ("edicts", ED_PrintEdicts);
-	Cmd_AddCommand ("edictcount", ED_Count);
-	Cmd_AddCommand ("profile", PR_Profile_f);
+	g_pCmds->Cmd_AddCommand ("edict", ED_PrintEdict_f);
+	g_pCmds->Cmd_AddCommand ("edicts", ED_PrintEdicts);
+	g_pCmds->Cmd_AddCommand ("edictcount", ED_Count);
+	g_pCmds->Cmd_AddCommand ("profile", PR_Profile_f);
 	Cvar_RegisterVariable (&nomonsters);
 	Cvar_RegisterVariable (&gamecfg);
 	Cvar_RegisterVariable (&scratch1);
@@ -1192,19 +1193,19 @@ void PR_Init (void)
 
 edict_t *EDICT_NUM(int n)
 {
-	if (n < 0 || n >= sv.max_edicts)
+	if (n < 0 || n >= sv->max_edicts)
 		Sys_Error ("EDICT_NUM: bad number %i", n);
-	return (edict_t *)((byte *)sv.edicts+ (n)*pr_edict_size);
+	return (edict_t *)((byte *)sv->edicts+ (n)*pr_edict_size);
 }
 
 int NUM_FOR_EDICT(edict_t *e)
 {
 	int		b;
 	
-	b = (byte *)e - (byte *)sv.edicts;
+	b = (byte *)e - (byte *)sv->edicts;
 	b = b / pr_edict_size;
 	
-	if (b < 0 || b >= sv.num_edicts)
+	if (b < 0 || b >= sv->num_edicts)
 		Sys_Error ("NUM_FOR_EDICT: bad pointer");
 	return b;
 }

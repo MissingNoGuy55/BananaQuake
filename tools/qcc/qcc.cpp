@@ -53,7 +53,6 @@ char		precache_files[MAX_FILES][MAX_DATA_PATH];
 int			precache_files_block[MAX_SOUNDS];
 int			numfiles;
 
-
 /*
 =================
 BspModels
@@ -1262,13 +1261,21 @@ void main (int argc, char **argv)
 		printf ("compiling %s\n", filename);
 		ogsource2 = LoadFile (filename, &src2);
 
-		if (!PR_CompileFile ((char*)ogsource2, filename))
+		if (!PR_CompileFile((char*)ogsource2, filename))
+		{
+			if (pr_immediate.cppvector)
+				delete pr_immediate.cppvector;
 			exit (1);
+		}
 			
 	} while (1);
 	
-	if (!PR_FinishCompilation ())
+	if (!PR_FinishCompilation())
+	{
+		if (pr_immediate.cppvector)
+			delete pr_immediate.cppvector;
 		Error ("compilation errors");
+	}
 
 	p = CheckParm ("-asm");
 	if (p)

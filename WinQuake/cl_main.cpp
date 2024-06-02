@@ -63,7 +63,7 @@ void CL_ClearState (void)
 {
 	int			i;
 
-	if (!sv.active)
+	if (!sv->active)
 		host->Host_ClearMemory ();
 
 // wipe the entire cl structure
@@ -120,7 +120,7 @@ void CL_Disconnect (void)
 		NET_Close (cls.netcon);
 
 		cls.state = ca_disconnected;
-		if (sv.active)
+		if (sv->active)
 			host->Host_ShutdownServer(false);
 	}
 
@@ -131,7 +131,7 @@ void CL_Disconnect (void)
 void CL_Disconnect_f (void)
 {
 	CL_Disconnect ();
-	if (sv.active)
+	if (sv->active)
 		host->Host_ShutdownServer (false);
 }
 
@@ -241,7 +241,7 @@ void CL_NextDemo (void)
 	}
 
 	sprintf (str,"playdemo %s\n", cls.demos[cls.demonum]);
-	Cbuf_InsertText (str);
+	g_pCmdBuf->Cbuf_InsertText (str);
 	cls.demonum++;
 }
 
@@ -398,7 +398,7 @@ float	CL_LerpPoint (void)
 
 	f = cl.mtime[0] - cl.mtime[1];
 	
-	if (!f || cl_nolerp.value || cls.timedemo || sv.active)
+	if (!f || cl_nolerp.value || cls.timedemo || sv->active)
 	{
 		cl.time = cl.mtime[0];
 		return 1;
@@ -751,11 +751,11 @@ void CL_Init (void)
 
 //	Cvar_RegisterVariable (&cl_autofire);
 	
-	Cmd_AddCommand ("entities", CL_PrintEntities_f);
-	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
-	Cmd_AddCommand ("record", CL_Record_f);
-	Cmd_AddCommand ("stop", CL_Stop_f);
-	Cmd_AddCommand ("playdemo", CL_PlayDemo_f);
-	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
+	g_pCmds->Cmd_AddCommand ("entities", CL_PrintEntities_f);
+	g_pCmds->Cmd_AddCommand ("disconnect", CL_Disconnect_f);
+	g_pCmds->Cmd_AddCommand ("record", CL_Record_f);
+	g_pCmds->Cmd_AddCommand ("stop", CL_Stop_f);
+	g_pCmds->Cmd_AddCommand ("playdemo", CL_PlayDemo_f);
+	g_pCmds->Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
 }
 

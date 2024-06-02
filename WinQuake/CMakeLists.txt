@@ -1,11 +1,9 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.6)
 
 # add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/sdl2 ${CMAKE_CURRENT_SOURCE_DIR}/sdl2/lib)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/sdl2/build ${CMAKE_CURRENT_SOURCE_DIR}/build)
 set(CMAKE_CURRENT_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build")
-
-set (SDL2_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sdl2/include)
 
 # Create an option to switch between a system sdl library and a vendored sdl library
 option(MYGAME_VENDORED "Use vendored libraries" ON)
@@ -34,7 +32,7 @@ enable_language(CXX ASM)
 
 project(bananaquake LANGUAGES CXX ASM)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CXX_STANDARD_REQUIRED true)
 
 SET(ASM_OPTIONS "-DELF -m32 -x assembler-with-cpp")
@@ -836,6 +834,25 @@ zone.h
 
 endif (APPLE)
 
+# set(QCC_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../tools/qcc)
+
+# set(QCC_SOURCES ${QCC_DIRECTORY}/builtin.cpp
+# ${QCC_DIRECTORY}/cmdlib.cpp
+# ${QCC_DIRECTORY}/pr_comp.cpp
+# ${QCC_DIRECTORY}/pr_lex.cpp
+# ${QCC_DIRECTORY}/qcc.cpp
+# )
+
+# set(QCC_HEADERS ${QCC_DIRECTORY}/builtin.h
+# ${QCC_DIRECTORY}/cmdlib.h
+# ${QCC_DIRECTORY}/pr_comp.h
+# ${QCC_DIRECTORY}/progdefs.h
+# ${QCC_DIRECTORY}/qcc.h
+# ${WINQUAKE_HEADERS}
+# )
+
+# set (QCC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 #=================================================================
 
 list(APPEND includepathWinQuake
@@ -845,16 +862,42 @@ list(APPEND includepathWinQuake
 )
 
 if (WIN32)
+
+if (${CMAKE_SIZEOF_VOID_P} STREQUAL "4")
+
 list(APPEND includepathLibraryWinQuakeSoftware
     "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x86"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scitech/lib/win32/vc"
+    "${CMAKE_CURRENT_BUILD_DIR}/sdl2"
+)
+
+list(APPEND includepathLibraryWinQuakeOpenGLx86
+    "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x86"
+	$<$<CONFIG:Debug>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Debug>
+	$<$<CONFIG:RelWithDebInfo>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/RelWithDebInfo>
+	$<$<CONFIG:Release>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Release>
+	$<$<CONFIG:MinSizeRel>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/MinSizeRel>
+    "${CMAKE_CURRENT_BUILD_DIR}/sdl2"
+)
+
+else()
+
+list(APPEND includepathLibraryWinQuakeSoftware
+    "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x64"
     "${CMAKE_CURRENT_SOURCE_DIR}/scitech/lib/win32/vc"
     "${CMAKE_CURRENT_BUILD_DIR}/sdl2/Debug"
 )
 
-list(APPEND includepathLibraryWinQuakeOpenGL
-    "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x86"
-    "${CMAKE_CURRENT_BUILD_DIR}/sdl2/Debug"
+list(APPEND includepathLibraryWinQuakeOpenGLx64
+    "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x64"
+	$<$<CONFIG:Debug>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Debug>
+	$<$<CONFIG:RelWithDebInfo>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/RelWithDebInfo>
+	$<$<CONFIG:Release>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Release>
+	$<$<CONFIG:MinSizeRel>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/MinSizeRel>
 )
+
+endif()
+
 endif (WIN32)
 
 if (UNIX)
@@ -876,7 +919,13 @@ endif (APPLE)
 
 if (WIN32)
 # add_executable(bananaquakesoftware WIN32 ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
+if (${CMAKE_SIZEOF_VOID_P} STREQUAL "4")
 add_executable(bananaquakeopengl WIN32 ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
+# add_executable(bananaquakeqcc WIN32 ${QCC_SOURCES} ${QCC_HEADERS})
+else()
+add_executable(bananaquakeopengl x64 ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
+# add_executable(bananaquakeqcc x64 ${QCC_SOURCES} ${QCC_HEADERS})
+endif()
 endif (WIN32)
 
 if (UNIX)
@@ -889,6 +938,10 @@ if (APPLE)
 add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
 endif(APPLE)
 
+# target_include_directories(bananaquakeqcc PUBLIC
+    # "${QCC_INCLUDE_DIR}"
+# )
+
 #=================================================================
 #[[
 if (UNIX)
@@ -897,11 +950,18 @@ endif (UNIX)
 target_compile_definitions(bananaquakesoftware PUBLIC MGL40_COMPAT)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_VORBIS)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_WAVE)
+
 if (WIN32)
+if (${CMAKE_SIZEOF_VOID_P} STREQUAL "4")
+target_compile_definitions(bananaquakesoftware PUBLIC WIN32)
+else()
+target_compile_definitions(bananaquakesoftware PUBLIC WIN64)
+endif()
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_MP3)
 endif (WIN32)
-target_compile_definitions(bananaquakesoftware PUBLIC DEBUG)
-target_compile_definitions(bananaquakesoftware PUBLIC _DEBUG)
+
+#target_compile_definitions(bananaquakesoftware PUBLIC DEBUG)
+#target_compile_definitions(bananaquakesoftware PUBLIC _DEBUG)
 
 target_include_directories(bananaquakesoftware PUBLIC
     "${includepathWinQuake}"
@@ -911,11 +971,18 @@ target_compile_definitions(bananaquakeopengl PUBLIC GLQUAKE)
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_VORBIS)
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_WAVE)
 if (WIN32)
+if (${CMAKE_SIZEOF_VOID_P} STREQUAL "4")
+target_compile_definitions(bananaquakeopengl PUBLIC WIN32)
+else()
+target_compile_definitions(bananaquakeopengl PUBLIC WIN64)
+endif()
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_MP3)
 endif (WIN32)
 target_compile_definitions(bananaquakeopengl PUBLIC LINUX)
-target_compile_definitions(bananaquakeopengl PUBLIC DEBUG)
-target_compile_definitions(bananaquakeopengl PUBLIC _DEBUG)
+#target_compile_definitions(bananaquakeopengl PUBLIC DEBUG)
+#target_compile_definitions(bananaquakeopengl PUBLIC _DEBUG)
+
+# target_compile_definitions(bananaquakeqcc PUBLIC QUAKE_TOOLS)
 
 target_include_directories(bananaquakeopengl PUBLIC
     "${includepathWinQuake}"
@@ -924,14 +991,19 @@ target_include_directories(bananaquakeopengl PUBLIC
 #=================================================================
 
 #target_link_directories(bananaquakesoftware PUBLIC ${includepathLibraryWinQuakeSoftware})
-target_link_directories(bananaquakeopengl PUBLIC ${includepathLibraryWinQuakeOpenGL})
-
+if(WIN32)
+if (${CMAKE_SIZEOF_VOID_P} STREQUAL "4")
+target_link_directories(bananaquakeopengl PUBLIC ${includepathLibraryWinQuakeOpenGLx86})
+else()
+target_link_directories(bananaquakeopengl PUBLIC ${includepathLibraryWinQuakeOpenGLx64})
+endif()
+endif(WIN32)
 #=================================================================
 
 if (MSVC)
 
 #[[target_link_libraries(bananaquakesoftware mgllt.lib
-SDL2d.lib
+SDL2.lib
 libvorbisfile.lib
 libvorbis.lib
 libopusfile.lib
@@ -947,7 +1019,10 @@ glu32.lib
 odbc32.lib
 odbccp32.lib)]]
 
-target_link_libraries(bananaquakeopengl SDL2d.lib
+target_link_libraries(bananaquakeopengl $<$<CONFIG:Debug>:SDL2d.lib>
+$<$<CONFIG:RelWithDebInfo>:SDL2.lib>
+$<$<CONFIG:Release>:SDL2.lib>
+$<$<CONFIG:MinSizeRel>:SDL2.lib>
 libvorbisfile.lib
 libvorbis.lib
 libopusfile.lib
@@ -970,36 +1045,22 @@ if (MSVC)
 #target_link_options(bananaquakesoftware PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:-SAFESEH:NO>")
 endif (MSVC)
 
-if (MSVC)
+#if (MSVC)
+
 #SET_TARGET_PROPERTIES(bananaquakesoftware PROPERTIES
 #LINK_FLAGS_DEBUG
 #"/NODEFAULTLIB:libc.lib")
 
-SET_TARGET_PROPERTIES(bananaquakeopengl PROPERTIES
-LINK_FLAGS_DEBUG
-"/NODEFAULTLIB:libc.lib")
-
-endif (MSVC)
-
-# SDL2::SDL2main may or may not be available. It is e.g. required by Windows GUI applications
-if(TARGET SDL2::SDL2main)
-    # It has an implicit dependency on SDL2 functions, so it MUST be added before SDL2::SDL2 (or SDL2::SDL2-static)
-#    target_link_libraries(bananaquakesoftware SDL2::SDL2main)
-endif()
-
-# Link to the actual SDL2 library. SDL2::SDL2 is the shared SDL library, SDL2::SDL2-static is the static SDL libarary.
-#target_link_libraries(bananaquakesoftware SDL2::SDL2)
-
-if(TARGET SDL2::SDL2main)
-    target_link_libraries(bananaquakeopengl SDL2::SDL2main)
-endif()
-
+#endif (MSVC)
+#
+#if(TARGET SDL2::SDL2main)
+#    target_link_libraries(bananaquakeopengl SDL2::SDL2main)
+#endif()
 target_link_libraries(bananaquakeopengl SDL2::SDL2)
 
 if (MSVC)
-
 target_compile_options(bananaquakeopengl PRIVATE "/MP")
-
+target_link_options(bananaquakeopengl PRIVATE "/SUBSYSTEM:WINDOWS")
 endif (MSVC)
 
 if (UNIX)

@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int			wad_numlumps;
 lumpinfo_t	*wad_lumps;
-byte		*wad_base;
+byte	*wad_base;
 
 /*
 ==================
@@ -66,12 +66,12 @@ W_LoadWadFile
 */
 void W_LoadWadFile (const char *filename)
 {
-	lumpinfo_t		*lump_p;
-	wadinfo_t		*header;
-	unsigned		i;
-	int				infotableofs;
+	lumpinfo_t		*lump_p = nullptr;
+	wadinfo_t		*header = nullptr;
+	unsigned		i = 0;
+	int				infotableofs = 0;
 	
-        wad_base = COM_LoadHunkFile<byte> (filename, NULL);
+    wad_base = COM_LoadHunkFile<byte> (filename, NULL);
 	if (!wad_base)
 		Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
 

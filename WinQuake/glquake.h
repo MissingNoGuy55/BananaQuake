@@ -169,15 +169,45 @@ typedef struct glRect_s {
 #define TEXPREF_WARPIMAGE		0x0800	// resize this texture when warpimagesize changes
 
 extern unsigned short	d_8to16table[256];
-extern unsigned int	d_8to24table[256];
-extern unsigned int d_8to24table_fbright[256];
-extern unsigned int d_8to24table_fbright_fence[256];
-extern unsigned int d_8to24table_nobright[256];
-extern unsigned int d_8to24table_nobright_fence[256];
-extern unsigned int d_8to24table_conchars[256];
-extern unsigned int d_8to24table_shirt[256];
-extern unsigned int d_8to24table_pants[256];
+extern unsigned int		d_8to24table[256];
+extern unsigned int		d_8to24table_fbright[256];
+extern unsigned int		d_8to24table_fbright_fence[256];
+extern unsigned int		d_8to24table_nobright[256];
+extern unsigned int		d_8to24table_nobright_fence[256];
+extern unsigned int		d_8to24table_conchars[256];
+extern unsigned int		d_8to24table_shirt[256];
+extern unsigned int		d_8to24table_pants[256];
 extern unsigned char d_15to8table[65536];
+
+// Missi: BananaQuake stuff (2/17/22)
+
+class CGLTexture
+{
+public:
+	CGLTexture();
+	CGLTexture(CQuakePic qpic, float sl = 0, float tl = 0, float sh = 0, float th = 0);
+	~CGLTexture();
+
+	CGLTexture* next;
+	model_t* owner;
+	CQuakePic			pic;
+
+	GLuint				texnum;
+	char				identifier[64];
+	unsigned int		width, height;
+	bool				mipmap;
+
+	int					source_width, source_height;
+	srcformat_t			source_format;
+	uintptr_t			source_offset;
+
+	unsigned int		checksum;
+	unsigned int		flags;
+
+private:
+	CGLTexture(const CGLTexture& obj);
+
+};
 
 class CGLRenderer : public CCoreRenderer
 {
@@ -188,7 +218,7 @@ public:
 
 	void GL_AlphaEdgeFix(byte* data, int width, int height);
 
-	static void GL_Bind(CGLTexture* tex);
+	void GL_Bind(CGLTexture* tex);
 
 	int Scrap_AllocBlock(int w, int h, int* x, int* y);
 
@@ -214,20 +244,20 @@ public:
 
 	int AllocBlock(int w, int h, int* x, int* y);
 
-	void Draw_Init(void);
-	void Draw_Character(int x, int y, int num);
-	void Draw_String(int x, int y, const char* str);
-	void Draw_DebugChar(char num);
-	void Draw_AlphaPic(int x, int y, CQuakePic* pic, float alpha);
-	void Draw_Pic(int x, int y, CQuakePic* pic);
-	void Draw_TransPic(int x, int y, CQuakePic* pic);
-	void Draw_TransPicTranslate(int x, int y, CQuakePic* pic, byte* translation);
-	void Draw_ConsoleBackground(int lines);
-	void Draw_TileClear(int x, int y, int w, int h);
-	void Draw_Fill(int x, int y, int w, int h, int c);
-	void Draw_FadeScreen(void);
-	void Draw_BeginDisc(void);
-	void Draw_EndDisc(void);
+	virtual void Draw_Init(void);
+	virtual void Draw_Character(int x, int y, int num);
+	virtual void Draw_String(int x, int y, const char* str);
+	virtual void Draw_DebugChar(char num);
+	virtual void Draw_AlphaPic(int x, int y, CQuakePic* pic, float alpha);
+	virtual void Draw_Pic(int x, int y, CQuakePic* pic);
+	virtual void Draw_TransPic(int x, int y, CQuakePic* pic);
+	virtual void Draw_TransPicTranslate(int x, int y, CQuakePic* pic, byte* translation);
+	virtual void Draw_ConsoleBackground(int lines);
+	virtual void Draw_TileClear(int x, int y, int w, int h);
+	virtual void Draw_Fill(int x, int y, int w, int h, int c);
+	virtual void Draw_FadeScreen(void);
+	virtual void Draw_BeginDisc(void);
+	virtual void Draw_EndDisc(void);
 
 	void GL_Init(void);
 
@@ -266,7 +296,7 @@ public:
 
 	void GL_MipMap(byte* in, int width, int height);
 	void GL_MipMap8Bit(byte* in, int width, int height);
-	static void GL_SetFilterModes(CGLTexture* glt);
+	void GL_SetFilterModes(CGLTexture* glt);
 
 	void GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha);
 
@@ -321,7 +351,7 @@ public:
 
 	texture_t* R_TextureAnimation(texture_t* base);
 
-	static CGLTexture gltextures[MAX_GLTEXTURES];
+	CGLTexture gltextures[MAX_GLTEXTURES];
 
 	void R_RenderDynamicLightmaps(msurface_t* fa);
 	void R_TimeRefresh_f(void);
@@ -375,16 +405,16 @@ private:
 
 	int			skytexturenum;
 
-	static glpoly_t*	lightmap_polys[MAX_LIGHTMAPS];
-	static bool			lightmap_modified[MAX_LIGHTMAPS];
-	static glRect_t		lightmap_rectchange[MAX_LIGHTMAPS];
-	static int			lightmap_count;
+	glpoly_t*	lightmap_polys[MAX_LIGHTMAPS];
+	bool			lightmap_modified[MAX_LIGHTMAPS];
+	glRect_t		lightmap_rectchange[MAX_LIGHTMAPS];
+	int			lightmap_count;
 
-	static int			allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];	// Missi: changed from a 2D array (12/6/2022)
+	int			allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];	// Missi: changed from a 2D array (12/6/2022)
 
 	// the lightmap texture data needs to be kept in
 	// main memory so texsubimage can update properly
-	static	byte		lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
+	byte		lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
 
 	// For gl_texsort 0
 	msurface_t* skychain;
@@ -392,16 +422,16 @@ private:
 
 	int		lightmap_bytes;		// 1, 2, or 4
 
-	static CGLTexture* lightmap_textures;
+	CGLTexture* lightmap_textures;
 
 	unsigned	blocklights[BLOCK_WIDTH*BLOCK_HEIGHT*3];
 	int			active_lightmaps;
 
-	static CGLTexture* free_gltextures;
-	static CGLTexture* active_gltextures;
+	CGLTexture* free_gltextures;
+	CGLTexture* active_gltextures;
 
-	static CGLTexture* translate_texture;
-	static CGLTexture* char_texture;
+	CGLTexture* translate_texture;
+	CGLTexture* char_texture;
 
 	int last_lightmap_allocated;
 
@@ -411,8 +441,8 @@ private:
 
 	int	numgltextures;
 
-	static int		gl_filter_min;
-	static int		gl_filter_max;
+	int		gl_filter_min;
+	int		gl_filter_max;
 
 	int		texels;
 
@@ -427,36 +457,6 @@ class COpenGLPic
 public:
 	CGLTexture* tex;
 	float	sl, tl, sh, th;
-};
-
-// Missi: BananaQuake stuff (2/17/22)
-
-class CGLTexture
-{
-public:
-	CGLTexture();
-	CGLTexture(CQuakePic qpic, float sl = 0, float tl = 0, float sh = 0, float th = 0);
-	~CGLTexture();
-
-	CGLTexture*			next;
-	model_t*			owner;
-	CQuakePic			pic;
-
-	GLuint				texnum;
-	char				identifier[64];
-	unsigned int		width, height;
-	bool				mipmap;
-
-	int					source_width, source_height;
-	srcformat_t			source_format;
-	uintptr_t			source_offset;
-
-	unsigned int		checksum;
-	unsigned int		flags;
-
-private:
-	CGLTexture(const CGLTexture& obj);
-
 };
 
 extern	bool	gl_texture_NPOT;

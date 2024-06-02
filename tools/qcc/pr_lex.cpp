@@ -17,6 +17,11 @@
     See file, 'COPYING', for details.
 */
 
+/*
+	Missi: a lot of this has been expanded with additions from the "GSC" language that Call of Duty games use,
+	which is basically just an expanded version of QuakeC that mimicks C even more... (9/12/2023)
+*/
+
 #include "qcc.h"
 
 int			pr_source_line;
@@ -37,7 +42,8 @@ int		pr_error_count;
 
 const char	*pr_punctuation[] =
 // longer symbols must be before a shorter partial match
-{"&&", "||", "<=", ">=","==", "!=", ";", ",", "!", "*", "/", "(", ")", "-", "+", "=", "[", "]", "{", "}", "...", ".", "<", ">" , "#" , "&" , "|" , NULL};
+// Missi: added ":" for switch/case statements (9/13/2023)
+{"&&", "||", "<=", ">=","==", "!=", ";", ",", "!", "*", "/", "(", ")", "-", "+", "=", "[", "]", "{", "}", "...", ".", "<", ">" , "#" , "&" , "|" , ":", NULL};
 
 // simple types.  function types are dynamically allocated
 type_t	type_void = {ev_void, &def_void};
@@ -47,6 +53,7 @@ type_t	type_vector = {ev_vector, &def_vector};
 type_t	type_entity = {ev_entity, &def_entity};
 type_t	type_field = {ev_field, &def_field};
 type_t	type_function = {ev_function, &def_function,NULL,&type_void};
+type_t	type_cppvector = { ev_cppvector, &def_cppvector, NULL, &type_cppvector };
 // type_function is a void() function used for state defs
 type_t	type_pointer = {ev_pointer, &def_pointer};
 
@@ -64,10 +71,11 @@ def_t	def_entity = {&type_entity, "temp"};
 def_t	def_field = {&type_field, "temp"};
 def_t	def_function = {&type_function, "temp"};
 def_t	def_pointer = {&type_pointer, "temp"};
+def_t	def_cppvector = {&type_cppvector, "temp"};
 
 def_t	def_ret, def_parms[MAX_PARMS];
 
-def_t	*def_for_type[8] = {&def_void, &def_string, &def_float, &def_vector, &def_entity, &def_field, &def_function, &def_pointer};
+def_t	*def_for_type[9] = {&def_void, &def_string, &def_float, &def_vector, &def_entity, &def_field, &def_function, &def_cppvector, &def_pointer};
 
 void PR_LexWhitespace (void);
 
@@ -445,6 +453,41 @@ void PR_Lex (void)
 		return;
 	}
 
+	int stringlen = strlen(&pr_file_p[1]);
+
+	if (c == '[' && pr_file_p[1] == ']' && pr_file_p[2] == ';')
+	{
+		pr_token_type = tt_immediate;
+		pr_immediate_type = &type_cppvector;
+		pr_immediate.cppvector = new std::vector<void*>;
+
+		// pr_file_p += 3;
+
+		if (!PR_Check("["))
+			PR_LexPunctuation();
+
+		return;
+	}
+	/* Missi: this monolithic boolean statement is to get around an array-like statement in weapons.qc which looks like the following :
+
+	void()	s_explode1	=	[0,		s_explode2] {};
+	void()	s_explode2	=	[1,		s_explode3] {};
+	void()	s_explode3	=	[2,		s_explode4] {};
+	void()	s_explode4	=	[3,		s_explode5] {};
+	void()	s_explode5	=	[4,		s_explode6] {};
+	void()	s_explode6	=	[5,		SUB_Remove] {};
+	*/
+	else if (c == '[' && pr_file_p[1] != ',' && stringlen <= ((char)sizeof(int) * 4) && stringlen > 0)
+	{
+		constexpr char test = ((char)sizeof(int) * 4);
+
+		pr_token_type = tt_immediate;
+		pr_immediate_type = &type_float;
+		pr_immediate._float = PR_LexNumber();
+
+		return;
+	}
+
 // handle quoted strings as a unit
 	if (c == '\"')
 	{
@@ -658,6 +701,8 @@ type_t *PR_ParseType (void)
 		type = &type_entity;
 	else if (!strcmp (pr_token, "string") )
 		type = &type_string;
+	else if (!strcmp(pr_token, "dynamic"))
+		type = &type_cppvector;
 	else if (!strcmp (pr_token, "void") )
 		type = &type_void;
 	else

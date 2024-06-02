@@ -177,7 +177,7 @@ void CGLRenderer::R_Init (void)
 
 	//Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);	
 	//Cmd_AddCommand ("envmap", R_Envmap_f);
-	Cmd_AddCommand ("pointfile", CCoreRenderer::R_ReadPointFile_f);	
+	g_pCmds->Cmd_AddCommand ("pointfile", CCoreRenderer::R_ReadPointFile_f);
 
 	Cvar_RegisterVariable (&r_norefresh);
 	Cvar_RegisterVariable (&r_lightmap);

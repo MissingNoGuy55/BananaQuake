@@ -47,8 +47,6 @@ int             static_registered = 1;  // only for startup check, then set
 
 bool		msg_suppress_1 = 0;
 
-void COM_InitFilesystem (void);
-
 // if a packfile directory differs from this, it is assumed to be hacked
 #define PAK0_COUNT              339
 #define PAK0_CRC                32981
@@ -465,6 +463,22 @@ int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_lis
 		str[size - 1] = '\0';
 
 	return ret;
+}
+
+void Q_FixSlashes(char* str, size_t size, char delimiter)
+{
+	if (!size || !str)
+		return;
+
+	int pos = 0;
+
+	for (; str[pos]; pos++)
+	{
+		if (str[pos] == delimiter)
+		{
+			str[pos] = '/';
+		}
+	}
 }
 
 /*
@@ -1271,7 +1285,7 @@ void CCommon::COM_Init (const char *basedir)
 
 	Cvar_RegisterVariable (&registered);
 	Cvar_RegisterVariable (&cmdline);
-	Cmd_AddCommand ("path", CCommon::COM_Path_f);
+	g_pCmds->Cmd_AddCommand ("path", CCommon::COM_Path_f);
 
 	COM_InitFilesystem ();
 	//COM_CheckRegistered ();
@@ -1342,7 +1356,7 @@ struct searchpath_t
 	struct searchpath_t *next = NULL;
 };
 
-searchpath_t* com_searchpaths = NULL;
+searchpath_t* com_searchpaths = nullptr;
 
 /*
 ============
@@ -1462,14 +1476,14 @@ Sets com_filesize and one of handle or file
 int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintptr_t* path_id)
 {
 	searchpath_t	*search = NULL;
-    char			netpath[MAX_OSPATH];
-    char			cachepath[MAX_OSPATH];
+	char			netpath[MAX_OSPATH] = {};
+	char			cachepath[MAX_OSPATH] = {};
 	pack_t			*pak = NULL;
-	int				i;
+	int				i = 0;
 	int				findtime = 0, cachetime = 0;
 
-    memset(netpath, 0, sizeof(netpath));
-    memset(cachepath, 0, sizeof(cachepath));
+    //memset(netpath, 0, sizeof(netpath));
+    //memset(cachepath, 0, sizeof(cachepath));
 
 	if (file && handle)
 		Sys_Error ("COM_FindFile: both handle and file set");
@@ -1504,9 +1518,12 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 						}
 						else
 						{       // open a new file on the pakfile
-							*file = fopen(pak->filename, "rb");
-							if (*file)
-								fseek(*file, pak->files[i].filepos, SEEK_SET);
+							handle = &pak->handle;
+
+							if (*handle)
+								Sys_FileSeek(pak->handle, pak->files[i].filepos);
+							else
+								Sys_Error("Couldn't find file %s\n", pak->files[i].name);
 						}
 						com_filesize = pak->files[i].filelen;
 						return com_filesize;
@@ -1709,13 +1726,13 @@ of the list so they override previous pack files.
 */
 pack_t* CCommon::COM_LoadPackFile (char *packfile)
 {
-	dpackheader_t   header = {};
-	int                             i = 0;
+	dpackheader_t			header = {};
+	int                     i = 0;
 	packfile_t              *newfiles = NULL;
-	int                             numpackfiles = 0;
+	int                     numpackfiles = 0;
 	pack_t                  *pack = NULL;
-	int                             packhandle = 0;
-	static dpackfile_t             info[MAX_FILES_IN_PACK] = {};
+	int                     packhandle = 0;
+	static dpackfile_t      info[MAX_FILES_IN_PACK] = {};
 	unsigned short          crc = 0;
 
 	if (Sys_FileOpenRead (packfile, &packhandle) == -1)
@@ -1781,10 +1798,10 @@ Missi: copied from QuakeSpasm (1/4/2023)
 */
 void CCommon::COM_AddGameDirectory (const char *dir)
 {
-	int                             i = 0;
-	searchpath_t			*search = NULL;
-	pack_t                  *pak = NULL;
-    char                    pakfile[MAX_OSPATH];
+	int                     i = 0;
+	searchpath_t			*search = nullptr;
+	pack_t                  *pak = nullptr;
+	char                    pakfile[MAX_OSPATH] = {};
 	uintptr_t				path_id = 0;
 
 	Q_strcpy (com_gamedir, dir);
@@ -1848,6 +1865,8 @@ void CCommon::COM_InitFilesystem (void)
 	else
 		Q_strcpy (basedir, host->host_parms.basedir);
 
+	Q_FixSlashes(basedir, strlen(basedir));
+
 	j = strlen (basedir);
 
 	if (j > 0)
@@ -1903,7 +1922,7 @@ void CCommon::COM_InitFilesystem (void)
 	if (i)
 	{
 		com_modified = true;
-		com_searchpaths = NULL;
+		com_searchpaths = nullptr;
 		while (++i < com_argc)
 		{
 			if (!com_argv[i] || com_argv[i][0] == '+' || com_argv[i][0] == '-')

@@ -56,6 +56,7 @@ GLint		gl_hardware_maxsize;
 static byte	conback_buffer[sizeof(CQuakePic)];
 CQuakePic	*conback = (CQuakePic*)&conback_buffer;
 
+/*
 CGLTexture	CGLRenderer::gltextures[MAX_GLTEXTURES];
 CGLTexture* CGLRenderer::free_gltextures;
 CGLTexture* CGLRenderer::active_gltextures;
@@ -73,6 +74,7 @@ glRect_t	CGLRenderer::lightmap_rectchange[MAX_LIGHTMAPS];
 
 int			CGLRenderer::gl_filter_min;
 int			CGLRenderer::gl_filter_max;
+*/
 
 CGLRenderer::CGLRenderer()
 {
@@ -114,7 +116,7 @@ CGLRenderer::CGLRenderer()
 	lightmap_textures = NULL;
 
 	free_gltextures = g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture) * MAX_GLTEXTURES, "gltextures");
-	active_gltextures = NULL;
+	active_gltextures = nullptr;
 	int i;
 
 	for (i = 0; i < MAX_GLTEXTURES - 1; i++)
@@ -145,16 +147,16 @@ CGLRenderer::~CGLRenderer()
 	lightmap_count = 0;
 	last_lightmap_allocated = 0;
 
-	draw_chars = NULL;
-	draw_disc = NULL;
-	draw_backtile = NULL;
+	draw_chars = nullptr;
+	draw_disc = nullptr;
+	draw_backtile = nullptr;
 
-	lightmap_textures = NULL;
-	translate_texture = NULL;
-	char_texture = NULL;
+	lightmap_textures = nullptr;
+	translate_texture = nullptr;
+	char_texture = nullptr;
 
-	free_gltextures = NULL;
-	active_gltextures = NULL;
+	free_gltextures = nullptr;
+	active_gltextures = nullptr;
 
 	numgltextures = 0;
 }
@@ -568,10 +570,10 @@ void CGLRenderer::Draw_TextureMode_f (void)
 	int		i;
 	CGLTexture	*glt = NULL;
 
-	if (Cmd_Argc() == 1)
+	if (g_pCmds->Cmd_Argc() == 1)
 	{
 		for (i=0 ; i< NUM_GLMODES; i++)
-			if (gl_filter_min == glmodes[i].minfilter)
+			if (g_GLRenderer->gl_filter_min == glmodes[i].minfilter)
 			{
 				Con_Printf ("%s\n", glmodes[i].name);
 				return;
@@ -582,7 +584,7 @@ void CGLRenderer::Draw_TextureMode_f (void)
 
 	for (i=0 ; i< NUM_GLMODES; i++)
 	{
-		if (!Q_strcasecmp (glmodes[i].name, Cmd_Argv(1) ) )
+		if (!Q_strcasecmp (glmodes[i].name, g_pCmds->Cmd_Argv(1) ) )
 			break;
 	}
 	if (i == NUM_GLMODES)
@@ -591,10 +593,10 @@ void CGLRenderer::Draw_TextureMode_f (void)
 		return;
 	}
 
-	gl_filter_min = glmodes[i].minfilter;
-	gl_filter_max = glmodes[i].magfilter;
+	g_GLRenderer->gl_filter_min = glmodes[i].minfilter;
+	g_GLRenderer->gl_filter_max = glmodes[i].magfilter;
 
-	gl_texturemode.string = Cmd_Argv(1);
+	gl_texturemode.string = g_pCmds->Cmd_Argv(1);
 
 	// change all the existing mipmap texture objects
 	for (i = 0; i < NUM_GLMODES; i++)
@@ -604,8 +606,8 @@ void CGLRenderer::Draw_TextureMode_f (void)
 			if (glmode_idx != i)
 			{
 				glmode_idx = i;
-				for (glt = active_gltextures; glt; glt = glt->next)
-					GL_SetFilterModes(glt);
+				for (glt = g_GLRenderer->active_gltextures; glt; glt = glt->next)
+					g_GLRenderer->GL_SetFilterModes(glt);
 				Sbar_Changed(); //sbar graphics need to be redrawn with new filter mode
 				//FIXME: warpimages need to be redrawn, too.
 			}
@@ -617,7 +619,7 @@ void CGLRenderer::Draw_TextureMode_f (void)
 	{
 		if (!Q_strcasecmp(glmodes[i].name, gl_texturemode.string))
 		{
-			gl_texturemode.string = Cmd_Argv(1);
+			gl_texturemode.string = g_pCmds->Cmd_Argv(1);
 			return;
 		}
 	}
@@ -625,7 +627,7 @@ void CGLRenderer::Draw_TextureMode_f (void)
 	i = atoi(gl_texturemode.string);
 	if (i >= 1 && i <= NUM_GLMODES)
 	{
-		gl_texturemode.string = Cmd_Argv(1);
+		gl_texturemode.string = g_pCmds->Cmd_Argv(1);
 		return;
 	}
 }
@@ -640,6 +642,7 @@ void CGLRenderer::Draw_Init (void)
 	char	ver[40];
 	int		start = 0;
 	uintptr_t offset = 0;
+	int		i = 0;
 
 	Cvar_RegisterVariable (&gl_nobind);
 	Cvar_RegisterVariable (&gl_max_size);
@@ -647,10 +650,16 @@ void CGLRenderer::Draw_Init (void)
 
 	memset(ver, 0, sizeof(ver));
 
-	Cmd_AddCommand ("gl_texturemode", &CGLRenderer::Draw_TextureMode_f);
+	g_pCmds->Cmd_AddCommand ("gl_texturemode", CGLRenderer::Draw_TextureMode_f);
 
 	draw_chars = W_GetLumpName<byte>("conchars");
 	offset = (uintptr_t)draw_chars - (uintptr_t)wad_base;
+
+	// Missi: FIXME: for some reason, this needs to be done as the changes from QuakeSpasm
+	// for applying d_8to24table_conchars will make the charset blank (9/13/2023)
+	for (i = 0; i < 256 * 64; i++)
+		if (draw_chars[i] == 0)
+			draw_chars[i] = 255;	// proper transparent color
 
 	// now turn them into textures
 	char_texture = GL_LoadTexture (NULL, "charset", 128, 128, SRC_INDEXED, draw_chars, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
@@ -1071,7 +1080,7 @@ CGLTexture* CGLRenderer::GL_FindTexture (model_t* model, const char *identifier)
 
 void CGLRenderer::GL_FreeTextureForModel(model_t* mod)
 {
-	CGLTexture* glt, * next;
+	CGLTexture* glt = nullptr, *next = nullptr;
 
 	for (glt = active_gltextures; glt; glt = next)
 	{
@@ -1757,8 +1766,10 @@ void CGLRenderer::GL_LoadImage8(CGLTexture* glt, byte* data)
 	}
 	else if (glt->flags & TEXPREF_CONCHARS)
 	{
-		usepal = d_8to24table_conchars;
-		padbyte = 0;
+		// Missi: FIXME: for some reason, this needs to be set to d_8to24table as the changes from QuakeSpasm
+		// for applying d_8to24table_conchars will make the charset blank (9/13/2023)
+		usepal = d_8to24table;
+		padbyte = 255;
 	}
 	else
 	{
@@ -1934,7 +1945,8 @@ CGLTexture::CGLTexture() :  next(NULL),
     source_format(SRC_NONE),
     source_offset((uintptr_t)0),
     checksum(0),
-    flags(0)
+    flags(0),
+	texnum(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
@@ -1949,7 +1961,8 @@ CGLTexture::CGLTexture(CQuakePic qpic, float des_sl, float des_tl, float des_sh,
     source_format(SRC_NONE),
     source_offset((uintptr_t)0),
     checksum(0),
-    flags(0)
+    flags(0),
+	texnum(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }
@@ -1964,7 +1977,8 @@ CGLTexture::CGLTexture(const CGLTexture& obj) : next(NULL),
     source_format(SRC_NONE),
     source_offset((uintptr_t)0),
     checksum(0),
-    flags(0)
+    flags(0),
+	texnum(0)
 {
 	memset(identifier, 0x00, sizeof(identifier));
 }

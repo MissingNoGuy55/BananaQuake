@@ -389,10 +389,10 @@ V_cshift_f
 */
 void V_cshift_f (void)
 {
-	cshift_empty.destcolor[0] = atoi(Cmd_Argv(1));
-	cshift_empty.destcolor[1] = atoi(Cmd_Argv(2));
-	cshift_empty.destcolor[2] = atoi(Cmd_Argv(3));
-	cshift_empty.percent = atoi(Cmd_Argv(4));
+	cshift_empty.destcolor[0] = atoi(g_pCmds->Cmd_Argv(1));
+	cshift_empty.destcolor[1] = atoi(g_pCmds->Cmd_Argv(2));
+	cshift_empty.destcolor[2] = atoi(g_pCmds->Cmd_Argv(3));
+	cshift_empty.percent = atoi(g_pCmds->Cmd_Argv(4));
 }
 
 
@@ -1155,9 +1155,9 @@ V_Init
 */
 void V_Init (void)
 {
-	Cmd_AddCommand ("v_cshift", V_cshift_f);	
-	Cmd_AddCommand ("bf", V_BonusFlash_f);
-	Cmd_AddCommand ("centerview", V_StartPitchDrift);
+	g_pCmds->Cmd_AddCommand ("v_cshift", V_cshift_f);	
+	g_pCmds->Cmd_AddCommand ("bf", V_BonusFlash_f);
+	g_pCmds->Cmd_AddCommand ("centerview", V_StartPitchDrift);
 
 	Cvar_RegisterVariable (&lcd_x);
 	Cvar_RegisterVariable (&lcd_yaw);

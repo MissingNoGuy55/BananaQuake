@@ -44,7 +44,7 @@ typedef struct edict_s
 
 	entity_state_t	baseline;
 	
-	float		freetime;			// sv.time when the object was freed
+	float		freetime;			// sv->time when the object was freed
 	entvars_t	v;					// C exported fields from progs
 // other fields from progs come immediately after
 } edict_t;
@@ -97,26 +97,27 @@ void ED_LoadFromFile (const char *data);
 
 int PR_AllocString(int size, char** ptr);
 
-//define EDICT_NUM(n) ((edict_t *)(sv.edicts+ (n)*pr_edict_size))
-//define NUM_FOR_EDICT(e) (((byte *)(e) - sv.edicts)/pr_edict_size)
+//define EDICT_NUM(n) ((edict_t *)(sv->edicts+ (n)*pr_edict_size))
+//define NUM_FOR_EDICT(e) (((byte *)(e) - sv->edicts)/pr_edict_size)
 
 edict_t *EDICT_NUM(int n);
 int NUM_FOR_EDICT(edict_t *e);
 
 #define	NEXT_EDICT(e) ((edict_t *)( (byte *)e + pr_edict_size))
 
-#define	EDICT_TO_PROG(e) ((byte *)e - (byte *)sv.edicts)
-#define PROG_TO_EDICT(e) ((edict_t *)((byte *)sv.edicts + e))
+#define	EDICT_TO_PROG(e) ((byte *)e - (byte *)sv->edicts)
+#define PROG_TO_EDICT(e) ((edict_t *)((byte *)sv->edicts + e))
 
 //============================================================================
 
 #define	G_FLOAT(o) (pr_globals[o])
 #define	G_INT(o) (*(int *)&pr_globals[o])
-#define	G_EDICT(o)		((edict_t *)((byte *)sv.edicts+ *(int *)&pr_globals[o]))
+#define	G_EDICT(o)		((edict_t *)((byte *)sv->edicts+ *(int *)&pr_globals[o]))
 #define G_EDICTNUM(o) NUM_FOR_EDICT(G_EDICT(o))
 #define	G_VECTOR(o) (&pr_globals[o])
 #define	G_STRING(o)		(PR_GetString(*(string_t *)&pr_globals[o]))
 #define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
+#define G_CPPVECTOR(o) ((CQVector<void*>*)&pr_globals[o])
 
 #define	E_FLOAT(e,o) (((float*)&e->v)[o])
 #define	E_INT(e,o) (*(int *)&((float*)&e->v)[o])
@@ -124,7 +125,7 @@ int NUM_FOR_EDICT(edict_t *e);
 #define	E_STRING(e,o) (PR_GetString(*(string_t *)&((float*)&e->v)[o]))
 
 #ifndef QUAKE_TOOLS
-extern	int		type_size[8];
+extern	int		type_size[9];
 #endif
 
 typedef void (*builtin_t) (void);

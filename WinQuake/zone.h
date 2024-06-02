@@ -86,9 +86,7 @@ Zone block
 #ifndef ZONE_H
 #define ZONE_H
 
-#ifndef QUAKE_GAME
 #include "sys.h"
-#endif
 
 #if defined (__linux__) || defined(__CYGWIN__)
 #include "strl_fn.h"
@@ -96,6 +94,9 @@ Zone block
 #include "cvar.h"
 #include "cmd.h"
 #endif
+
+#include "cvar.h"
+#include "cmd.h"
 
 void Con_Printf(const char* fmt, ...);
 void Sys_Error(const char* err, ...);
@@ -598,7 +599,7 @@ void CMemCache::Cache_Init(void)
 	cache_head.next = cache_head.prev = &cache_head;
 	cache_head.lru_next = cache_head.lru_prev = &cache_head;
 
-	Cmd_AddCommand("flush", Cache_Flush_Callback<T>());
+	g_pCmds->Cmd_AddCommand("flush", Cache_Flush_Callback<T>());
 }
 
 /*

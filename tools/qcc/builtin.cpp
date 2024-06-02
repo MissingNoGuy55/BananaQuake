@@ -17,687 +17,53 @@
     See file, 'COPYING', for details.
 */
 
-// Missi: this file had to be changed A LOT to get QCC to compile in C++.
-// There is a reason for this, as it would look through quakedef.h to find .c files to link Quake functions,
-// before going through here and using the already-linked functions. But guess what happens when you lose the global
-// scope .c files had? A lot of nasty unresolved externals (there were EIGHTY OF THEM), hence why there's so many 
-// COPIES of Quake functions here.
-//
-// The only other option is to literally move around everything in BananaQuake so that it's in a friendly C++ linking
-// environment for QCC, but that is really not desirable at the moment as the entire project could break, and
-// I am only one person.
-// 
-// In short, the reason you see so many .cpp file includes in here is because the functions are known
-// to exist through quakedef.h, but QCC cannot find where they are, as it is not Quake's project (12/3/2022)
+#include "qcc.h"
+#include "progdefs.h"
 
-#include "quakedef.h"
-#include <winquake.h>
 //dfunction_t* pr_xfunction;
 
-/*
-==============================================================================
- FORWARD DECLARATIONS FOR VARIABLES AND CLASSES FROM BANANAQUAKE (FOR QCC'S FINICKY ASS)
-==============================================================================
-*/
+template<typename T>
+class CQVector;
 
-/*
-==================
-PROGS
-==================
-*/
+extern dprograms_t*				progs;
+extern dfunction_t*				pr_functions;
+extern char*					pr_strings;
+extern int						pr_stringssize;
+extern ddef_t*					pr_fielddefs;
+extern ddef_t*					pr_globaldefs;
+extern dstatement_t*			pr_statements;
+extern globalvars_t*			pr_global_struct;
+extern float*					pr_globals;			// same as pr_global_struct
+extern int						pr_edict_size;	// in bytes
 
-//int pr_argc;
-//bool pr_trace;
+extern int						pr_maxknownstrings;
+extern int						pr_numknownstrings;
+extern CQVector<const char*>	pr_knownstrings;
 
-/*
-==================
-CLASSES
-==================
-*/
+extern unsigned short		pr_crc;
 
-//class CCommon*			common;
-//class CQuakeHost*		host;
-//class CQuakeServer		sv;
-//class CConProc*			g_ConProc;
-//struct cache_user_s*	loadcache;
-//struct client_s*		host_client;
+typedef void (*builtin_t) (void);
+extern	builtin_t* pr_builtins;
+extern int pr_numbuiltins;
 
-/*
-==================
-MATH
-==================
-*/
+extern int		pr_argc;
 
-//vec3_t vec3_origin;
-//cvar_t teamplay;
+extern	dfunction_t* pr_xfunction;
+extern	int			pr_xstatement;
+extern bool		pr_trace;
 
-/*
-==============================================================================
- FORWARD DECLARATIONS FOR FUNCTIONS FROM BANANAQUAKE (FOR QCC'S FINICKY ASS)
-==============================================================================
-*/
+extern	unsigned short		pr_crc;
 
-/*
-==================
-CONSOLE
-==================
-*/
+extern const char* PR_GetString(int num);
+extern void Con_Printf(const char* fmt, ...);
 
-#include <console.cpp>
-#include <conproc.cpp>
+extern vec3_t vec3_origin;
 
-/*
-==================
-MATH
-==================
-*/
+extern int  msg_readcount;
+extern bool msg_badread;
 
-#include <mathlib.cpp>
-
-/*
-==================
-COMMON.CPP FORWARD STUFF
-==================
-*/
-
-#include <common.cpp>
-
-/*
-==================
-CLIENT
-==================
-*/
-
-cvar_t	cl_name;
-cvar_t	cl_color;
-
-cvar_t	cl_shownet;	// can be 0, 1, or 2
-cvar_t	cl_nolerp;
-
-cvar_t	lookspring;
-cvar_t	lookstrafe;
-cvar_t	sensitivity;
-
-cvar_t	m_pitch;
-cvar_t	m_yaw;
-cvar_t	m_forward;
-cvar_t	m_side;
-
-client_static_t	cls = {};
-client_state_t	cl = {};
-// FIXME: put these on hunk?
-efrag_t			cl_efrags[MAX_EFRAGS] = {};
-entity_t		cl_entities[MAX_EDICTS] = {};
-entity_t		cl_static_entities[MAX_STATIC_ENTITIES] = {};
-lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES] = {};
-dlight_t		cl_dlights[MAX_DLIGHTS] = {};
-
-void CL_DecayLights()
-{
-}
-
-void CL_Init()
-{
-}
-
-void CL_Disconnect()
-{
-}
-
-int CL_ReadFromServer()
-{
-	return -1;
-}
-
-void CL_NextDemo()
-{
-}
-
-void CL_SendCmd()
-{
-}
-
-#include <cfgfile.cpp>
-
-/*
-==================
-INPUT
-==================
-*/
-
-#include <cl_input.cpp>
-#include <keys.cpp>
-
-void IN_Init()
-{
-}
-
-void IN_Shutdown()
-{
-}
-
-/*
-==================
-NETWORK FORWARD STUFF
-==================
-*/
-
-#include <net_main.cpp>
-
-/*
-==================
-PROGS
-==================
-*/
-
-#include <pr_edict.cpp>
-#include <pr_exec.cpp>
-
-/*
-==================
-CVAR
-==================
-*/
-
-#include <strlcat.cpp>
-#include <strlcpy.cpp>
-#include <cmd.cpp>
-#include <cvar.cpp>
-
-/*
-==================
-ZONE
-==================
-*/
-
-bool r_cache_thrash;
-
-#include <zone.cpp>
-
-/*
-==================
-SERVER
-==================
-*/
-
-#include <sv_main.cpp>
-#include <sv_move.cpp>
-#include <sv_phys.cpp>
-#include <sv_user.cpp>
-#include <host.cpp>
-
-cvar_t deathmatch;
-cvar_t coop;
-cvar_t fraglimit;
-cvar_t timelimit;
-
-int net_numdrivers;
-net_driver_t net_drivers[MAX_NET_DRIVERS] =
-{
-};
-
-refdef_t r_refdef;
-vec3_t r_origin;
-vec3_t vpn;
-vec3_t vright;
-vec3_t vup;
-
-void Chase_Init()
-{
-}
-
-int VCR_Init()
-{
-	return -1;
-}
-
-void CQuakeHost::Host_InitCommands()
-{
-}
-
-void CQuakeHost::Host_Quit_f()
-{
-}
-
-int SV_ModelIndex(const char* mod)
-{
-	return -1;
-}
-
-/*
-==================
-MODEL
-==================
-*/
-
-#include <model.cpp>
-#include <world.cpp>
-
-/*
-==================
-"THE D" MODELS
-==================
-*/
-
-void D_UpdateRects(vrect_t* prect)
-{
-}
-
-void D_InitCaches(void* buffer, int size)
-{
-}
-
-void D_EnableBackBufferAccess()
-{
-}
-
-void D_DisableBackBufferAccess()
-{
-}
-
-void D_FlushCaches()
-{
-}
-
-void D_EndDirectRect(int x, int y, int width, int height)
-{
-}
-
-void CCoreRenderer::R_ViewChanged(vrect_t* pvrect, int lineadj, float aspect)
-{
-}
-
-void CCoreRenderer::R_PushDlights()
-{
-}
-
-int D_SurfaceCacheForRes(int width, int height)
-{
-	return -1;
-}
-
-/*
-==================
-GRAPHICS
-==================
-*/
-
-#include <wad.cpp>
-#include <draw.cpp>
-#include <vid_win.cpp>
-#include <view.cpp>
-#include <screen.cpp>
-#include <menu.cpp>
-#include <sbar.cpp>
-
-texture_t* r_notexture_mip;
-int screenwidth;
-short* d_pzbuffer;
-byte* r_warpbuffer;
-int r_pixbytes;
-bool r_dowarp;
-bool noclip_anglehack;
-byte* d_viewbuffer;
-
-CCoreRenderer::CCoreRenderer()
-{
-}
-
-void CSoftwareRenderer::R_InitSky(texture_s* mt)
-{
-}
-
-void CCoreRenderer::R_Init()
-{
-
-}
-
-void CCoreRenderer::R_RenderView(void)
-{
-}
-
-void CCoreRenderer::R_SetVrect(vrect_t* pvrectin, vrect_t* pvrect, int lineadj)
-{
-}
-
-/*
-==================
-WINDOWS CRAP
-==================
-*/
-#if 0
-int VID_ForceUnlockedAndReturnState(void)
-{
-	int	lk;
-
-	if (!lockcount)
-		return 0;
-
-	lk = lockcount;
-
-	if (dibdc)
-	{
-		lockcount = 0;
-	}
-	else
-	{
-		lockcount = 1;
-		VID_UnlockBuffer();
-	}
-
-	return lk;
-}
-
-
-void VID_ForceLockState(int lk)
-{
-
-	if (!dibdc && lk)
-	{
-		lockcount = 0;
-		VID_LockBuffer();
-	}
-
-	lockcount = lk;
-}
-
-void VID_LockBuffer(void)
-{
-
-	if (dibdc)
-		return;
-
-	lockcount++;
-
-	if (lockcount > 1)
-		return;
-
-	MGL_beginDirectAccess();
-
-	if (memdc)
-	{
-		// Update surface pointer for linear access modes
-		vid.buffer = vid.conbuffer = vid.direct = static_cast<pixel_t*>(memdc->surface);
-		vid.rowbytes = vid.conrowbytes = memdc->mi.bytesPerLine;
-	}
-	else if (mgldc)
-	{
-		// Update surface pointer for linear access modes
-		vid.buffer = vid.conbuffer = vid.direct = static_cast<pixel_t*>(mgldc->surface);
-		vid.rowbytes = vid.conrowbytes = mgldc->mi.bytesPerLine;
-	}
-
-	if (r_dowarp)
-		d_viewbuffer = r_warpbuffer;
-	else
-		d_viewbuffer = static_cast<pixel_t*>(static_cast<byte*>(vid.buffer));
-
-	if (r_dowarp)
-		screenwidth = WARP_WIDTH;
-	else
-		screenwidth = vid.rowbytes;
-
-	if (lcd_x.value)
-		screenwidth <<= 1;
-}
-
-
-void VID_UnlockBuffer(void)
-{
-	if (dibdc)
-		return;
-
-	lockcount--;
-
-	if (lockcount > 0)
-		return;
-
-	if (lockcount < 0)
-		Sys_Error("Unbalanced unlock");
-
-	MGL_endDirectAccess();
-
-	// to turn up any unlocked accesses
-	vid.buffer = vid.conbuffer = vid.direct = d_viewbuffer = NULL;
-
-}
-#endif
-
-void VID_Init(unsigned char* palette)
-{
-}
-
-void VID_Lockbuffer(void)
-{
-}
-
-void VID_SetDefaultMode(void)
-{
-}
-
-void VID_SetPalette(unsigned char* palette)
-{
-}
-
-void VID_ShiftPalette(unsigned char* palette)
-{
-}
-
-void VID_Shutdown(void)
-{
-}
-
-void VID_LockBuffer(void)
-{
-}
-
-void VID_UnlockBuffer(void)
-{
-}
-
-void VID_Update(vrect_t* rects)
-{
-}
-
-#include <sys_win.cpp>
-
-/*
-==================
-SOUND
-==================
-*/
-
-#include <bgmusic.h>
-#include <cd_win.cpp>
-#include <snd_dma.cpp>
-#include <snd_mem.cpp>
-#include <snd_mix.cpp>
-#include <snd_win.cpp>
-
-CBackgroundMusic* g_BGM;
-
-void CBackgroundMusic::BGM_PlayCDtrack(byte track, bool looping)
-{
-}
-
-/*
-==================
-MISC
-==================
-*/
-#if 0
-void SZ_Alloc(sizebuf_t* buf, int startsize)
-{
-	if (startsize < 256)
-		startsize = 256;
-	buf->data = g_MemCache->Hunk_AllocName<byte>(startsize, "sizebuf");
-	buf->maxsize = startsize;
-	buf->cursize = 0;
-}
-
-
-void SZ_Free(sizebuf_t* buf)
-{
-	//      Z_Free (buf->data);
-	//      buf->data = NULL;
-	//      buf->maxsize = 0;
-	buf->cursize = 0;
-}
-
-void SZ_Clear(sizebuf_t* buf)
-{
-	buf->cursize = 0;
-}
-
-void* SZ_GetSpace(sizebuf_t* buf, int length)
-{
-	void* data = 0;
-
-	if (buf->cursize + length > buf->maxsize)
-	{
-		if (!buf->allowoverflow)
-			Sys_Error("SZ_GetSpace: overflow without allowoverflow set");
-
-		if (length > buf->maxsize)
-			Sys_Error("SZ_GetSpace: %i is > full buffer size", length);
-
-		buf->overflowed = true;
-		Con_Printf("SZ_GetSpace: overflow");
-		SZ_Clear(buf);
-	}
-
-	data = buf->data + buf->cursize;
-	buf->cursize += length;
-
-	return data;
-}
-
-void SZ_Write(sizebuf_t* buf, const void* data, int length)
-{
-	Q_memcpy(SZ_GetSpace(buf, length), data, length);
-}
-
-void SZ_Print(sizebuf_t* buf, const char* data)
-{
-	int             len;
-
-	len = Q_strlen(data) + 1;
-
-	// byte * cast to keep VC++ happy
-	if (buf->data[buf->cursize - 1])
-		Q_memcpy((byte*)SZ_GetSpace(buf, len), (void*)data, len); // no trailing 0
-	else
-		Q_memcpy((byte*)SZ_GetSpace(buf, len - 1) - 1, (void*)data, len); // write over trailing 0
-}
-
-/*
-==============================================================================
-
-			MESSAGE IO FUNCTIONS
-
-Handles byte ordering and avoids alignment errors
-==============================================================================
-*/
-
-//
-// writing functions
-//
-
-void MSG_WriteChar(sizebuf_t* sb, int c)
-{
-	byte* buf;
-
-#ifdef PARANOID
-	if (c < -128 || c > 127)
-		Sys_Error("MSG_WriteChar: range error");
-#endif
-
-	buf = static_cast<byte*>(SZ_GetSpace(sb, 1));
-	buf[0] = c;
-}
-
-void MSG_WriteByte(sizebuf_t* sb, int c)
-{
-	byte* buf = NULL;
-
-#ifdef PARANOID
-	if (c < 0 || c > 255)
-		Sys_Error("MSG_WriteByte: range error");
-#endif
-
-	buf = (byte*)SZ_GetSpace(sb, 1);
-	buf[0] = c;
-}
-
-void MSG_WriteShort(sizebuf_t* sb, int c)
-{
-	byte* buf;
-
-#ifdef PARANOID
-	if (c < ((short)0x8000) || c >(short)0x7fff)
-		Sys_Error("MSG_WriteShort: range error");
-#endif
-
-	buf = (byte*)SZ_GetSpace(sb, 2);
-	buf[0] = c & 0xff;
-	buf[1] = c >> 8;
-}
-
-void MSG_WriteLong(sizebuf_t* sb, int c)
-{
-	byte* buf;
-
-	buf = (byte*)SZ_GetSpace(sb, 4);
-	buf[0] = c & 0xff;
-	buf[1] = (c >> 8) & 0xff;
-	buf[2] = (c >> 16) & 0xff;
-	buf[3] = c >> 24;
-}
-
-void MSG_WriteFloat(sizebuf_t* sb, float f)
-{
-	union
-	{
-		float   f;
-		int     l;
-	} dat;
-
-
-	dat.f = f;
-	dat.l = LittleLong(dat.l);
-
-	SZ_Write(sb, &dat.l, 4);
-}
-
-void MSG_WriteString(sizebuf_t* sb, const char* s)
-{
-	if (!s)
-		SZ_Write(sb, "", 1);
-	else
-		SZ_Write(sb, (char*)s, Q_strlen(s) + 1);
-}
-
-void MSG_WriteCoord(sizebuf_t* sb, float f)
-{
-	MSG_WriteShort(sb, (int)(f * 8));
-}
-
-void MSG_WriteAngle(sizebuf_t* sb, float f)
-{
-	MSG_WriteByte(sb, ((int)f * 256 / 360) & 255);
-}
-
-//
-// reading functions
-//
-int                     msg_readcount;
-bool        msg_badread;
-
-void MSG_BeginReading(void)
-{
-	msg_readcount = 0;
-	msg_badread = false;
-}
+extern sizebuf_t		net_message;
+extern int				net_activeconnections = 0;
 
 // returns -1 and sets msg_badread if no more characters are available
 int MSG_ReadChar(void)
@@ -819,10 +185,6 @@ float MSG_ReadAngle(void)
 {
 	return MSG_ReadChar() * (360.0 / 256);
 }
-#endif
-
-#include <in_win.cpp>
-#include <crc.cpp>
 
 #define	RETURN_EDICT(e) (((int *)pr_globals)[OFS_RETURN] = EDICT_TO_PROG(e))
 
@@ -833,7 +195,6 @@ float MSG_ReadAngle(void)
 
 ============================================================================
 */
-#if 0
 void Q_memset(void* dest, int fill, int count)
 {
 	int             i;
@@ -1173,7 +534,7 @@ float Q_atof(const char* str)
 
 	return val * sign;
 }
-#endif
+
 /*
 ===============================================================================
 
@@ -1218,7 +579,7 @@ void PF_error (void)
 	ed = PROG_TO_EDICT(pr_global_struct->self);
 	ED_Print (ed);
 
-	host->Host_Error ("Program error");
+	GetQuakeHost()->Host_Error("Program error");
 }
 
 /*
@@ -1243,7 +604,7 @@ void PF_objerror (void)
 	ED_Print (ed);
 	ED_Free (ed);
 	
-	host->Host_Error ("Program error");
+	GetQuakeHost()->Host_Error("Program error");
 }
 
 
@@ -1278,7 +639,7 @@ void PF_setorigin (void)
 	e = G_EDICT(OFS_PARM0);
 	org = G_VECTOR(OFS_PARM1);
 	VectorCopy (org, e->v.origin);
-	sv.SV_LinkEdict (e, false);
+	sv->SV_LinkEdict (e, false);
 }
 
 
@@ -1353,7 +714,7 @@ void SetMinMaxSize (edict_t *e, float *min, float *max, bool rotate)
 	VectorCopy (rmax, e->v.maxs);
 	VectorSubtract (max, min, e->v.size);
 	
-	sv.SV_LinkEdict (e, false);
+	sv->SV_LinkEdict (e, false);
 }
 
 /*
@@ -1396,7 +757,7 @@ void PF_setmodel (void)
 	m = G_STRING(OFS_PARM1);
 
 	// check to see if model was properly precached
-	for (i = 0, check = sv.model_precache; *check; i++, check++)
+	for (i = 0, check = sv->model_precache; *check; i++, check++)
 	{
 		if (!strcmp(*check, m))
 			break;
@@ -1409,7 +770,7 @@ void PF_setmodel (void)
 	e->v.model = PR_SetEngineString(*check);
 	e->v.modelindex = i; //SV_ModelIndex (m);
 
-	mod = sv.models[(int)e->v.modelindex];  // Mod_ForName (m, true);
+	mod = sv->models[(int)e->v.modelindex];  // Mod_ForName (m, true);
 
 	if (mod)
 		SetMinMaxSize(e, mod->mins, mod->maxs, true);
@@ -1431,7 +792,7 @@ void PF_bprint (void)
 	const char		*s;
 
 	s = PF_VarString(0);
-	sv.SV_BroadcastPrintf (s);
+	sv->SV_BroadcastPrintf (s);
 }
 
 /*
@@ -1649,7 +1010,7 @@ void PF_particle (void)
 	dir = G_VECTOR(OFS_PARM1);
 	color = G_FLOAT(OFS_PARM2);
 	count = G_FLOAT(OFS_PARM3);
-	sv.SV_StartParticle (org, dir, color, count);
+	sv->SV_StartParticle (org, dir, color, count);
 }
 
 
@@ -1673,7 +1034,7 @@ void PF_ambientsound (void)
 	attenuation = G_FLOAT(OFS_PARM3);
 	
 // check to see if samp was properly precached
-	for (soundnum=0, check = sv.sound_precache ; *check ; check++, soundnum++)
+	for (soundnum=0, check = sv->sound_precache ; *check ; check++, soundnum++)
 		if (!strcmp(*check,samp))
 			break;
 			
@@ -1685,14 +1046,14 @@ void PF_ambientsound (void)
 
 // add an svc_spawnambient command to the level signon packet
 
-	MSG_WriteByte (&sv.signon,svc_spawnstaticsound);
+	MSG_WriteByte (&sv->signon,svc_spawnstaticsound);
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord(&sv.signon, pos[i]);
+		MSG_WriteCoord(&sv->signon, pos[i]);
 
-	MSG_WriteByte (&sv.signon, soundnum);
+	MSG_WriteByte (&sv->signon, soundnum);
 
-	MSG_WriteByte (&sv.signon, vol*255);
-	MSG_WriteByte (&sv.signon, attenuation*64);
+	MSG_WriteByte (&sv->signon, vol*255);
+	MSG_WriteByte (&sv->signon, attenuation*64);
 
 }
 
@@ -1735,7 +1096,7 @@ void PF_sound (void)
 	if (channel < 0 || channel > 7)
 		Sys_Error ("SV_StartSound: channel = %i", channel);
 
-	sv.SV_StartSound (entity, channel, sample, volume, attenuation);
+	sv->SV_StartSound (entity, channel, sample, volume, attenuation);
 }
 
 /*
@@ -1775,7 +1136,7 @@ void PF_traceline (void)
 	nomonsters = G_FLOAT(OFS_PARM2);
 	ent = G_EDICT(OFS_PARM3);
 
-	trace = sv.SV_Move (v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
+	trace = sv->SV_Move (v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
 
 	pr_global_struct->trace_allsolid = trace.allsolid;
 	pr_global_struct->trace_startsolid = trace.startsolid;
@@ -1788,7 +1149,7 @@ void PF_traceline (void)
 	if (trace.ent)
 		pr_global_struct->trace_ent = EDICT_TO_PROG(trace.ent);
 	else
-		pr_global_struct->trace_ent = EDICT_TO_PROG(sv.edicts);
+		pr_global_struct->trace_ent = EDICT_TO_PROG(sv->edicts);
 }
 
 /*
@@ -1852,9 +1213,9 @@ int PF_newcheckclient (int check)
 
 // get the PVS for the entity
 	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
-	leaf = Mod_PointInLeaf (org, sv.worldmodel);
-	pvs = Mod_LeafPVS (leaf, sv.worldmodel);
-	memcpy (checkpvs, pvs, (sv.worldmodel->numleafs+7)>>3 );
+	leaf = Mod_PointInLeaf (org, sv->worldmodel);
+	pvs = Mod_LeafPVS (leaf, sv->worldmodel);
+	memcpy (checkpvs, pvs, (sv->worldmodel->numleafs+7)>>3 );
 
 	return i;
 }
@@ -1884,29 +1245,29 @@ void PF_checkclient (void)
 	vec3_t	view;
 	
 // find a new check if on a new frame
-	if (sv.time - sv.lastchecktime >= 0.1)
+	if (sv->time - sv->lastchecktime >= 0.1)
 	{
-		sv.lastcheck = PF_newcheckclient (sv.lastcheck);
-		sv.lastchecktime = sv.time;
+		sv->lastcheck = PF_newcheckclient (sv->lastcheck);
+		sv->lastchecktime = sv->time;
 	}
 
 // return check if it might be visible	
-	ent = EDICT_NUM(sv.lastcheck);
+	ent = EDICT_NUM(sv->lastcheck);
 	if (ent->free || ent->v.health <= 0)
 	{
-		RETURN_EDICT(sv.edicts);
+		RETURN_EDICT(sv->edicts);
 		return;
 	}
 
 // if current entity can't possibly see the check entity, return 0
 	self = PROG_TO_EDICT(pr_global_struct->self);
 	VectorAdd (self->v.origin, self->v.view_ofs, view);
-	leaf = Mod_PointInLeaf (view, sv.worldmodel);
-	l = (leaf - sv.worldmodel->leafs) - 1;
+	leaf = Mod_PointInLeaf (view, sv->worldmodel);
+	l = (leaf - sv->worldmodel->leafs) - 1;
 	if ( (l<0) || !(checkpvs[l>>3] & (1<<(l&7)) ) )
 	{
 c_notvis++;
-		RETURN_EDICT(sv.edicts);
+		RETURN_EDICT(sv->edicts);
 		return;
 	}
 
@@ -2011,13 +1372,13 @@ void PF_findradius (void)
 	vec3_t	eorg;
 	int		i, j;
 
-	chain = (edict_t *)sv.edicts;
+	chain = (edict_t *)sv->edicts;
 	
 	org = G_VECTOR(OFS_PARM0);
 	rad = G_FLOAT(OFS_PARM1);
 
-	ent = NEXT_EDICT(sv.edicts);
-	for (i=1 ; i<sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
+	ent = NEXT_EDICT(sv->edicts);
+	for (i=1 ; i<sv->num_edicts ; i++, ent = NEXT_EDICT(ent))
 	{
 		if (ent->free)
 			continue;
@@ -2103,7 +1464,7 @@ void PF_Find (void)
 	if (!s)
 		PR_RunError ("PF_Find: bad search string");
 		
-	for (e++ ; e < sv.num_edicts ; e++)
+	for (e++ ; e < sv->num_edicts ; e++)
 	{
 		ed = EDICT_NUM(e);
 		if (ed->free)
@@ -2118,7 +1479,7 @@ void PF_Find (void)
 		}
 	}
 	
-	RETURN_EDICT(sv.edicts);
+	RETURN_EDICT(sv->edicts);
 }
 
 void PR_CheckEmptyString (const char *s)
@@ -2137,7 +1498,7 @@ void PF_precache_sound (void)
 	const char	*s;
 	int		i;
 	
-	if (sv.state != ss_loading)
+	if (sv->state != ss_loading)
 		PR_RunError ("PF_Precache_*: Precache can only be done in spawn functions");
 		
 	s = G_STRING(OFS_PARM0);
@@ -2146,12 +1507,12 @@ void PF_precache_sound (void)
 	
 	for (i=0 ; i<MAX_SOUNDS ; i++)
 	{
-		if (!sv.sound_precache[i])
+		if (!sv->sound_precache[i])
 		{
-			sv.sound_precache[i] = s;
+			sv->sound_precache[i] = s;
 			return;
 		}
-		if (!strcmp(sv.sound_precache[i], s))
+		if (!strcmp(sv->sound_precache[i], s))
 			return;
 	}
 	PR_RunError ("PF_precache_sound: overflow");
@@ -2162,7 +1523,7 @@ void PF_precache_model (void)
 	const char	*s;
 	int		i;
 	
-	if (sv.state != ss_loading)
+	if (sv->state != ss_loading)
 		PR_RunError ("PF_Precache_*: Precache can only be done in spawn functions");
 		
 	s = G_STRING(OFS_PARM0);
@@ -2171,13 +1532,13 @@ void PF_precache_model (void)
 
 	for (i=0 ; i<MAX_MODELS ; i++)
 	{
-		if (!sv.model_precache[i])
+		if (!sv->model_precache[i])
 		{
-			sv.model_precache[i] = s;
-			sv.models[i] = Mod_ForName (s, true);
+			sv->model_precache[i] = s;
+			sv->models[i] = Mod_ForName (s, true);
 			return;
 		}
-		if (!strcmp(sv.model_precache[i], s))
+		if (!strcmp(sv->model_precache[i], s))
 			return;
 	}
 	PR_RunError ("PF_precache_model: overflow");
@@ -2239,7 +1600,7 @@ void PF_walkmove (void)
 	oldf = pr_xfunction;
 	oldself = pr_global_struct->self;
 	
-	G_FLOAT(OFS_RETURN) = sv.SV_movestep(ent, move, true);
+	G_FLOAT(OFS_RETURN) = sv->SV_movestep(ent, move, true);
 	
 	
 // restore program state
@@ -2265,14 +1626,14 @@ void PF_droptofloor (void)
 	VectorCopy (ent->v.origin, end);
 	end[2] -= 256;
 	
-	trace = sv.SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, false, ent);
+	trace = sv->SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, false, ent);
 
 	if (trace.fraction == 1 || trace.allsolid)
 		G_FLOAT(OFS_RETURN) = 0;
 	else
 	{
 		VectorCopy (trace.endpos, ent->v.origin);
-		sv.SV_LinkEdict (ent, false);
+		sv->SV_LinkEdict (ent, false);
 		ent->v.flags = (int)ent->v.flags | FL_ONGROUND;
 		ent->v.groundentity = EDICT_TO_PROG(trace.ent);
 		G_FLOAT(OFS_RETURN) = 1;
@@ -2297,10 +1658,10 @@ void PF_lightstyle (void)
 	val = G_STRING(OFS_PARM1);
 
 // change the string in sv
-	sv.lightstyles[style] = val;
+	sv->lightstyles[style] = val;
 	
 // send message to all clients on this server
-	if (sv.state != ss_active)
+	if (sv->state != ss_active)
 		return;
 	
 	for (j=0, client = svs.clients ; j<svs.maxclients ; j++, client++)
@@ -2342,7 +1703,7 @@ void PF_checkbottom (void)
 	
 	ent = G_EDICT(OFS_PARM0);
 
-	G_FLOAT(OFS_RETURN) = sv.SV_CheckBottom (ent);
+	G_FLOAT(OFS_RETURN) = sv->SV_CheckBottom (ent);
 }
 
 /*
@@ -2356,7 +1717,7 @@ void PF_pointcontents (void)
 	
 	v = G_VECTOR(OFS_PARM0);
 
-	G_FLOAT(OFS_RETURN) = sv.SV_PointContents (v);
+	G_FLOAT(OFS_RETURN) = sv->SV_PointContents (v);
 }
 
 /*
@@ -2375,9 +1736,9 @@ void PF_nextent (void)
 	while (1)
 	{
 		i++;
-		if (i == sv.num_edicts)
+		if (i == sv->num_edicts)
 		{
-			RETURN_EDICT(sv.edicts);
+			RETURN_EDICT(sv->edicts);
 			return;
 		}
 		ent = EDICT_NUM(i);
@@ -2417,7 +1778,7 @@ void PF_aim (void)
 // try sending a trace straight
 	VectorCopy (pr_global_struct->v_forward, dir);
 	VectorMA (start, 2048, dir, end);
-	tr = sv.SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
+	tr = sv->SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
 	if (tr.ent && tr.ent->v.takedamage == DAMAGE_AIM
 	&& (!host->teamplay.value || ent->v.team <=0 || ent->v.team != tr.ent->v.team) )
 	{
@@ -2431,8 +1792,8 @@ void PF_aim (void)
 	bestdist = sv_aim.value;
 	bestent = NULL;
 	
-	check = NEXT_EDICT(sv.edicts);
-	for (i=1 ; i<sv.num_edicts ; i++, check = NEXT_EDICT(check) )
+	check = NEXT_EDICT(sv->edicts);
+	for (i=1 ; i<sv->num_edicts ; i++, check = NEXT_EDICT(check) )
 	{
 		if (check->v.takedamage != DAMAGE_AIM)
 			continue;
@@ -2447,7 +1808,7 @@ void PF_aim (void)
 		dist = DotProduct (dir, pr_global_struct->v_forward);
 		if (dist < bestdist)
 			continue;	// to far to turn
-		tr = sv.SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
+		tr = sv->SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
 		if (tr.ent == check)
 		{	// can shoot at this one
 			bestdist = dist;
@@ -2537,7 +1898,7 @@ sizebuf_t *WriteDest (void)
 	switch (dest)
 	{
 	case MSG_BROADCAST:
-		return &sv.datagram;
+		return &sv->datagram;
 	
 	case MSG_ONE:
 		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
@@ -2547,10 +1908,10 @@ sizebuf_t *WriteDest (void)
 		return &svs.clients[entnum-1].message;
 		
 	case MSG_ALL:
-		return &sv.reliable_datagram;
+		return &sv->reliable_datagram;
 	
 	case MSG_INIT:
-		return &sv.signon;
+		return &sv->signon;
 
 	default:
 		PR_RunError ("WriteDest: bad destination");
@@ -2618,21 +1979,39 @@ void PF_makestatic (void)
 		return; //can't display the correct model & frame, so don't show it at all
 	}
 
-	MSG_WriteByte (&sv.signon,svc_spawnstatic);
+	MSG_WriteByte (&sv->signon,svc_spawnstatic);
 
-	MSG_WriteByte (&sv.signon, SV_ModelIndex(PR_GetString(ent->v.model)));
+	MSG_WriteByte (&sv->signon, SV_ModelIndex(PR_GetString(ent->v.model)));
 
-	MSG_WriteByte (&sv.signon, (int)ent->v.frame);
-	MSG_WriteByte (&sv.signon, (int)ent->v.colormap);
-	MSG_WriteByte (&sv.signon, (int)ent->v.skin);
+	MSG_WriteByte (&sv->signon, (int)ent->v.frame);
+	MSG_WriteByte (&sv->signon, (int)ent->v.colormap);
+	MSG_WriteByte (&sv->signon, (int)ent->v.skin);
 	for (i=0 ; i<3 ; i++)
 	{
-		MSG_WriteCoord(&sv.signon, ent->v.origin[i]);
-		MSG_WriteAngle(&sv.signon, ent->v.angles[i]);
+		MSG_WriteCoord(&sv->signon, ent->v.origin[i]);
+		MSG_WriteAngle(&sv->signon, ent->v.angles[i]);
 	}
 
 // throw the entity away now
 	ED_Free (ent);
+}
+
+/*
+=================
+PF_CPPVectorAdd
+
+the size box is rotated by the current angle
+
+CPPVectorAdd (entity, minvector, maxvector)
+=================
+*/
+void PF_CPPVectorAdd(void)
+{
+	std::vector<void*>* vec;
+
+	vec = G_CPPVECTOR(OFS_PARM0);
+
+	vec->push_back((void*)OFS_PARM1);
 }
 
 //=============================================================================
@@ -2684,6 +2063,46 @@ void PF_Fixme (void)
 	PR_RunError ("unimplemented bulitin");
 }
 
+/*
+======================
+SV_MoveToGoal
+
+======================
+*/
+void PF_MoveToGoal(void)
+{
+	edict_t* ent, * goal;
+	float		dist;
+#ifdef QUAKE2
+	edict_t* enemy;
+#endif
+
+	ent = PROG_TO_EDICT(pr_global_struct->self);
+	goal = PROG_TO_EDICT(ent->v.goalentity);
+	dist = G_FLOAT(OFS_PARM0);
+
+	if (!((int)ent->v.flags & (FL_ONGROUND | FL_FLY | FL_SWIM)))
+	{
+		G_FLOAT(OFS_RETURN) = 0;
+		return;
+	}
+
+	// if the next step hits the enemy, return immediately
+#ifdef QUAKE2
+	enemy = PROG_TO_EDICT(ent->v.enemy);
+	if (enemy != sv->edicts && SV_CloseEnough(ent, enemy, dist))
+#else
+	if (PROG_TO_EDICT(ent->v.enemy) != sv->edicts && sv->SV_CloseEnough(ent, goal, dist))
+#endif
+		return;
+
+	// bump around...
+	if ((rand() & 3) == 1 ||
+		!sv->SV_StepDirection(ent, ent->v.ideal_yaw, dist))
+	{
+		sv->SV_NewChaseDir(ent, goal, dist);
+	}
+}
 
 
 builtin_t pr_builtin[] =
@@ -2758,7 +2177,7 @@ PF_Fixme,
 PF_Fixme,
 PF_Fixme,
 
-CQuakeServer::SV_MoveToGoal,
+PF_MoveToGoal,
 PF_precache_file,
 PF_makestatic,
 
@@ -2774,7 +2193,8 @@ PF_precache_model,
 PF_precache_sound,		// precache_sound2 is different only for qcc
 PF_precache_file,
 
-PF_setspawnparms
+PF_setspawnparms,
+PF_CPPVectorAdd
 };
 
 builtin_t *pr_builtins = pr_builtin;

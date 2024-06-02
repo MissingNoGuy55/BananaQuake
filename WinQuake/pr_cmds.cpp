@@ -125,7 +125,7 @@ void PF_setorigin (void)
 	e = G_EDICT(OFS_PARM0);
 	org = G_VECTOR(OFS_PARM1);
 	VectorCopy (org, e->v.origin);
-	sv.SV_LinkEdict (e, false);
+	sv->SV_LinkEdict (e, false);
 }
 
 
@@ -200,7 +200,7 @@ void SetMinMaxSize (edict_t *e, float *min, float *max, bool rotate)
 	VectorCopy (rmax, e->v.maxs);
 	VectorSubtract (max, min, e->v.size);
 	
-	sv.SV_LinkEdict (e, false);
+	sv->SV_LinkEdict (e, false);
 }
 
 /*
@@ -243,7 +243,7 @@ static void PF_setmodel (void)
 	m = G_STRING(OFS_PARM1);
 
 // check to see if model was properly precached
-	for (i = 0, check = sv.model_precache; *check; i++, check++)
+	for (i = 0, check = sv->model_precache; *check; i++, check++)
 	{
 		if (!strcmp(*check, m))
 			break;
@@ -256,7 +256,7 @@ static void PF_setmodel (void)
 	e->v.model = PR_SetEngineString(*check);
 	e->v.modelindex = i; //SV_ModelIndex (m);
 
-	mod = sv.models[ (int)e->v.modelindex];  // Mod_ForName (m, true);
+	mod = sv->models[ (int)e->v.modelindex];  // Mod_ForName (m, true);
 	
 	if (mod)
 		SetMinMaxSize (e, mod->mins, mod->maxs, true);
@@ -278,7 +278,7 @@ void PF_bprint (void)
 	char		*s;
 
 	s = PF_VarString(0);
-	sv.SV_BroadcastPrintf ("%s", s);
+	sv->SV_BroadcastPrintf ("%s", s);
 }
 
 /*
@@ -496,7 +496,7 @@ void PF_particle (void)
 	dir = G_VECTOR(OFS_PARM1);
 	color = G_FLOAT(OFS_PARM2);
 	count = G_FLOAT(OFS_PARM3);
-	sv.SV_StartParticle (org, dir, color, count);
+	sv->SV_StartParticle (org, dir, color, count);
 }
 
 
@@ -520,7 +520,7 @@ void PF_ambientsound (void)
 	attenuation = G_FLOAT(OFS_PARM3);
 	
 // check to see if samp was properly precached
-	for (soundnum=0, check = sv.sound_precache ; *check ; check++, soundnum++)
+	for (soundnum=0, check = sv->sound_precache ; *check ; check++, soundnum++)
 		if (!strcmp(*check,samp))
 			break;
 			
@@ -532,14 +532,14 @@ void PF_ambientsound (void)
 
 // add an svc_spawnambient command to the level signon packet
 
-	MSG_WriteByte (&sv.signon,svc_spawnstaticsound);
+	MSG_WriteByte (&sv->signon,svc_spawnstaticsound);
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord(&sv.signon, pos[i]);
+		MSG_WriteCoord(&sv->signon, pos[i]);
 
-	MSG_WriteByte (&sv.signon, soundnum);
+	MSG_WriteByte (&sv->signon, soundnum);
 
-	MSG_WriteByte (&sv.signon, vol*255);
-	MSG_WriteByte (&sv.signon, attenuation*64);
+	MSG_WriteByte (&sv->signon, vol*255);
+	MSG_WriteByte (&sv->signon, attenuation*64);
 
 }
 
@@ -585,7 +585,7 @@ void PF_sound (void)
 	if (channel < 0 || channel > 7)
 		Sys_Error ("SV_StartSound: channel = %i", channel);
 
-	sv.SV_StartSound (entity, channel, sample, volume, attenuation);
+	sv->SV_StartSound (entity, channel, sample, volume, attenuation);
 }
 
 /*
@@ -625,7 +625,7 @@ void PF_traceline (void)
 	nomonsters = G_FLOAT(OFS_PARM2);
 	ent = G_EDICT(OFS_PARM3);
 
-	trace = sv.SV_Move (v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
+	trace = sv->SV_Move (v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
 
 	pr_global_struct->trace_allsolid = trace.allsolid;
 	pr_global_struct->trace_startsolid = trace.startsolid;
@@ -638,7 +638,7 @@ void PF_traceline (void)
 	if (trace.ent)
 		pr_global_struct->trace_ent = EDICT_TO_PROG(trace.ent);
 	else
-		pr_global_struct->trace_ent = EDICT_TO_PROG(sv.edicts);
+		pr_global_struct->trace_ent = EDICT_TO_PROG(sv->edicts);
 }
 
 
@@ -667,7 +667,7 @@ void PF_TraceToss (void)
 	if (trace.ent)
 		pr_global_struct->trace_ent = EDICT_TO_PROG(trace.ent);
 	else
-		pr_global_struct->trace_ent = EDICT_TO_PROG(sv.edicts);
+		pr_global_struct->trace_ent = EDICT_TO_PROG(sv->edicts);
 }
 #endif
 
@@ -733,9 +733,9 @@ int PF_newcheckclient (int check)
 
 // get the PVS for the entity
 	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
-	leaf = Mod_PointInLeaf (org, sv.worldmodel);
-	pvs = Mod_LeafPVS (leaf, sv.worldmodel);
-	memcpy (checkpvs, pvs, (sv.worldmodel->numleafs+7)>>3 );
+	leaf = Mod_PointInLeaf (org, sv->worldmodel);
+	pvs = Mod_LeafPVS (leaf, sv->worldmodel);
+	memcpy (checkpvs, pvs, (sv->worldmodel->numleafs+7)>>3 );
 
 	return i;
 }
@@ -765,29 +765,29 @@ void PF_checkclient (void)
 	vec3_t	view;
 	
 // find a new check if on a new frame
-	if (sv.time - sv.lastchecktime >= 0.1)
+	if (sv->time - sv->lastchecktime >= 0.1)
 	{
-		sv.lastcheck = PF_newcheckclient (sv.lastcheck);
-		sv.lastchecktime = sv.time;
+		sv->lastcheck = PF_newcheckclient (sv->lastcheck);
+		sv->lastchecktime = sv->time;
 	}
 
 // return check if it might be visible	
-	ent = EDICT_NUM(sv.lastcheck);
+	ent = EDICT_NUM(sv->lastcheck);
 	if (ent->free || ent->v.health <= 0)
 	{
-		RETURN_EDICT(sv.edicts);
+		RETURN_EDICT(sv->edicts);
 		return;
 	}
 
 // if current entity can't possibly see the check entity, return 0
 	self = PROG_TO_EDICT(pr_global_struct->self);
 	VectorAdd (self->v.origin, self->v.view_ofs, view);
-	leaf = Mod_PointInLeaf (view, sv.worldmodel);
-	l = (leaf - sv.worldmodel->leafs) - 1;
+	leaf = Mod_PointInLeaf (view, sv->worldmodel);
+	l = (leaf - sv->worldmodel->leafs) - 1;
 	if ( (l<0) || !(checkpvs[l>>3] & (1<<(l&7)) ) )
 	{
 c_notvis++;
-		RETURN_EDICT(sv.edicts);
+		RETURN_EDICT(sv->edicts);
 		return;
 	}
 
@@ -839,7 +839,7 @@ void PF_localcmd (void)
 	const char	*str;
 	
 	str = G_STRING(OFS_PARM0);	
-	Cbuf_AddText (str);
+	g_pCmdBuf->Cbuf_AddText (str);
 }
 
 /*
@@ -892,13 +892,13 @@ void PF_findradius (void)
 	vec3_t	eorg;
 	int		i, j;
 
-	chain = (edict_t *)sv.edicts;
+	chain = (edict_t *)sv->edicts;
 	
 	org = G_VECTOR(OFS_PARM0);
 	rad = G_FLOAT(OFS_PARM1);
 
-	ent = NEXT_EDICT(sv.edicts);
-	for (i=1 ; i<sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
+	ent = NEXT_EDICT(sv->edicts);
+	for (i=1 ; i<sv->num_edicts ; i++, ent = NEXT_EDICT(ent))
 	{
 		if (ent->free)
 			continue;
@@ -990,14 +990,14 @@ void PF_Find (void)
 	edict_t	*second;
 	edict_t	*last;
 
-	first = second = last = (edict_t *)sv.edicts;
+	first = second = last = (edict_t *)sv->edicts;
 	e = G_EDICTNUM(OFS_PARM0);
 	f = G_INT(OFS_PARM1);
 	s = G_STRING(OFS_PARM2);
 	if (!s)
 		PR_RunError ("PF_Find: bad search string");
 		
-	for (e++ ; e < sv.num_edicts ; e++)
+	for (e++ ; e < sv->num_edicts ; e++)
 	{
 		ed = EDICT_NUM(e);
 		if (ed->free)
@@ -1007,9 +1007,9 @@ void PF_Find (void)
 			continue;
 		if (!strcmp(t,s))
 		{
-			if (first == (edict_t *)sv.edicts)
+			if (first == (edict_t *)sv->edicts)
 				first = ed;
-			else if (second == (edict_t *)sv.edicts)
+			else if (second == (edict_t *)sv->edicts)
 				second = ed;
 			ed->v.chain = EDICT_TO_PROG(last);
 			last = ed;
@@ -1022,7 +1022,7 @@ void PF_Find (void)
 			first->v.chain = last->v.chain;
 		else
 			first->v.chain = EDICT_TO_PROG(last);
-		last->v.chain = EDICT_TO_PROG((edict_t *)sv.edicts);
+		last->v.chain = EDICT_TO_PROG((edict_t *)sv->edicts);
 		if (second && second != last)
 			second->v.chain = EDICT_TO_PROG(last);
 	}
@@ -1041,7 +1041,7 @@ void PF_Find (void)
 	if (!s)
 		PR_RunError ("PF_Find: bad search string");
 		
-	for (e++ ; e < sv.num_edicts ; e++)
+	for (e++ ; e < sv->num_edicts ; e++)
 	{
 		ed = EDICT_NUM(e);
 		if (ed->free)
@@ -1056,7 +1056,7 @@ void PF_Find (void)
 		}
 	}
 
-	RETURN_EDICT(sv.edicts);
+	RETURN_EDICT(sv->edicts);
 }
 #endif
 
@@ -1076,7 +1076,7 @@ void PF_precache_sound (void)
 	const char	*s;
 	int		i;
 	
-	if (sv.state != ss_loading)
+	if (sv->state != ss_loading)
 		PR_RunError ("PF_Precache_*: Precache can only be done in spawn functions");
 		
 	s = G_STRING(OFS_PARM0);
@@ -1085,12 +1085,12 @@ void PF_precache_sound (void)
 	
 	for (i=0 ; i<MAX_SOUNDS ; i++)
 	{
-		if (!sv.sound_precache[i])
+		if (!sv->sound_precache[i])
 		{
-			sv.sound_precache[i] = s;
+			sv->sound_precache[i] = s;
 			return;
 		}
-		if (!strcmp(sv.sound_precache[i], s))
+		if (!strcmp(sv->sound_precache[i], s))
 			return;
 	}
 	PR_RunError ("PF_precache_sound: overflow");
@@ -1101,7 +1101,7 @@ static void PF_precache_model (void)
 	const char* s;
 	int		i, m;
 
-	if (sv.state != ss_loading)
+	if (sv->state != ss_loading)
 		PR_RunError("PF_Precache_*: Precache can only be done in spawn functions");
 
 	s = G_STRING(OFS_PARM0);
@@ -1110,13 +1110,13 @@ static void PF_precache_model (void)
 
 	for (i = 0; i < MAX_MODELS; i++)
 	{
-		if (!sv.model_precache[i])
+		if (!sv->model_precache[i])
 		{
-			sv.model_precache[i] = s;
-			sv.models[i] = Mod_ForName(s, true);
+			sv->model_precache[i] = s;
+			sv->models[i] = Mod_ForName(s, true);
 			return;
 		}
-		if (!strcmp(sv.model_precache[i], s))
+		if (!strcmp(sv->model_precache[i], s))
 			return;
 	}
 	PR_RunError("PF_precache_model: overflow");
@@ -1178,7 +1178,7 @@ void PF_walkmove (void)
 	oldf = pr_xfunction;
 	oldself = pr_global_struct->self;
 	
-	G_FLOAT(OFS_RETURN) = sv.SV_movestep(ent, move, true);
+	G_FLOAT(OFS_RETURN) = sv->SV_movestep(ent, move, true);
 	
 	
 // restore program state
@@ -1204,14 +1204,14 @@ void PF_droptofloor (void)
 	VectorCopy (ent->v.origin, end);
 	end[2] -= 256;
 	
-	trace = sv.SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, false, ent);
+	trace = sv->SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, false, ent);
 
 	if (trace.fraction == 1 || trace.allsolid)
 		G_FLOAT(OFS_RETURN) = 0;
 	else
 	{
 		VectorCopy (trace.endpos, ent->v.origin);
-		sv.SV_LinkEdict (ent, false);
+		sv->SV_LinkEdict (ent, false);
 		ent->v.flags = (int)ent->v.flags | FL_ONGROUND;
 		ent->v.groundentity = EDICT_TO_PROG(trace.ent);
 		G_FLOAT(OFS_RETURN) = 1;
@@ -1243,10 +1243,10 @@ void PF_lightstyle (void)
 	}
 
 // change the string in sv
-	sv.lightstyles[style] = val;
+	sv->lightstyles[style] = val;
 	
 // send message to all clients on this server
-	if (sv.state != ss_active)
+	if (sv->state != ss_active)
 		return;
 	
 	for (j=0, client = svs.clients ; j<svs.maxclients ; j++, client++)
@@ -1288,7 +1288,7 @@ void PF_checkbottom (void)
 	
 	ent = G_EDICT(OFS_PARM0);
 
-	G_FLOAT(OFS_RETURN) = sv.SV_CheckBottom (ent);
+	G_FLOAT(OFS_RETURN) = sv->SV_CheckBottom (ent);
 }
 
 /*
@@ -1302,7 +1302,7 @@ void PF_pointcontents (void)
 	
 	v = G_VECTOR(OFS_PARM0);
 
-	G_FLOAT(OFS_RETURN) = sv.SV_PointContents (v);
+	G_FLOAT(OFS_RETURN) = sv->SV_PointContents (v);
 }
 
 /*
@@ -1321,9 +1321,9 @@ void PF_nextent (void)
 	while (1)
 	{
 		i++;
-		if (i == sv.num_edicts)
+		if (i == sv->num_edicts)
 		{
-			RETURN_EDICT(sv.edicts);
+			RETURN_EDICT(sv->edicts);
 			return;
 		}
 		ent = EDICT_NUM(i);
@@ -1362,7 +1362,7 @@ void PF_aim (void)
 // try sending a trace straight
 	VectorCopy (pr_global_struct->v_forward, dir);
 	VectorMA (start, 2048, dir, end);
-	tr = sv.SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
+	tr = sv->SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
 	if (tr.ent && tr.ent->v.takedamage == DAMAGE_AIM
 	&& (!host->teamplay.value || ent->v.team <=0 || ent->v.team != tr.ent->v.team) )
 	{
@@ -1376,8 +1376,8 @@ void PF_aim (void)
 	bestdist = sv_aim.value;
 	bestent = NULL;
 	
-	check = NEXT_EDICT(sv.edicts);
-	for (i=1 ; i<sv.num_edicts ; i++, check = NEXT_EDICT(check) )
+	check = NEXT_EDICT(sv->edicts);
+	for (i=1 ; i<sv->num_edicts ; i++, check = NEXT_EDICT(check) )
 	{
 		if (check->v.takedamage != DAMAGE_AIM)
 			continue;
@@ -1393,7 +1393,7 @@ void PF_aim (void)
 		dist = DotProduct (dir, pr_global_struct->v_forward);
 		if (dist < bestdist)
 			continue;	// to far to turn
-		tr = sv.SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
+		tr = sv->SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
 		if (tr.ent == check)
 		{	// can shoot at this one
 			bestdist = dist;
@@ -1527,7 +1527,7 @@ sizebuf_t *WriteDest (void)
 	switch (dest)
 	{
 	case MSG_BROADCAST:
-		return &sv.datagram;
+		return &sv->datagram;
 	
 	case MSG_ONE:
 		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
@@ -1537,10 +1537,10 @@ sizebuf_t *WriteDest (void)
 		return &svs.clients[entnum-1].message;
 		
 	case MSG_ALL:
-		return &sv.reliable_datagram;
+		return &sv->reliable_datagram;
 	
 	case MSG_INIT:
-		return &sv.signon;
+		return &sv->signon;
 
 	default:
 		PR_RunError ("WriteDest: bad destination");
@@ -1600,23 +1600,23 @@ void PF_makestatic (void)
 	
 	ent = G_EDICT(OFS_PARM0);
 
-	if (sv.SV_ModelIndex(PR_GetString(ent->v.model)) & 0xFF00 || (int)(ent->v.frame) & 0xFF00)
+	if (sv->SV_ModelIndex(PR_GetString(ent->v.model)) & 0xFF00 || (int)(ent->v.frame) & 0xFF00)
 	{
 		ED_Free(ent);
 		return; //can't display the correct model & frame, so don't show it at all
 	}
 
-	MSG_WriteByte (&sv.signon,svc_spawnstatic);
+	MSG_WriteByte (&sv->signon,svc_spawnstatic);
 
-	MSG_WriteByte (&sv.signon, sv.SV_ModelIndex(PR_GetString(ent->v.model)));
+	MSG_WriteByte (&sv->signon, sv->SV_ModelIndex(PR_GetString(ent->v.model)));
 
-	MSG_WriteByte (&sv.signon, ent->v.frame);
-	MSG_WriteByte (&sv.signon, ent->v.colormap);
-	MSG_WriteByte (&sv.signon, ent->v.skin);
+	MSG_WriteByte (&sv->signon, ent->v.frame);
+	MSG_WriteByte (&sv->signon, ent->v.colormap);
+	MSG_WriteByte (&sv->signon, ent->v.skin);
 	for (i=0 ; i<3 ; i++)
 	{
-		MSG_WriteCoord(&sv.signon, ent->v.origin[i]);
-		MSG_WriteAngle(&sv.signon, ent->v.angles[i]);
+		MSG_WriteCoord(&sv->signon, ent->v.origin[i]);
+		MSG_WriteAngle(&sv->signon, ent->v.angles[i]);
 	}
 
 // throw the entity away now
@@ -1678,7 +1678,7 @@ void PF_changelevel (void)
 	svs.changelevel_issued = true;
 	
 	s = G_STRING(OFS_PARM0);
-	Cbuf_AddText (g_Common->va("changelevel %s\n",s));
+	g_pCmdBuf->Cbuf_AddText (g_Common->va("changelevel %s\n",s));
 #endif
 }
 
@@ -1711,7 +1711,7 @@ void PF_WaterMove (void)
 
 	if (self->v.movetype == MOVETYPE_NOCLIP)
 	{
-		self->v.air_finished = sv.time + 12;
+		self->v.air_finished = sv->time + 12;
 		G_FLOAT(OFS_RETURN) = damage;
 		return;
 	}
@@ -1734,26 +1734,26 @@ void PF_WaterMove (void)
 	if (!(flags & (FL_IMMUNE_WATER + FL_GODMODE)))
 		if (((flags & FL_SWIM) && (waterlevel < drownlevel)) || (waterlevel >= drownlevel))
 		{
-			if (self->v.air_finished < sv.time)
-				if (self->v.pain_finished < sv.time)
+			if (self->v.air_finished < sv->time)
+				if (self->v.pain_finished < sv->time)
 				{
 					self->v.dmg = self->v.dmg + 2;
 					if (self->v.dmg > 15)
 						self->v.dmg = 10;
 //					T_Damage (self, world, world, self.dmg, 0, FALSE);
 					damage = self->v.dmg;
-					self->v.pain_finished = sv.time + 1.0;
+					self->v.pain_finished = sv->time + 1.0;
 				}
 		}
 		else
 		{
-			if (self->v.air_finished < sv.time)
+			if (self->v.air_finished < sv->time)
 //				sound (self, CHAN_VOICE, "player/gasp2.wav", 1, ATTN_NORM);
 				SV_StartSound (self, CHAN_VOICE, "player/gasp2.wav", 255, ATTN_NORM);
-			else if (self->v.air_finished < sv.time + 9)
+			else if (self->v.air_finished < sv->time + 9)
 //				sound (self, CHAN_VOICE, "player/gasp1.wav", 1, ATTN_NORM);
 				SV_StartSound (self, CHAN_VOICE, "player/gasp1.wav", 255, ATTN_NORM);
-			self->v.air_finished = sv.time + 12.0;
+			self->v.air_finished = sv->time + 12.0;
 			self->v.dmg = 2;
 		}
 	
@@ -1766,7 +1766,7 @@ void PF_WaterMove (void)
 			SV_StartSound (self, CHAN_BODY, "misc/outwater.wav", 255, ATTN_NORM);
 			self->v.flags = (float)(flags &~FL_INWATER);
 		}
-		self->v.air_finished = sv.time + 12.0;
+		self->v.air_finished = sv->time + 12.0;
 		G_FLOAT(OFS_RETURN) = damage;
 		return;
 	}
@@ -1774,12 +1774,12 @@ void PF_WaterMove (void)
 	if (watertype == CONTENT_LAVA)
 	{	// do damage
 		if (!(flags & (FL_IMMUNE_LAVA + FL_GODMODE)))
-			if (self->v.dmgtime < sv.time)
+			if (self->v.dmgtime < sv->time)
 			{
-				if (self->v.radsuit_finished < sv.time)
-					self->v.dmgtime = sv.time + 0.2;
+				if (self->v.radsuit_finished < sv->time)
+					self->v.dmgtime = sv->time + 0.2;
 				else
-					self->v.dmgtime = sv.time + 1.0;
+					self->v.dmgtime = sv->time + 1.0;
 //				T_Damage (self, world, world, 10*self.waterlevel, 0, TRUE);
 				damage = (float)(10*waterlevel);
 			}
@@ -1787,9 +1787,9 @@ void PF_WaterMove (void)
 	else if (watertype == CONTENT_SLIME)
 	{	// do damage
 		if (!(flags & (FL_IMMUNE_SLIME + FL_GODMODE)))
-			if (self->v.dmgtime < sv.time && self->v.radsuit_finished < sv.time)
+			if (self->v.dmgtime < sv->time && self->v.radsuit_finished < sv->time)
 			{
-				self->v.dmgtime = sv.time + 1.0;
+				self->v.dmgtime = sv->time + 1.0;
 //				T_Damage (self, world, world, 4*self.waterlevel, 0, TRUE);
 				damage = (float)(4*waterlevel);
 			}
@@ -1839,12 +1839,28 @@ void PF_sqrt (void)
 }
 #endif
 
+/*
+=================
+PF_CPPVectorAdd
+
+the size box is rotated by the current angle
+
+CPPVectorAdd (entity, minvector, maxvector)
+=================
+*/
+void PF_CPPVectorAdd(void)
+{
+	CQVector<void*>* vec;
+
+	vec = G_CPPVECTOR(OFS_PARM0);
+
+	vec->AddToTail((void*)OFS_PARM0);
+}
+
 void PF_Fixme (void)
 {
 	PR_RunError ("unimplemented bulitin");
 }
-
-
 
 builtin_t pr_builtin[] =
 {
@@ -1944,7 +1960,8 @@ PF_precache_model,
 PF_precache_sound,		// precache_sound2 is different only for qcc
 PF_precache_file,
 
-PF_setspawnparms
+PF_setspawnparms,
+PF_CPPVectorAdd
 };
 
 builtin_t *pr_builtins = pr_builtin;

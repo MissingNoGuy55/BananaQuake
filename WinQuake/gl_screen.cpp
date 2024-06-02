@@ -388,9 +388,9 @@ void SCR_Init (void)
 //
 // register our commands
 //
-	Cmd_AddCommand ("screenshot",SCR_ScreenShot_f);
-	Cmd_AddCommand ("sizeup",SCR_SizeUp_f);
-	Cmd_AddCommand ("sizedown",SCR_SizeDown_f);
+	g_pCmds->Cmd_AddCommand ("screenshot",SCR_ScreenShot_f);
+	g_pCmds->Cmd_AddCommand ("sizeup",SCR_SizeUp_f);
+	g_pCmds->Cmd_AddCommand ("sizedown",SCR_SizeDown_f);
 
 	scr_ram = g_GLRenderer->Draw_PicFromWad ("ram");
 	scr_net = g_GLRenderer->Draw_PicFromWad ("net");

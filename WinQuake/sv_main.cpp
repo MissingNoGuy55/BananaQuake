@@ -21,12 +21,39 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-CQuakeServer		sv;
+CQuakeServer*	sv = nullptr;
 server_static_t	svs;
 
 char	localmodels[MAX_MODELS][5];			// inline model names for precache
 
 //============================================================================
+
+CQuakeServer::CQuakeServer()
+{
+	active = false;
+	datagram = {};
+	memset(&datagram_buf, 0, sizeof(datagram_buf));
+	edicts = nullptr;
+	lastcheck = 0;
+	lastchecktime = 0.0;
+	memset(&lightstyles, 0, sizeof(lightstyles));
+	loadgame = false;
+	max_edicts = 0;
+	memset(&model_precache, 0, sizeof(model_precache));
+	memset(&modelname, 0, sizeof(modelname));
+	memset(&models, 0, sizeof(models));
+	memset(&name, 0, sizeof(name));
+	num_edicts = 0;
+	paused = false;
+	reliable_datagram = {};
+	memset(&reliable_datagram_buf, 0, sizeof(reliable_datagram_buf));
+	signon = {};
+	memset(&signon_buf, 0, sizeof(signon_buf));
+	memset(&sound_precache, 0, sizeof(sound_precache));
+	state = {};
+	time = 0.0;
+	memset(&worldmodel, 0, sizeof(worldmodel));
+}
 
 /*
 ===============
@@ -81,12 +108,12 @@ void CQuakeServer::SV_StartParticle (vec3_t org, vec3_t dir, int color, int coun
 {
 	int		i, v;
 
-	if (sv.datagram.cursize > MAX_DATAGRAM-16)
+	if (sv->datagram.cursize > MAX_DATAGRAM-16)
 		return;	
-	MSG_WriteByte (&sv.datagram, svc_particle);
-	MSG_WriteCoord (&sv.datagram, org[0]);
-	MSG_WriteCoord (&sv.datagram, org[1]);
-	MSG_WriteCoord (&sv.datagram, org[2]);
+	MSG_WriteByte (&sv->datagram, svc_particle);
+	MSG_WriteCoord (&sv->datagram, org[0]);
+	MSG_WriteCoord (&sv->datagram, org[1]);
+	MSG_WriteCoord (&sv->datagram, org[2]);
 	for (i=0 ; i<3 ; i++)
 	{
 		v = dir[i]*16;
@@ -94,10 +121,10 @@ void CQuakeServer::SV_StartParticle (vec3_t org, vec3_t dir, int color, int coun
 			v = 127;
 		else if (v < -128)
 			v = -128;
-		MSG_WriteChar (&sv.datagram, v);
+		MSG_WriteChar (&sv->datagram, v);
 	}
-	MSG_WriteByte (&sv.datagram, count);
-	MSG_WriteByte (&sv.datagram, color);
+	MSG_WriteByte (&sv->datagram, count);
+	MSG_WriteByte (&sv->datagram, color);
 }           
 
 /*  
@@ -132,16 +159,16 @@ void CQuakeServer::SV_StartSound (edict_t *entity, int channel, const char *samp
 	if (channel < 0 || channel > 7)
 		Sys_Error ("SV_StartSound: channel = %i", channel);
 
-	if (sv.datagram.cursize > MAX_DATAGRAM-16)
+	if (sv->datagram.cursize > MAX_DATAGRAM-16)
 		return;	
 
 // find precache number for sound
     for (sound_num=1 ; sound_num<MAX_SOUNDS
-        && sv.sound_precache[sound_num] ; sound_num++)
-        if (!strcmp(sample, sv.sound_precache[sound_num]))
+        && sv->sound_precache[sound_num] ; sound_num++)
+        if (!strcmp(sample, sv->sound_precache[sound_num]))
             break;
     
-    if ( sound_num == MAX_SOUNDS || !sv.sound_precache[sound_num] )
+    if ( sound_num == MAX_SOUNDS || !sv->sound_precache[sound_num] )
     {
         Con_Printf ("SV_StartSound: %s not precacheed\n", sample);
         return;
@@ -158,16 +185,16 @@ void CQuakeServer::SV_StartSound (edict_t *entity, int channel, const char *samp
 		field_mask |= SND_ATTENUATION;
 
 // directed messages go only to the entity the are targeted on
-	MSG_WriteByte (&sv.datagram, svc_sound);
-	MSG_WriteByte (&sv.datagram, field_mask);
+	MSG_WriteByte (&sv->datagram, svc_sound);
+	MSG_WriteByte (&sv->datagram, field_mask);
 	if (field_mask & SND_VOLUME)
-		MSG_WriteByte (&sv.datagram, volume);
+		MSG_WriteByte (&sv->datagram, volume);
 	if (field_mask & SND_ATTENUATION)
-		MSG_WriteByte (&sv.datagram, attenuation*64);
-	MSG_WriteShort (&sv.datagram, channel);
-	MSG_WriteByte (&sv.datagram, sound_num);
+		MSG_WriteByte (&sv->datagram, attenuation*64);
+	MSG_WriteShort (&sv->datagram, channel);
+	MSG_WriteByte (&sv->datagram, sound_num);
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord (&sv.datagram, entity->v.origin[i] + 0.5 * (entity->v.mins[i] + entity->v.maxs[i]));
+		MSG_WriteCoord (&sv->datagram, entity->v.origin[i] + 0.5 * (entity->v.mins[i] + entity->v.maxs[i]));
 }           
 
 /*
@@ -208,22 +235,22 @@ void CQuakeServer::SV_SendServerinfo (client_t *client)
 	else
 		MSG_WriteByte (&client->message, GAME_COOP);
 
-	snprintf (message, sizeof(message), PR_GetString(sv.edicts->v.message));
+	snprintf (message, sizeof(message), PR_GetString(sv->edicts->v.message));
 
 	MSG_WriteString (&client->message,message);
 
-	for (s = sv.model_precache+1 ; *s ; s++)
+	for (s = sv->model_precache+1 ; *s ; s++)
 		MSG_WriteString (&client->message, *s);
 	MSG_WriteByte (&client->message, 0);
 
-	for (s = sv.sound_precache+1 ; *s ; s++)
+	for (s = sv->sound_precache+1 ; *s ; s++)
 		MSG_WriteString (&client->message, *s);
 	MSG_WriteByte (&client->message, 0);
 
 // send music
 	MSG_WriteByte (&client->message, svc_cdtrack);
-	MSG_WriteByte (&client->message, sv.edicts->v.sounds);
-	MSG_WriteByte (&client->message, sv.edicts->v.sounds);
+	MSG_WriteByte (&client->message, sv->edicts->v.sounds);
+	MSG_WriteByte (&client->message, sv->edicts->v.sounds);
 
 // set view	
 	MSG_WriteByte (&client->message, svc_setview);
@@ -264,7 +291,7 @@ void CQuakeServer::SV_ConnectClient (int clientnum)
 // set up the client_t
 	netconnection = client->netconnection;
 	
-	if (sv.loadgame)
+	if (sv->loadgame)
 		memcpy (spawn_parms, client->spawn_parms, sizeof(spawn_parms));
 	memset (client, 0, sizeof(*client));
 	client->netconnection = netconnection;
@@ -283,7 +310,7 @@ void CQuakeServer::SV_ConnectClient (int clientnum)
 	client->privileged = false;				
 #endif
 
-	if (sv.loadgame)
+	if (sv->loadgame)
 		memcpy (client->spawn_parms, spawn_parms, sizeof(spawn_parms));
 	else
 	{
@@ -351,7 +378,7 @@ SV_ClearDatagram
 */
 void CQuakeServer::SV_ClearDatagram (void)
 {
-	SZ_Clear (&sv.datagram);
+	SZ_Clear (&sv->datagram);
 }
 
 /*
@@ -382,7 +409,7 @@ void CQuakeServer::SV_AddToFatPVS (vec3_t org, mnode_t *node)
 		{
 			if (node->contents != CONTENTS_SOLID)
 			{
-				pvs = Mod_LeafPVS ( (mleaf_t *)node, sv.worldmodel);
+				pvs = Mod_LeafPVS ( (mleaf_t *)node, sv->worldmodel);
 				for (i=0 ; i<fatbytes ; i++)
 					fatpvs[i] |= pvs[i];
 			}
@@ -413,9 +440,9 @@ given point.
 */
 byte* CQuakeServer::SV_FatPVS (vec3_t org)
 {
-	fatbytes = (sv.worldmodel->numleafs+31)>>3;
+	fatbytes = (sv->worldmodel->numleafs+31)>>3;
 	Q_memset (fatpvs, 0, fatbytes);
-	SV_AddToFatPVS (org, sv.worldmodel->nodes);
+	SV_AddToFatPVS (org, sv->worldmodel->nodes);
 	return fatpvs;
 }
 
@@ -442,8 +469,8 @@ void CQuakeServer::SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 	pvs = SV_FatPVS (org);
 
 // send over all entities (excpet the client) that touch the pvs
-	ent = NEXT_EDICT(sv.edicts);
-	for (e=1 ; e<sv.num_edicts ; e++, ent = NEXT_EDICT(ent))
+	ent = NEXT_EDICT(sv->edicts);
+	for (e=1 ; e<sv->num_edicts ; e++, ent = NEXT_EDICT(ent))
 	{
 #ifdef QUAKE2
 		// don't send if flagged for NODRAW and there are no lighting effects
@@ -563,8 +590,8 @@ void CQuakeServer::SV_CleanupEnts (void)
 	int		e;
 	edict_t	*ent;
 	
-	ent = NEXT_EDICT(sv.edicts);
-	for (e=1 ; e<sv.num_edicts ; e++, ent = NEXT_EDICT(ent))
+	ent = NEXT_EDICT(sv->edicts);
+	for (e=1 ; e<sv->num_edicts ; e++, ent = NEXT_EDICT(ent))
 	{
 		ent->v.effects = (int)ent->v.effects & ~EF_MUZZLEFLASH;
 	}
@@ -731,7 +758,7 @@ bool CQuakeServer::SV_SendClientDatagram (client_t *client)
 	msg.cursize = 0;
 
 	MSG_WriteByte (&msg, svc_time);
-	MSG_WriteFloat (&msg, sv.time);
+	MSG_WriteFloat (&msg, sv->time);
 
 // add the client specific data to the datagram
 	SV_WriteClientdataToMessage (client->edict, &msg);
@@ -739,8 +766,8 @@ bool CQuakeServer::SV_SendClientDatagram (client_t *client)
 	SV_WriteEntitiesToClient (client->edict, &msg);
 
 // copy the server datagram if there is space
-	if (msg.cursize + sv.datagram.cursize < msg.maxsize)
-		SZ_Write (&msg, sv.datagram.data, sv.datagram.cursize);
+	if (msg.cursize + sv->datagram.cursize < msg.maxsize)
+		SZ_Write (&msg, sv->datagram.data, sv->datagram.cursize);
 
 // send the datagram
 	if (NET_SendUnreliableMessage (client->netconnection, &msg) == -1)
@@ -784,10 +811,10 @@ void CQuakeServer::SV_UpdateToReliableMessages (void)
 	{
 		if (!client->active)
 			continue;
-		SZ_Write (&client->message, sv.reliable_datagram.data, sv.reliable_datagram.cursize);
+		SZ_Write (&client->message, sv->reliable_datagram.data, sv->reliable_datagram.cursize);
 	}
 
-	SZ_Clear (&sv.reliable_datagram);
+	SZ_Clear (&sv->reliable_datagram);
 }
 
 
@@ -912,10 +939,10 @@ int CQuakeServer::SV_ModelIndex (const char *name)
 	if (!name || !name[0])
 		return 0;
 
-	for (i=0 ; i<MAX_MODELS && sv.model_precache[i] ; i++)
-		if (!strcmp(sv.model_precache[i], name))
+	for (i=0 ; i<MAX_MODELS && sv->model_precache[i] ; i++)
+		if (!strcmp(sv->model_precache[i], name))
 			return i;
-	if (i==MAX_MODELS || !sv.model_precache[i])
+	if (i==MAX_MODELS || !sv->model_precache[i])
 		Sys_Error ("SV_ModelIndex: model %s not precached", name);
 	return i;
 }
@@ -932,7 +959,7 @@ void CQuakeServer::SV_CreateBaseline (void)
 	edict_t			*svent;
 	int				entnum;	
 		
-	for (entnum = 0; entnum < sv.num_edicts ; entnum++)
+	for (entnum = 0; entnum < sv->num_edicts ; entnum++)
 	{
 	// get the current server version
 		svent = EDICT_NUM(entnum);
@@ -963,17 +990,17 @@ void CQuakeServer::SV_CreateBaseline (void)
 	//
 	// add to the message
 	//
-		MSG_WriteByte (&sv.signon,svc_spawnbaseline);		
-		MSG_WriteShort (&sv.signon,entnum);
+		MSG_WriteByte (&sv->signon,svc_spawnbaseline);		
+		MSG_WriteShort (&sv->signon,entnum);
 
-		MSG_WriteByte (&sv.signon, svent->baseline.modelindex);
-		MSG_WriteByte (&sv.signon, svent->baseline.frame);
-		MSG_WriteByte (&sv.signon, svent->baseline.colormap);
-		MSG_WriteByte (&sv.signon, svent->baseline.skin);
+		MSG_WriteByte (&sv->signon, svent->baseline.modelindex);
+		MSG_WriteByte (&sv->signon, svent->baseline.frame);
+		MSG_WriteByte (&sv->signon, svent->baseline.colormap);
+		MSG_WriteByte (&sv->signon, svent->baseline.skin);
 		for (i=0 ; i<3 ; i++)
 		{
-			MSG_WriteCoord(&sv.signon, svent->baseline.origin[i]);
-			MSG_WriteAngle(&sv.signon, svent->baseline.angles[i]);
+			MSG_WriteCoord(&sv->signon, svent->baseline.origin[i]);
+			MSG_WriteAngle(&sv->signon, svent->baseline.angles[i]);
 		}
 	}
 }
@@ -1003,7 +1030,7 @@ void CQuakeServer::SV_SendReconnect (void)
 #ifdef QUAKE2
 		Cbuf_InsertText ("reconnect\n");
 #else
-		Cmd_ExecuteString ("reconnect\n", src_command);
+		g_pCmds->Cmd_ExecuteString ("reconnect\n", src_command);
 #endif
 }
 
@@ -1066,7 +1093,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 //
 // tell all connected clients that we are going to a new level
 //
-	if (sv.active)
+	if (sv->active)
 	{
 		SV_SendReconnect ();
 	}
@@ -1089,68 +1116,68 @@ void CQuakeServer::SV_SpawnServer (char *server)
 //
 	host->Host_ClearMemory ();
 
-	Q_strlcpy(sv.name, server, sizeof(sv.name));
+	Q_strlcpy(sv->name, server, sizeof(sv->name));
 #ifdef QUAKE2
 	if (startspot)
-		Q_strcpy(sv.startspot, startspot);
+		Q_strcpy(sv->startspot, startspot);
 #endif
 
 // load progs to get entity field count
 	PR_LoadProgs ();
 
 // allocate server memory
-	sv.max_edicts = MAX_EDICTS;
+	sv->max_edicts = MAX_EDICTS;
 	
-	sv.edicts = g_MemCache->Hunk_AllocName<edict_t>(sv.max_edicts * pr_edict_size, "edicts");
+	sv->edicts = g_MemCache->Hunk_AllocName<edict_t>(sv->max_edicts * pr_edict_size, "edicts");
 
-	sv.datagram.maxsize = sizeof(sv.datagram_buf);
-	sv.datagram.cursize = 0;
-	sv.datagram.data = sv.datagram_buf;
+	sv->datagram.maxsize = sizeof(sv->datagram_buf);
+	sv->datagram.cursize = 0;
+	sv->datagram.data = sv->datagram_buf;
 	
-	sv.reliable_datagram.maxsize = sizeof(sv.reliable_datagram_buf);
-	sv.reliable_datagram.cursize = 0;
-	sv.reliable_datagram.data = sv.reliable_datagram_buf;
+	sv->reliable_datagram.maxsize = sizeof(sv->reliable_datagram_buf);
+	sv->reliable_datagram.cursize = 0;
+	sv->reliable_datagram.data = sv->reliable_datagram_buf;
 	
-	sv.signon.maxsize = sizeof(sv.signon_buf);
-	sv.signon.cursize = 0;
-	sv.signon.data = sv.signon_buf;
+	sv->signon.maxsize = sizeof(sv->signon_buf);
+	sv->signon.cursize = 0;
+	sv->signon.data = sv->signon_buf;
 	
 // leave slots at start for clients only
-	sv.num_edicts = svs.maxclients+1;
+	sv->num_edicts = svs.maxclients+1;
 	for (i=0 ; i<svs.maxclients ; i++)
 	{
 		ent = EDICT_NUM(i+1);
 		svs.clients[i].edict = ent;
 	}
 	
-	sv.state = ss_loading;
-	sv.paused = false;
+	sv->state = ss_loading;
+	sv->paused = false;
 
-	sv.time = 1.0;
+	sv->time = 1.0;
 	
-	Q_strlcpy (sv.name, server, sizeof(sv.name));
-	snprintf(sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", server);
-	sv.worldmodel = Mod_ForName (sv.modelname, false);
-	if (!sv.worldmodel)
+	Q_strlcpy (sv->name, server, sizeof(sv->name));
+	snprintf(sv->modelname, sizeof(sv->modelname), "maps/%s.bsp", server);
+	sv->worldmodel = Mod_ForName (sv->modelname, false);
+	if (!sv->worldmodel)
 	{
-		Con_Printf ("Couldn't spawn server %s\n", sv.modelname);
-		sv.active = false;
+		Con_Printf ("Couldn't spawn server %s\n", sv->modelname);
+		sv->active = false;
 		return;
 	}
-	sv.models[1] = sv.worldmodel;
+	sv->models[1] = sv->worldmodel;
 	
 //
 // clear world interaction links
 //
 	SV_ClearWorld ();
 	
-	sv.sound_precache[0] = dummy;
-	sv.model_precache[0] = dummy;
-	sv.model_precache[1] = sv.modelname;
-	for (i=1 ; i<sv.worldmodel->numsubmodels ; i++)
+	sv->sound_precache[0] = dummy;
+	sv->model_precache[0] = dummy;
+	sv->model_precache[1] = sv->modelname;
+	for (i=1 ; i<sv->worldmodel->numsubmodels ; i++)
 	{
-		sv.model_precache[1+i] = localmodels[i];
-		sv.models[i+1] = Mod_ForName (localmodels[i], false);
+		sv->model_precache[1+i] = localmodels[i];
+		sv->models[i+1] = Mod_ForName (localmodels[i], false);
 	}
 
 //
@@ -1159,7 +1186,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 	ent = EDICT_NUM(0);
 	memset (&ent->v, 0, sizeof(progs->entityfields * 4));
 	ent->free = false;
-	ent->v.model = PR_SetEngineString(sv.worldmodel->name);
+	ent->v.model = PR_SetEngineString(sv->worldmodel->name);
 	ent->v.modelindex = 1;		// world model
 	ent->v.solid = SOLID_BSP;
 	ent->v.movetype = MOVETYPE_PUSH;
@@ -1169,20 +1196,20 @@ void CQuakeServer::SV_SpawnServer (char *server)
 	else
 		pr_global_struct->deathmatch = host->deathmatch.value;
 
-	pr_global_struct->mapname = PR_SetEngineString(sv.name);
+	pr_global_struct->mapname = PR_SetEngineString(sv->name);
 #ifdef QUAKE2
-	pr_global_struct->startspot = sv.startspot - pr_strings;
+	pr_global_struct->startspot = sv->startspot - pr_strings;
 #endif
 
 // serverflags are for cross level information (sigils)
 	pr_global_struct->serverflags = svs.serverflags;
 	
-	ED_LoadFromFile (sv.worldmodel->entities);
+	ED_LoadFromFile (sv->worldmodel->entities);
 
-	sv.active = true;
+	sv->active = true;
 
 // all setup is completed, any further precache statements are errors
-	sv.state = ss_active;
+	sv->state = ss_active;
 	
 // run two frames to allow everything to settle
 	host->host_frametime = 0.1;

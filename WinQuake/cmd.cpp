@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-void Cmd_ForwardToServer (void);
-
 #define	MAX_ALIAS_NAME	32
 
 typedef struct cmdalias_s
@@ -34,10 +32,13 @@ typedef struct cmdalias_s
 
 cmdalias_t	*cmd_alias;
 
-int trashtest;
-int *trashspot;
+int		trashtest;
+int		*trashspot;
 
 bool	cmd_wait;
+
+CCommandBuffer* g_pCmdBuf = nullptr;
+CCommand* g_pCmds = nullptr;
 
 //=============================================================================
 
@@ -50,7 +51,7 @@ next frame.  This allows commands like:
 bind g "impulse 5 ; +attack ; wait ; -attack ; impulse 2"
 ============
 */
-void Cmd_Wait_f (void)
+void CCommand::Cmd_Wait_f (void)
 {
 	cmd_wait = true;
 }
@@ -70,7 +71,7 @@ sizebuf_t	cmd_text;
 Cbuf_Init
 ============
 */
-void Cbuf_Init (void)
+void CCommandBuffer::Cbuf_Init (void)
 {
 	SZ_Alloc (&cmd_text, 8192);		// space for commands and script files
 }
@@ -83,7 +84,7 @@ Cbuf_AddText
 Adds command text at the end of the buffer
 ============
 */
-void Cbuf_AddText (const char *text)
+void CCommandBuffer::Cbuf_AddText (const char *text)
 {
 	int		l;
 	
@@ -108,7 +109,7 @@ Adds a \n to the text
 FIXME: actually change the command buffer to do less copying
 ============
 */
-void Cbuf_InsertText (const char *text)
+void CCommandBuffer::Cbuf_InsertText (const char *text)
 {
 	char	*temp;
 	int		templen;
@@ -140,7 +141,7 @@ void Cbuf_InsertText (const char *text)
 Cbuf_Execute
 ============
 */
-void Cbuf_Execute (void)
+void CCommandBuffer::Cbuf_Execute (void)
 {
 	int		i;
 	char	*text;
@@ -181,7 +182,7 @@ void Cbuf_Execute (void)
 		}
 
 // execute the command line
-		Cmd_ExecuteString (line, src_command);
+		g_pCmds->Cmd_ExecuteString (line, src_command);
 		
 		if (cmd_wait)
 		{	// skip out while text still remains in buffer, leaving it
@@ -210,13 +211,13 @@ quake +prog jctest.qp +cmd amlev1
 quake -nosound +cmd amlev1
 ===============
 */
-void Cmd_StuffCmds_f (void)
+void CCommand::Cmd_StuffCmds_f (void)
 {
 	int		i, j;
 	int		s;
 	char	*text, *build, c;
 		
-	if (Cmd_Argc () != 1)
+	if (g_pCmds->Cmd_Argc () != 1)
 	{
 		Con_Printf ("stuffcmds : execute command line parameters\n");
 		return;
@@ -268,7 +269,7 @@ void Cmd_StuffCmds_f (void)
 	}
 	
 	if (build[0])
-		Cbuf_InsertText (build);
+		g_pCmdBuf->Cbuf_InsertText (build);
 	
 	mainzone->Z_Free (text);
 	mainzone->Z_Free (build);
@@ -280,27 +281,27 @@ void Cmd_StuffCmds_f (void)
 Cmd_Exec_f
 ===============
 */
-void Cmd_Exec_f (void)
+void CCommand::Cmd_Exec_f (void)
 {
 	char	*f;
 	int		mark;
 
-	if (Cmd_Argc () != 2)
+	if (g_pCmds->Cmd_Argc () != 2)
 	{
 		Con_Printf ("exec <filename> : execute a script file\n");
 		return;
 	}
 
 	mark = g_MemCache->Hunk_LowMark ();
-	f = COM_LoadHunkFile<char> (Cmd_Argv(1), NULL);
+	f = COM_LoadHunkFile<char> (g_pCmds->Cmd_Argv(1), NULL);
 	if (!f)
 	{
-		Con_Printf ("couldn't exec %s\n",Cmd_Argv(1));
+		Con_Printf ("couldn't exec %s\n", g_pCmds->Cmd_Argv(1));
 		return;
 	}
-	Con_Printf ("execing %s\n",Cmd_Argv(1));
+	Con_Printf ("execing %s\n", g_pCmds->Cmd_Argv(1));
 	
-	Cbuf_InsertText (f);
+	g_pCmdBuf->Cbuf_InsertText (f);
 	g_MemCache->Hunk_FreeToLowMark(mark);
 }
 
@@ -312,12 +313,12 @@ Cmd_Echo_f
 Just prints the rest of the line to the console
 ===============
 */
-void Cmd_Echo_f (void)
+void CCommand::Cmd_Echo_f (void)
 {
 	int		i;
 	
-	for (i=1 ; i<Cmd_Argc() ; i++)
-		Con_Printf ("%s ",Cmd_Argv(i));
+	for (i=1 ; i< g_pCmds->Cmd_Argc() ; i++)
+		Con_Printf ("%s ", g_pCmds->Cmd_Argv(i));
 	Con_Printf ("\n");
 }
 
@@ -329,7 +330,7 @@ Creates a new command that executes a command string (possibly ; seperated)
 ===============
 */
 
-char *CopyString (char *in)
+char* CCommand::CopyString (char *in)
 {
 	char	*out;
 	
@@ -338,14 +339,14 @@ char *CopyString (char *in)
 	return out;
 }
 
-void Cmd_Alias_f (void)
+void CCommand::Cmd_Alias_f (void)
 {
 	cmdalias_t	*a;
 	char		cmd[1024];
 	int			i, c;
 	const char		*s = NULL;
 
-	if (Cmd_Argc() == 1)
+	if (g_pCmds->Cmd_Argc() == 1)
 	{
 		Con_Printf ("Current alias commands:\n");
 		for (a = cmd_alias ; a ; a=a->next)
@@ -353,7 +354,7 @@ void Cmd_Alias_f (void)
 		return;
 	}
 
-	s = Cmd_Argv(1);
+	s = g_pCmds->Cmd_Argv(1);
 	if (strlen(s) >= MAX_ALIAS_NAME)
 	{
 		Con_Printf ("Alias name is too long\n");
@@ -380,16 +381,16 @@ void Cmd_Alias_f (void)
 
 // copy the rest of the command line
 	cmd[0] = 0;		// start out with a null string
-	c = Cmd_Argc();
+	c = g_pCmds->Cmd_Argc();
 	for (i=2 ; i< c ; i++)
 	{
-		Q_strcat (cmd, Cmd_Argv(i));
+		Q_strcat (cmd, g_pCmds->Cmd_Argv(i));
 		if (i != c)
 			Q_strcat (cmd, " ");
 	}
 	Q_strcat (cmd, "\n");
 	
-	a->value = CopyString (cmd);
+	a->value = g_pCmds->CopyString (cmd);
 }
 
 /*
@@ -420,12 +421,17 @@ cmd_source_t	cmd_source;
 
 cmd_function_t*	cmd_functions;		// possible commands to execute
 
+CCommand::CCommand()
+{
+	Cmd_Init();
+}
+
 /*
 ============
 Cmd_Init
 ============
 */
-void Cmd_Init (void)
+void CCommand::Cmd_Init(void)
 {
 //
 // register our commands
@@ -446,7 +452,7 @@ void Cmd_Init (void)
 Cmd_Argc
 ============
 */
-int		Cmd_Argc (void)
+int CCommand::Cmd_Argc (void)
 {
 	return cmd_argc;
 }
@@ -456,7 +462,7 @@ int		Cmd_Argc (void)
 Cmd_Argv
 ============
 */
-const char	*Cmd_Argv (int arg)
+const char* CCommand::Cmd_Argv (int arg)
 {
 	if ( (unsigned)arg >= cmd_argc )
 		return cmd_null_string;
@@ -468,7 +474,7 @@ const char	*Cmd_Argv (int arg)
 Cmd_Args
 ============
 */
-const char		*Cmd_Args (void)
+const char* CCommand::Cmd_Args (void)
 {
 	return cmd_args;
 }
@@ -480,7 +486,7 @@ Cmd_TokenizeString
 Parses the given string into command line tokens.
 ============
 */
-void Cmd_TokenizeString (const char *text)
+void CCommand::Cmd_TokenizeString (const char *text)
 {
 	int		i;
 	
@@ -529,7 +535,7 @@ void Cmd_TokenizeString (const char *text)
 Cmd_AddCommand
 ============
 */
-void	Cmd_AddCommand (const char *cmd_name, xcommand_t function)
+void CCommand::Cmd_AddCommand (const char *cmd_name, xcommand_t function)
 {
 	cmd_function_t	*cmd = NULL;
 
@@ -565,7 +571,7 @@ void	Cmd_AddCommand (const char *cmd_name, xcommand_t function)
 Cmd_Exists
 ============
 */
-bool	Cmd_Exists (const char *cmd_name)
+bool CCommand::Cmd_Exists (const char *cmd_name)
 {
 	cmd_function_t	*cmd = NULL;
 	int	i;
@@ -586,7 +592,7 @@ bool	Cmd_Exists (const char *cmd_name)
 Cmd_CompleteCommand
 ============
 */
-const char *Cmd_CompleteCommand (const char *partial)
+const char* CCommand::Cmd_CompleteCommand (const char *partial)
 {
 	cmd_function_t	*cmd;
 	int				len;
@@ -613,7 +619,7 @@ A complete command line has been parsed, so try to execute it
 FIXME: lookupnoadd the token to speed search?
 ============
 */
-void	Cmd_ExecuteString (const char *text, cmd_source_t src)
+void CCommand::Cmd_ExecuteString (const char *text, cmd_source_t src)
 {	
 	cmd_function_t	*cmd;
 	cmdalias_t		*a;
@@ -640,7 +646,7 @@ void	Cmd_ExecuteString (const char *text, cmd_source_t src)
 	{
 		if (!Q_strcasecmp (cmd_argv[0], a->name))
 		{
-			Cbuf_InsertText (a->value);
+			g_pCmdBuf->Cbuf_InsertText (a->value);
 			return;
 		}
 	}
@@ -659,11 +665,11 @@ Cmd_ForwardToServer
 Sends the entire command line over to the server
 ===================
 */
-void Cmd_ForwardToServer (void)
+void CCommand::Cmd_ForwardToServer (void)
 {
 	if (cls.state != ca_connected)
 	{
-		Con_Printf ("Can't \"%s\", not connected\n", Cmd_Argv(0));
+		Con_Printf ("Can't \"%s\", not connected\n", g_pCmds->Cmd_Argv(0));
 		return;
 	}
 	
@@ -671,13 +677,13 @@ void Cmd_ForwardToServer (void)
 		return;		// not really connected
 
 	MSG_WriteByte (&cls.message, clc_stringcmd);
-	if (Q_strcasecmp(Cmd_Argv(0), "cmd") != 0)
+	if (Q_strcasecmp(g_pCmds->Cmd_Argv(0), "cmd") != 0)
 	{
-		SZ_Print (&cls.message, Cmd_Argv(0));
+		SZ_Print (&cls.message, g_pCmds->Cmd_Argv(0));
 		SZ_Print (&cls.message, " ");
 	}
-	if (Cmd_Argc() > 1)
-		SZ_Print (&cls.message, Cmd_Args());
+	if (g_pCmds->Cmd_Argc() > 1)
+		SZ_Print (&cls.message, g_pCmds->Cmd_Args());
 	else
 		SZ_Print (&cls.message, "\n");
 }
@@ -692,7 +698,7 @@ where the given parameter apears, or 0 if not present
 ================
 */
 
-int Cmd_CheckParm (char *parm)
+int CCommand::Cmd_CheckParm (char *parm)
 {
 	int i;
 	
@@ -704,4 +710,9 @@ int Cmd_CheckParm (char *parm)
 			return i;
 			
 	return 0;
+}
+
+CCommandBuffer::CCommandBuffer()
+{
+	Cbuf_Init();
 }

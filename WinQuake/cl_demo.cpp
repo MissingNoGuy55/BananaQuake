@@ -210,14 +210,14 @@ void CL_Record_f (void)
 	if (cmd_source != src_command)
 		return;
 
-	c = Cmd_Argc();
+	c = g_pCmds->Cmd_Argc();
 	if (c != 2 && c != 3 && c != 4)
 	{
 		Con_Printf ("record <demoname> [<map> [cd track]]\n");
 		return;
 	}
 
-	if (strstr(Cmd_Argv(1), ".."))
+	if (strstr(g_pCmds->Cmd_Argv(1), ".."))
 	{
 		Con_Printf ("Relative pathnames are not allowed.\n");
 		return;
@@ -232,13 +232,13 @@ void CL_Record_f (void)
 // write the forced cd track number, or -1
 	if (c == 4)
 	{
-		track = atoi(Cmd_Argv(3));
+		track = atoi(g_pCmds->Cmd_Argv(3));
 		Con_Printf ("Forcing CD track to %i\n", cls.forcetrack);
 	}
 	else
 		track = -1;	
 
-	sprintf (name, "%s/%s", g_Common->com_gamedir, Cmd_Argv(1));
+	sprintf (name, "%s/%s", g_Common->com_gamedir, g_pCmds->Cmd_Argv(1));
 	
 //
 // start the map up
@@ -247,8 +247,8 @@ void CL_Record_f (void)
     {
         char buf[256];
         memset(buf, 0, sizeof(buf));
-        snprintf(buf, sizeof(buf), "map %s", Cmd_Argv(2));
-        Cmd_ExecuteString (buf, src_command);
+        snprintf(buf, sizeof(buf), "map %s", g_pCmds->Cmd_Argv(2));
+		g_pCmds->Cmd_ExecuteString (buf, src_command);
 	//	Cmd_ExecuteString (g_Common->va_unsafe("map %s", Cmd_Argv(2)), src_command);
     }
 //
@@ -287,7 +287,7 @@ void CL_PlayDemo_f (void)
 	if (cmd_source != src_command)
 		return;
 
-	if (Cmd_Argc() != 2)
+	if (g_pCmds->Cmd_Argc() != 2)
 	{
 		Con_Printf ("play <demoname> : plays a demo\n");
 		return;
@@ -301,7 +301,7 @@ void CL_PlayDemo_f (void)
 //
 // open the demo file
 //
-	Q_strcpy (name, Cmd_Argv(1));
+	Q_strcpy (name, g_pCmds->Cmd_Argv(1));
 	g_Common->COM_DefaultExtension (name, ".dem");
 
 	Con_Printf ("Playing demo from %s.\n", name);
@@ -362,7 +362,7 @@ void CL_TimeDemo_f (void)
 	if (cmd_source != src_command)
 		return;
 
-	if (Cmd_Argc() != 2)
+	if (g_pCmds->Cmd_Argc() != 2)
 	{
 		Con_Printf ("timedemo <demoname> : gets demo speeds\n");
 		return;

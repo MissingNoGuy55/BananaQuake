@@ -163,11 +163,11 @@ void CSoundDMA::S_Init (void)
 		fakedma = true;
 
 	
-	Cmd_AddCommand("play", S_Play);
-	Cmd_AddCommand("playvol", S_PlayVol);
-	Cmd_AddCommand("stopsound", S_StopAllSoundsC);
-	Cmd_AddCommand("soundlist", S_SoundList);
-	Cmd_AddCommand("soundinfo", S_SoundInfo_f);
+	g_pCmds->Cmd_AddCommand("play", S_Play);
+	g_pCmds->Cmd_AddCommand("playvol", S_PlayVol);
+	g_pCmds->Cmd_AddCommand("stopsound", S_StopAllSoundsC);
+	g_pCmds->Cmd_AddCommand("soundlist", S_SoundList);
+	g_pCmds->Cmd_AddCommand("soundinfo", S_SoundInfo_f);
 
 		// Missi: enable this later
 	Cvar_RegisterVariable(&nosound);
@@ -1012,15 +1012,15 @@ void CSoundInternal::S_Play(void)
 	sfx_t* sfx;
 
 	i = 1;
-	while (i < Cmd_Argc())
+	while (i < g_pCmds->Cmd_Argc())
 	{
-		if (!Q_strrchr(Cmd_Argv(i), '.'))
+		if (!Q_strrchr(g_pCmds->Cmd_Argv(i), '.'))
 		{
-			Q_strcpy(name, Cmd_Argv(i));
+			Q_strcpy(name, g_pCmds->Cmd_Argv(i));
 			Q_strcat(name, ".wav");
 		}
 		else
-			Q_strcpy(name, Cmd_Argv(i));
+			Q_strcpy(name, g_pCmds->Cmd_Argv(i));
 		sfx = g_SoundSystem->S_PrecacheSound(name);
 		g_SoundSystem->S_StartSound(hash++, 0, sfx, listener_origin, 1.0, 1.0);
 		i++;
@@ -1036,17 +1036,17 @@ void CSoundInternal::S_PlayVol(void)
 	sfx_t	*sfx;
 	
 	i = 1;
-	while (i<Cmd_Argc())
+	while (i< g_pCmds->Cmd_Argc())
 	{
-		if (!Q_strrchr(Cmd_Argv(i), '.'))
+		if (!Q_strrchr(g_pCmds->Cmd_Argv(i), '.'))
 		{
-			Q_strcpy(name, Cmd_Argv(i));
+			Q_strcpy(name, g_pCmds->Cmd_Argv(i));
 			Q_strcat(name, ".wav");
 		}
 		else
-			Q_strcpy(name, Cmd_Argv(i));
+			Q_strcpy(name, g_pCmds->Cmd_Argv(i));
 		sfx = g_SoundSystem->S_PrecacheSound(name);
-		vol = Q_atof(Cmd_Argv(i+1));
+		vol = Q_atof(g_pCmds->Cmd_Argv(i+1));
 		g_SoundSystem->S_StartSound(hash++, 0, sfx, listener_origin, vol, 1.0);
 		i+=2;
 	}

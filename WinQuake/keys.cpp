@@ -162,8 +162,8 @@ void Key_Console (int key)
 	
 	if (key == K_ENTER)
 	{
-		Cbuf_AddText (key_lines[edit_line]+1);	// skip the >
-		Cbuf_AddText ("\n");
+		g_pCmdBuf->Cbuf_AddText (key_lines[edit_line]+1);	// skip the >
+		g_pCmdBuf->Cbuf_AddText ("\n");
 		Con_Printf ("%s\n",key_lines[edit_line]);
 		edit_line = (edit_line + 1) & 31;
 		history_line = edit_line;
@@ -177,7 +177,7 @@ void Key_Console (int key)
 
 	if (key == K_TAB)
 	{	// command completion
-		cmd = Cmd_CompleteCommand (key_lines[edit_line]+1);
+		cmd = g_pCmds->Cmd_CompleteCommand (key_lines[edit_line]+1);
 		if (!cmd)
 			cmd = Cvar_CompleteVariable (key_lines[edit_line]+1);
 		if (cmd)
@@ -301,11 +301,11 @@ void Key_Message (int key)
 	if (key == K_ENTER)
 	{
 		if (team_message)
-			Cbuf_AddText ("say_team \"");
+			g_pCmdBuf->Cbuf_AddText ("say_team \"");
 		else
-			Cbuf_AddText ("say \"");
-		Cbuf_AddText(chat_buffer);
-		Cbuf_AddText("\"\n");
+			g_pCmdBuf->Cbuf_AddText ("say \"");
+		g_pCmdBuf->Cbuf_AddText(chat_buffer);
+		g_pCmdBuf->Cbuf_AddText("\"\n");
 
 		key_dest = key_game;
 		chat_bufferlen = 0;
@@ -438,16 +438,16 @@ void Key_Unbind_f (void)
 {
 	int		b;
 
-	if (Cmd_Argc() != 2)
+	if (g_pCmds->Cmd_Argc() != 2)
 	{
 		Con_Printf ("unbind <key> : remove commands from a key\n");
 		return;
 	}
 	
-	b = Key_StringToKeynum (Cmd_Argv(1));
+	b = Key_StringToKeynum (g_pCmds->Cmd_Argv(1));
 	if (b==-1)
 	{
-		Con_Printf ("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+		Con_Printf ("\"%s\" isn't a valid key\n", g_pCmds->Cmd_Argv(1));
 		return;
 	}
 
@@ -474,26 +474,26 @@ void Key_Bind_f (void)
 	int			i, c, b;
 	char		cmd[1024];
 	
-	c = Cmd_Argc();
+	c = g_pCmds->Cmd_Argc();
 
 	if (c != 2 && c != 3)
 	{
 		Con_Printf ("bind <key> [command] : attach a command to a key\n");
 		return;
 	}
-	b = Key_StringToKeynum (Cmd_Argv(1));
+	b = Key_StringToKeynum (g_pCmds->Cmd_Argv(1));
 	if (b==-1)
 	{
-		Con_Printf ("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+		Con_Printf ("\"%s\" isn't a valid key\n", g_pCmds->Cmd_Argv(1));
 		return;
 	}
 
 	if (c == 2)
 	{
 		if (keybindings[b])
-			Con_Printf ("\"%s\" = \"%s\"\n", Cmd_Argv(1), keybindings[b] );
+			Con_Printf ("\"%s\" = \"%s\"\n", g_pCmds->Cmd_Argv(1), keybindings[b] );
 		else
-			Con_Printf ("\"%s\" is not bound\n", Cmd_Argv(1) );
+			Con_Printf ("\"%s\" is not bound\n", g_pCmds->Cmd_Argv(1) );
 		return;
 	}
 	
@@ -503,7 +503,7 @@ void Key_Bind_f (void)
 	{
 		if (i > 2)
 			Q_strcat (cmd, " ");
-		Q_strcat (cmd, Cmd_Argv(i));
+		Q_strcat (cmd, g_pCmds->Cmd_Argv(i));
 	}
 
 	Key_SetBinding (b, cmd);
@@ -596,9 +596,9 @@ void Key_Init (void)
 //
 // register our functions
 //
-	Cmd_AddCommand ("bind",Key_Bind_f);
-	Cmd_AddCommand ("unbind",Key_Unbind_f);
-	Cmd_AddCommand ("unbindall",Key_Unbindall_f);
+	g_pCmds->Cmd_AddCommand ("bind",Key_Bind_f);
+	g_pCmds->Cmd_AddCommand ("unbind",Key_Unbind_f);
+	g_pCmds->Cmd_AddCommand ("unbindall",Key_Unbindall_f);
 
 
 }
@@ -682,7 +682,7 @@ void Key_Event (int key, bool down)
 		if (kb && kb[0] == '+')
 		{
 			sprintf (cmd, "-%s %i\n", kb+1, key);
-			Cbuf_AddText (cmd);
+			g_pCmdBuf->Cbuf_AddText (cmd);
 		}
 		if (keyshift[key] != key)
 		{
@@ -690,7 +690,7 @@ void Key_Event (int key, bool down)
 			if (kb && kb[0] == '+')
 			{
 				sprintf (cmd, "-%s %i\n", kb+1, key);
-				Cbuf_AddText (cmd);
+				g_pCmdBuf->Cbuf_AddText (cmd);
 			}
 		}
 		return;
@@ -718,12 +718,12 @@ void Key_Event (int key, bool down)
 			if (kb[0] == '+')
 			{	// button commands add keynum as a parm
 				sprintf (cmd, "%s %i\n", kb, key);
-				Cbuf_AddText (cmd);
+				g_pCmdBuf->Cbuf_AddText (cmd);
 			}
 			else
 			{
-				Cbuf_AddText (kb);
-				Cbuf_AddText ("\n");
+				g_pCmdBuf->Cbuf_AddText (kb);
+				g_pCmdBuf->Cbuf_AddText ("\n");
 			}
 		}
 		return;

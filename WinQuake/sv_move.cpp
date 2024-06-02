@@ -127,7 +127,7 @@ bool CQuakeServer::SV_movestep (edict_t *ent, vec3_t move, bool relink)
 		{
 			VectorAdd (ent->v.origin, move, neworg);
 			enemy = PROG_TO_EDICT(ent->v.enemy);
-			if (i == 0 && enemy != sv.edicts)
+			if (i == 0 && enemy != sv->edicts)
 			{
 				dz = ent->v.origin[2] - PROG_TO_EDICT(ent->v.enemy)->v.origin[2];
 				if (dz > 40)
@@ -148,7 +148,7 @@ bool CQuakeServer::SV_movestep (edict_t *ent, vec3_t move, bool relink)
 				return true;
 			}
 			
-			if (enemy == sv.edicts)
+			if (enemy == sv->edicts)
 				break;
 		}
 		
@@ -411,17 +411,17 @@ void CQuakeServer::SV_MoveToGoal (void)
 // if the next step hits the enemy, return immediately
 #ifdef QUAKE2
 	enemy = PROG_TO_EDICT(ent->v.enemy);
-	if (enemy != sv.edicts &&  SV_CloseEnough (ent, enemy, dist) )
+	if (enemy != sv->edicts &&  SV_CloseEnough (ent, enemy, dist) )
 #else
-	if ( PROG_TO_EDICT(ent->v.enemy) != sv.edicts && sv.SV_CloseEnough (ent, goal, dist) )
+	if ( PROG_TO_EDICT(ent->v.enemy) != sv->edicts && sv->SV_CloseEnough (ent, goal, dist) )
 #endif
 		return;
 
 // bump around...
 	if ( (rand()&3)==1 ||
-	!sv.SV_StepDirection (ent, ent->v.ideal_yaw, dist))
+	!sv->SV_StepDirection (ent, ent->v.ideal_yaw, dist))
 	{
-		sv.SV_NewChaseDir (ent, goal, dist);
+		sv->SV_NewChaseDir (ent, goal, dist);
 	}
 }
 

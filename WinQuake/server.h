@@ -82,6 +82,8 @@ class CQuakeServer
 
 public:
 
+	CQuakeServer();
+
 	void SV_Init(void);
 
 	void SV_StartParticle(vec3_t org, vec3_t dir, int color, int count);
@@ -279,7 +281,7 @@ public:
 	const char* lightstyles[MAX_LIGHTSTYLES];
 	int			num_edicts;
 	int			max_edicts;
-	edict_t* edicts;			// can NOT be array indexed, because
+	edict_t*	edicts;				// can NOT be array indexed, because
 									// edict_t is variable sized, but can
 									// be used to reference the world ent
 	server_state_t	state;			// some actions are only valid during load
@@ -294,7 +296,6 @@ public:
 	byte		signon_buf[8192];
 
 };
-
 
 //=============================================================================
 
@@ -390,7 +391,7 @@ extern	cvar_t	fraglimit;
 extern	cvar_t	timelimit;
 
 extern	server_static_t	svs;				// persistant server info
-extern	CQuakeServer		sv;					// local server
+extern	CQuakeServer*		sv;					// local server
 
 extern	client_t	*host_client;
 

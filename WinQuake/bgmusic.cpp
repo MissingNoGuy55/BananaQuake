@@ -53,8 +53,8 @@ static snd_stream_t* bgmstream = NULL;
 
 void CBackgroundMusic::BGM_Play_f(void)
 {
-	if (Cmd_Argc() == 2) {
-		BGM_Play(Cmd_Argv(1));
+	if (g_pCmds->Cmd_Argc() == 2) {
+		BGM_Play(g_pCmds->Cmd_Argv(1));
 	}
 	else {
 		Con_Printf("music <musicfile>\n");
@@ -73,14 +73,14 @@ void CBackgroundMusic::BGM_Resume_f(void)
 
 void CBackgroundMusic::BGM_Loop_f(void)
 {
-	if (Cmd_Argc() == 2) {
-		if (Q_strcasecmp(Cmd_Argv(1), "0") == 0 ||
-			Q_strcasecmp(Cmd_Argv(1), "off") == 0)
+	if (g_pCmds->Cmd_Argc() == 2) {
+		if (Q_strcasecmp(g_pCmds->Cmd_Argv(1), "0") == 0 ||
+			Q_strcasecmp(g_pCmds->Cmd_Argv(1), "off") == 0)
 			bgmloop = false;
-		else if (Q_strcasecmp(Cmd_Argv(1), "1") == 0 ||
-			Q_strcasecmp(Cmd_Argv(1), "on") == 0)
+		else if (Q_strcasecmp(g_pCmds->Cmd_Argv(1), "1") == 0 ||
+			Q_strcasecmp(g_pCmds->Cmd_Argv(1), "on") == 0)
 			bgmloop = true;
-		else if (Q_strcasecmp(Cmd_Argv(1), "toggle") == 0)
+		else if (Q_strcasecmp(g_pCmds->Cmd_Argv(1), "toggle") == 0)
 			bgmloop = !bgmloop;
 
 		if (bgmstream) bgmstream->loop = bgmloop;
@@ -99,11 +99,11 @@ void CBackgroundMusic::BGM_Stop_f(void)
 
 void CBackgroundMusic::BGM_Jump_f(void)
 {
-	if (Cmd_Argc() != 2) {
+	if (g_pCmds->Cmd_Argc() != 2) {
 		Con_Printf("music_jump <ordernum>\n");
 	}
 	else if (bgmstream) {
-		S_CodecJumpToOrder(bgmstream, atoi(Cmd_Argv(1)));
+		S_CodecJumpToOrder(bgmstream, atoi(g_pCmds->Cmd_Argv(1)));
 	}
 }
 
@@ -121,12 +121,12 @@ bool CBackgroundMusic::BGM_Init()
 	int i;
 
 	Cvar_RegisterVariable(&bgm_extmusic);
-	Cmd_AddCommand("music", BGM_Play_f);
-	Cmd_AddCommand("music_pause", BGM_Pause_f);
-	Cmd_AddCommand("music_resume", BGM_Resume_f);
-	Cmd_AddCommand("music_loop", BGM_Loop_f);
-	Cmd_AddCommand("music_stop", BGM_Stop_f);
-	Cmd_AddCommand("music_jump", BGM_Jump_f);
+	g_pCmds->Cmd_AddCommand("music", BGM_Play_f);
+	g_pCmds->Cmd_AddCommand("music_pause", BGM_Pause_f);
+	g_pCmds->Cmd_AddCommand("music_resume", BGM_Resume_f);
+	g_pCmds->Cmd_AddCommand("music_loop", BGM_Loop_f);
+	g_pCmds->Cmd_AddCommand("music_stop", BGM_Stop_f);
+	g_pCmds->Cmd_AddCommand("music_jump", BGM_Jump_f);
 
 	if (g_Common->COM_CheckParm("-noextmusic") != 0)
 		no_extmusic = true;
@@ -279,10 +279,10 @@ void CBackgroundMusic::BGM_PlayCDtrack(byte track, bool looping)
 	 * is below *.ogg in the music_handler order, the mp3 will still
 	 * have priority over track02.ogg from, say, id1.
 	 */
-	char tmp[MAX_QPATH] = "";
-	const char* ext;
+	char tmp[MAX_QPATH] = {};
+	const char* ext = nullptr;
 	uintptr_t path_id = 0, prev_id = 0, type = 0;
-	music_handler_t* handler;
+	music_handler_t* handler = nullptr;
 
 	BGM_Stop();
 	if (CDAudio_Play(track, looping) == 0)

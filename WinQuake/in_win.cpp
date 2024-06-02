@@ -492,8 +492,8 @@ void IN_Init (void)
 	Cvar_RegisterVariable (&joy_wwhack1);
 	Cvar_RegisterVariable (&joy_wwhack2);
 
-	Cmd_AddCommand ("force_centerview", Force_CenterView_f);
-	Cmd_AddCommand ("joyadvancedupdate", Joy_AdvancedUpdate_f);
+	g_pCmds->Cmd_AddCommand ("force_centerview", Force_CenterView_f);
+	g_pCmds->Cmd_AddCommand ("joyadvancedupdate", Joy_AdvancedUpdate_f);
 
 	uiWheelMessage = RegisterWindowMessage ( "MSWHEEL_ROLLMSG" );
 

@@ -31,7 +31,7 @@ Cvar_FindVar
 */
 cvar_t *Cvar_FindVar (const char *var_name)
 {
-	cvar_t	*var;
+	cvar_t	*var = NULL;
 	
 	for (var=cvar_vars ; var ; var=var->next)
 		if (!Q_strcmp (var_name, var->name))
@@ -129,8 +129,8 @@ void Cvar_Set (const char *var_name, const char *value)
 	var->value = Q_atof (str);
 	if (var->server && changed)
 	{
-		if (sv.active)
-			sv.SV_BroadcastPrintf ("\"%s\" changed to \"%s\"\n", var->name, var->string);
+		if (sv->active)
+			sv->SV_BroadcastPrintf ("\"%s\" changed to \"%s\"\n", var->name, var->string);
 	}
 }
 
@@ -158,7 +158,7 @@ Adds a freestanding variable to the variable list.
 void Cvar_RegisterVariable (cvar_t *variable)
 {
 	const char	*oldstr;
-	
+
 // first check to see if it has allready been defined
 	if (Cvar_FindVar (variable->name))
 	{
@@ -167,7 +167,7 @@ void Cvar_RegisterVariable (cvar_t *variable)
 	}
 	
 // check for overlap with a command
-	if (Cmd_Exists (variable->name))
+	if (g_pCmds->Cmd_Exists (variable->name))
 	{
 		Con_Printf ("Cvar_RegisterVariable: %s is a command\n", variable->name);
 		return;
@@ -207,18 +207,18 @@ bool	Cvar_Command (void)
 	cvar_t			*v;
 
 // check variables
-	v = Cvar_FindVar (Cmd_Argv(0));
+	v = Cvar_FindVar (g_pCmds->Cmd_Argv(0));
 	if (!v)
 		return false;
 		
 // perform a variable print or set
-	if (Cmd_Argc() == 1)
+	if (g_pCmds->Cmd_Argc() == 1)
 	{
 		Con_Printf ("\"%s\" is \"%s\"\n", v->name, v->string);
 		return true;
 	}
 
-	Cvar_Set (v->name, Cmd_Argv(1));
+	Cvar_Set (v->name, g_pCmds->Cmd_Argv(1));
 	return true;
 }
 

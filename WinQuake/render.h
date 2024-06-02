@@ -144,6 +144,13 @@ class CGLTexture;
 class CTexture;
 #endif
 
+/*
+* Missi: core renderer
+* 
+* There are three renderers present in BananaQuake: the core renderer, the software renderer, and
+* the OpenGL renderer.
+* 
+*/
 class CCoreRenderer
 {
 public:

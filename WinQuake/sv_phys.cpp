@@ -64,8 +64,8 @@ void CQuakeServer::SV_CheckAllEnts (void)
 	edict_t		*check;
 
 // see if any solid entities are inside the final position
-	check = NEXT_EDICT(sv.edicts);
-	for (e=1 ; e<sv.num_edicts ; e++, check = NEXT_EDICT(check))
+	check = NEXT_EDICT(sv->edicts);
+	for (e=1 ; e<sv->num_edicts ; e++, check = NEXT_EDICT(check))
 	{
 		if (check->free)
 			continue;
@@ -128,17 +128,17 @@ bool CQuakeServer::SV_RunThink (edict_t *ent)
 	float	thinktime;
 
 	thinktime = ent->v.nextthink;
-	if (thinktime <= 0 || thinktime > sv.time + host->host_frametime)
+	if (thinktime <= 0 || thinktime > sv->time + host->host_frametime)
 		return true;
 		
-	if (thinktime < sv.time)
-		thinktime = sv.time;	// don't let things stay in the past.
+	if (thinktime < sv->time)
+		thinktime = sv->time;	// don't let things stay in the past.
 								// it is possible to start that way
 								// by a trigger with a local time.
 	ent->v.nextthink = 0;
 	pr_global_struct->time = thinktime;
 	pr_global_struct->self = EDICT_TO_PROG(ent);
-	pr_global_struct->other = EDICT_TO_PROG(sv.edicts);
+	pr_global_struct->other = EDICT_TO_PROG(sv->edicts);
 	PR_ExecuteProgram (ent->v.think);
 	return !ent->free;
 }
@@ -157,7 +157,7 @@ void CQuakeServer::SV_Impact (edict_t *e1, edict_t *e2)
 	old_self = pr_global_struct->self;
 	old_other = pr_global_struct->other;
 	
-	pr_global_struct->time = sv.time;
+	pr_global_struct->time = sv->time;
 	if (e1->v.touch && e1->v.solid != SOLID_NOT)
 	{
 		pr_global_struct->self = EDICT_TO_PROG(e1);
@@ -470,8 +470,8 @@ void CQuakeServer::SV_PushMove (edict_t *pusher, float movetime)
 
 // see if any solid entities are inside the final position
 	num_moved = 0;
-	check = NEXT_EDICT(sv.edicts);
-	for (e=1 ; e<sv.num_edicts ; e++, check = NEXT_EDICT(check))
+	check = NEXT_EDICT(sv->edicts);
+	for (e=1 ; e<sv->num_edicts ; e++, check = NEXT_EDICT(check))
 	{
 		if (check->free)
 			continue;
@@ -598,8 +598,8 @@ void SV_PushRotate (edict_t *pusher, float movetime)
 
 // see if any solid entities are inside the final position
 	num_moved = 0;
-	check = NEXT_EDICT(sv.edicts);
-	for (e=1 ; e<sv.num_edicts ; e++, check = NEXT_EDICT(check))
+	check = NEXT_EDICT(sv->edicts);
+	for (e=1 ; e<sv->num_edicts ; e++, check = NEXT_EDICT(check))
 	{
 		if (check->free)
 			continue;
@@ -732,9 +732,9 @@ void CQuakeServer::SV_Physics_Pusher (edict_t *ent)
 	if (thinktime > oldltime && thinktime <= ent->v.ltime)
 	{
 		ent->v.nextthink = 0;
-		pr_global_struct->time = sv.time;
+		pr_global_struct->time = sv->time;
 		pr_global_struct->self = EDICT_TO_PROG(ent);
-		pr_global_struct->other = EDICT_TO_PROG(sv.edicts);
+		pr_global_struct->other = EDICT_TO_PROG(sv->edicts);
 		PR_ExecuteProgram (ent->v.think);
 		if (ent->free)
 			return;
@@ -1064,7 +1064,7 @@ void CQuakeServer::SV_Physics_Client (edict_t	*ent, int num)
 //
 // call standard client pre-think
 //	
-	pr_global_struct->time = sv.time;
+	pr_global_struct->time = sv->time;
 	pr_global_struct->self = EDICT_TO_PROG(ent);
 	PR_ExecuteProgram (pr_global_struct->PlayerPreThink);
 	
@@ -1125,7 +1125,7 @@ void CQuakeServer::SV_Physics_Client (edict_t	*ent, int num)
 //		
 	SV_LinkEdict (ent, true);
 
-	pr_global_struct->time = sv.time;
+	pr_global_struct->time = sv->time;
 	pr_global_struct->self = EDICT_TO_PROG(ent);
 	PR_ExecuteProgram (pr_global_struct->PlayerPostThink);
 }
@@ -1376,7 +1376,7 @@ void SV_Physics_Step (edict_t *ent)
 	else
 		VectorCopy(vec_origin, ent->v.basevelocity);
 //@@
-	pr_global_struct->time = sv.time;
+	pr_global_struct->time = sv->time;
 	pr_global_struct->self = EDICT_TO_PROG(ent);
 	PF_WaterMove();
 
@@ -1510,9 +1510,9 @@ void CQuakeServer::SV_Physics (void)
 	edict_t	*ent;
 
 // let the progs know that a new frame has started
-	pr_global_struct->self = EDICT_TO_PROG(sv.edicts);
-	pr_global_struct->other = EDICT_TO_PROG(sv.edicts);
-	pr_global_struct->time = sv.time;
+	pr_global_struct->self = EDICT_TO_PROG(sv->edicts);
+	pr_global_struct->other = EDICT_TO_PROG(sv->edicts);
+	pr_global_struct->time = sv->time;
 	PR_ExecuteProgram (pr_global_struct->StartFrame);
 
 //SV_CheckAllEnts ();
@@ -1520,8 +1520,8 @@ void CQuakeServer::SV_Physics (void)
 //
 // treat each object in turn
 //
-	ent = sv.edicts;
-	for (i=0 ; i<sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
+	ent = sv->edicts;
+	for (i=0 ; i<sv->num_edicts ; i++, ent = NEXT_EDICT(ent))
 	{
 		if (ent->free)
 			continue;
@@ -1560,7 +1560,7 @@ void CQuakeServer::SV_Physics (void)
 	if (pr_global_struct->force_retouch)
 		pr_global_struct->force_retouch--;	
 
-	sv.time += host->host_frametime;
+	sv->time += host->host_frametime;
 }
 
 

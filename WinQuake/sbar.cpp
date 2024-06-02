@@ -191,8 +191,8 @@ void Sbar_Init (void)
 	sb_face_invis_invuln = ResolveRenderer()->Draw_PicFromWad ("face_inv2");
 	sb_face_quad = ResolveRenderer()->Draw_PicFromWad ("face_quad");
 
-	Cmd_AddCommand ("+showscores", Sbar_ShowScores);
-	Cmd_AddCommand ("-showscores", Sbar_DontShowScores);
+	g_pCmds->Cmd_AddCommand ("+showscores", Sbar_ShowScores);
+	g_pCmds->Cmd_AddCommand ("-showscores", Sbar_DontShowScores);
 
 	sb_sbar = ResolveRenderer()->Draw_PicFromWad ("sbar");
 	sb_ibar = ResolveRenderer()->Draw_PicFromWad ("ibar");

@@ -40,27 +40,21 @@ static byte		maxTrack = 0;
 
 UINT	wDeviceID;
 
-#ifndef QUAKE_TOOLS
-
 static void CDAudio_Eject(void)
 {
-#ifndef QUAKE_TOOLS
 	DWORD_PTR	dwReturn;
 
     if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_OPEN, (DWORD_PTR)NULL))
 		Con_DPrintf("MCI_SET_DOOR_OPEN failed (%i)\n", dwReturn);
-#endif
 }
 
 
 static void CDAudio_CloseDoor(void)
 {
-#ifndef QUAKE_TOOLS
 	DWORD_PTR	dwReturn;
 
     if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_CLOSED, (DWORD_PTR)NULL))
 		Con_DPrintf("MCI_SET_DOOR_CLOSED failed (%i)\n", dwReturn);
-#endif
 }
 
 
@@ -285,12 +279,12 @@ static void CD_f (void)
 	int		ret;
 	int		n;
 
-	if (Cmd_Argc() < 2)
+	if (g_pCmds->Cmd_Argc() < 2)
 		return;
 
 	memset(cmd, 0, sizeof(cmd));
 
-	snprintf(cmd, sizeof(cmd), "%s", Cmd_Argv(1));
+	snprintf(cmd, sizeof(cmd), "%s", g_pCmds->Cmd_Argv(1));
 
 	command = cmd;
 
@@ -321,7 +315,7 @@ static void CD_f (void)
 
 	if (Q_strcasecmp(command, "remap") == 0)
 	{
-		ret = Cmd_Argc() - 2;
+		ret = g_pCmds->Cmd_Argc() - 2;
 		if (ret <= 0)
 		{
 			for (n = 1; n < 100; n++)
@@ -330,7 +324,7 @@ static void CD_f (void)
 			return;
 		}
 		for (n = 1; n <= ret; n++)
-			remap[n] = Q_atoi(Cmd_Argv (n+1));
+			remap[n] = Q_atoi(g_pCmds->Cmd_Argv (n+1));
 		return;
 	}
 
@@ -352,13 +346,13 @@ static void CD_f (void)
 
 	if (Q_strcasecmp(command, "play") == 0)
 	{
-		CDAudio_Play((byte)Q_atoi(Cmd_Argv (2)), false);
+		CDAudio_Play((byte)Q_atoi(g_pCmds->Cmd_Argv (2)), false);
 		return;
 	}
 
 	if (Q_strcasecmp(command, "loop") == 0)
 	{
-		CDAudio_Play((byte)Q_atoi(Cmd_Argv (2)), true);
+		CDAudio_Play((byte)Q_atoi(g_pCmds->Cmd_Argv (2)), true);
 		return;
 	}
 
@@ -501,7 +495,7 @@ int CDAudio_Init(void)
 		cdValid = false;
 	}
 
-	Cmd_AddCommand ("cd", CD_f);
+	g_pCmds->Cmd_AddCommand ("cd", CD_f);
 
 	Con_Printf("CD Audio Initialized\n");
 
@@ -517,8 +511,6 @@ void CDAudio_Shutdown(void)
 	if (mciSendCommand(wDeviceID, MCI_CLOSE, MCI_WAIT, (DWORD_PTR)NULL))
 		Con_DPrintf("CDAudio_Shutdown: MCI_CLOSE failed\n");
 }
-
-#else
 
 
 //long CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -554,5 +546,3 @@ void CDAudio_Shutdown(void)
 //
 //	return 0;
 //}
-
-#endif

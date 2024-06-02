@@ -54,13 +54,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdlib.h>
 #include <setjmp.h>
 // #include <dsound.h>
-#ifdef _WIN32
+#if (_WIN32) || (WIN64)
 #include <windows.h>
 #endif
+
+#ifndef QUAKE_TOOLS
 #include <SDL.h>
+#endif
+
 #ifdef GLQUAKE
 #include <SDL_opengl.h>
 #endif
+
+#include <vector>
 
 #ifndef APIENTRY
 #define	APIENTRY

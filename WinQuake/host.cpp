@@ -66,7 +66,7 @@ void CQuakeHost::Host_EndGame (const char *message, ...)
 	va_end (argptr);
 	Con_DPrintf ("Host_EndGame: %s\n",string);
 	
-	if (sv.active)
+	if (sv->active)
 		Host_ShutdownServer (false);
 
 	if (cls.state == ca_dedicated)
@@ -104,7 +104,7 @@ void CQuakeHost::Host_Error (const char *error, ...)
 	va_end (argptr);
 	Con_Printf ("Host_Error: %s\n",string);
 	
-	if (sv.active)
+	if (sv->active)
 		Host_ShutdownServer (false);
 
 	if (cls.state == ca_dedicated)
@@ -218,7 +218,7 @@ void CQuakeHost::Host_WriteConfiguration (void)
 
 // dedicated servers initialize the host but don't parse and set the
 // config.cfg cvars
-	if (host_initialized & !isDedicated)
+	if (host_initialized && !isDedicated)
 	{
 		f = fopen (g_Common->va("%s/config.cfg", g_Common->com_gamedir), "w");
 		if (!f)
@@ -265,9 +265,9 @@ Sends text to all active clients
 */
 void CQuakeServer::SV_BroadcastPrintf (const char *fmt, ...)
 {
-	va_list		argptr;
-	char		string[1024];
-	int			i;
+	va_list		argptr = {};
+	char		string[1024] = {};
+	int			i = 0;
 	
 	va_start (argptr,fmt);
 	vsprintf (string, fmt,argptr);
@@ -290,8 +290,8 @@ Send text over to the client to be executed
 */
 void CQuakeHost::Host_ClientCommands (const char *fmt, ...)
 {
-	va_list		argptr;
-	char		string[1024] = "";
+	va_list		argptr = {};
+	char		string[1024] = {};
 	
 	va_start (argptr,fmt);
 	vsprintf (string, fmt,argptr);
@@ -311,9 +311,9 @@ if (crash = true), don't bother sending signofs
 */
 void CQuakeServer::SV_DropClient (bool crash)
 {
-	int		saveSelf;
-	int		i;
-	client_t *client;
+	int		saveSelf = 0;
+	int		i = 0;
+	client_t *client = nullptr;
 
 	if (!crash)
 	{
@@ -373,16 +373,16 @@ This only happens at the end of a game, not between levels
 */
 void CQuakeHost::Host_ShutdownServer(bool crash)
 {
-	int		i;
-	int		count;
-	sizebuf_t	buf;
-	char		message[4];
-	double	start;
+	int			i = 0;
+	int			count = 0;
+	sizebuf_t	buf = {};
+	char		message[4] = {};
+	double		start = 0.0;
 
-	if (!sv.active)
+	if (!sv->active)
 		return;
 
-	sv.active = false;
+	sv->active = false;
 
 // stop all client sounds immediately
 	if (cls.state == ca_connected)
@@ -425,7 +425,7 @@ void CQuakeHost::Host_ShutdownServer(bool crash)
 
 	for (i=0, host_client = svs.clients ; i<svs.maxclients ; i++, host_client++)
 		if (host_client->active)
-			sv.SV_DropClient(crash);
+			sv->SV_DropClient(crash);
 
 //
 // clear structures
@@ -456,7 +456,9 @@ CQuakeHost::CQuakeHost() :
 	isDedicated(false),
     minimum_memory(0),
 	oldrealtime(0),
-    host_hunklevel(0)
+    host_hunklevel(0),
+	host_abortserver(),
+	sys_nostdout()
 {
     memset(&host_parms, 0, sizeof(host_parms));
 }
@@ -474,7 +476,9 @@ CQuakeHost::CQuakeHost(quakeparms_t<byte*> parms) :
 	isDedicated(false),
     minimum_memory(0),
 	oldrealtime(0),
-    host_hunklevel(0)
+    host_hunklevel(0),
+	host_abortserver(),
+	sys_nostdout()
 {
 #ifdef __linux__
 	host_parms.basedir = parms.basedir ? parms.basedir : strdup("");
@@ -483,7 +487,6 @@ CQuakeHost::CQuakeHost(quakeparms_t<byte*> parms) :
 	host_parms.basedir = parms.basedir ? parms.basedir : _strdup("");
 	host_parms.cachedir = parms.cachedir ? parms.cachedir : _strdup("");
 #endif
-	memset(host_abortserver, 0, sizeof(jmp_buf));
 }
 
 void CQuakeHost::Host_ClearMemory (void)
@@ -495,7 +498,7 @@ void CQuakeHost::Host_ClearMemory (void)
 		g_MemCache->Hunk_FreeToLowMark(host_hunklevel);
 
 	cls.signon = 0;
-	memset(&sv, 0, sizeof(sv));
+	memset(sv, 0, sizeof(*sv));
 	memset(&cl, 0, sizeof(cl));
 }
 
@@ -550,7 +553,7 @@ void CQuakeHost::Host_GetConsoleCommands (void)
 		cmd = Sys_ConsoleInput ();
 		if (!cmd)
 			break;
-		Cbuf_AddText (cmd);
+		g_pCmdBuf->Cbuf_AddText (cmd);
 	}
 }
 
@@ -573,7 +576,7 @@ void _Host_ServerFrame (void)
 	
 // move things around and think
 // always pause in single player if in console or menus
-	if (!sv.paused && (svs.maxclients > 1 || key_dest == key_game) )
+	if (!sv->paused && (svs.maxclients > 1 || key_dest == key_game) )
 		SV_Physics ();
 }
 
@@ -615,21 +618,21 @@ void CQuakeHost::Host_ServerFrame (void)
 	pr_global_struct->frametime = host_frametime;
 
 // set the time and clear the general datagram
-	sv.SV_ClearDatagram ();
+	sv->SV_ClearDatagram ();
 	
 // check for new clients
-	sv.SV_CheckForNewClients ();
+	sv->SV_CheckForNewClients ();
 
 // read client messages
-	sv.SV_RunClients ();
+	sv->SV_RunClients ();
 	
 // move things around and think
 // always pause in single player if in console or menus
-	if (!sv.paused && (svs.maxclients > 1 || key_dest == key_game) )
-		sv.SV_Physics ();
+	if (!sv->paused && (svs.maxclients > 1 || key_dest == key_game) )
+		sv->SV_Physics ();
 
 // send all messages to the clients
-	sv.SV_SendClientMessages ();
+	sv->SV_SendClientMessages ();
 }
 
 #endif
@@ -669,12 +672,12 @@ void CQuakeHost::_Host_Frame (float time)
 #endif
 
 // process console commands
-	Cbuf_Execute ();
+	g_pCmdBuf->Cbuf_Execute ();
 
 	NET_Poll();
 
 // if running the server locally, make intentions now
-	if (sv.active)
+	if (sv->active)
 		CL_SendCmd ();
 	
 //-------------------
@@ -686,7 +689,7 @@ void CQuakeHost::_Host_Frame (float time)
 // check for commands typed to the host
 	Host_GetConsoleCommands ();
 	
-	if (sv.active)
+	if (sv->active)
 		Host_ServerFrame ();
 
 //-------------------
@@ -697,7 +700,7 @@ void CQuakeHost::_Host_Frame (float time)
 
 // if running the server remotely, send intentions now after
 // the incoming messages have been read
-	if (!sv.active)
+	if (!sv->active)
 		CL_SendCmd ();
 
 	host_time += host_frametime;
@@ -876,8 +879,9 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	g_MemCache = new CMemCache;
 	g_MemCache->Memory_Init (host_parms.membase, host_parms.memsize);
 	g_CRCManager = new CCRCManager;
-	Cbuf_Init ();
-	Cmd_Init ();	
+	sv = new CQuakeServer;
+	g_pCmdBuf = new CCommandBuffer;
+	g_pCmds = new CCommand;	
 	V_Init ();
 	Chase_Init ();
 	//Host_InitVCR (parms);
@@ -890,7 +894,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	PR_Init ();
 	Mod_Init ();
 	NET_Init ();
-	sv.SV_Init();
+	sv->SV_Init();
 
 	Con_Printf("Exe: %s %s\n", __TIME__, __DATE__);
 	Con_Printf ("%4.1f megabyte heap\n",parms.memsize/ (1024*1024.0));
@@ -961,7 +965,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 #endif
 	}
 
-	Cbuf_InsertText ("exec quake.rc\n");
+	g_pCmdBuf->Cbuf_InsertText ("exec quake.rc\n");
 
 	g_MemCache->Hunk_AllocName<char>(0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = g_MemCache->Hunk_LowMark();
