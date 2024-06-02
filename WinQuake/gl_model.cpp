@@ -137,13 +137,15 @@ Mod_ClearAll
 */
 void Mod_ClearAll (void)
 {
-	int		i;
-	model_t	*mod;
-	
+	int			i = 0;
+	model_t		*mod = nullptr;
+
 	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
 		if (mod->type != mod_alias)
 		{
 			mod->needload = true;
+
+			if (cls.state != ca_dedicated)
 				g_GLRenderer->GL_FreeTextureForModel(mod);
 		}
 }
