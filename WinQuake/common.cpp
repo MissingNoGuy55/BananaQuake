@@ -1801,7 +1801,7 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 	int                     i = 0;
 	searchpath_t			*search = nullptr;
 	pack_t                  *pak = nullptr;
-	char                    pakfile[MAX_OSPATH] = {};
+	char                    pakfile[MAX_PATH] = {};
 	uintptr_t				path_id = 0;
 
 	Q_strcpy (com_gamedir, dir);
@@ -1911,7 +1911,14 @@ void CCommon::COM_InitFilesystem (void)
 	if (i && i < com_argc-1)
 	{
 		com_modified = true;
-		COM_AddGameDirectory (va("%s/%s", basedir, com_argv[i+1]));
+
+		// Missi: if it starts with a slash (on Linux/Mac) or a drive letter (Windows) then it's an absolute path (6/2/2024)
+		const bool absolute = ((com_argv[i+1][0] == '/')) || ((com_argv[i + 1][0] > 64) && (com_argv[i + 1][0] < 91) && (com_argv[i + 1][1] == ':'));
+
+		if (!absolute)
+			COM_AddGameDirectory (va("%s/%s", basedir, com_argv[i+1]));
+		else
+			COM_AddGameDirectory (va("%s", com_argv[i+1]));
 	}
 
 //
