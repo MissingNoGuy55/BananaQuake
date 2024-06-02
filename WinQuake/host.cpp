@@ -214,7 +214,7 @@ Writes key bindings and archived cvars to config.cfg
 */
 void CQuakeHost::Host_WriteConfiguration (void)
 {
-	FILE	*f;
+	FILE	*f = nullptr;
 
 // dedicated servers initialize the host but don't parse and set the
 // config.cfg cvars
@@ -245,8 +245,8 @@ FIXME: make this just a stuffed echo?
 */
 void CQuakeServer::SV_ClientPrintf (const char *fmt, ...)
 {
-	va_list		argptr;
-	char		string[1024];
+	va_list		argptr = {};
+	char		string[1024] = {};
 	
 	va_start (argptr,fmt);
 	vsprintf (string, fmt,argptr);
@@ -546,7 +546,7 @@ Add them exactly as if they had been typed at the console
 */
 void CQuakeHost::Host_GetConsoleCommands (void)
 {
-	char	*cmd;
+	char	*cmd = nullptr;
 
 	while (1)
 	{
@@ -647,10 +647,10 @@ Runs all active servers
 */
 void CQuakeHost::_Host_Frame (float time)
 {
-	static double		time1 = 0;
-	static double		time2 = 0;
-	static double		time3 = 0;
-	int			pass1, pass2, pass3;
+	static double		time1 = 0.0;
+	static double		time2 = 0.0;
+	static double		time3 = 0.0;
+	int			pass1 = 0, pass2 = 0, pass3 = 0;
 
 	if (setjmp (host_abortserver) )
 		return;			// something bad happened, or the server disconnected
@@ -750,10 +750,10 @@ void CQuakeHost::_Host_Frame (float time)
 
 void CQuakeHost::Host_Frame (float time)
 {
-	double	time1, time2;
-	static double	timetotal;
-	static int		timecount;
-	int		i, c, m;
+	double	time1 = 0.0, time2 = 0.0;
+	static double	timetotal = 0.0;
+	static int		timecount = 0;
+	int		i = 0, c = 0, m = 0;
 
 	if (!serverprofile.value)
 	{
@@ -937,15 +937,8 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		g_SoundSystem->S_Init ();
 #else
 
-//#ifdef _DEBUG
-
-		
-
-//#endif
 
 #ifdef	GLQUAKE
-	// FIXME: doesn't use the new one-window approach yet
-		//S_Init ();
 		SDL_setenv("SDL_AudioDriver", "directsound", 1);
 		g_SoundSystem = new CSoundSystemWin;
 		g_SoundSystem->S_Init();
