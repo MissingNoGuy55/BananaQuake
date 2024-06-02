@@ -53,10 +53,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <cstdlib>
 #include <stdlib.h>
 #include <setjmp.h>
+#include <string>
+#include <vector>
 // #include <dsound.h>
 #if (_WIN32) || (WIN64)
 #include <windows.h>
 #endif
+
+using cxxstring = std::string;
 
 #ifndef QUAKE_TOOLS
 #include <SDL.h>
@@ -66,7 +70,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <SDL_opengl.h>
 #endif
 
-#include <vector>
 
 #ifndef APIENTRY
 #define	APIENTRY
