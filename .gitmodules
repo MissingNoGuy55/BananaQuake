@@ -2,6 +2,3 @@
 	path = WinQuake/sdl2
 	url = https://github.com/libsdl-org/SDL
 	branch = release-2.30.x
-[submodule "WinQuake/mesa"]
-	path = WinQuake/mesa
-	url = https://github.com/Mesa3D/mesa
