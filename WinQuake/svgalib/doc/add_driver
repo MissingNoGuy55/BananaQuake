@@ -1,6 +1,0 @@
-Makefile.cfg DRIVER, DRIVER_TEST
-src/Makefile
-src/vga.c driverspecs, config names, test
-src/vga.h
-src/driver.h
-
