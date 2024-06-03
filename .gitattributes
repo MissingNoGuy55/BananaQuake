@@ -46,4 +46,5 @@
 *.vcproj text
 *.vcxproj text
 
-*.sh text
+*.sh eol=lf
+*.bat eol=crlf
