@@ -1,2 +1,2 @@
-cmake -S . -B build -A x64
+cmake -S . -B build
 pause
