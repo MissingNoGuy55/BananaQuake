@@ -485,7 +485,7 @@ void Q_FixSlashes(char* str, size_t size, const char delimiter)
 	}
 }
 
-void Q_FixQuotes(char* dest, const char* src, size_t size, const char delimiter)
+void Q_FixQuotes(char* dest, const char* src, size_t size)
 {
 	if (!size || !src)
 		return;
