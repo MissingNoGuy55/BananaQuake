@@ -28,6 +28,12 @@ void (*vid_menukeyfn)(int key);
 
 int m_state;
 
+extern cvar_t	vid_config_x;
+extern cvar_t	vid_config_y;
+extern int		window_center_x, window_center_y, window_x, window_y, window_width, window_height;
+extern int		DIBWidth, DIBHeight;
+extern RECT		WindowRect;
+
 enum m_states { m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_net, m_options, m_video, m_keys, m_help, m_quit, m_serialconfig, m_modemconfig, m_lanconfig, m_gameoptions, m_search, m_slist };
 
 void M_Menu_Main_f (void);
@@ -87,13 +93,15 @@ void M_GameOptions_Key (int key);
 void M_Search_Key (int key);
 void M_ServerList_Key (int key);
 
-bool	m_entersound;		// play after drawing a frame, so caching
+bool		m_entersound;		// play after drawing a frame, so caching
 								// won't disrupt the sound
-bool	m_recursiveDraw;
+bool		m_recursiveDraw;
 
 int			m_return_state;
-bool	m_return_onerror;
+bool		m_return_onerror;
 char		m_return_reason [32];
+
+static int	vid_mode_selection = 0;
 
 #define StartingGame	(m_multiplayer_cursor == 1)
 #define JoiningGame		(m_multiplayer_cursor == 0)
@@ -1169,6 +1177,34 @@ void M_AdjustSliders (int dir)
 	case 11:	// lookstrafe
 		Cvar_SetValue ("lookstrafe", !lookstrafe.value);
 		break;
+	
+	case 12:	// lookstrafe
+		if (!&GetVideoModes()[vid_mode_selection + 1])
+			break;
+
+		Cvar_SetValue ("vid_config_x", GetVideoModes()[vid_mode_selection+1].width);
+		Cvar_SetValue ("vid_config_y", GetVideoModes()[vid_mode_selection+1].height);
+
+#ifdef _WIN32
+
+		window_width = vid_config_x.value;
+		window_height = vid_config_y.value;
+		DIBWidth = window_width;
+		DIBHeight = window_height;
+
+		WindowRect.right = window_width;
+		WindowRect.bottom = window_height;
+
+		vid.width = window_width;
+		vid.height = window_height;
+
+		SetWindowPos(mainwindow, NULL, 0, 0, window_width, window_height, SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_NOCOPYBITS);
+		SetWindowPos(dibwindow, NULL, 0, 0, window_width, window_height, SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_NOCOPYBITS);
+		AdjustWindowRectEx(&WindowRect, 0, FALSE, 0);
+
+		UpdateWindow(dibwindow);
+#endif
+		break;
 
 #ifdef _WIN32
 	case 13:	// _windowed_mouse
@@ -1255,8 +1291,13 @@ void M_Options_Draw (void)
 	M_DrawCheckbox (220, 120, lookstrafe.value);
 
 	if (vid_menudrawfn)
-		M_Print (16, 128, "         Video Options");
+	{
+		char vidMode[256] = {};
+		snprintf(vidMode, sizeof(vidMode), "%dx%d", GetVideoModes()[vid_mode_selection].width, GetVideoModes()[vid_mode_selection].height);
 
+		M_Print(16, 128, "         Video Options");
+		M_Print(220, 128, vidMode);
+	}
 #ifdef _WIN32
 #ifndef QUAKE_TOOLS
 	if (modestate == MS_WINDOWED)
@@ -1297,7 +1338,7 @@ void M_Options_Key (int k)
 			g_pCmdBuf->Cbuf_AddText ("exec default.cfg\n");
 			break;
 		case 12:
-			M_Menu_Video_f ();
+			//M_Menu_Video_f ();
 			break;
 		default:
 			M_AdjustSliders (1);
@@ -1321,10 +1362,30 @@ void M_Options_Key (int k)
 
 	case K_LEFTARROW:
 		M_AdjustSliders (-1);
+		switch (options_cursor)
+		{
+			case 12:
+				if (vid_mode_selection >= 0)
+					vid_mode_selection--;
+				break;
+			
+			default:
+				break;
+		}
 		break;
 
 	case K_RIGHTARROW:
 		M_AdjustSliders (1);
+		switch (options_cursor)
+		{
+			case 12:
+				if (vid_mode_selection >= 0)
+					vid_mode_selection++;
+				break;
+
+			default:
+				break;
+		}
 		break;
 	}
 
