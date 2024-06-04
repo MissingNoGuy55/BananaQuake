@@ -1422,7 +1422,7 @@ void CGLRenderer::GL_BuildLightmaps (void)
 
 	r_framecount = 1;		// no dlightcache
 
-	//Spike -- wipe out all the lightmap data (johnfitz -- the gltexture objects were already freed by Mod_ClearAll)
+	//Spike -- wipe out all the lightmap data (johnfitz -- the gltexture objects were already freed by Mod_ClearAll) -- Missi: copied from QuakeSpasm (6/3/2022)
 	if (lightmap_textures)
 	{
 		memset(allocated, 0, sizeof(allocated));
@@ -1431,7 +1431,6 @@ void CGLRenderer::GL_BuildLightmaps (void)
 		memset(lightmap_modified, 0, sizeof(lightmap_modified));
 		memset(lightmap_polys, 0, sizeof(lightmap_polys));
 		memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
-		memset(lightmap_textures, 0, sizeof(*lightmap_textures) * lightmap_count);
 		lightmap_textures = nullptr;
 	}
 
