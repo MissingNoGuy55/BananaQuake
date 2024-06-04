@@ -215,10 +215,10 @@ static void CD_f (void)
 	int		ret;
 	int		n;
 
-	if (Cmd_Argc() < 2)
+	if (g_pCmds->Cmd_Argc() < 2)
 		return;
 
-	command = Cmd_Argv (1);
+	command = g_pCmds->Cmd_Argv (1);
 
 	if (Q_strcasecmp(command, "on") == 0)
 	{
@@ -247,7 +247,7 @@ static void CD_f (void)
 
 	if (Q_strcasecmp(command, "remap") == 0)
 	{
-		ret = Cmd_Argc() - 2;
+		ret = g_pCmds->Cmd_Argc() - 2;
 		if (ret <= 0)
 		{
 			for (n = 1; n < 100; n++)
@@ -256,7 +256,7 @@ static void CD_f (void)
 			return;
 		}
 		for (n = 1; n <= ret; n++)
-			remap[n] = Q_atoi(Cmd_Argv (n+1));
+			remap[n] = Q_atoi(g_pCmds->Cmd_Argv (n+1));
 		return;
 	}
 
@@ -278,13 +278,13 @@ static void CD_f (void)
 
 	if (Q_strcasecmp(command, "play") == 0)
 	{
-		CDAudio_Play((byte)Q_atoi(Cmd_Argv (2)), false);
+		CDAudio_Play((byte)Q_atoi(g_pCmds->Cmd_Argv (2)), false);
 		return;
 	}
 
 	if (Q_strcasecmp(command, "loop") == 0)
 	{
-		CDAudio_Play((byte)Q_atoi(Cmd_Argv (2)), true);
+		CDAudio_Play((byte)Q_atoi(g_pCmds->Cmd_Argv (2)), true);
 		return;
 	}
 
@@ -400,7 +400,7 @@ int CDAudio_Init(void)
 		cdValid = false;
 	}
 
-	Cmd_AddCommand ("cd", CD_f);
+	g_pCmds->Cmd_AddCommand ("cd", CD_f);
 
 	Con_Printf("CD Audio Initialized\n");
 
