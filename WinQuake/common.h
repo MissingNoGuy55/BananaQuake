@@ -177,7 +177,7 @@ int q_vsnprintf(char* str, size_t size, const char* format, va_list args);
 int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
 
 void Q_FixSlashes(char* str, size_t size, const char delimiter = '\\');
-void Q_FixQuotes(const char* src, char* dest, size_t size, const char delimiter = '\"');
+void Q_FixQuotes(char* dest, const char* src, size_t size);
 //============================================================================
 
 //
