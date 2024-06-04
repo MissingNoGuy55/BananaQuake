@@ -37,6 +37,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <X11/extensions/Xxf86dga.h>    // Missi (4/30/2023)
 #include <X11/extensions/xf86vmode.h>
 
+extern XF86VidModeModeInfo** GetVideoModes();
+
 #define WARP_WIDTH              320
 #define WARP_HEIGHT             200
 
@@ -57,7 +59,7 @@ unsigned char	d_15to8table[65536];
 
 cvar_t	vid_mode = {"vid_mode","0",false};
  
-static bool        mouse_avail;
+static bool        mouse_avail = false;
 static bool        mouse_active;
 static int   mx, my;
 static int	old_mouse_x, old_mouse_y;
@@ -106,6 +108,11 @@ static float vid_gamma = 1.0;
 bool is8bit = false;
 bool isPermedia = false;
 bool gl_mtexable = false;
+
+XF86VidModeModeInfo** GetVideoModes()
+{
+	return vidmodes;
+}
 
 /*-----------------------------------------------------------------------*/
 void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height)
@@ -300,14 +307,14 @@ static void install_grabs(void)
 					 vid.width / 2, vid.height / 2);
 	}
 
-	XGrabKeyboard(dpy, win,
+    /*XGrabKeyboard(dpy, win,
 				  False,
 				  GrabModeAsync, GrabModeAsync,
-				  CurrentTime);
+                  CurrentTime);*/
 
 	mouse_active = true;
 
-//	XSync(dpy, True);
+    //XSync(dpy, True);
 }
 
 static void uninstall_grabs(void)
@@ -620,13 +627,16 @@ void GL_Init (void)
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 //	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+    // poll max size from hardware
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_hardware_maxsize);
 }
 
 /*
@@ -806,7 +816,7 @@ void VID_Init(unsigned char *palette)
 	if ((i = g_Common->COM_CheckParm("-width")) != 0)
 		width = atoi(g_Common->com_argv[i+1]);
 	else if (g_Common->COM_CheckParm("-w"))
-		height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-h") + 1]);
+        width = atoi(g_Common->com_argv[g_Common->COM_CheckParm("-w") + 1]);
 
 	if ((i = g_Common->COM_CheckParm("-height")) != 0)
 		height = atoi(g_Common->com_argv[i+1]);
@@ -818,13 +828,23 @@ void VID_Init(unsigned char *palette)
 	else
 		vid.conwidth = 640;
 
+    if (g_Common->COM_CheckParm("-w"))
+    {
+        vid.width = width;
+        vid.conwidth = width;
+    }
+    if (g_Common->COM_CheckParm("-h"))
+    {
+        vid.height = height;
+        vid.conheight = height;
+    }
 	vid.conwidth &= 0xfff8; // make it a multiple of eight
 
 	if (vid.conwidth < 320)
 		vid.conwidth = 320;
 
 	// pick a conheight that matches with correct aspect
-	vid.conheight = vid.conwidth*3 / 4;
+    vid.conheight = vid.conwidth*3 / 4;
 
 	if ((i = g_Common->COM_CheckParm("-conheight")) != 0)
 		vid.conheight = Q_atoi(g_Common->com_argv[i+1]);
@@ -937,7 +957,7 @@ void VID_Init(unsigned char *palette)
 	vid.width = vid.conwidth;
 	vid.height = vid.conheight;
 
-	vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+    vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
 	vid.numpages = 2;
 
 	InitSig(); // trap evil signals
@@ -947,10 +967,10 @@ void VID_Init(unsigned char *palette)
 	sprintf (gldir, "%s/glquake", g_Common->com_gamedir);
 	Sys_mkdir (gldir);
 
-	VID_SetPalette(palette);
+    VID_SetPalette(palette);
 
 	// Check for 3DFX Extensions and initialize them.
-	// VID_Init8bitPalette();
+    //VID_Init8bitPalette();
 
 	Con_SafePrintf ("Video mode %dx%d initialized.\n", width, height);
 

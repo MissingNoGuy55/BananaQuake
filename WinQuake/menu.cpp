@@ -32,7 +32,10 @@ extern cvar_t	vid_config_x;
 extern cvar_t	vid_config_y;
 extern int		window_center_x, window_center_y, window_x, window_y, window_width, window_height;
 extern int		DIBWidth, DIBHeight;
+
+#ifdef _WIN32
 extern RECT		WindowRect;
+#endif
 
 enum m_states { m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_net, m_options, m_video, m_keys, m_help, m_quit, m_serialconfig, m_modemconfig, m_lanconfig, m_gameoptions, m_search, m_slist };
 
@@ -1178,13 +1181,21 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("lookstrafe", !lookstrafe.value);
 		break;
 	
+#ifdef _WIN32
 	case 12:	// lookstrafe
 		if (!&GetVideoModes()[vid_mode_selection + 1])
 			break;
-
+		
 		Cvar_SetValue ("vid_config_x", GetVideoModes()[vid_mode_selection+1].width);
 		Cvar_SetValue ("vid_config_y", GetVideoModes()[vid_mode_selection+1].height);
-
+#elif __linux__
+	case 12:	// lookstrafe
+		if (!GetVideoModes()[vid_mode_selection + 1])
+			break;
+		
+		Cvar_SetValue ("vid_config_x", GetVideoModes()[vid_mode_selection+1]->htotal);
+		Cvar_SetValue ("vid_config_y", GetVideoModes()[vid_mode_selection+1]->vtotal);		
+#endif
 #ifdef _WIN32
 
 		window_width = vid_config_x.value;
@@ -1293,8 +1304,11 @@ void M_Options_Draw (void)
 	if (vid_menudrawfn)
 	{
 		char vidMode[256] = {};
+#ifdef _WIN32
 		snprintf(vidMode, sizeof(vidMode), "%dx%d", GetVideoModes()[vid_mode_selection].width, GetVideoModes()[vid_mode_selection].height);
-
+#elif __linux__
+		snprintf(vidMode, sizeof(vidMode), "%dx%d", GetVideoModes()[vid_mode_selection]->vtotal, GetVideoModes()[vid_mode_selection]->htotal);		
+#endif
 		M_Print(16, 128, "         Video Options");
 		M_Print(220, 128, vidMode);
 	}

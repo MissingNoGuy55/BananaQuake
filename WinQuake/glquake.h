@@ -38,6 +38,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef _WIN32
 #include <windows.h>
 #include "winquake.h"
+#elif __linux__
+#include <X11/Xlib.h>
+#include <X11/extensions/Xxf86dga.h>    // Missi (4/30/2023)
+#include <X11/extensions/xf86vmode.h>
 #endif
 
 #ifdef _WIN32
@@ -547,6 +551,10 @@ extern	const char*		gl_renderer;
 extern	const char*		gl_version;
 extern	const char*		gl_extensions;
 
+#ifdef __linux__
+typedef enum {MS_WINDOWED, MS_FULLSCREEN, MS_FULLDIB, MS_UNINIT} modestate_t;
+#endif
+
 typedef struct {
 	modestate_t	type;
 	int			width;
@@ -560,7 +568,12 @@ typedef struct {
 } vmode_t;
 
 void R_TranslatePlayerSkin (int playernum);
+
+#ifdef _WIN32
 extern vmode_t* GetVideoModes();
+#elif __linux__
+extern XF86VidModeModeInfo** GetVideoModes();
+#endif
 
 // Multitexture
 #define    TEXTURE0_SGIS				0x835E
