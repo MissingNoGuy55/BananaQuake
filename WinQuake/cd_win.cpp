@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <windows.h>
 #include "quakedef.h"
 
-extern	HWND	mainwindow;
+extern	HWND	mainwindow, dibwindow;
 extern	cvar_t	bgmvolume;
 
 static bool		cdValid = false;
