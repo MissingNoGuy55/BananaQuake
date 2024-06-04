@@ -39,17 +39,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define NO_MODE					(MODE_WINDOWED - 1)
 #define MODE_FULLSCREEN_DEFAULT	(MODE_WINDOWED + 1)
 
-typedef struct {
-	modestate_t	type;
-	int			width;
-	int			height;
-	int			modenum;
-	int			dib;
-	int			fullscreen;
-	int			bpp;
-	int			halfscreen;
-	char		modedesc[17];
-} vmode_t;
+//typedef struct {
+//	modestate_t	type;
+//	int			width;
+//	int			height;
+//	int			modenum;
+//	int			dib;
+//	int			fullscreen;
+//	int			bpp;
+//	int			halfscreen;
+//	char		modedesc[17];
+//} vmode_t;
 
 typedef struct {
 	int			width;
@@ -73,32 +73,32 @@ const char*		gl_extensions;
 bool		DDActive;
 bool		scr_skipupdate;
 
-static vmode_t	modelist[MAX_MODE_LIST];
-static int		nummodes;
-static vmode_t	*pcurrentmode;
-static vmode_t	badmode;
+static vmode_t			modelist[MAX_MODE_LIST];
+static int				nummodes;
+static vmode_t			*pcurrentmode;
+static vmode_t			badmode;
 
-static DEVMODE	gdevmode;
-static bool	vid_initialized = false;
-static bool	windowed, leavecurrentmode;
-static bool vid_canalttab = false;
-static bool vid_wassuspended = false;
-static int		windowed_mouse;
-extern bool	mouseactive;  // from in_win.c
-static HICON	hIcon;
+static DEVMODE			gdevmode;
+static bool				vid_initialized = false;
+static bool				windowed, leavecurrentmode;
+static bool				vid_canalttab = false;
+static bool				vid_wassuspended = false;
+static int				windowed_mouse;
+extern bool				mouseactive;  // from in_win.c
+static HICON			hIcon;
 
-static int			DIBWidth, DIBHeight;
-static RECT			WindowRect;
-static DWORD		WindowStyle, ExWindowStyle;
+int						DIBWidth, DIBHeight;
+RECT					WindowRect;
+static DWORD			WindowStyle, ExWindowStyle;
 
-HWND	mainwindow, dibwindow;
+HWND					mainwindow, dibwindow;
 
-static int	vid_modenum = NO_MODE;
-static int	vid_realmode;
-static int	vid_default = MODE_WINDOWED;
-static int	windowed_default;
+static int				vid_modenum = NO_MODE;
+static int				vid_realmode;
+static int				vid_default = MODE_WINDOWED;
+static int				windowed_default;
 static unsigned char	vid_curpal[256*3];
-static bool fullsbardraw = false;
+static bool				fullsbardraw = false;
 
 static float vid_gamma = 1.0;
 
@@ -159,6 +159,11 @@ int			window_center_x, window_center_y, window_x, window_y, window_width, window
 RECT		window_rect;
 
 // direct draw software compatability stuff
+
+vmode_t* GetVideoModes()
+{
+	return modelist;
+}
 
 void VID_HandlePause (bool pause)
 {
@@ -459,6 +464,15 @@ int VID_SetMode (int modenum, unsigned char *palette)
 
 	Sleep (100);
 
+	const bool bBorderless = g_Common->COM_CheckParm("-noborder");
+
+	if (bBorderless)
+	{
+		LONG lStyle = GetWindowLong(mainwindow, GWL_STYLE);
+		lStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+
+		SetWindowLong(mainwindow, GWL_STYLE, lStyle);
+	}
 	SetWindowPos (mainwindow, HWND_TOP, 0, 0, 0, 0,
 				  SWP_DRAWFRAME | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW |
 				  SWP_NOCOPYBITS);
