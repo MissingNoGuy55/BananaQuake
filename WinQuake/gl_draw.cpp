@@ -460,7 +460,7 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 	else
 	{
 
-		offset = (uintptr_t)p - (uintptr_t)wad_base + sizeof(int) * 2; //johnfitz -- Missi: copied from QuakeSpasm (6/3/2022)
+		offset = (uintptr_t)p - (uintptr_t)wad_base + sizeof(int) * 2; //johnfitz -- Missi: copied from QuakeSpasm (6/3/2024)
 
 		gl.tex = GL_LoadTexture(NULL, name, p->width, p->height, SRC_INDEXED, pbuf->data, offset, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //Missi -- copied from QuakeSpasm (5/28/2022) -- TexMgr
 		gl.sl = 0;
