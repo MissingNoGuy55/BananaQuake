@@ -1681,6 +1681,18 @@ void	VID_Init (unsigned char *palette)
 			Sys_Error ("Can't run in non-RGB mode");
 		}
 
+		if (g_Common->COM_CheckParm("-width"))
+			width = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-width") + 1]);
+		else if (g_Common->COM_CheckParm("-w"))
+			width = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-w") + 1]);
+		else
+			width = 640;
+
+		if (g_Common->COM_CheckParm("-height"))
+			height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-height") + 1]);
+		else if (g_Common->COM_CheckParm("-h"))
+			height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-h") + 1]);
+
 		ReleaseDC (NULL, hdc);
 
 		windowed = true;
