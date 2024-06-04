@@ -144,9 +144,9 @@ void InsertLinkAfter (link_t *l, link_t *after)
 ============================================================================
 */
 
-#ifdef _WIN64
+#if (_WIN64) || (__x86_64__)
 #define VOID_P long long
-#elif _WIN32
+#else
 #define VOID_P long
 #endif
 
@@ -1825,7 +1825,7 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 	int                     i = 0;
 	searchpath_t			*search = nullptr;
 	pack_t                  *pak = nullptr;
-	char                    pakfile[MAX_PATH] = {};
+	char                    pakfile[MAX_QPATH] = {};
 	uintptr_t				path_id = 0;
 
 	Q_strcpy (com_gamedir, dir);
@@ -1944,12 +1944,16 @@ void CCommon::COM_InitFilesystem (void)
 		else
 		{
 			const char* absPath = com_argv[i + 1];
-			char path[MAX_PATH] = {};
+			char path[MAX_QPATH] = {};
 
+#ifndef __linux__
 			Q_FixQuotes(path, absPath, sizeof(path));
 			Q_FixSlashes(path, sizeof(path));
 
-			COM_AddGameDirectory(va("%s", path));
+            COM_AddGameDirectory(va("%s", path));
+#else
+            COM_AddGameDirectory(va("%s", absPath));
+#endif
 		}
 	}
 
