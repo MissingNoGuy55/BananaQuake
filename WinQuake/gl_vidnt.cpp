@@ -1856,6 +1856,11 @@ void	VID_Init (unsigned char *palette)
 		vid.conwidth = Q_atoi(g_Common->com_argv[i+1]);
 	else
 		vid.conwidth = 640;
+	
+	if (g_Common->COM_CheckParm("-w"))
+        vid.conwidth = width;
+    if (g_Common->COM_CheckParm("-h"))
+        vid.conheight = height;
 
 	vid.conwidth &= 0xfff8; // make it a multiple of eight
 
