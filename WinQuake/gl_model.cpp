@@ -673,7 +673,7 @@ void CalcSurfaceExtents (msurface_t *s)
 		s->texturemins[i] = bmins[i] * 16;
 		s->extents[i] = (bmaxs[i] - bmins[i]) * 16;
 
-		if (!(tex->flags & TEX_SPECIAL) && s->extents[i] > 2000) //johnfitz -- was 512 in glquake, 256 in winquake
+		if (!(tex->flags & TEX_SPECIAL) && s->extents[i] > 2000) //johnfitz -- was 512 in glquake, 256 in winquake -- Missi: copied from QuakeSpasm (6/3/2022)
 			Sys_Error("Bad surface extents");
 	}
 }
@@ -1184,8 +1184,8 @@ Mod_LoadAliasFrame
 */
 void * Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame)
 {
-	trivertx_t		*pframe, *pinframe;
-	int				i, j;
+	trivertx_t		*pframe = nullptr, *pinframe = nullptr;
+	int				i = 0;
 	daliasframe_t	*pdaliasframe;
 	
 	pdaliasframe = (daliasframe_t *)pin;
