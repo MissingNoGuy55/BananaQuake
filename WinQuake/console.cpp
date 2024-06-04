@@ -153,7 +153,7 @@ If the line width has changed, reformat the buffer.
 void Con_CheckResize (void)
 {
 	int		i, j, width, oldwidth, oldtotallines, numlines, numchars;
-	char	tbuf[CON_TEXTSIZE];
+	static char	tbuf[CON_TEXTSIZE] = {};
 
 	width = (vid.width >> 3) - 2;
 
@@ -221,7 +221,7 @@ void Con_Init (void)
 	{
 		if (strlen (g_Common->com_gamedir) < (MAXGAMEDIRLEN - strlen (t2)))
 		{
-			sprintf (temp, "%s%s", g_Common->com_gamedir, t2);
+			snprintf (temp, sizeof(temp), "%s%s", g_Common->com_gamedir, t2);
 #ifdef _WIN32
 			_unlink (temp);
 #else
@@ -297,7 +297,7 @@ void Con_Print (const char *txt)
 		mask = 0;
 
 
-	while ( (c = *txt) )
+	while ( (c = *txt) != NULL )
 	{
 	// count word length
 		for (l=0 ; l< con_linewidth ; l++)
@@ -626,13 +626,13 @@ void Con_DrawNotify (void)
 
 	if (key_dest == key_message)
 	{
-        static char text[] = "say:";
+        static char saytext[] = "say:";
 
 		clearnotify = 0;
 		scr_copytop = 1;
 	
 		x = 0;
-        ResolveRenderer()->Draw_String (8, v, text);
+        ResolveRenderer()->Draw_String (8, v, saytext);
 		while(chat_buffer[x])
 		{
 			ResolveRenderer()->Draw_Character ( (x+5)<<3, v, chat_buffer[x]);

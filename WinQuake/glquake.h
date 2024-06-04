@@ -411,10 +411,9 @@ private:
 	int			skytexturenum;
 
 	glpoly_t*	lightmap_polys[MAX_LIGHTMAPS];
-	bool			lightmap_modified[MAX_LIGHTMAPS];
-	glRect_t		lightmap_rectchange[MAX_LIGHTMAPS];
+	bool		lightmap_modified[MAX_LIGHTMAPS];
+	glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
 	int			lightmap_count;
-
 	int			allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];	// Missi: changed from a 2D array (12/6/2022)
 
 	// the lightmap texture data needs to be kept in
@@ -425,7 +424,7 @@ private:
 	msurface_t* skychain;
 	msurface_t* waterchain;
 
-	int		lightmap_bytes;		// 1, 2, or 4
+	int			lightmap_bytes;		// 1, 2, or 4
 
 	CGLTexture* lightmap_textures;
 
@@ -444,7 +443,7 @@ private:
 	CQuakePic* draw_disc;
 	CQuakePic* draw_backtile;
 
-	int	numgltextures;
+	int		numgltextures;
 
 	int		gl_filter_min;
 	int		gl_filter_max;
@@ -494,15 +493,15 @@ extern	vec3_t	r_origin;
 extern	refdef_t	r_refdef;
 extern	mleaf_t		*r_viewleaf, *r_oldviewleaf;
 extern	texture_t	*r_notexture_mip;
-extern	int		d_lightstylevalue[256];	// 8.8 fraction of base light value
+extern	int			d_lightstylevalue[256];	// 8.8 fraction of base light value
 
-extern	bool	envmap;
+extern	bool		envmap;
 extern	CGLTexture* currenttexture;
 extern	CGLTexture* cnttextures[2];
 extern	CGLTexture* particletexture;
 extern	CGLTexture* playertextures[MAX_SCOREBOARD];
 
-extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
+extern	int		skytexturenum;		// index in cl.loadmodel, not gl texture object
 
 extern	cvar_t	r_norefresh;
 extern	cvar_t	r_drawentities;

@@ -85,7 +85,7 @@ public:
 
 	//int			minimum_memory;
 
-	jmp_buf 	host_abortserver;
+	bool 	host_died;
 
 	cvar_t	host_framerate = { "host_framerate","0" };	// set for slow motion
 	cvar_t	host_speeds = { "host_speeds","0" };			// set for running times

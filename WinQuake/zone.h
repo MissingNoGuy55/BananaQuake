@@ -413,7 +413,7 @@ template<typename T>
 T* CMemZone::Z_TagMalloc(int size, int tag)
 {
 	int		extra = 0;
-	CMemBlock<T>* start, * rover, * m_new, * base;
+	CMemBlock<T>* start, * rover_local, * m_new, * base;
 
 	if (!tag)
 		Sys_Error("Z_TagMalloc: tried to use a 0 tag");
@@ -423,23 +423,23 @@ T* CMemZone::Z_TagMalloc(int size, int tag)
 	// of sufficient size
 	//
 	size += sizeof(CMemBlock<T>);	// account for size of block header
-	size += 4;					// space for memory trash tester
+	size += sizeof(VOID_P);					// space for memory trash tester
 	size = (size + 7) & ~7;		// align to 8-byte boundary
 
-	base = rover = (CMemBlock<T>*)mainzone->rover; // = mainzone->rover;
+	base = rover_local = (CMemBlock<T>*)mainzone->rover; // = mainzone->rover_local;
 	start = base->prev;
 
 	do
 	{
-		if (rover == start)	// scaned all the way around the list
+		if (rover_local == start)	// scaned all the way around the list
 			return NULL;
-		if (rover->tag)
+		if (rover_local->tag)
 		{
-			base = rover->next;
-			rover = rover->next;
+			base = rover_local->next;
+			rover_local = rover_local->next;
 		}
 		else
-			rover = rover->next;
+			rover_local = rover_local->next;
 	} while (base->tag || base->size < size);
 
 	//
@@ -461,7 +461,7 @@ T* CMemZone::Z_TagMalloc(int size, int tag)
 
 	base->tag = tag;				// no longer a free block
 
-	rover = base->next;	// next allocation will start looking here
+	rover_local = base->next;	// next allocation will start looking here
 
 	base->id = ZONEID;
 

@@ -110,10 +110,10 @@ CGLRenderer::CGLRenderer()
 	skychain = nullptr;
 	waterchain = nullptr;
 
+	lightmap_textures = nullptr;
+
 	gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
 	gl_filter_max = GL_LINEAR;
-
-	lightmap_textures = nullptr;
 
 	free_gltextures = g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture) * MAX_GLTEXTURES, "gltextures");
 	active_gltextures = nullptr;
@@ -363,7 +363,7 @@ void CGLRenderer::Scrap_Upload (void)
 
 typedef struct cachepic_s
 {
-	char		name[MAX_QPATH];
+	char		name[MAX_QPATH] = {};
 	CQuakePic		pic;
 	byte		padding[32];	// for appended glpic
 } cachepic_t;
@@ -1859,7 +1859,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, 
 
 	if ((flags & TEXPREF_OVERWRITE) && (glt = GL_FindTexture(owner, identifier)))
 	{
-		if (glt->checksum == CRCBlock)
+		if (glt->checksum == (unsigned int)CRCBlock)
 			return glt;
 	}
 	else

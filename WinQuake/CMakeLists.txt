@@ -1029,6 +1029,7 @@ target_link_libraries(bananaquakeopengl SDL2::SDL2)
 
 if (MSVC)
 target_compile_options(bananaquakeopengl PRIVATE "/MP")
+target_compile_options(bananaquakeopengl PRIVATE "/W4")
 target_link_options(bananaquakeopengl PRIVATE "/SUBSYSTEM:WINDOWS")
 endif (MSVC)
 

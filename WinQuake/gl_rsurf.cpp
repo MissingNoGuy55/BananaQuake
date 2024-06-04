@@ -1431,6 +1431,14 @@ void CGLRenderer::GL_BuildLightmaps (void)
 		memset(lightmap_modified, 0, sizeof(lightmap_modified));
 		memset(lightmap_polys, 0, sizeof(lightmap_polys));
 		memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
+
+		memset(cl_dlights, 0, sizeof(cl_dlights));
+		memset(cl_lightstyle, 0, sizeof(lightmap_rectchange));
+
+		last_lightmap_allocated = 0;
+		active_lightmaps = 0;
+		lightmap_count = 0;
+		lightmap_bytes = 0;
 		lightmap_textures = nullptr;
 	}
 

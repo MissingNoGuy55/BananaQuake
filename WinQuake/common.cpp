@@ -144,12 +144,6 @@ void InsertLinkAfter (link_t *l, link_t *after)
 ============================================================================
 */
 
-#if (_WIN64) || (__x86_64__)
-#define VOID_P long long
-#else
-#define VOID_P long
-#endif
-
 void Q_memset (void *dest, int fill, size_t count)
 {
 	int             i;

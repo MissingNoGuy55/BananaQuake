@@ -77,7 +77,7 @@ void CQuakeHost::Host_EndGame (const char *message, ...)
 	else
 		CL_Disconnect ();
 
-	longjmp (host_abortserver, 1);
+	host_died = true;
 }
 
 /*
@@ -115,7 +115,7 @@ void CQuakeHost::Host_Error (const char *error, ...)
 
 	inerror = false;
 
-	longjmp (host_abortserver, 1);
+	host_died = true;
 }
 
 /*
@@ -454,10 +454,10 @@ CQuakeHost::CQuakeHost() :
 	msg_suppress_1(false),
 	current_skill(0),
 	isDedicated(false),
+	host_died(false),
     minimum_memory(0),
 	oldrealtime(0),
     host_hunklevel(0),
-	host_abortserver(),
 	sys_nostdout()
 {
     memset(&host_parms, 0, sizeof(host_parms));
@@ -474,10 +474,10 @@ CQuakeHost::CQuakeHost(quakeparms_t<byte*> parms) :
 	msg_suppress_1(false),
 	current_skill(0),
 	isDedicated(false),
+	host_died(false),
     minimum_memory(0),
 	oldrealtime(0),
     host_hunklevel(0),
-	host_abortserver(),
 	sys_nostdout()
 {
 #ifdef __linux__
@@ -652,7 +652,7 @@ void CQuakeHost::_Host_Frame (float time)
 	static double		time3 = 0.0;
 	int			pass1 = 0, pass2 = 0, pass3 = 0;
 
-	if (setjmp (host_abortserver) )
+	if (host_died)
 		return;			// something bad happened, or the server disconnected
 
 // keep the random time dependent

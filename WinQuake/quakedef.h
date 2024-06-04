@@ -39,6 +39,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //define	PARANOID			// speed sapping error checking
 
+#if (_WIN64) || (__x86_64__)
+#define VOID_P long long
+#else
+#define VOID_P long
+#endif
+
 #ifdef QUAKE2
 #define	GAMENAME	"id1"		// directory to look in by default
 #else
