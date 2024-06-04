@@ -238,7 +238,7 @@ void CL_ParseServerInfo (void)
 
 // parse signon message
 	str = MSG_ReadString ();
-	strncpy (cl.levelname, str, sizeof(cl.levelname)-1);
+	Q_strncpy (cl.levelname, str, sizeof(cl.levelname)-1);
 
 // seperate the printfs so the server message can have a color
 	Con_Printf("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
