@@ -144,11 +144,17 @@ void InsertLinkAfter (link_t *l, link_t *after)
 ============================================================================
 */
 
+#ifdef _WIN64
+#define VOID_P long long
+#elif _WIN32
+#define VOID_P long
+#endif
+
 void Q_memset (void *dest, int fill, size_t count)
 {
 	int             i;
 
-	if ( (((long)dest | count) & 3) == 0)
+	if ( (((VOID_P)dest | count) & 3) == 0)
 	{
 		count >>= 2;
 		fill = fill | (fill<<8) | (fill<<16) | (fill<<24);
@@ -164,7 +170,7 @@ void Q_memcpy (void *dest, const void *src, size_t count)
 {
 	int             i;
 
-	if ((((long)dest | (long)src | count) & 3) == 0 )
+	if ((((VOID_P)dest | (VOID_P)src | count) & 3) == 0 )
 	{
 		count>>=2;
 		for (i=0 ; i<count ; i++)
@@ -465,19 +471,32 @@ int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_lis
 	return ret;
 }
 
-void Q_FixSlashes(char* str, size_t size, char delimiter)
+void Q_FixSlashes(char* str, size_t size, const char delimiter)
 {
 	if (!size || !str)
 		return;
 
-	int pos = 0;
-
-	for (; str[pos]; pos++)
+	for (int pos = 0; str[pos]; pos++)
 	{
 		if (str[pos] == delimiter)
 		{
 			str[pos] = '/';
 		}
+	}
+}
+
+void Q_FixQuotes(const char* src, char* dest, size_t size, const char delimiter)
+{
+	if (!size || !src)
+		return;
+
+	for (int pos = 0; *src; src++, pos++)
+	{
+		if (*src == delimiter)
+			continue;
+
+		dest[pos] = *src;
+		pos++;
 	}
 }
 
@@ -1912,13 +1931,20 @@ void CCommon::COM_InitFilesystem (void)
 	{
 		com_modified = true;
 
-		// Missi: if it starts with a slash (on Linux/Mac) or a drive letter (Windows) then it's an absolute path (6/2/2024)
-		const bool absolute = ((com_argv[i+1][0] == '/')) || ((com_argv[i + 1][0] > 64) && (com_argv[i + 1][0] < 91) && (com_argv[i + 1][1] == ':'));
+		// Missi: if it starts with a forward slash (on Linux/Mac), a quotation mark, or a drive letter (Windows) then it's an absolute path (6/2/2024)
+		const bool absolute = ((com_argv[i+1][0] == '/')) || (com_argv[i+1][0] == '\"') || ((com_argv[i + 1][0] > 64) && (com_argv[i + 1][0] < 91) && (com_argv[i + 1][1] == ':'));
 
 		if (!absolute)
 			COM_AddGameDirectory (va("%s/%s", basedir, com_argv[i+1]));
 		else
-			COM_AddGameDirectory (va("%s", com_argv[i+1]));
+		{
+			const char* absPath = com_argv[i + 1];
+			char path[MAX_PATH] = {};
+
+			Q_FixQuotes(absPath, path, sizeof(path));
+
+			COM_AddGameDirectory(va("%s", absPath));
+		}
 	}
 
 //
@@ -1948,6 +1974,13 @@ void CCommon::COM_InitFilesystem (void)
 			com_searchpaths = search;
 		}
 	}
+
+#ifdef _DEBUG
+	for (int l = 0; l < com_argc; l++)
+	{
+		Sys_Printf("com_argv[%d]: %s\n", l, com_argv[l]);
+	}
+#endif
 
 	if (g_Common->COM_CheckParm ("-proghack"))
 		proghack = true;
