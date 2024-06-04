@@ -1947,6 +1947,7 @@ void CCommon::COM_InitFilesystem (void)
 			char path[MAX_PATH] = {};
 
 			Q_FixQuotes(path, absPath, sizeof(path));
+			Q_FixSlashes(path, sizeof(path));
 
 			COM_AddGameDirectory(va("%s", path));
 		}
