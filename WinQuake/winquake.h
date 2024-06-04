@@ -76,10 +76,10 @@ typedef enum {MS_WINDOWED, MS_FULLSCREEN, MS_FULLDIB, MS_UNINIT} modestate_t;
 
 extern modestate_t	modestate;
 
-extern HWND			mainwindow;
+extern HWND		mainwindow, dibwindow;
 extern bool		ActiveApp, Minimized;
 
-extern bool	WinNT;
+extern bool		WinNT;
 
 int VID_ForceUnlockedAndReturnState (void);
 void VID_ForceLockState (int lk);

@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _WIN32
 #include <windows.h>
+#include "winquake.h"
 #endif
 
 #ifdef _WIN32
@@ -546,7 +547,20 @@ extern	const char*		gl_renderer;
 extern	const char*		gl_version;
 extern	const char*		gl_extensions;
 
+typedef struct {
+	modestate_t	type;
+	int			width;
+	int			height;
+	int			modenum;
+	int			dib;
+	int			fullscreen;
+	int			bpp;
+	int			halfscreen;
+	char		modedesc[17];
+} vmode_t;
+
 void R_TranslatePlayerSkin (int playernum);
+extern vmode_t* GetVideoModes();
 
 // Multitexture
 #define    TEXTURE0_SGIS				0x835E

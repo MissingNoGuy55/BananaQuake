@@ -23,20 +23,20 @@ int			starttime;
 bool	ActiveApp, Minimized;
 bool	WinNT;
 
- double		pfreq;
- double		curtime = 0.0;
- double		lastcurtime = 0.0;
- int			lowshift;
- bool			isDedicated;
- bool		sc_return_on_enter = false;
- HANDLE				hinput, houtput;
+double		pfreq;
+double		curtime = 0.0;
+double		lastcurtime = 0.0;
+int			lowshift;
+bool			isDedicated;
+bool		sc_return_on_enter = false;
+HANDLE				hinput, houtput;
 
- char* tracking_tag = "Clams & Mooses";
+const char* tracking_tag = "Clams & Mooses";
 
- HANDLE	tevent;
- HANDLE	hFile;
- HANDLE	heventParent;
- HANDLE	heventChild;
+HANDLE	tevent;
+HANDLE	hFile;
+HANDLE	heventParent;
+HANDLE	heventChild;
 
 #endif
 

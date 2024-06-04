@@ -456,6 +456,8 @@ extern CSoundSystemLinux* g_SoundSystem;
 extern CSoundSystemMac* g_SoundSystem;
 #endif
 
+#ifndef QUAKE_TOOLS
 extern SDL_AudioDeviceID g_SoundDeviceID;
+#endif
 
 #endif

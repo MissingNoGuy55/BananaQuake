@@ -176,7 +176,8 @@ float Q_atof (const char *str);
 int q_vsnprintf(char* str, size_t size, const char* format, va_list args);
 int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
 
-void Q_FixSlashes(char* str, size_t size, char delimiter = '\\');
+void Q_FixSlashes(char* str, size_t size, const char delimiter = '\\');
+void Q_FixQuotes(const char* src, char* dest, size_t size, const char delimiter = '\"');
 //============================================================================
 
 //
@@ -349,7 +350,6 @@ Allways appends a 0 byte.
 ============
 */
 
-
 #include "zone.h"
 
 template<typename T>
@@ -465,5 +465,4 @@ T* COM_LoadStackFile(const char* path, void* buffer, int bufsize, uintptr_t* pat
 
 	return (T*)buf;
 }
-
 #endif

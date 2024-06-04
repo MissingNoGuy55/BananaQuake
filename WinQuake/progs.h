@@ -64,7 +64,7 @@ extern	float			*pr_globals;			// same as pr_global_struct
 
 extern int		pr_maxknownstrings;
 extern int		pr_numknownstrings;
-extern CQVector<const char*> pr_knownstrings;
+extern CQVector<const char*>	pr_knownstrings;
 
 extern	int				pr_edict_size;	// in bytes
 

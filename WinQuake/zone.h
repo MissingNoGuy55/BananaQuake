@@ -86,6 +86,7 @@ Zone block
 #ifndef ZONE_H
 #define ZONE_H
 
+#ifndef QUAKE_TOOLS
 #include "sys.h"
 
 #if defined (__linux__) || defined(__CYGWIN__)
@@ -1295,4 +1296,5 @@ inline void CMemBlock<T, I>::Purge(int numElements)
 	m_pMemory = (T*)realloc(m_pMemory, size * sizeof(T));
 }
 
+#endif
 #endif

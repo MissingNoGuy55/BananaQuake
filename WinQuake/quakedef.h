@@ -245,7 +245,11 @@ typedef uintptr_t src_offset_t;
 #include "bspfile.h"
 #include "vid.h"
 #include "sys.h"
+
+#ifndef QUAKE_TOOLS
 #include "zone.h"
+#endif
+
 #include "mathlib.h"
 #include "utils.h"
 
@@ -326,6 +330,7 @@ void Chase_Update (void);
 
 // Missi: this is gross, but it's better than doing #ifdef to everything that these rely on... (4/24/2023)
 
+#ifndef QUAKE_TOOLS
 #ifdef GLQUAKE
 template<typename T = CGLRenderer>
 #else
@@ -339,3 +344,4 @@ T* ResolveRenderer()
 	return g_SoftwareRenderer;
 #endif
 }
+#endif
