@@ -113,12 +113,12 @@ R_EntityParticles
 */
 
 #define NUMVERTEXNORMALS	162
-extern	float	r_avertexnormals[NUMVERTEXNORMALS][3];
+extern	double	r_avertexnormals[NUMVERTEXNORMALS][3];
 vec3_t	avelocities[NUMVERTEXNORMALS];
 float	beamlength = 16;
 vec3_t	avelocity = {23, 7, 3};
-float	partstep = 0.01;
-float	timescale = 0.01;
+float	partstep = 0.01f;
+float	timescale = 0.01f;
 
 void CCoreRenderer::R_EntityParticles (entity_t *ent)
 {
@@ -201,7 +201,7 @@ void CCoreRenderer::R_ReadPointFile_f (void)
 	particle_t	*p;
 	char	name[MAX_OSPATH];
 	
-	sprintf (name,"maps/%s.pts", sv->name);
+	snprintf (name, sizeof(name), "maps/%s.pts", sv->name);
 
 	g_Common->COM_FOpenFile (name, &f, NULL);
 	if (!f)
