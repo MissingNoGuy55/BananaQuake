@@ -14,15 +14,15 @@ else()
     # 1. Look for a SDL2 package, 2. look for the SDL2 component and 3. fail if none can be found
     find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
 
-	if (UNIX)
+        if (UNIX)
 
-		# X11
-		find_package(X11 REQUIRED CONFIG REQUIRED COMPONENTS X11)
-		find_package(Xext REQUIRED CONFIG REQUIRED COMPONENTS X11)
+                # X11
+                find_package(X11 REQUIRED CONFIG REQUIRED COMPONENTS X11)
+                find_package(Xext REQUIRED CONFIG REQUIRED COMPONENTS X11)
 
                 find_package(vorbis REQUIRED CONFIG REQUIRED COMPONENTS vorbis)
 
-	endif (UNIX)
+        endif (UNIX)
 
     # 1. Look for a SDL2 package, 2. Look for the SDL2maincomponent and 3. DO NOT fail when SDL2main is not available
     find_package(SDL2Main REQUIRED CONFIG COMPONENTS SDL2)
@@ -35,7 +35,7 @@ project(bananaquake LANGUAGES CXX ASM)
 set(CMAKE_CXX_STANDARD 20)
 set(CXX_STANDARD_REQUIRED true)
 
-SET(ASM_OPTIONS "-DELF -m32 -x assembler-with-cpp")
+SET(ASM_OPTIONS "-DELF -x assembler-with-cpp")
 SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 
 #=================================================================
@@ -362,6 +362,10 @@ zone.h
 endif (WIN32)
 
 if (UNIX)
+
+# add_executable(bananaquakesoftware ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
+add_executable(bananaquakeopengl)
+
 set(WINQUAKE_SOURCES d_copy.s
 d_draw.s
 d_draw16.s
@@ -528,7 +532,7 @@ world.h
 zone.h
 )
 
-set(GLQUAKE_SOURCES math.s
+target_sources(bananaquakeopengl PRIVATE math.s
 worlda.s
 snd_mixa.s
 
@@ -599,7 +603,7 @@ world.cpp
 zone.cpp
 )
 
-set(GLQUAKE_HEADERS anorm_dots.h
+target_sources(bananaquakeopengl PUBLIC anorm_dots.h
 anorms.h
 asm_draw.h
 asm_i386.h
@@ -664,6 +668,11 @@ winquake.h
 world.h
 zone.h
 )
+
+set_property(SOURCE quakeasm.h PROPERTY LANGUAGE ASM)
+set_property(SOURCE math.s PROPERTY LANGUAGE ASM)
+set_property(SOURCE worlda.s PROPERTY LANGUAGE ASM)
+set_property(SOURCE snd_mixa.s PROPERTY LANGUAGE ASM)
 
 endif (UNIX)
 
@@ -873,10 +882,10 @@ list(APPEND includepathLibraryWinQuakeSoftware
 
 list(APPEND includepathLibraryWinQuakeOpenGLx86
     "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x86"
-	$<$<CONFIG:Debug>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Debug>
-	$<$<CONFIG:RelWithDebInfo>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/RelWithDebInfo>
-	$<$<CONFIG:Release>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Release>
-	$<$<CONFIG:MinSizeRel>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/MinSizeRel>
+        $<$<CONFIG:Debug>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Debug>
+        $<$<CONFIG:RelWithDebInfo>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/RelWithDebInfo>
+        $<$<CONFIG:Release>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Release>
+        $<$<CONFIG:MinSizeRel>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/MinSizeRel>
     "${CMAKE_CURRENT_BUILD_DIR}/sdl2"
 )
 
@@ -890,10 +899,10 @@ list(APPEND includepathLibraryWinQuakeSoftware
 
 list(APPEND includepathLibraryWinQuakeOpenGLx64
     "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x64"
-	$<$<CONFIG:Debug>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Debug>
-	$<$<CONFIG:RelWithDebInfo>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/RelWithDebInfo>
-	$<$<CONFIG:Release>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Release>
-	$<$<CONFIG:MinSizeRel>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/MinSizeRel>
+        $<$<CONFIG:Debug>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Debug>
+        $<$<CONFIG:RelWithDebInfo>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/RelWithDebInfo>
+        $<$<CONFIG:Release>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Release>
+        $<$<CONFIG:MinSizeRel>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/MinSizeRel>
 )
 
 endif()
@@ -927,11 +936,6 @@ add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
 # add_executable(bananaquakeqcc x64 ${QCC_SOURCES} ${QCC_HEADERS})
 endif()
 endif (WIN32)
-
-if (UNIX)
-# add_executable(bananaquakesoftware ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
-add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
-endif(UNIX)
 
 if (APPLE)
 # add_executable(bananaquakesoftware ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
@@ -977,12 +981,9 @@ else()
 target_compile_definitions(bananaquakeopengl PUBLIC WIN64)
 endif()
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_MP3)
-endif (WIN32)
+else()
 target_compile_definitions(bananaquakeopengl PUBLIC LINUX)
-#target_compile_definitions(bananaquakeopengl PUBLIC DEBUG)
-#target_compile_definitions(bananaquakeopengl PUBLIC _DEBUG)
-
-# target_compile_definitions(bananaquakeqcc PUBLIC QUAKE_TOOLS)
+endif(WIN32)
 
 target_include_directories(bananaquakeopengl PUBLIC
     "${includepathWinQuake}"
@@ -1001,23 +1002,6 @@ endif(WIN32)
 #=================================================================
 
 if (MSVC)
-
-#[[target_link_libraries(bananaquakesoftware mgllt.lib
-SDL2.lib
-libvorbisfile.lib
-libvorbis.lib
-libopusfile.lib
-libopus.lib
-libFLAC.lib
-libogg.lib
-libmad.lib
-libxmp.lib
-winmm.lib
-wsock32.lib
-opengl32.lib
-glu32.lib
-odbc32.lib
-odbccp32.lib)]]
 
 target_link_libraries(bananaquakeopengl $<$<CONFIG:Debug>:SDL2d.lib>
 $<$<CONFIG:RelWithDebInfo>:SDL2.lib>
@@ -1041,21 +1025,6 @@ odbccp32.lib)
 
 endif (MSVC)
 
-if (MSVC)
-#target_link_options(bananaquakesoftware PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:-SAFESEH:NO>")
-endif (MSVC)
-
-#if (MSVC)
-
-#SET_TARGET_PROPERTIES(bananaquakesoftware PROPERTIES
-#LINK_FLAGS_DEBUG
-#"/NODEFAULTLIB:libc.lib")
-
-#endif (MSVC)
-#
-#if(TARGET SDL2::SDL2main)
-#    target_link_libraries(bananaquakeopengl SDL2::SDL2main)
-#endif()
 target_link_libraries(bananaquakeopengl SDL2::SDL2)
 
 if (MSVC)
@@ -1064,11 +1033,6 @@ target_link_options(bananaquakeopengl PRIVATE "/SUBSYSTEM:WINDOWS")
 endif (MSVC)
 
 if (UNIX)
-#[[target_link_libraries(bananaquakesoftware m)
-target_link_libraries(bananaquakesoftware X11)
-target_link_libraries(bananaquakesoftware Xext)
-target_link_libraries(bananaquakesoftware Xxf86dga)]]
-
 target_link_libraries(bananaquakeopengl X11)
 target_link_libraries(bananaquakeopengl Xext)
 target_link_libraries(bananaquakeopengl Xxf86dga)
@@ -1082,14 +1046,10 @@ target_link_libraries(bananaquakeopengl vorbisfile)
 target_link_libraries(bananaquakeopengl GL)
 target_link_libraries(bananaquakeopengl GLU)
 
-SET(ASM_OPTIONS "-DELF -x assembler-with-cpp")
-SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
+# Missi: prevents "missing .note.GNU-stack section implies executable stack" warning in recent binutils on Linux
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -z noexecstack")
 
-#target_compile_options(bananaquakesoftware PUBLIC "-Dstricmp=strcasecmp -g")
 target_compile_options(bananaquakeopengl PUBLIC "-Dstricmp=strcasecmp -g")
-
-# target_compile_options(bananaquakesoftware PUBLIC ${BQUAKE_COMPILE_FLAGS})
-# target_link_options(bananaquakesoftware PUBLIC ${BQUAKE_LINKER_FLAGS})
 
 endif (UNIX)
 
