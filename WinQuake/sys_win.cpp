@@ -894,6 +894,31 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		if (*lpCmdLine)
 		{
 			argv[parms.argc] = lpCmdLine;
+
+			// Missi: changed this to account for quoted strings e.g. for the "-game" parameter
+			// In the original code, spaces would terminate an argv regardless of quotes (6/2/2024)
+			if (*lpCmdLine == '\"')
+			{
+
+				char testStr[MAX_PATH] = {};
+				int pos = 0;
+
+				lpCmdLine++;
+
+				testStr[pos] = '\"';
+
+				while (*lpCmdLine && *lpCmdLine != '\"')
+				{
+					pos++;
+					testStr[pos] = *lpCmdLine;
+					lpCmdLine++;
+				}
+
+				testStr[pos+1] = '\"';
+
+				argv[parms.argc] = testStr;
+			}
+
 			parms.argc++;
 
 			while (*lpCmdLine && ((*lpCmdLine > 32) && (*lpCmdLine <= 126)))
