@@ -1825,7 +1825,7 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 	int                     i = 0;
 	searchpath_t			*search = nullptr;
 	pack_t                  *pak = nullptr;
-	char                    pakfile[MAX_QPATH] = {};
+	char                    pakfile[1024] = {};
 	uintptr_t				path_id = 0;
 
 	Q_strcpy (com_gamedir, dir);
@@ -1851,7 +1851,7 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 //
 	for (i=0 ; ; i++)
 	{
-        sprintf (pakfile, "%s/PAK%i.PAK", dir, i);
+        snprintf (pakfile, sizeof(pakfile), "%s/PAK%i.PAK", dir, i);
 		pak = COM_LoadPackFile (pakfile);
 		if (!pak)
 			break;
