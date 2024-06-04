@@ -915,7 +915,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 #if (_WIN32) && !(GLQUAKE)
 		SDL_setenv("SDL_AudioDriver", "directsound", 1);
 		g_SoundSystem = new CSoundSystemWin;
-#elif (__linux__)
+#elif (__linux__) && !(GLQUAKE)
         SDL_setenv("SDL_AudioDriver", "alsa", 1);
         g_SoundSystem = new CSoundSystemLinux;
 #endif
@@ -931,17 +931,21 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		g_GLRenderer->R_Init();
 #endif
 		SCR_Init();
-#ifndef	_WIN32
-	// on Win32, sound initialization has to come before video initialization, so we
-	// can put up a popup if the sound hardware is in use
-		g_SoundSystem->S_Init ();
+#ifdef	_WIN32
+    // on Win32, sound initialization has to come before video initialization, so we
+    // can put up a popup if the sound hardware is in use
+        g_SoundSystem->S_Init ();
 #else
 
 
-#ifdef	GLQUAKE
+#if (_WIN32) &&	(GLQUAKE)
 		SDL_setenv("SDL_AudioDriver", "directsound", 1);
 		g_SoundSystem = new CSoundSystemWin;
 		g_SoundSystem->S_Init();
+#elif (__linux__) && (GLQUAKE)
+        SDL_setenv("SDL_AudioDriver", "pulseaudio", 1);
+		g_SoundSystem = new CSoundSystemLinux;
+		g_SoundSystem->S_Init();	
 #endif
 
 #endif	// _WIN32
