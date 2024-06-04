@@ -63,8 +63,6 @@ lmode_t	lowresmodes[] = {
 	{512, 384},
 };
 
-
-
 const char*		gl_vendor;
 const char*		gl_renderer;
 const char*		gl_version;
@@ -150,8 +148,8 @@ cvar_t		_vid_default_mode_win = {"_vid_default_mode_win","3", true};
 cvar_t		vid_wait = {"vid_wait","0"};
 cvar_t		vid_nopageflip = {"vid_nopageflip","0", true};
 cvar_t		_vid_wait_override = {"_vid_wait_override", "0", true};
-cvar_t		vid_config_x = {"vid_config_x","800", true};
-cvar_t		vid_config_y = {"vid_config_y","600", true};
+cvar_t		vid_config_x = {"vid_config_x","0", true};
+cvar_t		vid_config_y = {"vid_config_y","0", true};
 cvar_t		vid_stretch_by_2 = {"vid_stretch_by_2","1", true};
 cvar_t		_windowed_mouse = {"_windowed_mouse","1", true};
 
@@ -1630,6 +1628,36 @@ static void Check_Gamma (unsigned char *pal)
 	memcpy (pal, palette, sizeof(palette));
 }
 
+// Missi: copied and modified from https://stackoverflow.com/a/74046173 (6/3/2024)
+static void GetMonitorRealResolution(HMONITOR monitor, int* pixelsWidth, int* pixelsHeight)
+{
+	MONITORINFOEX info = { sizeof(MONITORINFOEX) };
+	GetMonitorInfo(monitor, &info);
+	DEVMODE devmode = {};
+	devmode.dmSize = sizeof(DEVMODE);
+	EnumDisplaySettings(info.szDevice, ENUM_CURRENT_SETTINGS, &devmode);
+	*pixelsWidth = devmode.dmPelsWidth;
+	*pixelsHeight = devmode.dmPelsHeight;
+}
+
+struct sMonitorInfo
+{
+	int iIndex;
+	HMONITOR hMonitor;
+};
+
+static BOOL CALLBACK GetMonitorByIndex(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+{
+	sMonitorInfo* info = (sMonitorInfo*)dwData;
+
+	if (--info->iIndex < 0)
+	{
+		info->hMonitor = hMonitor;
+		return FALSE;
+	}
+	return TRUE;
+}
+
 /*
 ===================
 VID_Init
@@ -1642,6 +1670,7 @@ void	VID_Init (unsigned char *palette)
 	char	gldir[MAX_OSPATH];
 	HDC		hdc;
 	DEVMODE	devmode;
+	bool	vid_customres = false;
 
 	memset(&devmode, 0, sizeof(devmode));
 
@@ -1682,16 +1711,28 @@ void	VID_Init (unsigned char *palette)
 		}
 
 		if (g_Common->COM_CheckParm("-width"))
+		{
 			width = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-width") + 1]);
+			vid_customres = true;
+		}
 		else if (g_Common->COM_CheckParm("-w"))
+		{
 			width = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-w") + 1]);
+			vid_customres = true;
+		}
 		else
 			width = 640;
 
 		if (g_Common->COM_CheckParm("-height"))
+		{
 			height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-height") + 1]);
+			vid_customres = true;
+		}
 		else if (g_Common->COM_CheckParm("-h"))
+		{
 			height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-h") + 1]);
+			vid_customres = true;
+		}
 
 		ReleaseDC (NULL, hdc);
 
@@ -1724,9 +1765,15 @@ void	VID_Init (unsigned char *palette)
 			else
 			{
 				if (g_Common->COM_CheckParm("-width"))
+				{
 					width = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-width")+1]);
+					vid_customres = true;
+				}
 				else if (g_Common->COM_CheckParm("-w"))
+				{
 					width = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-w") + 1]);
+					vid_customres = true;
+				}
 				else
 					width = 640;
 
@@ -1742,9 +1789,50 @@ void	VID_Init (unsigned char *palette)
 				}
 
 				if (g_Common->COM_CheckParm("-height"))
+				{
 					height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-height")+1]);
+					vid_customres = true;
+				}
 				else if (g_Common->COM_CheckParm("-h"))
+				{
 					height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-h") + 1]);
+					vid_customres = true;
+				}
+
+				// Missi: nab the monitor's native resolution if we're going fullscreen and have no config vars set (6/3/2024)
+				if (vid_config_x.value == 0 && vid_config_y.value == 0)
+				{
+					if (!vid_customres)
+					{
+						sMonitorInfo info;
+						info.iIndex = 0;
+						info.hMonitor = NULL;
+
+						MONITORENUMPROC infoProc = {};
+
+						DISPLAY_DEVICE displayDevice = {};
+						displayDevice.cb = sizeof(DISPLAY_DEVICE);
+
+						MONITORINFOEX mon = {};
+						mon.cbSize = sizeof(MONITORINFOEX);
+
+						EnumDisplayMonitors(NULL, NULL, GetMonitorByIndex, (LPARAM)&info);
+
+						if (info.hMonitor != nullptr)
+						{
+							GetMonitorInfo(info.hMonitor, &mon);
+							GetMonitorRealResolution(info.hMonitor, &width, &height);
+
+							vid.width = width;
+							vid.height = height;
+							vid.conwidth = width;
+							vid.conheight = height;
+
+							Cvar_SetValue("vid_config_x", width);
+							Cvar_SetValue("vid_config_y", height);
+						}
+					}
+				}
 
 				// if they want to force it, add the specified mode to the list
 				if (g_Common->COM_CheckParm("-force") && (nummodes < MAX_MODE_LIST))
@@ -1886,6 +1974,13 @@ void	VID_Init (unsigned char *palette)
 		vid.conheight = Q_atoi(g_Common->com_argv[i+1]);
 	if (vid.conheight < 200)
 		vid.conheight = 200;
+
+	if (vid_config_x.value > 0 && vid_config_y.value > 0 &&
+		!g_Common->COM_CheckParm("-conheight") && !g_Common->COM_CheckParm("-conwidth"))
+	{
+		vid.conwidth = vid_config_x.value;
+		vid.conheight = vid_config_y.value;
+	}
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
