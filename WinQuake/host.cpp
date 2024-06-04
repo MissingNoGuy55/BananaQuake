@@ -963,6 +963,9 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	g_MemCache->Hunk_AllocName<char>(0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = g_MemCache->Hunk_LowMark();
 
+	if (cls.state == ca_dedicated)
+		g_pCmdBuf->Cbuf_InsertText("exec server.cfg\n");
+
 	host_initialized = true;
 	
 	Sys_Printf ("========Quake Initialized=========\n");	
