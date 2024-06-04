@@ -485,19 +485,24 @@ void Q_FixSlashes(char* str, size_t size, const char delimiter)
 	}
 }
 
-void Q_FixQuotes(const char* src, char* dest, size_t size, const char delimiter)
+void Q_FixQuotes(char* dest, const char* src, size_t size, const char delimiter)
 {
 	if (!size || !src)
 		return;
 
-	for (int pos = 0; *src; src++, pos++)
+	while(*src && --size)
 	{
-		if (*src == delimiter)
-			continue;
+		if (!size)
+			break;
 
-		dest[pos] = *src;
-		pos++;
+		if (*src != '\"')
+			*dest = *src;
+		else
+			*dest = *++src;
+
+		src++; dest++;
 	}
+	*dest = '\0';
 }
 
 /*
@@ -1941,9 +1946,9 @@ void CCommon::COM_InitFilesystem (void)
 			const char* absPath = com_argv[i + 1];
 			char path[MAX_PATH] = {};
 
-			Q_FixQuotes(absPath, path, sizeof(path));
+			Q_FixQuotes(path, absPath, sizeof(path));
 
-			COM_AddGameDirectory(va("%s", absPath));
+			COM_AddGameDirectory(va("%s", path));
 		}
 	}
 
