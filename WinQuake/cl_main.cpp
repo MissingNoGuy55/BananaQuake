@@ -197,7 +197,7 @@ Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 		MSG_WriteString (&cls.message, g_Common->va("color %i %i\n", ((int)cl_color.value)>>4, ((int)cl_color.value)&15));
 	
 		MSG_WriteByte (&cls.message, clc_stringcmd);
-		sprintf (str, "spawn %s", cls.spawnparms);
+		snprintf (str, sizeof(str), "spawn %s", cls.spawnparms);
 		MSG_WriteString (&cls.message, str);
 		break;
 		
@@ -240,7 +240,7 @@ void CL_NextDemo (void)
 		}
 	}
 
-	sprintf (str,"playdemo %s\n", cls.demos[cls.demonum]);
+	snprintf (str, sizeof(str), "playdemo %s\n", cls.demos[cls.demonum]);
 	g_pCmdBuf->Cbuf_InsertText (str);
 	cls.demonum++;
 }
@@ -404,16 +404,16 @@ float	CL_LerpPoint (void)
 		return 1;
 	}
 		
-	if (f > 0.1)
+	if (f > 0.1f)
 	{	// dropped packet, or start of demo
 		cl.mtime[1] = cl.mtime[0] - 0.1;
-		f = 0.1;
+		f = 0.1f;
 	}
 	frac = (cl.time - cl.mtime[1]) / f;
 //Con_Printf ("frac: %f\n",frac);
-	if (frac < 0)
+	if (frac < 0.0f)
 	{
-		if (frac < -0.01)
+		if (frac < -0.01f)
 		{
 SetPal(1);
 			cl.time = cl.mtime[1];
@@ -421,15 +421,15 @@ SetPal(1);
 		}
 		frac = 0;
 	}
-	else if (frac > 1)
+	else if (frac > 1.0f)
 	{
-		if (frac > 1.01)
+		if (frac > 1.01f)
 		{
 SetPal(2);
 			cl.time = cl.mtime[0];
 //				Con_Printf ("high frac\n");
 		}
-		frac = 1;
+		frac = 1.0f;
 	}
 	else
 		SetPal(0);
