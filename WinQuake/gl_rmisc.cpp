@@ -236,18 +236,12 @@ void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 	int		skinnum;
 	byte	translate[256];
 	byte*	 pixels;
-	byte	*out;
 	char	name[64];
-	unsigned	translate32[256];
-	unsigned	scaled_width, scaled_height;
 	int			inwidth, inheight;
-	int		i, j, s;
-	unsigned	frac, fracstep;
+	int		i;
 
 	model_t	*model;
 	aliashdr_t *paliashdr;
-	byte	*original;
-	byte		*inrow;
 	extern	byte		**player_8bit_texels_tbl;
 
 	GL_DisableMultitexture();
@@ -431,8 +425,6 @@ void CGLRenderer::R_TimeRefresh_f (void)
 {
 	int			i;
 	float		start, stop, time;
-	int			startangle;
-	vrect_t		vr;
 
 	glDrawBuffer  (GL_FRONT);
 	glFinish ();

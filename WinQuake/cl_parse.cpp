@@ -969,7 +969,7 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_sellscreen:
-			g_pCmds->Cmd_ExecuteString ("help", src_command);
+			g_pCmds->Cmd_ExecuteString("help", src_command);
 			break;
 		}
 	}

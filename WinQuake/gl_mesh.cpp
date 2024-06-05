@@ -288,7 +288,6 @@ void GL_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 	int* cmds;
 	trivertx_t* verts;
 	char	cache[MAX_QPATH], fullpath[MAX_OSPATH];
-	FILE* f;
 	int		h;
 
 	aliasmodel = m;

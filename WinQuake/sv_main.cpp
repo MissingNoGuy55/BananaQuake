@@ -142,7 +142,7 @@ Larger attenuations will drop off.  (max 4 attenuation)
 
 ==================
 */  
-void CQuakeServer::SV_StartSound (edict_t *entity, int channel, const char *sample, int volume,
+void CQuakeServer::SV_StartSound (edict_t *entity, int channel, const char *sample, int vol,
     float attenuation)
 {       
     int         sound_num;
@@ -150,8 +150,8 @@ void CQuakeServer::SV_StartSound (edict_t *entity, int channel, const char *samp
     int			i;
 	int			ent;
 	
-	if (volume < 0 || volume > 255)
-		Sys_Error ("SV_StartSound: volume = %i", volume);
+	if (vol < 0 || vol > 255)
+		Sys_Error ("SV_StartSound: vol = %i", vol);
 
 	if (attenuation < 0 || attenuation > 4)
 		Sys_Error ("SV_StartSound: attenuation = %f", attenuation);
@@ -179,7 +179,7 @@ void CQuakeServer::SV_StartSound (edict_t *entity, int channel, const char *samp
 	channel = (ent<<3) | channel;
 
 	field_mask = 0;
-	if (volume != DEFAULT_SOUND_PACKET_VOLUME)
+	if (vol != DEFAULT_SOUND_PACKET_VOLUME)
 		field_mask |= SND_VOLUME;
 	if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION)
 		field_mask |= SND_ATTENUATION;
@@ -188,7 +188,7 @@ void CQuakeServer::SV_StartSound (edict_t *entity, int channel, const char *samp
 	MSG_WriteByte (&sv->datagram, svc_sound);
 	MSG_WriteByte (&sv->datagram, field_mask);
 	if (field_mask & SND_VOLUME)
-		MSG_WriteByte (&sv->datagram, volume);
+		MSG_WriteByte (&sv->datagram, vol);
 	if (field_mask & SND_ATTENUATION)
 		MSG_WriteByte (&sv->datagram, attenuation*64);
 	MSG_WriteShort (&sv->datagram, channel);
@@ -614,6 +614,8 @@ void CQuakeServer::SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 	eval_t	*val;
 #endif
 
+	extern bool standard_quake;
+
 //
 // send a damage message
 //
@@ -932,18 +934,18 @@ SV_ModelIndex
 
 ================
 */
-int CQuakeServer::SV_ModelIndex (const char *name)
+int CQuakeServer::SV_ModelIndex (const char *modname)
 {
 	int		i;
 	
-	if (!name || !name[0])
+	if (!modname || !modname[0])
 		return 0;
 
 	for (i=0 ; i<MAX_MODELS && sv->model_precache[i] ; i++)
-		if (!strcmp(sv->model_precache[i], name))
+		if (!strcmp(sv->model_precache[i], modname))
 			return i;
 	if (i==MAX_MODELS || !sv->model_precache[i])
-		Sys_Error ("SV_ModelIndex: model %s not precached", name);
+		Sys_Error ("SV_ModelIndex: model %s not precached", modname);
 	return i;
 }
 

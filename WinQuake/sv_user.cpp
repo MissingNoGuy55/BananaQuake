@@ -248,7 +248,7 @@ void CQuakeServer::SV_WaterMove (void)
 {
 	int		i;
 	vec3_t	wishvel;
-	float	speed, newspeed, wishspeed, addspeed, accelspeed;
+	float	speed, newspeed, wshspeed, addspeed, accelspeed;
 
 //
 // user intentions
@@ -263,13 +263,13 @@ void CQuakeServer::SV_WaterMove (void)
 	else
 		wishvel[2] += cmd.upmove;
 
-	wishspeed = Length(wishvel);
-	if (wishspeed > sv_maxspeed.value)
+	wshspeed = Length(wishvel);
+	if (wshspeed > sv_maxspeed.value)
 	{
-		VectorScale (wishvel, sv_maxspeed.value/wishspeed, wishvel);
-		wishspeed = sv_maxspeed.value;
+		VectorScale (wishvel, sv_maxspeed.value/wshspeed, wishvel);
+		wshspeed = sv_maxspeed.value;
 	}
-	wishspeed *= 0.7;
+	wshspeed *= 0.7;
 
 //
 // water friction
@@ -288,15 +288,15 @@ void CQuakeServer::SV_WaterMove (void)
 //
 // water acceleration
 //
-	if (!wishspeed)
+	if (!wshspeed)
 		return;
 
-	addspeed = wishspeed - newspeed;
+	addspeed = wshspeed - newspeed;
 	if (addspeed <= 0)
 		return;
 
 	VectorNormalize (wishvel);
-	accelspeed = sv_accelerate.value * wishspeed * host->host_frametime;
+	accelspeed = sv_accelerate.value * wshspeed * host->host_frametime;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 

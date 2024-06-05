@@ -19,8 +19,13 @@
 // cmdlib.c
 
 #include "cmdlib.h"
-#include <time.h>
+#include <windows.h>
+
+#ifndef _WIN32
+#include <sys/time.h>
+#else
 #include <sysinfoapi.h>
+#endif
 
 #define PATHSEPERATOR   '/'
 
@@ -36,9 +41,10 @@ int		com_eof;
 I_FloatTime
 ================
 */
+#ifdef __linux__
 double I_FloatTime (void)
 {
-	/*struct timeval tp;
+	struct timeval tp;
 	struct timezone tzp;
 	static int		secbase;
 
@@ -50,16 +56,25 @@ double I_FloatTime (void)
 		return tp.tv_usec/1000000.0;
 	}
 	
-	return (tp.tv_sec - secbase) + tp.tv_usec/1000000.0;*/
-
-	LPSYSTEMTIME systime = {};
-
-	GetSystemTime(systime);
-
-	return (systime->wSecond / 1000000.0f);
-
-
+	return (tp.tv_sec - secbase) + tp.tv_usec/1000000.0;
 }
+#else
+double I_FloatTime(void)
+{
+	SYSTEMTIME time;
+	static int		secbase;
+
+	GetLocalTime(&time);
+
+	if (!secbase)
+	{
+		secbase = time.wSecond;
+		return time.wSecond / 1000000.0;
+	}
+
+	return (time.wSecond - secbase) + time.wSecond / 1000000.0;
+}
+#endif
 
 
 /*
@@ -150,8 +165,7 @@ skipwhite:
 filelength
 ================
 */
-#if 0	// Missi: already defined through common.cpp (12/3/2022)
-#ifdef __linux
+#ifdef __linux__
 int filelength (int handle)
 {
 	struct stat	fileinfo;
@@ -163,40 +177,40 @@ int filelength (int handle)
 
 	return fileinfo.st_size;
 }
+#else
+size_t filelength(FILE* handle)
+{
+	size_t fileinfo;
+
+	fileinfo = fseek(handle, 0, SEEK_END);
+
+	return fileinfo;
+}
+#endif
+
+#ifdef __linux__
+int tell (int handle)
+{
+	return lseek (handle, 0, SEEK_CUR);
+}
 #elif _WIN32
-int filelength(FILE* handle)
+int tell(FILE* handle)
 {
-	struct stat	fileinfo;
-	LPDWORD size = 0;
+	return fseek(handle, 0, SEEK_CUR);
+}
+#endif
 
-	if (GetFileSize(handle, size) == -1)
+char *strupr (char *start)
+{
+	char	*in;
+	in = start;
+	while (*in)
 	{
-		Error("Error fstating");
+		*in = toupper(*in);
+		in++;
 	}
-
-	fileinfo.st_size = (off_t)size;
-
-	return fileinfo.st_size;
+	return start;
 }
-#endif
-#endif
-
-int tell (FILE* handle)
-{
-	return fseek (handle, 0, SEEK_CUR);
-}
-
-//char *strupr (char *start)
-//{
-//	char	*in;
-//	in = start;
-//	while (*in)
-//	{
-//		*in = toupper(*in);
-//		in++;
-//	}
-//	return start;
-//}
 
 char *strlower (char *start)
 {
@@ -248,13 +262,13 @@ Checks for the given parameter in the program's command line arguments
 Returns the argument number (1 to argc-1) or 0 if not present
 =================
 */
-int CheckParm (const char *check)
+int CheckParm (char *check)
 {
 	int             i;
 
 	for (i = 1;i<myargc;i++)
 	{
-		if ( !_strcmpi(check, myargv[i]) )
+		if ( !stricmp(check, myargv[i]) )
 			return i;
 	}
 
@@ -266,88 +280,77 @@ int CheckParm (const char *check)
 #define O_BINARY 0
 #endif
 
-#ifdef __linux
+#ifdef __linux__
 int SafeOpenWrite (char *filename)
-#elif _WIN32
-FILE* SafeOpenWrite(const char* filename)
-#endif
 {
-#ifdef __linux
 	int     handle;
+
 	umask (0);
 	
 	handle = open(filename,O_WRONLY | O_CREAT | O_TRUNC | O_BINARY
 	, 0666);
-#else
-
-	FILE* handle;
-
-	if (fopen_s(&handle, filename, "wb") != 0)
-		Error("Error opening %s: %s", filename, strerror(errno));
-
-#endif
-
-	return handle;
-}
-
-#ifdef __linux
-int SafeOpenRead (const char *filename)
-#elif _WIN32
-FILE* SafeOpenRead (const char *filename)
-#endif
-{
-#ifdef __linux
-	int     handle;
-	handle = open(filename,O_RDONLY | O_BINARY);
 
 	if (handle == -1)
 		Error ("Error opening %s: %s",filename,strerror(errno));
-#elif _WIN32
-	FILE*     handle;
-	handle = fopen(filename, "rb");
 
-	if (handle == NULL)
-		Error("Error opening %s: %s", filename, strerror(errno));
-#endif
 	return handle;
 }
-
-#ifdef __linux
-void SafeRead (int handle, void *buffer, long count)
+int SafeOpenRead(char* filename)
 {
-	if (read (handle,buffer,count) != count)
-		Error ("File read failure");
+	int     handle;
+
+	handle = open(filename, O_RDONLY | O_BINARY);
+
+	if (handle == -1)
+		Error("Error opening %s: %s", filename, strerror(errno));
+
+	return handle;
+}
+void SafeRead(int handle, void* buffer, long count)
+{
+	if (read(handle, buffer, count) != count)
+		Error("File read failure");
 }
 
 
-void SafeWrite (int handle, void *buffer, long count)
+void SafeWrite(int handle, void* buffer, long count)
 {
-	if (write (handle,buffer,count) != count)
-		Error ("File write failure");
+	if (write(handle, buffer, count) != count)
+		Error("File write failure");
 }
-#elif _WIN32
+#else
+FILE* SafeOpenWrite(char* filename)
+{
+	FILE*     handle;
+
+	handle = fopen(filename, "rb+");
+
+	if (!handle)
+		Error("Error opening %s: %s", filename, strerror(errno));
+
+	return handle;
+}
+FILE* SafeOpenRead(char* filename)
+{
+	FILE* handle;
+
+	handle = fopen(filename, "rb");
+
+	if (!handle)
+		Error("Error opening %s: %s", filename, strerror(errno));
+
+	return handle;
+}
 void SafeRead(FILE* handle, void* buffer, long count)
 {
-#if 0
-	if (fread(buffer, 1, count, handle) != count)
+	if (fread(buffer, sizeof(long), count, handle) != count)
 		Error("File read failure");
-#else
-
-	size_t len = 0;
-
-	len = fread_s(buffer, count, sizeof(char), count, handle);
-
-	if (len == 0)
-		Error("File read failure");
-
-#endif
-
 }
 
 
 void SafeWrite(FILE* handle, void* buffer, long count)
 {
-	if (fwrite(buffer, sizeof(char), count, handle) != count)
+	if (fwrite(buffer, sizeof(long), count, handle) != count)
 		Error("File write failure");
 }
 #endif
@@ -371,51 +374,50 @@ void *SafeMalloc (long size)
 LoadFile
 ==============
 */
-void*    LoadFile (const char *filename, void *bufferptr)
+#ifdef __linux__
+long    LoadFile (char *filename, void **bufferptr)
 {
-#ifdef __linux
-	int     handle;
+	int             handle;
 	long    length;
 	void    *buffer;
-#elif _WIN32
-	FILE*   handle;
-	DWORD    length;
-	void* buffer;
-#endif
 
 	handle = SafeOpenRead (filename);
 	length = filelength (handle);
+	buffer = SafeMalloc (length+1);
+	((byte *)buffer)[length] = 0;
+	SafeRead (handle, buffer, length);
+	close (handle);
 
-	buffer = calloc(1, length);
+	*bufferptr = buffer;
+	return length;
+}
+#else
+long    LoadFile(char* filename, void** bufferptr)
+{
+	FILE*   handle;
+	long    length;
+	void* buffer;
 
-
-#ifdef __linux
+	handle = SafeOpenRead(filename);
+	fseek(handle, 0, SEEK_END);
+	length = ftell(handle);
 	buffer = SafeMalloc(length + 1);
 	((byte*)buffer)[length] = 0;
-#elif _WIN32
-	((byte*)buffer)[length] = 0;
-#endif
-
-
-
-	SafeRead (handle, buffer, length);
-#ifdef __linux
-	close(handle);
-#elif _WIN32
+	SafeRead(handle, buffer, length);
 	fclose(handle);
-#endif
 
-	return buffer;
+	*bufferptr = buffer;
+	return length;
 }
-
+#endif
 
 /*
 ==============
 SaveFile
 ==============
 */
-#ifdef __linux
-void    SaveFile (const char *filename, void *buffer, long count)
+#ifdef __linux__
+void    SaveFile (char *filename, void *buffer, long count)
 {
 	int             handle;
 
@@ -423,10 +425,10 @@ void    SaveFile (const char *filename, void *buffer, long count)
 	SafeWrite (handle, buffer, count);
 	close (handle);
 }
-#elif _WIN32
-void    SaveFile(const char* filename, FILE* buffer, long count)
+#else
+void    SaveFile(char* filename, void* buffer, long count)
 {
-	FILE*             handle;
+	FILE*	handle;
 
 	handle = SafeOpenWrite(filename);
 	SafeWrite(handle, buffer, count);
@@ -438,7 +440,7 @@ void    SaveFile(const char* filename, FILE* buffer, long count)
 
 void DefaultExtension (char *path, const char *extension)
 {
-	const char    *src;
+	char    *src;
 //
 // if path doesn't have a .EXT, append extension
 // (extension should include the .)
@@ -665,7 +667,7 @@ float	BigFloat (float l)
 
 short   BigShort (short l)
 {
-	unsigned char    b1,b2;
+	byte    b1,b2;
 
 	b1 = l&255;
 	b2 = (l>>8)&255;
@@ -681,7 +683,7 @@ short   LittleShort (short l)
 
 long    BigLong (long l)
 {
-	unsigned char    b1,b2,b3,b4;
+	byte    b1,b2,b3,b4;
 
 	b1 = l&255;
 	b2 = (l>>8)&255;
@@ -698,7 +700,7 @@ long    LittleLong (long l)
 
 float	BigFloat (float l)
 {
-	union { unsigned char b[4]; float f;} in, out;
+	union {byte b[4]; float f;} in, out;
 	
 	in.f = l;
 	out.b[0] = in.b[3];

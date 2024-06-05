@@ -22,12 +22,12 @@
 
 pr_info_t	pr;
 def_t		*pr_global_defs[MAX_REGS];	// to find def for a global variable
-//int			pr_edict_size;
+int			pr_edict_size;
 
 //========================================
 
 def_t		*pr_scope;		// the function being parsed, or NULL
-bool	pr_dumpasm;
+bool		pr_dumpasm;
 string_t	s_file;			// filename for function definition
 
 int			locals_end;		// for tracking local variables vs temps
@@ -128,20 +128,6 @@ opcode_t pr_opcodes[] =
  {"&", "BITAND", 2, false, &def_float, &def_float, &def_float},
  {"|", "BITOR", 2, false, &def_float, &def_float, &def_float},
 
- {"<SWITCH>", "SWITCH_F", -1, false, &def_float, &def_void, &def_float},
- {"<SWITCH>", "SWITCH_FV", -1, false, &def_vector, &def_void, &def_float},
- {"<SWITCH>", "SWITCH_E", -1, false, &def_entity, &def_void, &def_float},
- {"<SWITCH>", "SWITCH_S", -1, false, &def_string, &def_void, &def_float},
-
- {"<CASE>", "CASE", -1, false, &def_float, &def_void, &def_void},
-
- {"<DEFAULT>", "DEFAULT", -1, false, &def_void, &def_void, &def_void},
-
- {"<BREAK>", "BREAK", -1, false, &def_void, &def_void, &def_void},
-
- {"<ARRAY_OPEN>", "ARRAY_OPEN", -1, false, &def_void, &def_void, &def_void},
- {"<ARRAY_CLOSE>", "ARRAY_CLOSE", -1, false, &def_void, &def_void, &def_void},
-
  {NULL}
 };
 
@@ -218,10 +204,6 @@ def_t	*PR_ParseImmediate (void)
 		{
 			if (!strcmp(G_STRING(cn->ofs), pr_immediate_string) )
 			{
-				char test[1024];
-				memset(test, 0, sizeof(test));
-				sprintf_s(test, "%s", "Test\n");
-
 				PR_Lex ();
 				return cn;
 			}
@@ -241,14 +223,6 @@ def_t	*PR_ParseImmediate (void)
 			&& ( G_FLOAT(cn->ofs+2) == pr_immediate.vector[2] ) )
 			{
 				PR_Lex ();
-				return cn;
-			}
-		}
-		else if (pr_immediate_type == &type_cppvector)
-		{
-			if (G_CPPVECTOR(cn->ofs) == pr_immediate.cppvector)
-			{
-				PR_Lex();
 				return cn;
 			}
 		}
@@ -273,7 +247,7 @@ def_t	*PR_ParseImmediate (void)
 	if (pr_immediate_type == &type_string)
 		pr_immediate.string = CopyString (pr_immediate_string);
 	
-	memcpy (p_globals + cn->ofs, &pr_immediate, 4*type_size[pr_immediate_type->type]);
+	memcpy (pr_globals + cn->ofs, &pr_immediate, 4*type_size[pr_immediate_type->type]);
 	
 	PR_Lex ();
 
@@ -412,8 +386,8 @@ Returns the global ofs for the current token
 */
 def_t	*PR_ParseValue (void)
 {
-	def_t		*d = NULL;
-	char		*name = NULL;
+	def_t		*d;
+	char		*name;
 	
 // if the token is an immediate, allocate a constant for it
 	if (pr_token_type == tt_immediate)
@@ -467,7 +441,7 @@ def_t *PR_Term (void)
 		PR_Expect (")");
 		return e;
 	}
-
+	
 	return PR_ParseValue ();
 }
 
@@ -522,7 +496,7 @@ def_t *PR_Expression (int priority)
 				if (e2->type->aux_type)
 					type_c = e2->type->aux_type->type;
 				else
-					type_c = ev_void;	// Missi (11/2/2022)	// not a field
+					type_c = ev_invalid;	// not a field
 			}
 			else
 				type_c = ev_void;
@@ -567,8 +541,8 @@ PR_ParseStatement
 */
 void PR_ParseStatement (void)
 {
-	def_t				*e = NULL;
-	dstatement_t		*patch1 = NULL, *patch2 = NULL;
+	def_t				*e;
+	dstatement_t		*patch1, *patch2;
 	
 	if (PR_Check ("{"))
 	{
@@ -650,112 +624,6 @@ void PR_ParseStatement (void)
 		else
 			patch1->b = &statements[numstatements] - patch1;
 		
-		return;
-	}
-
-	if (PR_Check("switch"))
-	{
-		PR_Expect("(");
-		e = PR_Expression(TOP_PRIORITY);
-		PR_Expect(")");
-
-		etype_t t = e->type->type;
-		dstatement_t* patch1 = NULL;
-
-		patch1 = &statements[numstatements];
-
-		if (t == ev_float)
-			PR_Statement(&pr_opcodes[OP_SWITCH_F], e, 0);
-		else if (t == ev_vector)
-			PR_Statement(&pr_opcodes[OP_SWITCH_FV], e, 0);
-		else if (t == ev_entity)
-			PR_Statement(&pr_opcodes[OP_SWITCH_E], e, 0);
-		else if (t == ev_string)
-		{
-			PR_Statement(&pr_opcodes[OP_SWITCH_S], e, 0);
-			patch1->b = &statements[numstatements] - patch1;
-		}
-
-		PR_ParseStatement();
-		return;
-	}
-
-	if (PR_Check("case"))
-	{
-		e = PR_Expression(TOP_PRIORITY);
-
-		patch1 = &statements[numstatements];
-
-		PR_Statement(&pr_opcodes[OP_CASE], e, 0);
-		PR_Expect(":");
-
-		PR_ParseStatement();
-
-		if (e->type->type == ev_string)
-			patch1->a = e->ofs;
-
-		return;
-	}
-
-	if (PR_Check("break"))
-	{
-		if (PR_Check(";"))
-		{
-			PR_Statement(&pr_opcodes[OP_BREAK], 0, 0);
-			return;
-		}
-		e = PR_Expression(TOP_PRIORITY);
-		PR_Expect(";");
-		PR_Statement(&pr_opcodes[OP_BREAK], e, 0);
-		return;
-	}
-
-	if (PR_Check("default"))
-	{
-		PR_Expect(":");
-		PR_Statement(&pr_opcodes[OP_DEFAULT], e, 0);
-
-		/*if (PR_Check("break"))
-		{
-			if (PR_Check(";"))
-			{
-				PR_Statement(&pr_opcodes[OP_BREAK], 0, 0);
-				return;
-			}
-			e = PR_Expression(TOP_PRIORITY);
-			PR_Expect(";");
-			PR_Statement(&pr_opcodes[OP_BREAK], e, 0);
-			return;
-		}*/
-
-		return;
-	}
-
-	if (PR_Check("["))
-	{
-		e = PR_Expression(TOP_PRIORITY);
-		etype_t t = e->type->type;
-		dstatement_t* patch1 = NULL;
-
-		e = PR_Expression(TOP_PRIORITY);
-
-		patch1 = &statements[numstatements];
-
-		if (t == ev_float)
-			PR_Statement(&pr_opcodes[OP_SWITCH_F], e, 0);
-		else if (t == ev_vector)
-			PR_Statement(&pr_opcodes[OP_SWITCH_FV], e, 0);
-		else if (t == ev_entity)
-			PR_Statement(&pr_opcodes[OP_SWITCH_E], e, 0);
-		else if (t == ev_string)
-		{
-			PR_Statement(&pr_opcodes[OP_SWITCH_S], e, 0);
-			patch1->b = &statements[numstatements] - patch1;
-		}
-
-		PR_Expect("]");
-		PR_Statement(&pr_opcodes[OP_ARRAY_CLOSE], 0, 0);
-		PR_ParseStatement();
 		return;
 	}
 	
@@ -900,11 +768,7 @@ def_t *PR_GetDef (type_t *type, char *name, def_t *scope, bool allocate)
 	pr.def_tail->next = def;
 	pr.def_tail = def;
 	
-	char test[64];
-
-	def->name = (const char*)malloc (strlen(name)+1);
-	strcpy (test, name);
-	def->name = _strdup(test);
+	def->name = name;
 	def->type = type;
 
 	def->scope = scope;
@@ -932,7 +796,7 @@ def_t *PR_GetDef (type_t *type, char *name, def_t *scope, bool allocate)
 
 	if (type->type == ev_field)
 	{
-		*(int *)&p_globals[def->ofs] = pr.size_fields;
+		*(int *)&pr_globals[def->ofs] = pr.size_fields;
 		
 		if (type->aux_type->type == ev_vector)
 		{
@@ -971,8 +835,6 @@ void PR_ParseDefs (void)
 	dfunction_t	*df;
 	int			i;
 	int			locals_start;
-	bool		inarray = false;
-	static std::vector<void*>* vec;		// Missi: void* to prevent templatizing the whole chain of functions
 
 	type = PR_ParseType ();
 	
@@ -985,35 +847,6 @@ void PR_ParseDefs (void)
 
 		def = PR_GetDef (type, name, pr_scope, true);
 		
-		if (pr_scope && pr_file_p[1] == '[' && pr_file_p[2] != ']')
-		{
-			type = &type_cppvector;
-		}
-
-		if (PR_Check("["))
-		{
-			if (PR_Check("]"))
-			{
-				def->initialized = 1;
-				def->type = type;
-				pr_immediate_type = type;
-				memcpy(p_globals + def->ofs, &pr_immediate, 4 * type_size[pr_immediate_type->type]);
-				continue;
-			}
-			else
-			{
-				while (!PR_Check("]"))
-				{
-					def = PR_ParseImmediate();
-					if (pr_token[0] != ',')
-					{
-						vec->push_back(p_globals + def->ofs);
-					}
-				}
-			}
-			continue;
-		}
-
 // check for an initialization
 		if ( PR_Check ("=") )
 		{
@@ -1049,80 +882,14 @@ void PR_ParseDefs (void)
 				
 				continue;
 			}
-			/*else if (PR_Check("[]"))
-			{
-				def->initialized = 1;
-				memcpy(p_globals + def->ofs, &pr_immediate.cppvector, 4 * type_size[pr_immediate_type->type]);
-				continue;
-			}*/
-			else if (PR_Check("["))
-			{
-				if (pr_token[0] == ']')		// Missi: empty vector (9/17/2023)
-				{
-					PR_Lex();
-
-					def->initialized = 1;
-					def->type = type;
-					pr_immediate_type = type;
-					float* flt = new float;
-
-					memcpy(flt, p_globals + def->ofs, sizeof(float));
-
-					// pr_immediate.cppvector->push_back((void*)flt);
-					vec = pr_immediate.cppvector;
-					memcpy(&vec, &pr_immediate.cppvector, 4 * type_size[pr_immediate_type->type]);
-					memcpy(p_globals + def->ofs, &pr_immediate, 4 * type_size[pr_immediate_type->type]);
-					continue;
-				}
-				else						// Missi: it is a vector accessor, copy the contents (9/17/2023)
-				{
-					def->initialized = 1;
-					def->type = type;
-					pr_immediate_type = type;
-					pr_immediate.cppvector = (std::vector<void*>*)(p_globals + def->ofs);
-					memcpy(p_globals + def->ofs, &pr_immediate, 4 * type_size[pr_immediate_type->type]);
-					continue;
-				}
-			}
 			else if (pr_immediate_type != type)
-			{
 				PR_ParseError ("wrong immediate type for %s", name);
-			}
 	
 			def->initialized = 1;
-			memcpy (p_globals + def->ofs, &pr_immediate, 4*type_size[pr_immediate_type->type]);
+			memcpy (pr_globals + def->ofs, &pr_immediate, 4*type_size[pr_immediate_type->type]);
 			PR_Lex ();
 		}
 		
-		bool withinrange = ((pr_token[0] == '[') && pr_file_p[0] >= '0' && pr_file_p[0] <= '9');
-
-		if (withinrange)	// Missi: it is a vector accessor, copy the contents (9/17/2023)
-		{
-			def->initialized = 1;
-			def->type = type;
-			pr_immediate_type = type;
-
-			if (vec)
-			{
-				if (pr_immediate_type == &type_float)
-				{
-					char* test = NULL;
-					long idx = strtol(&pr_token[0], &test, sizeof(long));
-
-					//float crap = *(float*)(p_globals + def->ofs);
-					float* flt = (float*)vec->at(idx);
-					pr_immediate._float = *flt;	// Missi: UGLY!!! (9/17/2023)
-				}
-			}
-
-			pr_immediate.cppvector = vec;
-			memcpy(p_globals + def->ofs, &pr_immediate, 4 * type_size[pr_immediate_type->type]);
-
-			pr_file_p += 2;
-			PR_Lex();
-
-		}
-
 	} while (PR_Check (","));
 
 	PR_Expect (";");

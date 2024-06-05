@@ -1410,7 +1410,7 @@ void CCommon::COM_WriteFile (const char *filename, void *data, int len)
 	int		handle;
 	char	name[MAX_OSPATH];
 	
-	sprintf (name, "%s/%s", com_gamedir, filename);
+	snprintf (name, sizeof(name), "%s/%s", com_gamedir, filename);
 
 	handle = Sys_FileOpenWrite (name);
 	if (handle == -1)

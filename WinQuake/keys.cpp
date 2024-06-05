@@ -177,7 +177,7 @@ void Key_Console (int key)
 
 	if (key == K_TAB)
 	{	// command completion
-		cmd = g_pCmds->Cmd_CompleteCommand (key_lines[edit_line]+1);
+		cmd = g_pCmds->Cmd_CompleteCommand(key_lines[edit_line]+1);
 		if (!cmd)
 			cmd = Cvar_CompleteVariable (key_lines[edit_line]+1);
 		if (cmd)
@@ -748,7 +748,7 @@ void Key_Event (int key, bool down)
 
 	case key_game:
 	case key_console:
-		Key_Console (key);
+		Key_Console(key);
 		break;
 	default:
 		Sys_Error ("Bad key_dest");

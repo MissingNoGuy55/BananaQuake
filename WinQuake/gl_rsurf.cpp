@@ -1425,22 +1425,22 @@ void CGLRenderer::GL_BuildLightmaps (void)
 	//Spike -- wipe out all the lightmap data (johnfitz -- the gltexture objects were already freed by Mod_ClearAll) -- Missi: copied from QuakeSpasm (6/3/2024)
 	if (lightmap_textures)
 	{
-		memset(allocated, 0, sizeof(allocated));
-		memset(blocklights, 0, sizeof(blocklights));
-		memset(lightmaps, 0, sizeof(lightmaps));
-		memset(lightmap_modified, 0, sizeof(lightmap_modified));
-		memset(lightmap_polys, 0, sizeof(lightmap_polys));
-		memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
+        memset(allocated, 0, sizeof(allocated));
+        memset(blocklights, 0, sizeof(blocklights));
+        memset(lightmaps, 0, sizeof(lightmaps));
+        memset(lightmap_modified, 0, sizeof(lightmap_modified));
+        memset(lightmap_polys, 0, sizeof(lightmap_polys));
+        memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
 
 		memset(cl_dlights, 0, sizeof(cl_dlights));
-		memset(cl_lightstyle, 0, sizeof(lightmap_rectchange));
-
-		last_lightmap_allocated = 0;
-		active_lightmaps = 0;
-		lightmap_count = 0;
-		lightmap_bytes = 0;
-		lightmap_textures = nullptr;
+        memset(cl_lightstyle, 0, sizeof(*lightmap_rectchange));
 	}
+
+    last_lightmap_allocated = 0;
+    active_lightmaps = 0;
+    lightmap_count = 0;
+    lightmap_bytes = 0;
+    lightmap_textures = nullptr;
 
 	if (!lightmap_textures)
 	{

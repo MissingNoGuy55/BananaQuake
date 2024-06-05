@@ -17,15 +17,14 @@
     See file, 'COPYING', for details.
 */
 
-#pragma once
-
 #include "cmdlib.h"
+#include <stdio.h>
 #include <setjmp.h>
-#include <securitybaseapi.h>
-#include <AclAPI.h>
-#include <string>
-#include "pr_comp.h"
 #include <vector>
+
+typedef unsigned char byte;
+
+#include "pr_comp.h"
 
 /*
 
@@ -255,7 +254,7 @@ typedef struct type_s
 typedef struct def_s
 {
 	type_t		*type;
-	const char		*name;
+	const char	*name;
 	struct def_s	*next;
 	gofs_t		ofs;
 	struct def_s	*scope;		// function the var was defined in, or NULL
@@ -288,9 +287,9 @@ typedef union eval_s
 extern	int		type_size[9];
 extern	def_t	*def_for_type[9];
 
-extern	type_t	type_void, type_string, type_float, type_vector, type_entity, type_field, type_cppvector, type_function, type_pointer, type_floatfield;
+extern	type_t	type_void, type_string, type_float, type_vector, type_entity, type_field, type_function, type_pointer, type_floatfield;
 
-extern	def_t	def_void, def_string, def_float, def_vector, def_entity, def_field, def_cppvector, def_function, def_pointer;
+extern	def_t	def_void, def_string, def_float, def_vector, def_entity, def_field, def_function, def_pointer, def_cppvector;
 
 struct function_s
 {
@@ -325,9 +324,9 @@ typedef struct
 {
 	const char		*name;
 	const char		*opname;
-	float		priority;
-	bool	right_associative;
-	def_t		*type_a, *type_b, *type_c;
+	float			priority;
+	bool			right_associative;
+	def_t			*type_a, *type_b, *type_c;
 } opcode_t;
 
 //============================================================================
@@ -394,19 +393,13 @@ void PR_SkipToSemicolon (void);
 extern	char		pr_parm_names[MAX_PARMS][MAX_NAME];
 extern	bool	pr_trace;
 
-#define	NEXT_EDICT(e) ((edict_t *)( (byte *)e + pr_edict_size))
+#define	G_FLOAT(o) (pr_globals[o])
+#define	G_INT(o) (*(int *)&pr_globals[o])
+#define	G_VECTOR(o) (&pr_globals[o])
+#define	G_STRING(o) (strings + *(string_t *)&pr_globals[o])
+#define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
 
-#define	EDICT_TO_PROG(e) ((byte *)e - (byte *)sv->edicts)
-#define PROG_TO_EDICT(e) ((edict_t *)((byte *)sv->edicts + e))
-
-#define	G_FLOAT(o) (p_globals[o])
-#define	G_INT(o) (*(int *)&p_globals[o])
-#define	G_VECTOR(o) (&p_globals[o])
-#define	G_STRING(o) (strings + *(string_t *)&p_globals[o])
-#define	G_FUNCTION(o) (*(func_t *)&p_globals[o])
-#define G_CPPVECTOR(o) ((std::vector<void*>*)&p_globals[o])
-
-const char *PR_ValueString (etype_t type, void *val);
+char *PR_ValueString (etype_t type, void *val);
 
 void PR_ClearGrabMacros (void);
 
@@ -441,7 +434,7 @@ extern	int			statement_linenums[MAX_STATEMENTS];
 extern	dfunction_t	functions[MAX_FUNCTIONS];
 extern	int			numfunctions;
 
-extern	float		p_globals[MAX_REGS];
+extern	float		pr_globals[MAX_REGS];
 extern	int			numpr_globals;
 
 extern	char	pr_immediate_string[2048];
@@ -460,20 +453,4 @@ extern	int			numfiles;
 
 int	CopyString (const char *str);
 
-typedef struct sizebuf_s
-{
-	bool	allowoverflow;	// if false, do a Sys_Error
-	bool	overflowed;		// set to true if the buffer size failed
-	byte* data;
-	int		maxsize;
-	int		cursize;
-} sizebuf_t;
 
-void MSG_WriteChar(sizebuf_t* sb, int c);
-void MSG_WriteByte(sizebuf_t* sb, int c);
-void MSG_WriteShort(sizebuf_t* sb, int c);
-void MSG_WriteLong(sizebuf_t* sb, int c);
-void MSG_WriteFloat(sizebuf_t* sb, float f);
-void MSG_WriteString(sizebuf_t* sb, const char* s);
-void MSG_WriteCoord(sizebuf_t* sb, float f);
-void MSG_WriteAngle(sizebuf_t* sb, float f);

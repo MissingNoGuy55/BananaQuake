@@ -21,7 +21,6 @@
 #ifndef __CMDLIB__
 #define __CMDLIB__
 
-#include <windows.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -29,65 +28,57 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fileapi.h>
+#ifndef _WIN32
+#include <sys/file.h>
+#endif
 #include <stdarg.h>
 
 #ifdef NeXT
 #include <libc.h>
 #endif
 
-/*
-#ifndef __BYTEBOOL__
-#define __BYTEBOOL__
-typedef enum {false, true} bool;
-typedef unsigned char byte;
-#endif
-*/
-
 // the dec offsetof macro doesn't work very well...
 #define myoffsetof(type,identifier) ((size_t)&((type *)0)->identifier)
-
 
 // set these before calling CheckParm
 extern int myargc;
 extern char **myargv;
 
-//char *strupr (char *in);
-
+char *strupr (char *in);
 char *strlower (char *in);
-#ifdef __linux
+#ifdef __linux__
 int filelength (int handle);
-int tell (int handle);
-#elif _WIN32
-int filelength(FILE* handle);
-int tell(FILE* handle);
+#else
+size_t filelength (FILE* handle);
 #endif
+int tell (int handle);
 
 double I_FloatTime (void);
 
 void	Error (const char *error, ...);
 int		CheckParm (const char *check);
 
-#ifdef __linux
-int 	SafeOpenWrite (const char *filename);
-int 	SafeOpenRead (const char *filename);
+#ifdef __linux__
+int 	SafeOpenWrite (char *filename);
+int 	SafeOpenRead (char *filename);
 void 	SafeRead(int handle, void* buffer, long count);
 void 	SafeWrite(int handle, void* buffer, long count);
-#elif _WIN32
-FILE* 	SafeOpenWrite(const char* filename);
-FILE* 	SafeOpenRead(const char* filename);
+#else
+FILE* 	SafeOpenWrite(char* filename);
+FILE* 	SafeOpenRead(char* filename);
 void 	SafeRead(FILE* handle, void* buffer, long count);
 void 	SafeWrite(FILE* handle, void* buffer, long count);
 #endif
 void 	*SafeMalloc (long size);
 
 #ifdef __linux
-long	LoadFile (const char *filename, void **bufferptr);
-void	SaveFile (const char *filename, void *buffer, long count);
-#elif _WIN32
-void*	LoadFile (const char *filename, void *bufferptr);
-void	SaveFile(const char* filename, FILE* buffer, long count);
+long	LoadFile (char *filename, void **bufferptr);
+void	SaveFile (char *filename, void *buffer, long count);
+#else
+long	LoadFile(char* filename, void** bufferptr);
+void	SaveFile(char* filename, void* buffer, long count);
 #endif
+
 void 	DefaultExtension (char *path, const char *extension);
 void 	DefaultPath (char *path, char *basepath);
 void 	StripFilename (char *path);
@@ -106,11 +97,11 @@ long	LittleLong (long l);
 float	BigFloat (float l);
 float	LittleFloat (float l);
 
+void PR_CheckEmptyString(const char* s);
+
 char *COM_Parse (char *data);
 
 extern	char	com_token[1024];
 extern	int		com_eof;
-
-
 
 #endif

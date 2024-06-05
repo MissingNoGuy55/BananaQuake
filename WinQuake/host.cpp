@@ -878,10 +878,10 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 
 	g_MemCache = new CMemCache;
 	g_MemCache->Memory_Init (host_parms.membase, host_parms.memsize);
+	g_pCmds = new CCommand;
+	g_pCmdBuf = new CCommandBuffer;
 	g_CRCManager = new CCRCManager;
 	sv = new CQuakeServer;
-	g_pCmdBuf = new CCommandBuffer;
-	g_pCmds = new CCommand;	
 	V_Init ();
 	Chase_Init ();
 	//Host_InitVCR (parms);
@@ -933,7 +933,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		SCR_Init();
 #if (_WIN32) &&	(GLQUAKE)
 		SDL_setenv("SDL_AudioDriver", "directsound", 1);
-		g_SoundSystem = new CSoundSystemWin;
+		g_SoundSystem = new CSoundDMA;
 		g_SoundSystem->S_Init();
 #endif
 #if 0
@@ -943,7 +943,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 #endif
 #if (__linux__) && (GLQUAKE)
         SDL_setenv("SDL_AudioDriver", "pulseaudio", 1);
-		g_SoundSystem = new CSoundSystemLinux;
+		g_SoundSystem = new CSoundDMA;
 		g_SoundSystem->S_Init();	
 #endif
 
@@ -1001,7 +1001,8 @@ void CQuakeHost::Host_Shutdown(void)
 #endif
 	NET_Shutdown ();
 #ifndef QUAKE_TOOLS
-	g_SoundSystem->S_Shutdown();
+	if (g_SoundSystem)
+		g_SoundSystem->S_Shutdown();
 #endif
 	delete g_SoundSystem;
 

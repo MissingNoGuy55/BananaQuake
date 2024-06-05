@@ -87,7 +87,7 @@ public:
 	void SV_Init(void);
 
 	void SV_StartParticle(vec3_t org, vec3_t dir, int color, int count);
-	void SV_StartSound(edict_t* entity, int channel, const char* sample, int volume,
+	void SV_StartSound(edict_t* entity, int channel, const char* sample, int vol,
 		float attenuation);
 
 	void SV_SendServerinfo(client_t* client);
@@ -99,7 +99,7 @@ public:
 	void SV_SendClientMessages(void);
 	void SV_ClearDatagram(void);
 
-	int SV_ModelIndex(const char* name);
+	int SV_ModelIndex(const char* modname);
 
 	void SV_CreateBaseline(void);
 
@@ -179,7 +179,7 @@ public:
 
 	void SV_Impact(edict_t* e1, edict_t* e2);
 
-	int SV_FlyMove(edict_t* ent, float time, trace_t* steptrace);
+	int SV_FlyMove(edict_t* ent, float tm, trace_t* steptrace);
 
 	trace_t SV_PushEntity(edict_t* ent, vec3_t push);
 

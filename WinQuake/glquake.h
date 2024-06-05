@@ -155,7 +155,7 @@ typedef struct particle_s
 } particle_t;
 
 typedef struct glRect_s {
-	unsigned char l, t, w, h;
+	unsigned short l, t, w, h;
 } glRect_t;
 
 #define TEXPREF_NONE			0x0000
@@ -303,7 +303,7 @@ public:
 	void GL_MipMap8Bit(byte* in, int width, int height);
 	void GL_SetFilterModes(CGLTexture* glt);
 
-	void GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha);
+	void GL_Upload8(byte* data, int width, int height, bool alpha);
 
 	void GL_Upload32(CGLTexture* tex, unsigned* data);
 	void GL_BuildLightmaps(void);

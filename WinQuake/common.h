@@ -35,11 +35,6 @@ typedef unsigned char byte;
 #define BYTE_DEFINED 1
 #endif
 
-// #undef true
-// #undef false
-
-// typedef enum {false, true}	bool;
-
 //============================================================================
 
 typedef struct sizebuf_s
@@ -50,11 +45,6 @@ typedef struct sizebuf_s
 	int		maxsize;
 	int		cursize;
 } sizebuf_t;
-
-struct cache_user_s
-{
-	void* data;
-};
 
 void SZ_Alloc (sizebuf_t *buf, int startsize);
 void SZ_Free (sizebuf_t *buf);
@@ -84,26 +74,19 @@ void InsertLinkAfter (link_t *l, link_t *after);
 
 //============================================================================
 
-#ifndef NULL
-#define NULL ((void *)0)
-#endif
-
 #define Q_MAXCHAR ((char)0x7f)
 #define Q_MAXSHORT ((short)0x7fff)
 #define Q_MAXINT	((int)0x7fffffff)
 #define Q_MAXLONG ((int)0x7fffffff)
-#define Q_MAXFLOAT ((int)0x7fffffff)
+#define Q_MAXFLOAT ((float)0x7fffffff)
 
 #define Q_MINCHAR ((char)0x80)
 #define Q_MINSHORT ((short)0x8000)
 #define Q_MININT 	((int)0x80000000)
 #define Q_MINLONG ((int)0x80000000)
-#define Q_MINFLOAT ((int)0x7fffffff)
-
+#define Q_MINFLOAT ((float)0x7fffffff)
 
 // Missi: copied from QuakeSpasm (2/11/22)
-#undef	min
-#undef	max
 #define	q_min(a, b)	(((a) < (b)) ? (a) : (b))
 #define	q_max(a, b)	(((a) > (b)) ? (a) : (b))
 #define	CLAMP(_minval, x, _maxval)		\
@@ -312,15 +295,13 @@ extern CFileSystem* g_FileSystem;
 
 //============================================================================
 
+#ifndef QUAKE_TOOLS
 
 template<typename T>
 int             loadsize;
 
 template<typename T>
 T* loadbuf;
-
-//template<typename T>
-//T* cache_user_s::data = new T;
 
 template<typename T>
 T* COM_LoadStackFile (const char *path, void* buffer, int bufsize, uintptr_t* path_id);
@@ -333,20 +314,16 @@ T* COM_LoadHunkFile (const char *path, uintptr_t* path_id);
 template<typename T>
 void COM_LoadCacheFile (const char *path, struct cache_user_s *cu, uintptr_t* path_id);
 
-
 extern struct cvar_s	registered;
-
 extern bool		standard_quake, rogue, hipnotic;
-
 extern cache_user_s* loadcache;
-
 
 /*
 ============
 COM_LoadFile
 
 Filename are reletive to the quake directory.
-Allways appends a 0 byte.
+Allways appends a 0 byte.	
 ============
 */
 
@@ -411,24 +388,24 @@ inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 	else
 		((byte*)buf)[len] = 0;
 
-	//#ifndef QUAKE_TOOLS	// Missi: more garbage for QCC (12/2/2022)
-	//#ifndef GLQUAKE
-	//	g_SoftwareRenderer->Draw_BeginDisc();
-	//#else
-	//	g_GLRenderer->Draw_BeginDisc();
-	//#endif
-	//#endif
+#if 0
+#ifndef GLQUAKE
+	g_SoftwareRenderer->Draw_BeginDisc();
+#else
+	g_GLRenderer->Draw_BeginDisc();
+#endif
+#endif
 
 	Sys_FileRead(h, buf, len);
 	g_Common->COM_CloseFile(h);
 
-	//#ifdef QUAKE_GAME
-	//#ifndef GLQUAKE
-	//	g_SoftwareRenderer->Draw_EndDisc();
-	//#else
-	//	g_GLRenderer->Draw_EndDisc();
-	//#endif
-	//#endif
+#if 0
+#ifndef GLQUAKE
+	g_SoftwareRenderer->Draw_EndDisc();
+#else
+	g_GLRenderer->Draw_EndDisc();
+#endif
+#endif
 
 	return buf;
 }
@@ -465,4 +442,6 @@ T* COM_LoadStackFile(const char* path, void* buffer, int bufsize, uintptr_t* pat
 
 	return (T*)buf;
 }
+#endif
+
 #endif

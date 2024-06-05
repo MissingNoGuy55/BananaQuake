@@ -248,7 +248,7 @@ void CL_Record_f (void)
         char buf[256];
         memset(buf, 0, sizeof(buf));
         snprintf(buf, sizeof(buf), "map %s", g_pCmds->Cmd_Argv(2));
-		g_pCmds->Cmd_ExecuteString (buf, src_command);
+		g_pCmds->Cmd_ExecuteString(buf, src_command);
 	//	Cmd_ExecuteString (g_Common->va_unsafe("map %s", Cmd_Argv(2)), src_command);
     }
 //

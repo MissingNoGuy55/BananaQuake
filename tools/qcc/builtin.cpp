@@ -17,448 +17,76 @@
     See file, 'COPYING', for details.
 */
 
-#include "qcc.h"
-#include "progdefs.h"
-
-//dfunction_t* pr_xfunction;
-
-template<typename T>
-class CQVector;
-
-extern dprograms_t*				progs;
-extern dfunction_t*				pr_functions;
-extern char*					pr_strings;
-extern int						pr_stringssize;
-extern ddef_t*					pr_fielddefs;
-extern ddef_t*					pr_globaldefs;
-extern dstatement_t*			pr_statements;
-extern globalvars_t*			pr_global_struct;
-extern float*					pr_globals;			// same as pr_global_struct
-extern int						pr_edict_size;	// in bytes
-
-extern int						pr_maxknownstrings;
-extern int						pr_numknownstrings;
-extern CQVector<const char*>	pr_knownstrings;
-
-extern unsigned short		pr_crc;
-
-typedef void (*builtin_t) (void);
-extern	builtin_t* pr_builtins;
-extern int pr_numbuiltins;
-
-extern int		pr_argc;
-
-extern	dfunction_t* pr_xfunction;
-extern	int			pr_xstatement;
-extern bool		pr_trace;
-
-extern	unsigned short		pr_crc;
-
-extern const char* PR_GetString(int num);
-extern void Con_Printf(const char* fmt, ...);
-
-extern vec3_t vec3_origin;
-
-extern int  msg_readcount;
-extern bool msg_badread;
-
-extern sizebuf_t		net_message;
-extern int				net_activeconnections = 0;
-
-// returns -1 and sets msg_badread if no more characters are available
-int MSG_ReadChar(void)
-{
-	int     c;
-
-	if (msg_readcount + 1 > net_message.cursize)
-	{
-		msg_badread = true;
-		return -1;
-	}
-
-	c = (signed char)net_message.data[msg_readcount];
-	msg_readcount++;
-
-	return c;
-}
-
-int MSG_ReadByte(void)
-{
-	int     c;
-
-	if (msg_readcount + 1 > net_message.cursize)
-	{
-		msg_badread = true;
-		return -1;
-	}
-
-	c = (unsigned char)net_message.data[msg_readcount];
-	msg_readcount++;
-
-	return c;
-}
-
-int MSG_ReadShort(void)
-{
-	int     c;
-
-	if (msg_readcount + 2 > net_message.cursize)
-	{
-		msg_badread = true;
-		return -1;
-	}
-
-	c = (short)(net_message.data[msg_readcount]
-		+ (net_message.data[msg_readcount + 1] << 8));
-
-	msg_readcount += 2;
-
-	return c;
-}
-
-int MSG_ReadLong(void)
-{
-	int     c;
-
-	if (msg_readcount + 4 > net_message.cursize)
-	{
-		msg_badread = true;
-		return -1;
-	}
-
-	c = net_message.data[msg_readcount]
-		+ (net_message.data[msg_readcount + 1] << 8)
-		+ (net_message.data[msg_readcount + 2] << 16)
-		+ (net_message.data[msg_readcount + 3] << 24);
-
-	msg_readcount += 4;
-
-	return c;
-}
-
-float MSG_ReadFloat(void)
-{
-	union
-	{
-		byte    b[4];
-		float   f;
-		int     l;
-	} dat;
-
-	dat.b[0] = net_message.data[msg_readcount];
-	dat.b[1] = net_message.data[msg_readcount + 1];
-	dat.b[2] = net_message.data[msg_readcount + 2];
-	dat.b[3] = net_message.data[msg_readcount + 3];
-	msg_readcount += 4;
-
-	dat.l = LittleLong(dat.l);
-
-	return dat.f;
-}
-
-const char* MSG_ReadString(void)
-{
-	static char     string[2048];
-	int             l, c;
-
-	l = 0;
-	do
-	{
-		c = MSG_ReadChar();
-		if (c == -1 || c == 0)
-			break;
-		string[l] = c;
-		l++;
-	} while (l < sizeof(string) - 1);
-
-	string[l] = 0;
-
-	return string;
-}
-
-float MSG_ReadCoord(void)
-{
-	return MSG_ReadShort() * (1.0 / 8);
-}
-
-float MSG_ReadAngle(void)
-{
-	return MSG_ReadChar() * (360.0 / 256);
-}
+#include "quakedef.h"
 
 #define	RETURN_EDICT(e) (((int *)pr_globals)[OFS_RETURN] = EDICT_TO_PROG(e))
 
 /*
-============================================================================
-
-					LIBRARY REPLACEMENT FUNCTIONS
-
-============================================================================
+===============================================================================
+						FORWARD DECLARATIONS FROM QUAKE
+===============================================================================
 */
-void Q_memset(void* dest, int fill, int count)
-{
-	int             i;
 
-	if ((((long)dest | count) & 3) == 0)
+dprograms_t*			progs	=	nullptr;
+dfunction_t*			pr_functions = nullptr;;
+char*					pr_strings = nullptr;;
+int						pr_stringssize = 0;
+ddef_t*					pr_globaldefs = nullptr;
+ddef_t*					pr_fielddefs = nullptr;
+dstatement_t*			pr_statements = nullptr;
+globalvars_t*			pr_global_struct = nullptr;
+float*					pr_globals = nullptr;			// same as pr_global_struct
+bool					pr_trace = false;
+
+int						pr_maxknownstrings = 0;
+int						pr_numknownstrings = 0;
+CQVector<const char*>	pr_knownstrings;
+int						type_size[9];
+int						pr_argc;
+
+CCommandBuffer*			g_pCmdBuf;
+CQuakeHost*				host;
+CQuakeServer*			sv;
+vec3_t					vec3_origin;
+
+/*
+===============================================================================
+
+						STUFF DEFINED IN QUAKE
+
+===============================================================================
+*/
+
+int NUM_FOR_EDICT(edict_t* e)
+{
+	int		b;
+
+	b = (byte*)e - (byte*)sv->edicts;
+	b = b / pr_edict_size;
+
+	if (b < 0 || b >= sv->num_edicts)
+		PR_RunError("NUM_FOR_EDICT: bad pointer");
+	return b;
+}
+
+float VectorNormalize(vec3_t v)
+{
+	float	length, ilength;
+
+	length = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+	length = sqrt(length);		// FIXME
+
+	if (length)
 	{
-		count >>= 2;
-		fill = fill | (fill << 8) | (fill << 16) | (fill << 24);
-		for (i = 0; i < count; i++)
-			((int*)dest)[i] = fill;
-	}
-	else
-		for (i = 0; i < count; i++)
-			((byte*)dest)[i] = fill;
-}
-
-void Q_memcpy(void* dest, const void* src, int count)
-{
-	int             i;
-
-	if ((((long)dest | (long)src | count) & 3) == 0)
-	{
-		count >>= 2;
-		for (i = 0; i < count; i++)
-			((int*)dest)[i] = ((int*)src)[i];
-	}
-	else
-		for (i = 0; i < count; i++)
-			((byte*)dest)[i] = ((byte*)src)[i];
-}
-
-int Q_memcmp(void* m1, void* m2, int count)
-{
-	while (count)
-	{
-		count--;
-		if (((byte*)m1)[count] != ((byte*)m2)[count])
-			return -1;
-	}
-	return 0;
-}
-
-void Q_strcpy(char* dest, const char* src)
-{
-	while (*src)
-	{
-		*dest++ = *src++;
-	}
-	*dest++ = 0;
-}
-
-void Q_strncpy(char* dest, const char* src, int count)
-{
-	while (*src && count--)
-	{
-		*dest++ = *src++;
-	}
-	if (count)
-		*dest++ = 0;
-}
-
-size_t Q_strlcpy(char* dst, const char* src, size_t siz)
-{
-	char* d = dst;
-	const char* s = src;
-	size_t n = siz;
-
-	/* Copy as many bytes as will fit */
-	if (n != 0) {
-		while (--n != 0) {
-			if ((*d++ = *s++) == '\0')
-				break;
-		}
+		ilength = 1 / length;
+		v[0] *= ilength;
+		v[1] *= ilength;
+		v[2] *= ilength;
 	}
 
-	/* Not enough room in dst, add NUL and traverse rest of src */
-	if (n == 0) {
-		if (siz != 0)
-			*d = '\0';		/* NUL-terminate dst */
-		while (*s++)
-			;
-	}
+	return length;
 
-	return(s - src - 1);	/* count does not include NUL */
 }
-
-size_t Q_strlcat(char* dst, const char* src, size_t siz)
-{
-	char* d = dst;
-	const char* s = src;
-	size_t n = siz;
-	size_t dlen;
-
-	/* Find the end of dst and adjust bytes left but don't go past end */
-	while (n-- != 0 && *d != '\0')
-		d++;
-	dlen = d - dst;
-	n = siz - dlen;
-
-	if (n == 0)
-		return(dlen + strlen(s));
-	while (*s != '\0') {
-		if (n != 1) {
-			*d++ = *s;
-			n--;
-		}
-		s++;
-	}
-	*d = '\0';
-
-	return(dlen + (s - src));	/* count does not include NUL */
-}
-
-int Q_strlen(const char* str)
-{
-	int             count;
-
-	count = 0;
-	while (str[count])
-		count++;
-
-	return count;
-}
-
-char* Q_strrchr(const char* s, char c)
-{
-	int len = Q_strlen(s);
-	s += len;
-	while (len--)
-		if (*--s == c) return const_cast<char*>(s);
-	return 0;
-}
-
-void Q_strcat(char* dest, const char* src)
-{
-	dest += Q_strlen(dest);
-	Q_strcpy(dest, src);
-}
-
-int Q_strcmp(const char* s1, const char* s2)
-{
-	while (1)
-	{
-		if (*s1 != *s2)
-			return -1;              // strings not equal    
-		if (!*s1)
-			return 0;               // strings are equal
-		s1++;
-		s2++;
-	}
-
-	return -1;
-}
-
-int Q_strncmp(const char* s1, const char* s2, int count)
-{
-	while (1)
-	{
-		if (!count--)
-			return 0;
-		if (*s1 != *s2)
-			return -1;              // strings not equal    
-		if (!*s1)
-			return 0;               // strings are equal
-		s1++;
-		s2++;
-	}
-
-	return -1;
-}
-
-int Q_strncasecmp(const char* s1, const char* s2, int n)
-{
-	int             c1, c2;
-
-	while (1)
-	{
-		c1 = *s1++;
-		c2 = *s2++;
-
-		if (!n--)
-			return 0;               // strings are equal until end point
-
-		if (c1 != c2)
-		{
-			if (c1 >= 'a' && c1 <= 'z')
-				c1 -= ('a' - 'A');
-			if (c2 >= 'a' && c2 <= 'z')
-				c2 -= ('a' - 'A');
-			if (c1 != c2)
-				return -1;              // strings not equal
-		}
-		if (!c1)
-			return 0;               // strings are equal
-		//              s1++;
-		//              s2++;
-	}
-
-	return -1;
-}
-
-int Q_strcasecmp(const char* s1, const char* s2)
-{
-	return Q_strncasecmp(s1, s2, 99999);
-}
-
-int Q_atoi(const char* str)
-{
-	int             val;
-	int             sign;
-	int             c;
-
-	if (*str == '-')
-	{
-		sign = -1;
-		str++;
-	}
-	else
-		sign = 1;
-
-	val = 0;
-
-	//
-	// check for hex
-	//
-	if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
-	{
-		str += 2;
-		while (1)
-		{
-			c = *str++;
-			if (c >= '0' && c <= '9')
-				val = (val << 4) + c - '0';
-			else if (c >= 'a' && c <= 'f')
-				val = (val << 4) + c - 'a' + 10;
-			else if (c >= 'A' && c <= 'F')
-				val = (val << 4) + c - 'A' + 10;
-			else
-				return val * sign;
-		}
-	}
-
-	//
-	// check for character
-	//
-	if (str[0] == '\'')
-	{
-		return sign * str[1];
-	}
-
-	//
-	// assume decimal
-	//
-	while (1)
-	{
-		c = *str++;
-		if (c < '0' || c > '9')
-			return val * sign;
-		val = val * 10 + c - '0';
-	}
-
-	return 0;
-}
-
 
 float Q_atof(const char* str)
 {
@@ -535,6 +163,58 @@ float Q_atof(const char* str)
 	return val * sign;
 }
 
+float	anglemod(float a)
+{
+	a = (360.0f / 65536) * ((int)(a * (65536 / 360.0f)) & 65535);
+	return a;
+}
+
+vec_t Length(vec3_t v)
+{
+	int		i;
+	float	length;
+
+	length = 0;
+	for (i = 0; i < 3; i++)
+		length += v[i] * v[i];
+	length = sqrt(length);		// FIXME
+
+	return length;
+}
+
+float	Cvar_VariableValue(const char* var_name)
+{
+	cvar_t* var;
+
+	var = Cvar_FindVar(var_name);
+	if (!var)
+		return 0;
+	return Q_atof(var->string);
+}
+
+const char* PR_GetString(int num)
+{
+	if (num >= 0 && num < pr_stringssize)
+		return pr_strings + num;
+
+	else if (num < 0 && num >= -pr_numknownstrings)
+	{
+		if (!pr_knownstrings[-1 - num])
+		{
+			host->Host_Error("PR_GetString: attempt to get a non-existant string %d\n", num);
+			return "";
+		}
+		return pr_knownstrings[-1 - num];
+	}
+	else
+	{
+		host->Host_Error("PR_GetString: invalid string offset %d\n", num);
+		return "";
+	}
+
+	return NULL;
+}
+
 /*
 ===============================================================================
 
@@ -543,7 +223,7 @@ float Q_atof(const char* str)
 ===============================================================================
 */
 
-const char *PF_VarString (int	first)
+char *PF_VarString (int	first)
 {
 	int		i;
 	static char out[256];
@@ -551,7 +231,7 @@ const char *PF_VarString (int	first)
 	out[0] = 0;
 	for (i=first ; i<pr_argc ; i++)
 	{
-		strcat_s (out, G_STRING((OFS_PARM0+i*3)));
+		strcat (out, G_STRING((OFS_PARM0+i*3)));
 	}
 	return out;
 }
@@ -567,19 +247,18 @@ Dumps self.
 error(value)
 =================
 */
-
 void PF_error (void)
 {
-	const char	*s;
+	char	*s;
 	edict_t	*ed;
 	
 	s = PF_VarString(0);
 	Con_Printf ("======SERVER ERROR in %s:\n%s\n"
-	,PR_GetString(pr_xfunction->s_name),s);
+	,pr_strings + pr_xfunction->s_name,s);
 	ed = PROG_TO_EDICT(pr_global_struct->self);
 	ED_Print (ed);
 
-	GetQuakeHost()->Host_Error("Program error");
+	host->Host_Error ("Program error");
 }
 
 /*
@@ -594,20 +273,18 @@ objerror(value)
 */
 void PF_objerror (void)
 {
-	const char	*s;
+	char	*s;
 	edict_t	*ed;
 	
 	s = PF_VarString(0);
 	Con_Printf ("======OBJECT ERROR in %s:\n%s\n"
-	,PR_GetString(pr_xfunction->s_name), s);
+	,pr_strings + pr_xfunction->s_name,s);
 	ed = PROG_TO_EDICT(pr_global_struct->self);
 	ED_Print (ed);
 	ED_Free (ed);
 	
-	GetQuakeHost()->Host_Error("Program error");
+	host->Host_Error ("Program error");
 }
-
-
 
 /*
 ==============
@@ -747,35 +424,32 @@ setmodel(entity, model)
 */
 void PF_setmodel (void)
 {
-	edict_t* e;
-	const char* m;
-	const char** check;
-	model_t* mod;
+	edict_t	*e;
+	const char	*m, **check;
+	model_t	*mod;
 	int		i;
 
 	e = G_EDICT(OFS_PARM0);
 	m = G_STRING(OFS_PARM1);
 
-	// check to see if model was properly precached
-	for (i = 0, check = sv->model_precache; *check; i++, check++)
-	{
+// check to see if model was properly precached
+	for (i=0, check = sv->model_precache ; *check ; i++, check++)
 		if (!strcmp(*check, m))
 			break;
-	}
-
+			
 	if (!*check)
-		PR_RunError("no precache: %s\n", m);
+		PR_RunError ("no precache: %s\n", m);
+		
 
-
-	e->v.model = PR_SetEngineString(*check);
+	e->v.model = m - pr_strings;
 	e->v.modelindex = i; //SV_ModelIndex (m);
 
-	mod = sv->models[(int)e->v.modelindex];  // Mod_ForName (m, true);
-
+	mod = sv->models[ (int)e->v.modelindex];  // Mod_ForName (m, true);
+	
 	if (mod)
-		SetMinMaxSize(e, mod->mins, mod->maxs, true);
+		SetMinMaxSize (e, mod->mins, mod->maxs, true);
 	else
-		SetMinMaxSize(e, vec3_origin, vec3_origin, true);
+		SetMinMaxSize (e, vec3_origin, vec3_origin, true);
 }
 
 /*
@@ -789,7 +463,7 @@ bprint(value)
 */
 void PF_bprint (void)
 {
-	const char		*s;
+	char		*s;
 
 	s = PF_VarString(0);
 	sv->SV_BroadcastPrintf (s);
@@ -806,7 +480,7 @@ sprint(clientent, value)
 */
 void PF_sprint (void)
 {
-	const char		*s;
+	char		*s;
 	client_t	*client;
 	int			entnum;
 	
@@ -837,7 +511,7 @@ centerprint(clientent, value)
 */
 void PF_centerprint (void)
 {
-	const char		*s;
+	char		*s;
 	client_t	*client;
 	int			entnum;
 	
@@ -1023,7 +697,7 @@ PF_ambientsound
 void PF_ambientsound (void)
 {
 	const char		**check;
-	const char		*samp;
+	const char*	samp = nullptr;
 	float		*pos;
 	float 		vol, attenuation;
 	int			i, soundnum;
@@ -1072,7 +746,6 @@ Larger attenuations will drop off.
 
 =================
 */
-
 void PF_sound (void)
 {
 	const char		*sample;
@@ -1319,7 +992,7 @@ void PF_localcmd (void)
 	const char	*str;
 	
 	str = G_STRING(OFS_PARM0);	
-	Cbuf_AddText (str);
+	g_pCmdBuf->Cbuf_AddText (str);
 }
 
 /*
@@ -1415,10 +1088,10 @@ void PF_ftos (void)
 	v = G_FLOAT(OFS_PARM0);
 	
 	if (v == (int)v)
-		sprintf_s(pr_string_temp, "%d",(int)v);
+		sprintf (pr_string_temp, "%d",(int)v);
 	else
-		sprintf_s(pr_string_temp, "%5.1f",v);
-	G_INT(OFS_RETURN) = PR_SetEngineString(pr_string_temp);
+		sprintf (pr_string_temp, "%5.1f",v);
+	G_INT(OFS_RETURN) = pr_string_temp - pr_strings;
 }
 
 void PF_fabs (void)
@@ -1430,8 +1103,8 @@ void PF_fabs (void)
 
 void PF_vtos (void)
 {
-	sprintf_s(pr_string_temp, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
-	G_INT(OFS_RETURN) = PR_SetEngineString(pr_string_temp);
+	sprintf (pr_string_temp, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
+	G_INT(OFS_RETURN) = pr_string_temp - pr_strings;
 }
 
 void PF_Spawn (void)
@@ -1759,7 +1432,6 @@ vector aim(entity, missilespeed)
 =============
 */
 cvar_t	sv_aim = {"sv_aim", "0.93"};
-
 void PF_aim (void)
 {
 	edict_t	*ent, *check, *bestent;
@@ -1780,7 +1452,7 @@ void PF_aim (void)
 	VectorMA (start, 2048, dir, end);
 	tr = sv->SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
 	if (tr.ent && tr.ent->v.takedamage == DAMAGE_AIM
-	&& (!host->teamplay.value || ent->v.team <=0 || ent->v.team != tr.ent->v.team) )
+	&& (!teamplay.value || ent->v.team <=0 || ent->v.team != tr.ent->v.team) )
 	{
 		VectorCopy (pr_global_struct->v_forward, G_VECTOR(OFS_RETURN));
 		return;
@@ -1799,10 +1471,11 @@ void PF_aim (void)
 			continue;
 		if (check == ent)
 			continue;
-		if (host->teamplay.value && ent->v.team > 0 && ent->v.team == check->v.team)
+		if (teamplay.value && ent->v.team > 0 && ent->v.team == check->v.team)
 			continue;	// don't aim at teammate
 		for (j=0 ; j<3 ; j++)
-			end[j] = check->v.origin[j] + 0.5f * (check->v.mins[j] + check->v.maxs[j]);
+			end[j] = check->v.origin[j]
+			+ 0.5*(check->v.mins[j] + check->v.maxs[j]);
 		VectorSubtract (end, start, dir);
 		VectorNormalize (dir);
 		dist = DotProduct (dir, pr_global_struct->v_forward);
@@ -1894,7 +1567,7 @@ sizebuf_t *WriteDest (void)
 	int		dest;
 	edict_t	*ent;
 
-	dest = (int)G_FLOAT(OFS_PARM0);
+	dest = G_FLOAT(OFS_PARM0);
 	switch (dest)
 	{
 	case MSG_BROADCAST:
@@ -1923,22 +1596,22 @@ sizebuf_t *WriteDest (void)
 
 void PF_WriteByte (void)
 {
-	MSG_WriteByte (WriteDest(), (byte)G_FLOAT(OFS_PARM1));
+	MSG_WriteByte (WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
 void PF_WriteChar (void)
 {
-	MSG_WriteChar (WriteDest(), (char)G_FLOAT(OFS_PARM1));
+	MSG_WriteChar (WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
 void PF_WriteShort (void)
 {
-	MSG_WriteShort (WriteDest(), (short)G_FLOAT(OFS_PARM1));
+	MSG_WriteShort (WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
 void PF_WriteLong (void)
 {
-	MSG_WriteLong (WriteDest(), (long)G_FLOAT(OFS_PARM1));
+	MSG_WriteLong (WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
 void PF_WriteAngle (void)
@@ -1964,8 +1637,6 @@ void PF_WriteEntity (void)
 
 //=============================================================================
 
-int SV_ModelIndex (const char *name);
-
 void PF_makestatic (void)
 {
 	edict_t	*ent;
@@ -1973,19 +1644,13 @@ void PF_makestatic (void)
 	
 	ent = G_EDICT(OFS_PARM0);
 
-	if (SV_ModelIndex(PR_GetString(ent->v.model)) & 0xFF00 || (int)(ent->v.frame) & 0xFF00)
-	{
-		ED_Free(ent);
-		return; //can't display the correct model & frame, so don't show it at all
-	}
-
 	MSG_WriteByte (&sv->signon,svc_spawnstatic);
 
-	MSG_WriteByte (&sv->signon, SV_ModelIndex(PR_GetString(ent->v.model)));
+	MSG_WriteByte (&sv->signon, sv->SV_ModelIndex(pr_strings + ent->v.model));
 
-	MSG_WriteByte (&sv->signon, (int)ent->v.frame);
-	MSG_WriteByte (&sv->signon, (int)ent->v.colormap);
-	MSG_WriteByte (&sv->signon, (int)ent->v.skin);
+	MSG_WriteByte (&sv->signon, ent->v.frame);
+	MSG_WriteByte (&sv->signon, ent->v.colormap);
+	MSG_WriteByte (&sv->signon, ent->v.skin);
 	for (i=0 ; i<3 ; i++)
 	{
 		MSG_WriteCoord(&sv->signon, ent->v.origin[i]);
@@ -1994,24 +1659,6 @@ void PF_makestatic (void)
 
 // throw the entity away now
 	ED_Free (ent);
-}
-
-/*
-=================
-PF_CPPVectorAdd
-
-the size box is rotated by the current angle
-
-CPPVectorAdd (entity, minvector, maxvector)
-=================
-*/
-void PF_CPPVectorAdd(void)
-{
-	std::vector<void*>* vec;
-
-	vec = G_CPPVECTOR(OFS_PARM0);
-
-	vec->push_back((void*)OFS_PARM1);
 }
 
 //=============================================================================
@@ -2054,7 +1701,11 @@ void PF_changelevel (void)
 	svs.changelevel_issued = true;
 	
 	s = G_STRING(OFS_PARM0);
-	Cbuf_AddText (g_Common->va("changelevel %s\n",s));
+
+	char cmd[128] = {};
+	snprintf(cmd, sizeof(cmd), "%s", s);
+
+	g_pCmdBuf->Cbuf_AddText (cmd);
 }
 
 
@@ -2063,46 +1714,6 @@ void PF_Fixme (void)
 	PR_RunError ("unimplemented bulitin");
 }
 
-/*
-======================
-SV_MoveToGoal
-
-======================
-*/
-void PF_MoveToGoal(void)
-{
-	edict_t* ent, * goal;
-	float		dist;
-#ifdef QUAKE2
-	edict_t* enemy;
-#endif
-
-	ent = PROG_TO_EDICT(pr_global_struct->self);
-	goal = PROG_TO_EDICT(ent->v.goalentity);
-	dist = G_FLOAT(OFS_PARM0);
-
-	if (!((int)ent->v.flags & (FL_ONGROUND | FL_FLY | FL_SWIM)))
-	{
-		G_FLOAT(OFS_RETURN) = 0;
-		return;
-	}
-
-	// if the next step hits the enemy, return immediately
-#ifdef QUAKE2
-	enemy = PROG_TO_EDICT(ent->v.enemy);
-	if (enemy != sv->edicts && SV_CloseEnough(ent, enemy, dist))
-#else
-	if (PROG_TO_EDICT(ent->v.enemy) != sv->edicts && sv->SV_CloseEnough(ent, goal, dist))
-#endif
-		return;
-
-	// bump around...
-	if ((rand() & 3) == 1 ||
-		!sv->SV_StepDirection(ent, ent->v.ideal_yaw, dist))
-	{
-		sv->SV_NewChaseDir(ent, goal, dist);
-	}
-}
 
 
 builtin_t pr_builtin[] =
@@ -2177,7 +1788,7 @@ PF_Fixme,
 PF_Fixme,
 PF_Fixme,
 
-PF_MoveToGoal,
+sv->SV_MoveToGoal,
 PF_precache_file,
 PF_makestatic,
 
@@ -2193,8 +1804,7 @@ PF_precache_model,
 PF_precache_sound,		// precache_sound2 is different only for qcc
 PF_precache_file,
 
-PF_setspawnparms,
-PF_CPPVectorAdd
+PF_setspawnparms
 };
 
 builtin_t *pr_builtins = pr_builtin;

@@ -251,10 +251,7 @@ typedef uintptr_t src_offset_t;
 #include "bspfile.h"
 #include "vid.h"
 #include "sys.h"
-
-#ifndef QUAKE_TOOLS
 #include "zone.h"
-#endif
 
 #include "mathlib.h"
 #include "utils.h"
@@ -300,10 +297,8 @@ typedef struct
 #include "view.h"
 #include "menu.h"
 #include "crc.h"
-#ifdef QUAKE_GAME
 #include "cdaudio.h"
 #include "bgmusic.h"
-#endif
 #include "host.h"
 
 #ifdef GLQUAKE
@@ -321,8 +316,6 @@ typedef struct
 
 extern bool noclip_anglehack;
 
-extern CQuakeHost* host;
-
 //
 // chase
 //
@@ -334,14 +327,19 @@ void Chase_Init (void);
 void Chase_Reset (void);
 void Chase_Update (void);
 
+//=============================================================================
 // Missi: this is gross, but it's better than doing #ifdef to everything that these rely on... (4/24/2023)
+//=============================================================================
 
-#ifndef QUAKE_TOOLS
 #ifdef GLQUAKE
 template<typename T = CGLRenderer>
 #else
 template<typename T = CSoftwareRenderer>
 #endif
+extern T* ResolveRenderer();
+
+#ifndef QUAKE_TOOLS
+template<typename T>
 T* ResolveRenderer()
 {
 #ifdef GLQUAKE
@@ -349,5 +347,5 @@ T* ResolveRenderer()
 #else
 	return g_SoftwareRenderer;
 #endif
-}
+};
 #endif

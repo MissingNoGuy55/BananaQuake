@@ -1389,7 +1389,7 @@ void CGLRenderer::GL_SetFilterModes(CGLTexture* glt)
 CGLRenderer::GL_Upload8
 ===============
 */
-void CGLRenderer::GL_Upload8(byte* data, int width, int height, bool mipmap, bool alpha)
+void CGLRenderer::GL_Upload8(byte* data, int width, int height, bool alpha)
 {
 	static	unsigned	trans[640 * 480];		// FIXME, temporary
 	int			i, s;

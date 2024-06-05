@@ -320,7 +320,7 @@ void V_ParseDamage (void)
 	int		armor, blood;
 	vec3_t	from;
 	int		i;
-	vec3_t	forward, right, up;
+	vec3_t	fw, rt, u;
 	entity_t	*ent;
 	float	side;
 	float	count;
@@ -369,12 +369,12 @@ void V_ParseDamage (void)
 	VectorSubtract (from, ent->origin, from);
 	VectorNormalize (from);
 	
-	AngleVectors (ent->angles, forward, right, up);
+	AngleVectors (ent->angles, fw, rt, u);
 
-	side = DotProduct (from, right);
+	side = DotProduct (from, rt);
 	v_dmg_roll = count*side*v_kickroll.value;
 	
-	side = DotProduct (from, forward);
+	side = DotProduct (from, fw);
 	v_dmg_pitch = count*side*v_kickpitch.value;
 
 	v_dmg_time = v_kicktime.value;
@@ -929,7 +929,7 @@ void V_CalcRefdef (void)
 {
 	entity_t	*ent, *view;
 	int			i;
-	vec3_t		forward, right, up;
+	vec3_t		fw, rt, u;
 	vec3_t		angles;
 	float		bob;
 	static float oldz = 0;
@@ -973,17 +973,17 @@ void V_CalcRefdef (void)
 	angles[YAW] = ent->angles[YAW];
 	angles[ROLL] = ent->angles[ROLL];
 
-	AngleVectors (angles, forward, right, up);
+	AngleVectors (angles, fw, rt, u);
 
 	for (i=0 ; i<3 ; i++)
-		r_refdef.vieworg[i] += scr_ofsx.value*forward[i]
-			+ scr_ofsy.value*right[i]
-			+ scr_ofsz.value*up[i];
+		r_refdef.vieworg[i] += scr_ofsx.value*fw[i]
+			+ scr_ofsy.value*rt[i]
+			+ scr_ofsz.value*u[i];
 	
 	
 	V_BoundOffsets ();
 		
-// set up gun position
+// set u gun position
 	VectorCopy (cl.viewangles, view->angles);
 	
 	CalcGunAngle ();
@@ -993,9 +993,9 @@ void V_CalcRefdef (void)
 
 	for (i=0 ; i<3 ; i++)
 	{
-		view->origin[i] += forward[i]*bob*0.4;
-//		view->origin[i] += right[i]*bob*0.4;
-//		view->origin[i] += up[i]*bob*0.8;
+		view->origin[i] += fw[i]*bob*0.4;
+//		view->origin[i] += rt[i]*bob*0.4;
+//		view->origin[i] += u[i]*bob*0.8;
 	}
 	view->origin[2] += bob;
 
@@ -1018,7 +1018,7 @@ void V_CalcRefdef (void)
 	view->frame = cl.stats[STAT_WEAPONFRAME];
 	view->colormap = vid.colormap;
 
-// set up the refresh position
+// set u the refresh position
 	VectorAdd (r_refdef.viewangles, cl.punchangle, r_refdef.viewangles);
 
 // smooth out stair step ups
@@ -1191,7 +1191,7 @@ void V_Init (void)
 	Cvar_RegisterVariable (&v_kickroll);
 	Cvar_RegisterVariable (&v_kickpitch);	
 	
-	BuildGammaTable (1.0);	// no gamma yet
+	BuildGammaTable (1.0f);	// no gamma yet
 	Cvar_RegisterVariable (&v_gamma);
 }
 

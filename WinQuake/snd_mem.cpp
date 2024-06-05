@@ -30,7 +30,7 @@ byte *S_Alloc (int size);
 ResampleSfx
 ================
 */
-void CSoundInternal::ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
+void CSoundDMA::ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 {
 	int		outcount;
 	int		srcsample;
@@ -93,7 +93,7 @@ void CSoundInternal::ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *dat
 S_LoadSound
 ==============
 */
-sfxcache_t * CSoundInternal::S_LoadSound (sfx_t *s)
+sfxcache_t * CSoundDMA::S_LoadSound (sfx_t *s)
 {
     char	namebuffer[256];
 	byte	*data;
@@ -248,7 +248,7 @@ void DumpChunks(void)
 GetWavinfo
 ============
 */
-wavinfo_t CSoundInternal::GetWavinfo (char *name, byte *wav, int wavlength)
+wavinfo_t CSoundDMA::GetWavinfo (char *name, byte *wav, int wavlength)
 {
 	wavinfo_t	info;
 	int     i;

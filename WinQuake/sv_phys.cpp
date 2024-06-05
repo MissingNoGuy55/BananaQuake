@@ -226,7 +226,7 @@ If steptrace is not NULL, the trace of any vertical wall hit will be stored
 ============
 */
 #define	MAX_CLIP_PLANES	5
-int CQuakeServer::SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
+int CQuakeServer::SV_FlyMove (edict_t *ent, float tm, trace_t *steptrace)
 {
 	int			bumpcount, numbumps;
 	vec3_t		dir;
@@ -247,7 +247,7 @@ int CQuakeServer::SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 	VectorCopy (ent->v.velocity, primal_velocity);
 	numplanes = 0;
 	
-	time_left = time;
+	time_left = tm;
 
 	for (bumpcount=0 ; bumpcount<numbumps ; bumpcount++)
 	{
@@ -1405,7 +1405,7 @@ void SV_Physics_Step (edict_t *ent)
 		// apply friction
 		// let dead monsters who aren't completely onground slide
 		if (wasonground)
-			if (!(ent->v.health <= 0.0 && !SV_CheckBottom(ent)))
+			if (!(ent->v.health <= 0.0 && !sv->SV_CheckBottom(ent)))
 			{
 				vel = ent->v.velocity;
 				speed = sqrt(vel[0]*vel[0] +vel[1]*vel[1]);

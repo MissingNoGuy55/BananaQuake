@@ -122,6 +122,7 @@ private:
 
 };
 
+extern CQuakeHost* host;
 extern client_t* host_client;			// current client
 
 #endif

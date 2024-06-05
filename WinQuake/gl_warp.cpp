@@ -58,7 +58,7 @@ void CGLRenderer::SubdividePolygon (int numverts, float *verts)
 	float	*v;
 	vec3_t	front[64], back[64];
 	int		f, b;
-	float	dist[64];
+	float	dist[64] = {};
 	float	frac;
 	glpoly_t	*poly;
 	float	s, t;
@@ -149,7 +149,6 @@ void CGLRenderer::GL_SubdivideSurface (msurface_t *fa)
 	int			i;
 	int			lindex;
 	float		*vec;
-	texture_t	*t;
 
 	warpface = fa;
 
@@ -272,10 +271,6 @@ will have them chained together.
 */
 void CGLRenderer::EmitBothSkyLayers (msurface_t *fa)
 {
-	int			i;
-	int			lindex;
-	float		*vec;
-
 	GL_DisableMultitexture();
 
 	g_GLRenderer->GL_Bind (solidskytexture);

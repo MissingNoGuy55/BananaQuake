@@ -167,7 +167,7 @@ void Cvar_RegisterVariable (cvar_t *variable)
 	}
 	
 // check for overlap with a command
-	if (g_pCmds->Cmd_Exists (variable->name))
+	if (g_pCmds->Cmd_Exists(variable->name))
 	{
 		Con_Printf ("Cvar_RegisterVariable: %s is a command\n", variable->name);
 		return;

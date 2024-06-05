@@ -320,7 +320,6 @@ void CGLRenderer::GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 {
 	float 	l;
 	trivertx_t *verts;
-	int		list;
 	int		*order;
 	int		count;
 
@@ -371,12 +370,9 @@ extern	vec3_t			lightspot;
 
 void CGLRenderer::GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 {
-	int		index;
-	trivertx_t	*v, *verts;
-	int		list;
+	trivertx_t	*verts;
 	int		*order;
 	vec3_t	point;
-	float	*normal;
 	float	height, lheight;
 	int		count;
 
@@ -470,17 +466,14 @@ R_DrawAliasModel
 */
 void CGLRenderer::R_DrawAliasModel (entity_t *e)
 {
-	int			i, j;
+	int			i;
 	int			lnum;
 	vec3_t		dist;
 	float		add;
 	model_t		*clmodel;
 	vec3_t		mins, maxs;
 	aliashdr_t	*paliashdr;
-	trivertx_t	*verts, *v;
-	CGLTexture* tx, * fb;
-	int			index;
-	float		s, t, an;
+	float		an;
 	int			anim;
 
 	clmodel = currententity->model;
@@ -839,10 +832,6 @@ R_SetupFrame
 */
 void CGLRenderer::R_SetupFrame (void)
 {
-	int				edgecount;
-	vrect_t			vrect;
-	float			w, h;
-
 // don't allow cheats in multiplayer
 	if (cl.maxclients > 1)
 		Cvar_Set ("r_fullbright", "0");
@@ -894,8 +883,6 @@ R_SetupGL
 void CGLRenderer::R_SetupGL (void)
 {
 	float	screenaspect;
-	float	yfov;
-	int		i;
 	extern	int glwidth, glheight;
 	int		x, x2, y2, y, w, h;
 

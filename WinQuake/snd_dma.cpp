@@ -27,6 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #endif
 
+int CSoundDMA::paintedtime = 0;
+float CSoundDMA::sound_nominal_clip_dist = 1000.0f;
+
 // =======================================================================
 // Internal sound data & structures
 // =======================================================================
@@ -55,15 +58,15 @@ cvar_t		snd_mixspeed = { "snd_mixspeed", "44100" };
 cvar_t		snd_speed = { "snd_speed", "11025" };
 
 
-channel_t CSoundInternal::channels[128];
-int CSoundInternal::total_channels = 0;
-int CSoundInternal::num_sfx = 0;
-int CSoundInternal::sound_started = 0;
+channel_t CSoundDMA::channels[128];
+int CSoundDMA::total_channels = 0;
+int CSoundDMA::num_sfx = 0;
+int CSoundDMA::sound_started = 0;
 vec3_t listener_origin = {};
 vec3_t listener_forward = {};
 vec3_t listener_right = {};
 vec3_t listener_up = {};
-sfx_t* CSoundInternal::known_sfx[MAX_SFX] = { (sfx_t*)calloc(1, sizeof(sfx_t)) };
+sfx_t* CSoundDMA::known_sfx[MAX_SFX] = { (sfx_t*)calloc(1, sizeof(sfx_t)) };
 
 SDL_AudioDeviceID g_SoundDeviceID;
 
@@ -92,12 +95,12 @@ void CSoundDMA::S_AmbientOn (void)
 	snd_ambient = true;
 }
 
-void CSoundInternal::S_SoundInfo_f(void)
+void CSoundDMA::S_SoundInfo_f(void)
 {
 	g_SoundSystem->S_SoundInfo();
 }
 
-void CSoundInternal::S_SoundInfo()
+void CSoundDMA::S_SoundInfo()
 {
     if (!sound_started || !shm)
 	{
@@ -125,11 +128,8 @@ void CSoundDMA::S_Startup (void)
 {
 	if (!snd_initialized)
 		return;
-#ifdef _WIN32
-        sound_started = g_SoundSystem->SNDDMA_Init(&sn);
-#elif __linux__
-        sound_started = g_SoundSystem->SNDDMA_Init(&sn);
-#endif
+
+    sound_started = g_SoundSystem->SNDDMA_Init(&sn);
 	if (!sound_started)
 	{
 		Con_Printf("Failed initializing sound\n");
@@ -141,10 +141,6 @@ void CSoundDMA::S_Startup (void)
 			(shm->channels == 2) ? "stereo" : "mono",
 			shm->speed);
 	}
-}
-
-CSoundDMA::CSoundDMA()
-{
 }
 /*
 ================
@@ -163,11 +159,11 @@ void CSoundDMA::S_Init (void)
 		fakedma = true;
 
 	
-	g_pCmds->Cmd_AddCommand("play", S_Play);
-	g_pCmds->Cmd_AddCommand("playvol", S_PlayVol);
-	g_pCmds->Cmd_AddCommand("stopsound", S_StopAllSoundsC);
-	g_pCmds->Cmd_AddCommand("soundlist", S_SoundList);
-	g_pCmds->Cmd_AddCommand("soundinfo", S_SoundInfo_f);
+	g_pCmds->Cmd_AddCommand("play", &CSoundDMA::S_Play);
+	g_pCmds->Cmd_AddCommand("playvol", &CSoundDMA::S_PlayVol);
+	g_pCmds->Cmd_AddCommand("stopsound", &CSoundDMA::S_StopAllSoundsC);
+	g_pCmds->Cmd_AddCommand("soundlist", &CSoundDMA::S_SoundList);
+	g_pCmds->Cmd_AddCommand("soundinfo", &CSoundDMA::S_SoundInfo_f);
 
 		// Missi: enable this later
 	Cvar_RegisterVariable(&nosound);
@@ -249,7 +245,7 @@ void CSoundDMA::S_Shutdown(void)
 
 	if (!fakedma)
 	{
-		g_SoundSystem->SNDDMA_Shutdown();
+        g_SoundSystem->SNDDMA_Shutdown();
 	}
 }
 
@@ -264,7 +260,7 @@ S_FindName
 
 ==================
 */
-sfx_t* CSoundInternal::S_FindName (const char *name)
+sfx_t* CSoundDMA::S_FindName (const char *name)
 {
 	int		i;
 	sfx_t*	sfx;
@@ -317,7 +313,7 @@ S_PrecacheSound
 
 ==================
 */
-sfx_t* CSoundInternal::S_PrecacheSound (const char *name)
+sfx_t* CSoundDMA::S_PrecacheSound (const char *name)
 {
 	sfx_t	*sfx;
 
@@ -529,7 +525,7 @@ void CSoundDMA::S_StopSound(int entnum, int entchannel)
 	}
 }
 
-void CSoundInternal::S_StopAllSounds(bool clear)
+void CSoundDMA::S_StopAllSounds(bool clear)
 {
 	int		i;
 
@@ -548,7 +544,7 @@ void CSoundInternal::S_StopAllSounds(bool clear)
 		g_SoundSystem->S_ClearBuffer ();
 }
 
-void CSoundInternal::S_StopAllSoundsC (void)
+void CSoundDMA::S_StopAllSoundsC (void)
 {
 	S_StopAllSounds (true);
 }
@@ -859,13 +855,11 @@ void CSoundDMA::S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 
 void CSoundDMA::S_CheckMDMAMusic()
 {
-	static int oldtrack = cl.cdtrack;
-	static int oldlooptrack = cl.looptrack;
-	static bool oldsongplaying = false;
-	static bool songplaying = false;
-
 	if (cl.items & IT_QUAD && !songplaying)
 	{
+		oldtrack = cl.cdtrack;
+		oldlooptrack = cl.looptrack;
+
 		cl.cdtrack = 12;
 		cl.looptrack = true;
 		g_BGM->BGM_PlayCDtrack((byte)cl.cdtrack, cl.looptrack);
@@ -894,7 +888,7 @@ void CSoundDMA::GetSoundtime(void)
 // it is possible to miscount buffers if it has wrapped twice between
 // calls to S_Update.  Oh well.
 
-	samplepos = g_SoundSystem->SNDDMA_GetDMAPos();
+    samplepos = g_SoundSystem->SNDDMA_GetDMAPos();
 
 	if (samplepos < oldsamplepos)
 	{
@@ -927,7 +921,7 @@ void CSoundDMA::S_ExtraUpdate (void)
 	S_Update_();
 }
 
-void CSoundInternal::S_Update_(void)
+void CSoundDMA::S_Update_(void)
 {
 	unsigned int	endtime;
 	int				samps;
@@ -935,12 +929,12 @@ void CSoundInternal::S_Update_(void)
 	if (!sound_started || (snd_blocked > 0))
 		return;
 
-	g_SoundSystem->SNDDMA_LockBuffer();
+	SNDDMA_LockBuffer();
 	if (!shm->buffer)
 		return;
 
 // Updates DMA time
-	g_SoundSystem->GetSoundtime();
+	GetSoundtime();
 
 // check to make sure that we haven't overshot
 	if (paintedtime < soundtime)
@@ -955,9 +949,9 @@ void CSoundInternal::S_Update_(void)
 	samps = shm->samples >> (shm->channels - 1);
 	endtime = q_min(endtime, (unsigned int)(soundtime + samps));
 
-	g_SoundSystem->S_PaintChannels (endtime);
+    S_PaintChannels (endtime);
 
- 	g_SoundSystem->SNDDMA_Submit ();
+ 	SNDDMA_Submit ();
 
 }
 
@@ -979,16 +973,20 @@ console functions
 ===============================================================================
 */
 
-CSoundInternal::CSoundInternal() : snd_blocked(0), 
+CSoundDMA::CSoundDMA() : snd_blocked(0),
 	snd_ambient(true), 
 	snd_initialized(false), 
-	soundtime(0), 
-	paintedtime(0), 
+	soundtime(0),  
 	desired_speed(11025),
 	desired_bits(16), 
 	gSndBufSize(0), 
 	mmstarttime(0.f),
-	sound_nominal_clip_dist(1000.0)
+	songplaying(false),
+	oldsongplaying(false),
+	curtrack(0),
+	curlooptrack(0),
+	oldtrack(0),
+	oldlooptrack(0)
 {
 	for (int i = 0; i < NUM_AMBIENTS; i++)
 		ambient_sfx[i] = NULL;
@@ -1004,7 +1002,38 @@ CSoundInternal::CSoundInternal() : snd_blocked(0),
 	memset(&sn, 0, sizeof(dma_t));
 }
 
-void CSoundInternal::S_Play(void)
+CSoundDMA::~CSoundDMA()
+{
+	for (int i = 0; i < NUM_AMBIENTS; i++)
+		ambient_sfx[i] = NULL;
+
+	for (int i = 0; i < MAX_SFX; i++)
+		known_sfx[i] = (sfx_t*)calloc(1, sizeof(sfx_t));
+
+	memset(&listener_origin, 0, sizeof(vec3_t));
+	memset(&listener_forward, 0, sizeof(vec3_t));
+	memset(&listener_right, 0, sizeof(vec3_t));
+	memset(&listener_up, 0, sizeof(vec3_t));
+
+	memset(&sn, 0, sizeof(dma_t));
+
+	snd_blocked = 0;
+	snd_ambient = false;
+	snd_initialized = false;
+	soundtime = 0;
+	desired_speed = 0;
+	desired_bits = 0;
+	gSndBufSize = 0;
+	mmstarttime = 0.0f;
+	songplaying = false;
+	oldsongplaying = false;
+	curtrack = 0;
+	curlooptrack = 0;
+	oldtrack = 0;
+	oldlooptrack = 0;
+}
+
+void CSoundDMA::S_Play(void)
 {
 	static int hash = 345;
 	int 	i;
@@ -1021,13 +1050,13 @@ void CSoundInternal::S_Play(void)
 		}
 		else
 			Q_strcpy(name, g_pCmds->Cmd_Argv(i));
-		sfx = g_SoundSystem->S_PrecacheSound(name);
-		g_SoundSystem->S_StartSound(hash++, 0, sfx, listener_origin, 1.0, 1.0);
+		sfx = S_PrecacheSound(name);
+		S_StartSound(hash++, 0, sfx, listener_origin, 1.0, 1.0);
 		i++;
 	}
 }
 
-void CSoundInternal::S_PlayVol(void)
+void CSoundDMA::S_PlayVol(void)
 {
 	static int hash=543;
 	int i;
@@ -1045,14 +1074,14 @@ void CSoundInternal::S_PlayVol(void)
 		}
 		else
 			Q_strcpy(name, g_pCmds->Cmd_Argv(i));
-		sfx = g_SoundSystem->S_PrecacheSound(name);
+		sfx = S_PrecacheSound(name);
 		vol = Q_atof(g_pCmds->Cmd_Argv(i+1));
-		g_SoundSystem->S_StartSound(hash++, 0, sfx, listener_origin, vol, 1.0);
+		S_StartSound(hash++, 0, sfx, listener_origin, vol, 1.0);
 		i+=2;
 	}
 }
 
-void CSoundInternal::S_SoundList(void)
+void CSoundDMA::S_SoundList(void)
 {
 	int		i;
 	sfx_t	*sfx;

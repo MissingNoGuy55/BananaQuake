@@ -297,7 +297,7 @@ void Host_Map_f (void)
 			Q_strcat (cls.spawnparms, " ");
 		}
 		
-		g_pCmds->Cmd_ExecuteString ("connect local", src_command);
+		g_pCmds->Cmd_ExecuteString("connect local", src_command);
 	}	
 }
 
@@ -564,13 +564,15 @@ void Host_Loadgame_f (void)
 	FILE	*f;
 	static char	mapname[MAX_QPATH];
 	float	time, tfloat;
-	char	str[32768];
+	static char	str[32768] = {};
 	const char *start;
 	int		i, r;
 	edict_t	*ent;
 	int		entnum;
 	int		version;
 	static float			spawn_parms[NUM_SPAWN_PARMS];
+
+	memset(str, 0, sizeof(str));
 
 	if (cmd_source != src_command)
 		return;
@@ -1098,8 +1100,8 @@ void Host_Tell_f(void)
 	client_t *client;
 	client_t *save;
 	int		j;
-	char	*p;
-	char	text[64];
+	char*	p = {};
+	char	text[64] = {};
 
 	if (cmd_source == src_command)
 	{
@@ -1113,7 +1115,7 @@ void Host_Tell_f(void)
 	Q_strcpy(text, host_client->name);
 	Q_strcat(text, ": ");
 
-	strcat(p, g_pCmds->Cmd_Args());
+	Q_strcat(p, g_pCmds->Cmd_Args());
 
 // remove quotes if present
 	if (*p == '"')
@@ -1435,9 +1437,9 @@ Kicks a user off of the server
 */
 void Host_Kick_f (void)
 {
-	const char		*who;
-	const char		*message;
-	client_t	*save;
+	const char		*who = nullptr;
+	const char		*message = nullptr;
+	client_t	*save = nullptr;
 	int			i;
 	bool	byNumber = false;
 
@@ -1528,7 +1530,7 @@ Host_Give_f
 void Host_Give_f (void)
 {
 	char	t[256];
-	int		v, w;
+	int		v;
 	eval_t	*val;
 
 	if (cmd_source == src_command)

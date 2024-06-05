@@ -86,7 +86,6 @@ Zone block
 #ifndef ZONE_H
 #define ZONE_H
 
-#ifndef QUAKE_TOOLS
 #include "sys.h"
 
 #if defined (__linux__) || defined(__CYGWIN__)
@@ -106,6 +105,11 @@ void Sys_Error(const char* err, ...);
 
 #define	ZONEID	0x1d4a11
 #define MINFRAGMENT	64
+
+struct cache_user_s
+{
+	void* data;
+};
 
 extern struct cvar_s zone_debug;
 
@@ -322,8 +326,6 @@ void CMemZone::Z_CheckHeap(void)
 
 	for (block = (CMemBlock<T>*)blocklist.next; ; block = block->next)
 	{
-		const auto& testblock = (CMemBlock<T>*) &blocklist;
-
 		if (block->next == (CMemBlock<T>*)&blocklist)
 			break;			// all blocks have been hit	
 		if ((byte*)block + block->size != (byte*)block->next)
@@ -388,10 +390,13 @@ Z_Malloc
 ========================
 */
 
+extern void Q_memset(void* src, int fill, size_t size);
+
 template<typename T>
 T* CMemZone::Z_Malloc(int size)
 {
 	T* buf = 0;
+
 
 	Z_CheckHeap<T>();	// DEBUG
 	buf = (T*)Z_TagMalloc<T>(size, 1);
@@ -467,8 +472,6 @@ T* CMemZone::Z_TagMalloc(int size, int tag)
 
 	// marker for memory trash testing
 	*(int*)((byte*)base + base->size - 4) = ZONEID;
-
-	auto test = ((byte*)base + sizeof(CMemBlock<T>));
 
 	return (T*)((byte*)base + sizeof(CMemBlock<T>));
 }
@@ -587,6 +590,14 @@ CMemCacheSystem* CMemCache::m_CacheSystem = {};
 
 extern CMemCache* g_MemCache;
 
+/*
+============================================================
+
+					TEMPLATE FUNCTIONS
+
+============================================================
+*/
+#ifndef QUAKE_TOOLS
 /*
 ============
 Cache_Init
@@ -1295,6 +1306,6 @@ inline void CMemBlock<T, I>::Purge(int numElements)
 
 	m_pMemory = (T*)realloc(m_pMemory, size * sizeof(T));
 }
-
 #endif
 #endif
+ 

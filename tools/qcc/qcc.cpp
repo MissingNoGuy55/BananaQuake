@@ -18,11 +18,11 @@
 */
 
 #include	"qcc.h"
-#include	<strsafe.h>
+
 
 char		destfile[1024];
 
-float		p_globals[MAX_REGS];
+float		pr_globals[MAX_REGS];
 int			numpr_globals;
 
 char		strings[MAX_STRINGS];
@@ -52,6 +52,7 @@ int			nummodels;
 char		precache_files[MAX_FILES][MAX_DATA_PATH];
 int			precache_files_block[MAX_SOUNDS];
 int			numfiles;
+
 
 /*
 =================
@@ -182,12 +183,11 @@ void WriteData (int crc)
 {
 	def_t		*def;
 	ddef_t		*dd;
-	dprograms_t	progs = {};
-#ifdef __linux
+	dprograms_t	progs;
+#ifdef __linux__
 	int			h;
-#elif _WIN32
-	FILE*		h ={};
-	DWORD		fsizehigh;
+#else
+	FILE*		h;
 #endif
 	int			i;
 
@@ -223,7 +223,7 @@ void WriteData (int crc)
 //PrintFunctions ();
 //PrintFields ();
 //PrintGlobals ();
-	strofs = (strofs+3)&~3;
+strofs = (strofs+3)&~3;
 
 	printf ("%6i strofs\n", strofs);
 	printf ("%6i numstatements\n", numstatements);
@@ -233,21 +233,21 @@ void WriteData (int crc)
 	printf ("%6i numpr_globals\n", numpr_globals);
 	
 	h = SafeOpenWrite (destfile);
-	//fseek(h, 0, SEEK_SET);
 	SafeWrite (h, &progs, sizeof(progs));
 
-
-	fpos_t pos;
-	fgetpos(h, &pos);
-
-	progs.ofs_strings = pos;
+#ifdef __linux__
+	progs.ofs_strings = lseek (h, 0, SEEK_CUR);
+#else
+	progs.ofs_strings = fseek (h, 0, SEEK_CUR);
+#endif
 	progs.numstrings = strofs;
 	SafeWrite (h, strings, strofs);
 
-	pos = 0;
-	fgetpos(h, &pos);
-
-	progs.ofs_statements = pos;
+#ifdef __linux__
+	progs.ofs_statements = lseek (h, 0, SEEK_CUR);
+#else
+	progs.ofs_statements = fseek (h, 0, SEEK_CUR);
+#endif
 	progs.numstatements = numstatements;
 	for (i=0 ; i<numstatements ; i++)
 	{
@@ -258,10 +258,11 @@ void WriteData (int crc)
 	}
 	SafeWrite (h, statements, numstatements*sizeof(dstatement_t));
 
-	pos = 0;
-	fgetpos(h, &pos);
-
-	progs.ofs_functions = pos;
+#ifdef __linux__
+	progs.ofs_functions = lseek (h, 0, SEEK_CUR);
+#else
+	progs.ofs_functions = fseek(h, 0, SEEK_CUR);
+#endif
 	progs.numfunctions = numfunctions;
 	for (i=0 ; i<numfunctions ; i++)
 	{
@@ -274,10 +275,11 @@ void WriteData (int crc)
 	}	
 	SafeWrite (h, functions, numfunctions*sizeof(dfunction_t));
 
-	pos = 0;
-	fgetpos(h, &pos);
-
-	progs.ofs_globaldefs = pos;
+#ifdef __linux__
+	progs.ofs_globaldefs = lseek (h, 0, SEEK_CUR);
+#else
+	progs.ofs_globaldefs = fseek (h, 0, SEEK_CUR);
+#endif
 	progs.numglobaldefs = numglobaldefs;
 	for (i=0 ; i<numglobaldefs ; i++)
 	{
@@ -287,10 +289,11 @@ void WriteData (int crc)
 	}
 	SafeWrite (h, globals, numglobaldefs*sizeof(ddef_t));
 
-	pos = 0;
-	fgetpos(h, &pos);
+#ifdef __linux__
+	progs.ofs_fielddefs = lseek (h, 0, SEEK_CUR);
+#else
 
-	progs.ofs_fielddefs = pos;
+#endif
 	progs.numfielddefs = numfielddefs;
 	for (i=0 ; i<numfielddefs ; i++)
 	{
@@ -300,16 +303,17 @@ void WriteData (int crc)
 	}
 	SafeWrite (h, fields, numfielddefs*sizeof(ddef_t));
 
-	pos = 0;
-	fgetpos(h, &pos);
-
-	progs.ofs_globals = pos;
+#ifdef __linux__
+	progs.ofs_globals = lseek (h, 0, SEEK_CUR);
+#else
+	progs.ofs_globals = fseek(h, 0, SEEK_CUR);
+#endif
 	progs.numglobals = numpr_globals;
 	for (i=0 ; i<numpr_globals ; i++)
-		((int *)p_globals)[i] = LittleLong (((int *)p_globals)[i]);
-	SafeWrite (h, p_globals, numpr_globals*4);
+		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
+	SafeWrite (h, pr_globals, numpr_globals*4);
 
-	printf ("%6i TOTAL SIZE\n", (int)pos);
+	printf ("%6i TOTAL SIZE\n", (int)fseek (h, 0, SEEK_CUR));	
 
 	progs.entityfields = pr.size_fields;
 
@@ -381,7 +385,7 @@ def_t	*PR_DefForFieldOfs (gofs_t ofs)
 	{
 		if (d->type->type != ev_field)
 			continue;
-		if (*((int *)&p_globals[d->ofs]) == ofs)
+		if (*((int *)&pr_globals[d->ofs]) == ofs)
 			return d;
 	}
 	Error ("PR_DefForFieldOfs: couldn't find %i",ofs);
@@ -395,7 +399,7 @@ PR_ValueString
 Returns a string describing *data in a type specific manner
 =============
 */
-const char *PR_ValueString (etype_t type, void *val)
+char *PR_ValueString (etype_t type, void *val)
 {
 	static char	line[256];
 	def_t		*def;
@@ -455,7 +459,7 @@ char *PR_GlobalStringNoContents (gofs_t ofs)
 	void	*val;
 	static char	line[128];
 	
-	val = (void *)&p_globals[ofs];
+	val = (void *)&pr_globals[ofs];
 	def = pr_global_defs[ofs];
 	if (!def)
 //		Error ("PR_GlobalString: no def for %i", ofs);
@@ -473,19 +477,19 @@ char *PR_GlobalStringNoContents (gofs_t ofs)
 
 char *PR_GlobalString (gofs_t ofs)
 {
-	const char	*s;
+	char	*s;
 	int		i;
 	def_t	*def;
 	void	*val;
 	static char	line[128];
 	
-	val = (void *)&p_globals[ofs];
+	val = (void *)&pr_globals[ofs];
 	def = pr_global_defs[ofs];
 	if (!def)
 		return PR_GlobalStringNoContents(ofs);
 	if (def->initialized && def->type->type != ev_function)
 	{
-		s = PR_ValueString (def->type->type, &p_globals[ofs]);
+		s = PR_ValueString (def->type->type, &pr_globals[ofs]);
 		sprintf (line,"%i(%s)", ofs, s);
 	}
 	else
@@ -514,7 +518,6 @@ void PR_PrintOfs (gofs_t ofs)
 PR_PrintStatement
 =================
 */
-/*
 void PR_PrintStatement (dstatement_t *s)
 {
 	int		i;
@@ -546,7 +549,6 @@ void PR_PrintStatement (dstatement_t *s)
 	}
 	printf ("\n");
 }
-*/
 
 
 /*
@@ -832,118 +834,19 @@ typedef struct
 } packheader_t;
 
 packfile_t	pfiles[4096], *pf;
-#ifdef __linux
-int			packhandle;
-#elif _WIN32
 FILE*		packhandle;
-#endif
 int			packbytes;
 
-#include <stringapiset.h>
-
-#ifdef __linux
-void Sys_mkdir (const char *path)
-#elif _WIN32
-void Sys_mkdir (LPCWSTR path)
-#endif
+void Sys_mkdir (const wchar_t *path)
 {
-#ifdef __linux
+#ifdef __linux__
 	if (mkdir (path, 0777) != -1)
 		return;
-#elif _WIN32
-
-	DWORD dwRes, dwDisposition;
-	PSID pEveryoneSID = NULL, pAdminSID = NULL;
-	PACL pACL = NULL;
-	PSECURITY_DESCRIPTOR pSD = NULL;
-	EXPLICIT_ACCESS ea[2];
-	SID_IDENTIFIER_AUTHORITY SIDAuthWorld =
-		SECURITY_WORLD_SID_AUTHORITY;
-	SID_IDENTIFIER_AUTHORITY SIDAuthNT = SECURITY_NT_AUTHORITY;
-	SECURITY_ATTRIBUTES sa;
-	LPSECURITY_ATTRIBUTES secAttr = &sa;
-
-	// Create a well-known SID for the Everyone group.
-	if (!AllocateAndInitializeSid(&SIDAuthWorld, 1,
-		SECURITY_WORLD_RID,
-		0, 0, 0, 0, 0, 0, 0,
-		&pEveryoneSID))
-	{
-		printf("AllocateAndInitializeSid Error %lu\n", GetLastError());
-	}
-
-	// Initialize an EXPLICIT_ACCESS structure for an ACE.
-	// The ACE will allow Everyone read access to the key.
-	ZeroMemory(&ea, 2 * sizeof(EXPLICIT_ACCESS));
-	ea[0].grfAccessPermissions = KEY_READ;
-	ea[0].grfAccessMode = SET_ACCESS;
-	ea[0].grfInheritance = NO_INHERITANCE;
-	ea[0].Trustee.TrusteeForm = TRUSTEE_IS_SID;
-	ea[0].Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
-	ea[0].Trustee.ptstrName = (LPTSTR)pEveryoneSID;
-
-	// Create a SID for the BUILTIN\Administrators group.
-	if (!AllocateAndInitializeSid(&SIDAuthNT, 2,
-		SECURITY_BUILTIN_DOMAIN_RID,
-		DOMAIN_ALIAS_RID_ADMINS,
-		0, 0, 0, 0, 0, 0,
-		&pAdminSID))
-	{
-		printf("AllocateAndInitializeSid Error %u\n", GetLastError());
-	}
-
-	// Initialize an EXPLICIT_ACCESS structure for an ACE.
-	// The ACE will allow the Administrators group full access to
-	// the key.
-	ea[1].grfAccessPermissions = KEY_ALL_ACCESS;
-	ea[1].grfAccessMode = SET_ACCESS;
-	ea[1].grfInheritance = NO_INHERITANCE;
-	ea[1].Trustee.TrusteeForm = TRUSTEE_IS_SID;
-	ea[1].Trustee.TrusteeType = TRUSTEE_IS_GROUP;
-	ea[1].Trustee.ptstrName = (LPTSTR)pAdminSID;
-
-	// Create a new ACL that contains the new ACEs.
-	dwRes = SetEntriesInAcl(2, ea, NULL, &pACL);
-	if (ERROR_SUCCESS != dwRes)
-	{
-		printf("SetEntriesInAcl Error %u\n", GetLastError());
-	}
-
-	// Initialize a security descriptor.  
-	pSD = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR,
-		SECURITY_DESCRIPTOR_MIN_LENGTH);
-	if (NULL == pSD)
-	{
-		printf("LocalAlloc Error %u\n", GetLastError());
-	}
-
-	if (!InitializeSecurityDescriptor(pSD,
-		SECURITY_DESCRIPTOR_REVISION))
-	{
-		printf("InitializeSecurityDescriptor Error %u\n", GetLastError());
-	}
-
-	// Add the ACL to the security descriptor. 
-	if (!SetSecurityDescriptorDacl(pSD,
-		TRUE,     // bDaclPresent flag   
-		pACL,
-		FALSE))   // not a default DACL 
-	{
-		printf("SetSecurityDescriptorDacl Error %u\n",
-			GetLastError());
-	}
-
-	// Initialize a security attributes structure.
-	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-	sa.lpSecurityDescriptor = pSD;
-	sa.bInheritHandle = FALSE;
-
-	if (CreateDirectoryW(path, secAttr) != -1)
-		return;
-#endif
-
 	if (errno != EEXIST)
-		Error ("mkdir %s: %s",path, strerror(errno)); 
+		Error ("mkdir %s: %s",path, strerror(errno));
+#else
+	_wmkdir(path);
+#endif
 }
 
 /*
@@ -954,8 +857,6 @@ CreatePath
 void	CreatePath (char *path)
 {
 	char	*ofs;
-	LPCCH	mulbytestr = {};
-	LPWSTR	mulbytestr2 = {};
 	
 	for (ofs = path+1 ; *ofs ; ofs++)
 	{
@@ -963,9 +864,11 @@ void	CreatePath (char *path)
 		{	// create the directory
 			*ofs = 0;
 
-			MultiByteToWideChar(CP_UTF8, 0, mulbytestr, strlen(mulbytestr), mulbytestr2, wcslen(mulbytestr2));
+			wchar_t wpath[256];
 
-			Sys_mkdir (mulbytestr2);
+			mbstowcs(wpath, path, strlen(path));
+
+			Sys_mkdir (wpath);
 			*ofs = '/';
 		}
 	}
@@ -981,11 +884,7 @@ Copy a file into the pak file
 */
 void PackFile (char *src, char *name)
 {
-#ifdef __linux
-	int		in;
-#elif _WIN32
 	FILE*	in;
-#endif
 	int		remaining, count;
 	char	buf[4096];
 	
@@ -994,11 +893,8 @@ void PackFile (char *src, char *name)
 	
 	in = SafeOpenRead (src);
 	remaining = filelength (in);
-#ifdef __linux
-	pf->filepos = LittleLong (lseek (packhandle, 0, SEEK_CUR));
-#elif _WIN32
+
 	pf->filepos = LittleLong (fseek (packhandle, 0, SEEK_CUR));
-#endif
 	pf->filelen = LittleLong (remaining);
 	strcpy (pf->name, name);
 	printf ("%64s : %7i\n", pf->name, remaining);
@@ -1015,29 +911,22 @@ void PackFile (char *src, char *name)
 		SafeWrite (packhandle, buf, count);
 		remaining -= count;
 	}
-#ifdef __linux
-	close (in);
-#elif _WIN32
-	fclose(in);
-#endif
+
+	fclose (in);
 	pf++;
 }
 
 
 /*
 ===========
-DoCopyFile
+CopyFile
 
 Copies a file, creating any directories needed
 ===========
 */
-void DoCopyFile (char *src, char *dest)
+void CopyFile (char *src, char *dest)
 {
-#ifdef __linux
-	int		in, out;
-#elif _WIN32
 	FILE*	in, *out;
-#endif
 	int		remaining, count;
 	char	buf[4096];
 	
@@ -1059,13 +948,9 @@ void DoCopyFile (char *src, char *dest)
 		SafeWrite (out, buf, count);
 		remaining -= count;
 	}
-#ifdef __linux
-	close (in);
-	close (out);
-#elif _WIN32
-	fclose(in);
-	fclose(out);
-#endif
+
+	fclose (in);
+	fclose (out);	
 }
 
 
@@ -1135,7 +1020,7 @@ void CopyFiles (void)
 		sprintf (srcfile,"%s%s",srcdir, name);
 		sprintf (destfile,"%s%s",destdir, name);
 		if (copytype == 1)
-			DoCopyFile (srcfile, destfile);
+			CopyFile (srcfile, destfile);
 		else
 			PackFile (srcfile, name);
 	}
@@ -1146,7 +1031,7 @@ void CopyFiles (void)
 		sprintf (srcfile,"%s%s",srcdir, precache_models[i]);
 		sprintf (destfile,"%s%s",destdir, precache_models[i]);
 		if (copytype == 1)
-			DoCopyFile (srcfile, destfile);
+			CopyFile (srcfile, destfile);
 		else
 			PackFile (srcfile, precache_models[i]);
 	}
@@ -1157,7 +1042,7 @@ void CopyFiles (void)
 		sprintf (srcfile,"%s%s",srcdir, precache_files[i]);
 		sprintf (destfile,"%s%s",destdir, precache_files[i]);
 		if (copytype == 1)
-			DoCopyFile (srcfile, destfile);
+			CopyFile (srcfile, destfile);
 		else
 			PackFile (srcfile, precache_files[i]);
 	}
@@ -1169,23 +1054,15 @@ void CopyFiles (void)
 		header.id[2] = 'C';
 		header.id[3] = 'K';
 		dirlen = (byte *)pf - (byte *)pfiles;
-#ifdef __linux
-		header.dirofs = LittleLong(lseek (packhandle, 0, SEEK_CUR));
-#elif _WIN32
-		header.dirofs = LittleLong(fseek(packhandle, 0, SEEK_CUR));
-#endif
+		header.dirofs = LittleLong(fseek (packhandle, 0, SEEK_CUR));
 		header.dirlen = LittleLong(dirlen);
 		
 		SafeWrite (packhandle, pfiles, dirlen);
-#ifdef __linux
-		lseek (packhandle, 0, SEEK_SET);
+	
+		fseek (packhandle, 0, SEEK_SET);
 		SafeWrite (packhandle, &header, sizeof(header));
-		close (packhandle);	
-#elif _WIN32
-		fseek(packhandle, 0, SEEK_SET);
-		SafeWrite(packhandle, &header, sizeof(header));
-		fclose(packhandle);
-#endif
+		fclose (packhandle);	
+	
 	// do a crc of the file
 		CRC_Init (&crc);
 		for (i=0 ; i<dirlen ; i++)
@@ -1205,8 +1082,6 @@ main
 */
 void main (int argc, char **argv)
 {
-	void* ogsource;
-	void* ogsource2;
 	char	*src;
 	char	*src2;
 	char	filename[1024];
@@ -1239,9 +1114,9 @@ void main (int argc, char **argv)
 	InitData ();
 	
 	sprintf (filename, "%sprogs.src", sourcedir);
-	ogsource = LoadFile (filename, &src);
+	LoadFile (filename, (void **)&src);
 	
-	src = COM_Parse((char*)ogsource);
+	src = COM_Parse (src);
 	if (!src)
 		Error ("No destination filename.  qcc -help for info.\n");
 	strcpy (destfile, com_token);
@@ -1259,23 +1134,15 @@ void main (int argc, char **argv)
 			break;
 		sprintf (filename, "%s%s", sourcedir, com_token);
 		printf ("compiling %s\n", filename);
-		ogsource2 = LoadFile (filename, &src2);
+		LoadFile (filename, (void **)&src2);
 
-		if (!PR_CompileFile((char*)ogsource2, filename))
-		{
-			if (pr_immediate.cppvector)
-				delete pr_immediate.cppvector;
+		if (!PR_CompileFile (src2, filename) )
 			exit (1);
-		}
 			
 	} while (1);
 	
-	if (!PR_FinishCompilation())
-	{
-		if (pr_immediate.cppvector)
-			delete pr_immediate.cppvector;
+	if (!PR_FinishCompilation ())
 		Error ("compilation errors");
-	}
 
 	p = CheckParm ("-asm");
 	if (p)

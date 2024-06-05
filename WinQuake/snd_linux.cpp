@@ -38,17 +38,13 @@ CSoundSystemLinux* g_SoundSystem;
 
 static int tryrates[] = { 11025, 22051, 44100, 8000 };
 
-CSoundSystemLinux::CSoundSystemLinux()
-{
-}
-
 bool CSoundSystemLinux::SNDDMA_Init(dma_t* dma)
 {
 
-	SDL_AudioSpec desired;
-	int		tmp, val;
-	char	drivername[128];
-    size_t  buffersize;
+    SDL_AudioSpec desired = {};
+    int		tmp = 0, val = 0;
+    char	drivername[128] = {};
+    size_t  buffersize = 0;
     
     shm = g_MemCache->Hunk_AllocName<volatile dma_t>(sizeof(*shm), "shm");
 
@@ -79,13 +75,15 @@ bool CSoundSystemLinux::SNDDMA_Init(dma_t* dma)
 	desired.callback = paint_audio;
 	desired.userdata = NULL;
 
+    g_SoundDeviceID = SDL_OpenAudioDevice(NULL, 0, &desired, NULL, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+
 	/* Open the audio device */
-	if (SDL_OpenAudio(&desired, NULL) == -1)
+    if (g_SoundDeviceID == -1)
 	{
 		Con_Printf("Couldn't open SDL audio: %s\n", SDL_GetError());
 		SDL_QuitSubSystem(SDL_INIT_AUDIO);
 		return false;
-	}
+    }
 
 	memset ((void *) dma, 0, sizeof(dma_t));
 	shm = dma;
@@ -223,5 +221,6 @@ Send sound to device if buffer isn't really the dma buffer
 */
 void CSoundSystemLinux::SNDDMA_Submit(void)
 {
+    SDL_UnlockAudioDevice(g_SoundDeviceID);
 }
 

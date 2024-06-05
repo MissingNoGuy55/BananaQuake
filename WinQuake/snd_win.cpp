@@ -43,11 +43,11 @@ bool	primary_format_set;
 int	sample16;
 int	snd_sent, snd_completed;
 
-CSoundSystemWin* g_SoundSystem;
+CSoundDMA* g_SoundSystem;
 // SDL_AudioDeviceID g_SoundDeviceID;
 
 //dma_t CSoundInternal::sn = { NULL };
-volatile dma_t* CSoundInternal::shm;
+volatile dma_t* CSoundDMA::shm;
 
 static int	buffersize;
 
@@ -56,7 +56,7 @@ static int	buffersize;
 S_BlockSound
 ==================
 */
-void CSoundSystemWin::S_BlockSound (void)
+void CSoundDMA::S_BlockSound (void)
 {
 
 	if (sound_started && snd_blocked == 0)	/* ++snd_blocked == 1 */
@@ -74,7 +74,7 @@ void CSoundSystemWin::S_BlockSound (void)
 S_UnblockSound
 ==================
 */
-void CSoundSystemWin::S_UnblockSound (void)
+void CSoundDMA::S_UnblockSound (void)
 {
 	if (!sound_started || !snd_blocked)
 		return;
@@ -95,7 +95,7 @@ Returns false if nothing is found.
 ==================
 */
 
-bool CSoundSystemWin::SNDDMA_Init(dma_t* dma)
+bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 {
 	SDL_AudioSpec desired;
 	int		tmp, val;
@@ -195,7 +195,7 @@ inside the recirculating dma buffer, so the mixing code will know
 how many sample are required to fill it up.
 ===============
 */
-int CSoundSystemWin::SNDDMA_GetDMAPos(void)
+int CSoundDMA::SNDDMA_GetDMAPos(void)
 {
 	return shm->samplepos;
 }
@@ -207,29 +207,25 @@ SNDDMA_Submit
 Send sound to device if buffer isn't really the dma buffer
 ===============
 */
-void CSoundSystemWin::SNDDMA_Submit(void)
+void CSoundDMA::SNDDMA_Submit(void)
 {
 	SDL_UnlockAudioDevice(g_SoundDeviceID);
 }
 
-#ifdef QUAKE_GAME
-void CSoundSystemWin::paint_audio(void* unused, Uint8* stream, int len)
-#else
-void CSoundSystemWin::paint_audio(void* unused, byte* stream, int len)
-#endif
+void paint_audio(void* userdata, Uint8* stream, int len)
 {
 	int	pos, tobufend;
 	int	len1, len2;
 
-	if (!shm)
+	if (!g_SoundSystem->shm)
 	{	/* shouldn't happen, but just in case */
 		memset(stream, 0, len);
 		return;
 	}
 
-	pos = (shm->samplepos * (shm->samplebits / 8));
+	pos = (g_SoundSystem->shm->samplepos * (g_SoundSystem->shm->samplebits / 8));
 	if (pos >= buffersize)
-		shm->samplepos = pos = 0;
+		g_SoundSystem->shm->samplepos = pos = 0;
 
 	tobufend = buffersize - pos;  /* bytes to buffer's end. */
 	len1 = len;
@@ -241,20 +237,20 @@ void CSoundSystemWin::paint_audio(void* unused, byte* stream, int len)
 		len2 = len - len1;
 	}
 
-	memcpy(stream, shm->buffer + pos, len1);
+	memcpy(stream, g_SoundSystem->shm->buffer + pos, len1);
 
 	if (len2 <= 0)
 	{
-		shm->samplepos += (len1 / (shm->samplebits / 8));
+		g_SoundSystem->shm->samplepos += (len1 / (g_SoundSystem->shm->samplebits / 8));
 	}
 	else
 	{	/* wraparound? */
-		memcpy(stream + len1, shm->buffer, len2);
-		shm->samplepos = (len2 / (shm->samplebits / 8));
+		memcpy(stream + len1, g_SoundSystem->shm->buffer, len2);
+		g_SoundSystem->shm->samplepos = (len2 / (g_SoundSystem->shm->samplebits / 8));
 	}
 
-	if (shm->samplepos >= buffersize)
-		shm->samplepos = 0;
+	if (g_SoundSystem->shm->samplepos >= buffersize)
+		g_SoundSystem->shm->samplepos = 0;
 }
 
 
@@ -265,7 +261,7 @@ SNDDMA_Shutdown
 Reset the sound device for exiting
 ===============
 */
-void CSoundSystemWin::SNDDMA_Shutdown(void)
+void CSoundDMA::SNDDMA_Shutdown(void)
 {
 	if (shm)
 	{

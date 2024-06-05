@@ -75,8 +75,8 @@ void PR_Init (void);
 void PR_ExecuteProgram (func_t fnum);
 void PR_LoadProgs (void);
 
-const char* PR_GetString(int num); // Missi: brevity function from QuakeSpasm (11/24/2022)
-int PR_SetEngineString(const char* s);
+extern const char* PR_GetString(int num); // Missi: brevity function from QuakeSpasm (11/24/2022)
+extern int PR_SetEngineString(const char* s);
 
 void PR_Profile_f (void);
 

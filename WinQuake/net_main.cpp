@@ -865,10 +865,10 @@ void NET_Init (void)
 	Cvar_RegisterVariable (&idgods);
 #endif
 
-	g_pCmds->Cmd_AddCommand ("slist", NET_Slist_f);
-	g_pCmds->Cmd_AddCommand ("listen", NET_Listen_f);
-	g_pCmds->Cmd_AddCommand ("maxplayers", MaxPlayers_f);
-	g_pCmds->Cmd_AddCommand ("port", NET_Port_f);
+	g_pCmds->Cmd_AddCommand ("slist", &NET_Slist_f);
+	g_pCmds->Cmd_AddCommand ("listen", &NET_Listen_f);
+	g_pCmds->Cmd_AddCommand ("maxplayers", &MaxPlayers_f);
+	g_pCmds->Cmd_AddCommand ("port", &NET_Port_f);
 
 	// initialize all the drivers
 	for (net_driverlevel=0 ; net_driverlevel<net_numdrivers ; net_driverlevel++)
