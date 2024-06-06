@@ -919,6 +919,9 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
         SDL_setenv("SDL_AudioDriver", "alsa", 1);
         g_SoundSystem = new CSoundSystemLinux;
 #endif
+#ifdef _WIN32 // on non win32, mouse comes before video for security reasons
+		IN_Init ();
+#endif
 		VID_Init (host_basepal);
 		g_CoreRenderer = new CCoreRenderer;		// needed even for dedicated servers
 #ifndef GLQUAKE
@@ -954,9 +957,6 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 #endif
 		Sbar_Init ();
 		CL_Init ();
-#ifdef _WIN32 // on non win32, mouse comes before video for security reasons
-		IN_Init ();
-#endif
 	}
 
 	g_pCmdBuf->Cbuf_InsertText ("exec quake.rc\n");
