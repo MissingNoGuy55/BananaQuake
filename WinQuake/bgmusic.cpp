@@ -11,6 +11,8 @@ float	CBackgroundMusic::old_volume = -1.0f;
 bool CBackgroundMusic::bgmloop = false;
 cvar_t CBackgroundMusic::bgm_extmusic = { "bgm_extmusic", "1", true };
 
+cvar_t cl_showsonginfo = { "cl_showsonginfo", "0", true };
+
 typedef enum _bgm_player
 {
 	BGM_NONE = -1,
@@ -28,6 +30,12 @@ typedef struct music_handler_s
 	struct music_handler_s* next;
 } music_handler_t;
 
+typedef struct artistinfo_s
+{
+	const char* band;
+	const char* song;
+} artistinfo_t;
+
 static music_handler_t wanted_handlers[] =
 {
 	{ CODECTYPE_VORBIS,BGM_STREAMER,-1,  "ogg", MUSIC_DIRNAME, NULL },
@@ -42,6 +50,96 @@ static music_handler_t wanted_handlers[] =
 	//{ CODECTYPE_UMX,  BGM_STREAMER, -1,  "umx", MUSIC_DIRNAME, NULL },
 	{ CODECTYPE_NONE, BGM_NONE,     -1,   NULL,         NULL,  NULL }
 };
+
+// Missi: position of song name in the OGG file. No band name position as the song name is of variable length (6/5/2024)
+#define OGG_SONG_NAME_FILEPOS 332;
+
+//======================================================================
+// Missi: GetSongArtistAndName
+// 
+// Obtains the artist and song name from the metadata of a music track,
+// and fills an artistinfo_t struct with the data obtained.
+// 
+// Only support for OGG at the moment. There is no support for WAV due 
+// to its poor and numerous specifications (6/5/2024)
+//======================================================================
+static void GetSongArtistAndName(const char* filename, uintptr_t* path_id, const char* ext, artistinfo_t& artistinfo)
+{
+	FILE* f;
+	int size = g_Common->COM_FOpenFile(filename, &f, path_id);
+
+	if (size == -1)
+	{
+		Con_Printf("No file named %s\n", filename);
+		return;
+	}
+
+	if (!Q_strncmp(ext, "ogg", 3))
+	{
+		char substr[2048] = {};
+		char songname[2048] = {};
+		char artist[2048] = {};
+
+		int lastpos = OGG_SONG_NAME_FILEPOS;
+
+		while (1)
+		{
+			fseek(f, lastpos, SEEK_SET);
+			fscanf(f, "%s", substr);
+			rewind(f);
+			
+			if (!substr[0])
+				break;
+			
+			Q_strcat(songname, substr);
+			Q_strcat(songname, " ");
+
+			lastpos += Q_strlen(substr) + 1;
+		}
+
+		if (Q_strlen(songname) == 0)
+		{
+			Con_Printf("No song name found for track %s\n", filename);
+		}
+		else
+		{
+			songname[Q_strlen(songname) - 2] = '\0';
+			songname[Q_strlen(songname)] = '\0';
+			artistinfo.song = songname;
+		}
+
+		while (1)
+		{
+			fseek(f, lastpos + 9, SEEK_SET);
+			fscanf(f, "%s", substr);
+			rewind(f);
+
+			if (!substr[0])
+				break;
+
+			Q_strcat(artist, substr);
+			Q_strcat(artist, " ");
+
+			lastpos += Q_strlen(substr) + 1;
+		}
+
+		if (Q_strlen(artist) == 0)
+		{
+			Con_Printf("No artist found for track %s\n", filename);
+		}
+		else
+		{
+			artist[Q_strlen(artist) - 1] = '\0';
+			artist[Q_strlen(artist)] = '\0';
+			artistinfo.band = artist;
+		}
+
+		fclose(f);
+		return;
+	}
+
+	fclose(f);
+}
 
 static music_handler_t* music_handlers = NULL;
 
@@ -109,6 +207,7 @@ void CBackgroundMusic::BGM_Jump_f(void)
 
 CBackgroundMusic::CBackgroundMusic()
 {
+	Cvar_RegisterVariable(&cl_showsonginfo);
 }
 
 CBackgroundMusic::~CBackgroundMusic()
@@ -326,6 +425,20 @@ void CBackgroundMusic::BGM_PlayCDtrack(byte track, bool looping)
 		bgmstream = S_CodecOpenStreamType(tmp, type, bgmloop);
 		if (!bgmstream)
 			Con_Printf("Couldn't handle music file %s\n", tmp);
+		else
+		{	
+			if (cl_showsonginfo.value > 0.0f)
+			{
+				artistinfo_t artist = {};
+				GetSongArtistAndName(tmp, nullptr, ext, artist);
+
+				char songTitle[512] = {};
+
+				snprintf(songTitle, sizeof(songTitle), "Now playing: %s - %s", artist.band, artist.song);
+
+				SCR_CenterPrint(songTitle);
+			}
+		}
 	}
 }
 
