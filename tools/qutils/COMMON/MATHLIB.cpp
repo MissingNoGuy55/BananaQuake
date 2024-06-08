@@ -1,7 +1,7 @@
 // mathlib.c -- math primitives
 
-#include "cmdlib.h"
-#include "mathlib.h"
+#include "CMDLIB.H"
+#include "MATHLIB.H"
 
 vec3_t vec3_origin = {0,0,0};
 

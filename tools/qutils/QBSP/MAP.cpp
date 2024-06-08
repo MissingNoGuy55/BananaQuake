@@ -1,6 +1,6 @@
 // map.c
 
-#include "bsp5.h"
+#include "BSP5.H"
 
 int			nummapbrushes;
 mbrush_t	mapbrushes[MAX_MAP_BRUSHES];

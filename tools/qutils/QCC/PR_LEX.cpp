@@ -1,5 +1,5 @@
 
-#include "qcc.h"
+#include "QCC.H"
 
 int			pr_source_line;
 

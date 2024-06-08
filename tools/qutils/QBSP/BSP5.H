@@ -1,9 +1,9 @@
 
 // bsp5.h
 
-#include "common/cmdlib.h"
-#include "common/mathlib.h"
-#include "common/bspfile.h"
+#include "COMMON/CMDLIB.H"
+#include "COMMON/MATHLIB.H"
+#include "COMMON/BSPFILE.H"
 
 typedef struct
 {
@@ -13,7 +13,7 @@ typedef struct
 } plane_t;
 
 
-#include "map.h"
+#include "MAP.H"
 
 #define	MAX_THREADS	4
 

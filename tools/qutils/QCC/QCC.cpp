@@ -1,7 +1,11 @@
 
-#include "qcc.h"
+#include "QCC.H"
+#ifdef _WIN32
 #include <direct.h>
 #include <io.h>
+#elif __linux__
+#include <sys/stat.h>
+#endif
 
 char		sourcedir[1024];
 char		destfile[1024];
@@ -735,7 +739,7 @@ packfile_t	pfiles[4096], * pf;
 FILE*		packhandle;
 int			packbytes;
 
-void Sys_mkdir(const wchar_t* path)
+void Sys_mkdir(const char* path)
 {
 #ifdef __linux__
 	if (mkdir(path, 0777) != -1)
@@ -743,7 +747,7 @@ void Sys_mkdir(const wchar_t* path)
 	if (errno != EEXIST)
 		Error("mkdir %s: %s", path, strerror(errno));
 #else
-	_wmkdir(path);
+	_mkdir(path);
 #endif
 }
 
@@ -958,7 +962,7 @@ void CopyFiles(void)
 main
 ============
 */
-void main (int argc, char **argv)
+int main (int argc, char **argv)
 {
 	char	*src;
 	char	*src2;
@@ -978,7 +982,7 @@ void main (int argc, char **argv)
 		printf ("to build a clean data tree: qcc -copy <srcdir> <destdir>\n");
 		printf ("to build a clean pak file: qcc -pak <srcdir> <packfile>\n");
 		printf ("to bsp all bmodels: qcc -bspmodels <gamedir>\n");
-		return;
+		return -1;
 	}
 	
 	p = CheckParm ("-src");
@@ -1050,4 +1054,6 @@ void main (int argc, char **argv)
 
 	stop = I_FloatTime ();
 	printf ("%i seconds elapsed.\n", (int)(stop-start));
+	
+	return 0;
 }

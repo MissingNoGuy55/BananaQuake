@@ -3,9 +3,9 @@
 //
 
 #include <stdio.h>
-#include "cmdlib.h"
-#include "mathlib.h"
-#include "trilib.h"
+#include "CMDLIB.H"
+#include "MATHLIB.H"
+#include "TRILIB.H"
 
 // on disk representation of a face
 

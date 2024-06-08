@@ -1,4 +1,4 @@
-#include "vis.h"
+#include "VIS.H"
 
 int		c_chains;
 int		c_portalskip, c_leafskip;

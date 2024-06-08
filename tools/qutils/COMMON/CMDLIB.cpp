@@ -1,6 +1,6 @@
 // cmdlib.c
 
-#include "cmdlib.h"
+#include "CMDLIB.H"
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -10,6 +10,10 @@
 
 #ifdef NeXT
 #include <libc.h>
+#endif
+
+#ifdef __linux__
+#include <unistd.h>
 #endif
 
 #define PATHSEPERATOR   '/'

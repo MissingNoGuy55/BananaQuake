@@ -1,6 +1,6 @@
 // scriplib.c
 
-#include "cmdlib.h"
+#include "CMDLIB.H"
 #include "scriplib.h"
 
 /*

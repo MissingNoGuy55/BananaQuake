@@ -1,6 +1,6 @@
 // trace.c
 
-#include "light.h"
+#include "LIGHT.H"
 
 typedef struct tnode_s
 {

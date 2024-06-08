@@ -1,6 +1,6 @@
 
-#include "cmdlib.h"
-#include "mathlib.h"
+#include "CMDLIB.H"
+#include "MATHLIB.H"
 #include "bspfile.h"
 
 void main (int argc, char **argv)

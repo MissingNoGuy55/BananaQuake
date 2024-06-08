@@ -917,7 +917,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		g_SoundSystem = new CSoundSystemWin;
 #elif (__linux__) && !(GLQUAKE)
         SDL_setenv("SDL_AudioDriver", "alsa", 1);
-        g_SoundSystem = new CSoundSystemLinux;
+        g_SoundSystem = new CSoundDMA;
 #endif
 #ifdef _WIN32 // on non win32, mouse comes before video for security reasons
 		IN_Init ();
@@ -936,6 +936,10 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		SCR_Init();
 #if (_WIN32) &&	(GLQUAKE)
 		SDL_setenv("SDL_AudioDriver", "directsound", 1);
+		g_SoundSystem = new CSoundDMA;
+		g_SoundSystem->S_Init();
+#elif (__linux__) && (GLQUAKE)
+		SDL_setenv("SDL_AudioDriver", "pulseaudio", 1);
 		g_SoundSystem = new CSoundDMA;
 		g_SoundSystem->S_Init();
 #endif

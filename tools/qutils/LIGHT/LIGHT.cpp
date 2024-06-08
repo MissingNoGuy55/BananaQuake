@@ -1,6 +1,6 @@
 // lighting.c
 
-#include "light.h"
+#include "LIGHT.H"
 
 /*
 

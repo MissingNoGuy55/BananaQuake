@@ -1,6 +1,6 @@
 // divide.h
 
-#include "bsp5.h"
+#include "BSP5.H"
 
 
 surface_t	newcopy_t;

@@ -1,6 +1,6 @@
 
-#include "cmdlib.h"
-#include "threads.h"
+#include "CMDLIB.H"
+#include "THREADS.H"
 
 #define	MAX_THREADS	64
 

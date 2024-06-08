@@ -1,9 +1,9 @@
 
-#include "common/cmdlib.h"
+#include "COMMON/CMDLIB.H"
 #include <stdio.h>
 #include <setjmp.h>
 
-#include "pr_comp.h"
+#include "PR_COMP.H"
 
 /*
 

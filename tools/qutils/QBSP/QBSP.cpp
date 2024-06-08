@@ -1,6 +1,6 @@
 // bsp5.c
 
-#include "bsp5.h"
+#include "BSP5.H"
 
 //
 // command line flags
@@ -126,10 +126,10 @@ CopyWinding
 */
 winding_t	*CopyWinding (winding_t *w)
 {
-	int			size;
+	size_t		size;
 	winding_t	*c;
 	
-	size = (int)((winding_t *)0)->points[w->numpoints];
+	size = (size_t)((winding_t *)0)->points[w->numpoints];
 	c = (winding_t*)malloc (size);
 	memcpy (c, w, size);
 	return c;
@@ -392,7 +392,7 @@ NewWinding
 winding_t *NewWinding (int points)
 {
 	winding_t	*w;
-	int			size;
+	size_t		size;
 	
 	if (points > MAX_POINTS_ON_WINDING)
 		Error ("NewWinding: %i points", points);
@@ -401,7 +401,7 @@ winding_t *NewWinding (int points)
 	if (c_activewindings > c_peakwindings)
 		c_peakwindings = c_activewindings;
 
-	size = (int)((winding_t *)0)->points[points];
+	size = (size_t)((winding_t *)0)->points[points];
 	w = (winding_t*)malloc (size);
 	memset (w, 0, size);
 	

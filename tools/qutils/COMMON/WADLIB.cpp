@@ -13,7 +13,7 @@
 #ifdef NeXT
 #include <libc.h>
 #endif
-#include "cmdlib.h"
+#include "CMDLIB.H"
 #include "wadlib.h"
 
 /*

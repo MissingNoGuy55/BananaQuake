@@ -1,7 +1,7 @@
 // lbmlib.c
 
-#include "cmdlib.h"
-#include "lbmlib.h"
+#include "CMDLIB.H"
+#include "LBMLIB.H"
 
 
 

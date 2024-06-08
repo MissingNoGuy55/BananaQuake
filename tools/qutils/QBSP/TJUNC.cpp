@@ -1,6 +1,6 @@
 // tjunc.c
 
-#include "bsp5.h"
+#include "BSP5.H"
 
 
 typedef struct wvert_s

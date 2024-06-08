@@ -1,6 +1,6 @@
 // brush.c
 
-#include "bsp5.h"
+#include "BSP5.H"
 
 int			numbrushplanes;
 plane_t		planes[MAX_MAP_PLANES];

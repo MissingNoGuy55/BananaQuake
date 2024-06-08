@@ -1,6 +1,6 @@
 // entities.c
 
-#include "light.h"
+#include "LIGHT.H"
 
 entity_t	entities[MAX_MAP_ENTITIES];
 int			num_entities;

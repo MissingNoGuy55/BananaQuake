@@ -1,6 +1,6 @@
 
-#include "common/cmdlib.h"
-#include "threads.h"
+#include "COMMON/CMDLIB.H"
+#include "THREADS.H"
 
 #ifdef __alpha
 int		numthreads = 4;

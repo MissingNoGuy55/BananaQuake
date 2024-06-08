@@ -1,7 +1,7 @@
-#include "cmdlib.h"
-#include "mathlib.h"
-#include "lbmlib.h"
-#include "trilib.h"
+#include "CMDLIB.H"
+#include "MATHLIB.H"
+#include "LBMLIB.H"
+#include "TRILIB.H"
 
 
 triangle_t	*faces;

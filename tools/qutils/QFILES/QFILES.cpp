@@ -1,5 +1,5 @@
 
-#include "cmdlib.h"
+#include "CMDLIB.H"
 
 #define	MAX_SOUNDS		1024
 #define	MAX_MODELS		1024

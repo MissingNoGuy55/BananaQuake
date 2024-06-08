@@ -1,6 +1,6 @@
 
-#include "cmdlib.h"
-#include "mathlib.h"
+#include "CMDLIB.H"
+#include "MATHLIB.H"
 #include "polylib.h"
 
 #define	BOGUS_RANGE	8192

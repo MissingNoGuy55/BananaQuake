@@ -33,12 +33,13 @@ int audio_fd;
 int snd_inited;
 
 
-volatile dma_t* CSoundInternal::shm;
-CSoundSystemLinux* g_SoundSystem;
+volatile dma_t* CSoundDMA::shm;
+CSoundDMA* g_SoundSystem;
+static int	buffersize;
 
 static int tryrates[] = { 11025, 22051, 44100, 8000 };
 
-bool CSoundSystemLinux::SNDDMA_Init(dma_t* dma)
+bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 {
 
     SDL_AudioSpec desired = {};
@@ -138,7 +139,7 @@ bool CSoundSystemLinux::SNDDMA_Init(dma_t* dma)
 
 }
 
-int CSoundSystemLinux::SNDDMA_GetDMAPos(void)
+int CSoundDMA::SNDDMA_GetDMAPos(void)
 {
 
 	struct count_info count;
@@ -161,7 +162,7 @@ int CSoundSystemLinux::SNDDMA_GetDMAPos(void)
 
 }
 
-void CSoundSystemLinux::SNDDMA_Shutdown(void)
+void CSoundDMA::SNDDMA_Shutdown(void)
 {
 	if (snd_inited)
 	{
@@ -170,21 +171,20 @@ void CSoundSystemLinux::SNDDMA_Shutdown(void)
 	}
 }
 
-void CSoundSystemLinux::paint_audio(void* unused, byte* stream, int len)
+void paint_audio(void* userdata, Uint8* stream, int len)
 {
 	int	pos, tobufend;
 	int	len1, len2;
-    size_t buffersize = 0;
 
-	if (!shm)
+	if (!g_SoundSystem->shm)
 	{	/* shouldn't happen, but just in case */
 		memset(stream, 0, len);
 		return;
 	}
 
-	pos = (shm->samplepos * (shm->samplebits / 8));
+	pos = (g_SoundSystem->shm->samplepos * (g_SoundSystem->shm->samplebits / 8));
 	if (pos >= buffersize)
-		shm->samplepos = pos = 0;
+		g_SoundSystem->shm->samplepos = pos = 0;
 
 	tobufend = buffersize - pos;  /* bytes to buffer's end. */
 	len1 = len;
@@ -196,20 +196,20 @@ void CSoundSystemLinux::paint_audio(void* unused, byte* stream, int len)
 		len2 = len - len1;
 	}
 
-	memcpy(stream, shm->buffer + pos, len1);
+	memcpy(stream, g_SoundSystem->shm->buffer + pos, len1);
 
 	if (len2 <= 0)
 	{
-		shm->samplepos += (len1 / (shm->samplebits / 8));
+		g_SoundSystem->shm->samplepos += (len1 / (g_SoundSystem->shm->samplebits / 8));
 	}
 	else
 	{	/* wraparound? */
-		memcpy(stream + len1, shm->buffer, len2);
-		shm->samplepos = (len2 / (shm->samplebits / 8));
+		memcpy(stream + len1, g_SoundSystem->shm->buffer, len2);
+		g_SoundSystem->shm->samplepos = (len2 / (g_SoundSystem->shm->samplebits / 8));
 	}
 
-	if (shm->samplepos >= buffersize)
-		shm->samplepos = 0;
+	if (g_SoundSystem->shm->samplepos >= buffersize)
+		g_SoundSystem->shm->samplepos = 0;
 }
 
 /*
@@ -219,7 +219,7 @@ SNDDMA_Submit
 Send sound to device if buffer isn't really the dma buffer
 ===============
 */
-void CSoundSystemLinux::SNDDMA_Submit(void)
+void CSoundDMA::SNDDMA_Submit(void)
 {
     SDL_UnlockAudioDevice(g_SoundDeviceID);
 }

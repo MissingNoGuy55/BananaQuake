@@ -1,9 +1,9 @@
 
-#include "common/cmdlib.h"
-#include "common/mathlib.h"
-#include "common/bspfile.h"
-#include "entities.h"
-#include "threads.h"
+#include "COMMON/CMDLIB.H"
+#include "COMMON/MATHLIB.H"
+#include "COMMON/BSPFILE.H"
+#include "ENTITIES.H"
+#include "THREADS.H"
 
 #define	ON_EPSILON	0.1
 

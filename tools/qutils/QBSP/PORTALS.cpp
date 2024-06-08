@@ -1,5 +1,5 @@
 
-#include "bsp5.h"
+#include "BSP5.H"
 
 
 node_t	outside_node;		// portals outside the world face this

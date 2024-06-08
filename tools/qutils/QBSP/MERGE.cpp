@@ -1,6 +1,6 @@
 // merge.c
 
-#include "bsp5.h"
+#include "BSP5.H"
 
 
 #define CONTINUOUS_EPSILON	0.001

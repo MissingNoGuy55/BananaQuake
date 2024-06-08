@@ -1,6 +1,6 @@
 // solidbsp.c
 
-#include "bsp5.h"
+#include "BSP5.H"
 
 int		leaffaces;
 int		nodefaces;

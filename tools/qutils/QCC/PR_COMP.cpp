@@ -1,6 +1,10 @@
 
-#include "qcc.h"
+#include "QCC.H"
 
+
+#ifdef __linux
+#define _strdup strdup
+#endif
 
 pr_info_t	pr;
 def_t		*pr_global_defs[MAX_REGS];	// to find def for a global variable

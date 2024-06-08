@@ -39,6 +39,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //define	PARANOID			// speed sapping error checking
 
+typedef unsigned char byte;
+
 #if (_WIN64) || (__x86_64__)
 #define VOID_P long long
 #else

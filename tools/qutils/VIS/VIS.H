@@ -1,8 +1,8 @@
 // vis.h
 
-#include "common/cmdlib.h"
-#include "common/mathlib.h"
-#include "common/bspfile.h"
+#include "COMMON/CMDLIB.H"
+#include "COMMON/MATHLIB.H"
+#include "COMMON/BSPFILE.H"
 
 #define	MAX_PORTALS	32768
 
