@@ -1,5 +1,5 @@
 
-#include "CMDLIB.H"
+#include "COMMON/CMDLIB.H"
 
 #define	MAX_SOUNDS		1024
 #define	MAX_MODELS		1024
@@ -14,7 +14,7 @@ int			numsounds;
 
 char		precache_models[MAX_MODELS][MAX_DATA_PATH];
 int			precache_models_block[MAX_SOUNDS];
-int			nummodels;
+extern int	nummodels;
 
 char		precache_files[MAX_FILES][MAX_DATA_PATH];
 int			precache_files_block[MAX_SOUNDS];
@@ -86,7 +86,7 @@ void PackFile (char *src, char *name)
 CopyQFiles
 ===========
 */
-void CopyQFiles (int blocknum)
+void CopyQFiles(const char* gamedir, const char* pakfile)
 {
 	int		i, p;
 	char	srcfile[1024];
@@ -99,32 +99,24 @@ void CopyQFiles (int blocknum)
 	// create a pak file
 	pf = pfiles;
 
-	sprintf (destfile, "%spak%i.pak", gamedir, blocknum);
+	snprintf (destfile, sizeof(destfile), "%s", pakfile);
 	packhandle = SafeOpenWrite (destfile);
 	SafeWrite (packhandle, &header, sizeof(header));	
-	
-	blocknum++;
 
 	for (i=0 ; i<numsounds ; i++)
 	{
-		if (precache_sounds_block[i] != blocknum)
-			continue;
-		sprintf (name, "sound/%s", precache_sounds[i]);
-		sprintf (srcfile,"%s%s",gamedir, name);
+		snprintf (name, sizeof(name), "sound/%s", precache_sounds[i]);
+		snprintf (srcfile, sizeof(srcfile), "%s/sound/%s", gamedir, precache_sounds[i]);
 		PackFile (srcfile, name);
 	}
 	for (i=0 ; i<nummodels ; i++)
 	{
-		if (precache_models_block[i] != blocknum)
-			continue;
-		sprintf (srcfile,"%s%s",gamedir, precache_models[i]);
+		sprintf (srcfile,"%s/%s",gamedir, precache_models[i]);
 		PackFile (srcfile, precache_models[i]);
 	}
 	for (i=0 ; i<numfiles ; i++)
 	{
-		if (precache_files_block[i] != blocknum)
-			continue;
-		sprintf (srcfile,"%s%s",gamedir, precache_files[i]);
+		sprintf (srcfile,"%s/%s",gamedir, precache_files[i]);
 		PackFile (srcfile, precache_files[i]);
 	}
 	
@@ -192,7 +184,23 @@ int ReadFiles (void)
 	FILE	*f;
 	int		i;
 
-	f = SafeOpenRead ("files.dat");
+	char wd[1024] = {};
+	char filepath[1024] = {};
+
+	int p = CheckParm("-pak");
+
+	if (p != 0)
+	{
+		char* path = myargv[p+1];
+		int len = strlen(path) - 1;
+
+		if (path[len] == '\\' || path[len] == '/')
+			path[len] = '\0';
+
+		snprintf(filepath, sizeof(filepath), "%s/files.dat", myargv[p+1]);
+	}
+
+	f = (p > 0) ? SafeOpenRead(filepath) : SafeOpenRead ("files.dat");
 
 	fscanf (f, "%i\n", &numsounds);
 	for (i=0 ; i<numsounds ; i++)
@@ -214,6 +222,8 @@ int ReadFiles (void)
 	printf ("%3i sounds\n", numsounds);
 	printf ("%3i models\n", nummodels);
 	printf ("%3i files\n", numfiles);
+
+	return (numsounds + nummodels + numfiles);
 }
 
 
@@ -224,6 +234,9 @@ main
 */
 int main (int argc, char **argv)
 {
+	myargc = argc;
+	myargv = argv;
+
 	if (argc == 1)
 	{
 		printf ("qfiles -pak <0 / 1> : build a .pak file\n");
@@ -235,9 +248,12 @@ int main (int argc, char **argv)
 
 	ReadFiles ();
 
+	const char* gamepath = myargv[CheckParm("-pak")+1];
+	const char* outpath = myargv[CheckParm("-pak")+2];
+
 	if (!strcmp (argv[1], "-pak"))
 	{
-		CopyQFiles (atoi(argv[2]));
+		CopyQFiles(gamepath, outpath);
 	}
 	else if (!strcmp (argv[1], "-bspmodels"))
 	{

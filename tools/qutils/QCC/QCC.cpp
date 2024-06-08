@@ -835,126 +835,6 @@ void CopyAFile(char* src, char* dest)
 	fclose(out);
 }
 
-
-/*
-===========
-CopyFiles
-===========
-*/
-void CopyFiles(void)
-{
-	int		i = 0, p = 0;
-	char	srcdir[1024] = {}, destdir[1024] = {};
-	char	srcfile[1024] = {}, destfile[1024] = {};
-	int		copytype = 0;
-	char	name[1024] = {};
-	packheader_t	header = {};
-	int		dirlen = 0;
-	int		blocknum = 0;
-	unsigned short		crc = 0;
-
-	printf("%3i unique precache_sounds\n", numsounds);
-	printf("%3i unique precache_models\n", nummodels);
-
-	copytype = 0;
-
-	p = CheckParm("-copy");
-	if (p && p < myargc - 2)
-	{	// create a new directory tree
-		copytype = 1;
-
-		strcpy(srcdir, myargv[p + 1]);
-		strcpy(destdir, myargv[p + 2]);
-		if (srcdir[strlen(srcdir) - 1] != '/')
-			strcat(srcdir, "/");
-		if (destdir[strlen(destdir) - 1] != '/')
-			strcat(destdir, "/");
-	}
-
-	blocknum = 1;
-	p = CheckParm("-pak2");
-	if (p && p < myargc - 2)
-		blocknum = 2;
-	else
-		p = CheckParm("-pak");
-	if (p && p < myargc - 2)
-	{	// create a pak file
-		strcpy(srcdir, myargv[p + 1]);
-		strcpy(destdir, myargv[p + 2]);
-		if (srcdir[strlen(srcdir) - 1] != '/')
-			strcat(srcdir, "/");
-		DefaultExtension(destdir, ".pak");
-
-		pf = pfiles;
-		packhandle = SafeOpenWrite(destdir);
-		SafeWrite(packhandle, &header, sizeof(header));
-		copytype = 2;
-	}
-
-	if (!copytype)
-		return;
-
-	for (i = 0; i < numsounds; i++)
-	{
-		if (precache_sounds_block[i] != blocknum)
-			continue;
-		sprintf(name, "sound/%s", precache_sounds[i]);
-		sprintf(srcfile, "%s%s", srcdir, name);
-		sprintf(destfile, "%s%s", destdir, name);
-		if (copytype == 1)
-			CopyAFile(srcfile, destfile);
-		else
-			PackFile(srcfile, name);
-	}
-	for (i = 0; i < nummodels; i++)
-	{
-		if (precache_models_block[i] != blocknum)
-			continue;
-		sprintf(srcfile, "%s%s", srcdir, precache_models[i]);
-		sprintf(destfile, "%s%s", destdir, precache_models[i]);
-		if (copytype == 1)
-			CopyAFile(srcfile, destfile);
-		else
-			PackFile(srcfile, precache_models[i]);
-	}
-	for (i = 0; i < numfiles; i++)
-	{
-		if (precache_files_block[i] != blocknum)
-			continue;
-		sprintf(srcfile, "%s%s", srcdir, precache_files[i]);
-		sprintf(destfile, "%s%s", destdir, precache_files[i]);
-		if (copytype == 1)
-			CopyAFile(srcfile, destfile);
-		else
-			PackFile(srcfile, precache_files[i]);
-	}
-
-	if (copytype == 2)
-	{
-		header.id[0] = 'P';
-		header.id[1] = 'A';
-		header.id[2] = 'C';
-		header.id[3] = 'K';
-		dirlen = (byte*)pf - (byte*)pfiles;
-		header.dirofs = LittleLong(ftell(packhandle));
-		header.dirlen = LittleLong(dirlen);
-
-		SafeWrite(packhandle, pfiles, dirlen);
-
-		fseek(packhandle, 0, SEEK_SET);
-		SafeWrite(packhandle, &header, sizeof(header));
-		fclose(packhandle);
-
-		// do a crc of the file
-		CRC_Init(&crc);
-		for (i = 0; i < dirlen; i++)
-			CRC_ProcessByte(&crc, ((byte*)pfiles)[i]);
-
-		i = pf - pfiles;
-		printf("%i files packed in %i bytes (%i crc)\n", i, packbytes, crc);
-	}
-}
-
 //============================================================================
 
 /*
@@ -1050,7 +930,7 @@ int main (int argc, char **argv)
 	WriteFiles ();
 
 	// report / copy the data files
-	CopyFiles();
+	//CopyFiles(atoi(argv[2]));
 
 	stop = I_FloatTime ();
 	printf ("%i seconds elapsed.\n", (int)(stop-start));

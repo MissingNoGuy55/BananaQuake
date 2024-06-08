@@ -1,5 +1,5 @@
 
-#include "cmdlib.h"
+#include "COMMON/CMDLIB.H"
 
 #define	MAX_SOUNDS		1024
 #define	MAX_MODELS		1024
@@ -214,6 +214,8 @@ int ReadFiles (void)
 	printf ("%3i sounds\n", numsounds);
 	printf ("%3i models\n", nummodels);
 	printf ("%3i files\n", numfiles);
+
+	return i;
 }
 
 

@@ -65,7 +65,7 @@ char		qdir[1024];
 char		gamedir[1024];
 char		projectpath[1024];
 
-void SetQdirFromPath (char *path)
+void SetQdirFromPath (const char *path)
 {
 	char	temp[1024];
 	char	*c;

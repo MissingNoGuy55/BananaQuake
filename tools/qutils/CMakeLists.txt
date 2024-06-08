@@ -135,6 +135,32 @@ list(APPEND includepathQCC
 )
 
 #===================================================================
+# QFILES
+#===================================================================
+
+set(QFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/QFILES)
+
+file(GLOB_RECURSE QFILES_SOURCES
+${QFILES_DIR}/*.cpp
+)
+
+file(GLOB_RECURSE QFILES_HEADERS
+${QFILES_DIR}/*.h
+)
+
+set(QFILES_FILES
+${QFILES_SOURCES}
+${QFILES_HEADERS}
+${CMN_SOURCES}
+${CMN_HEADERS}
+)
+
+
+list(APPEND includepathQFILES
+	"${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+#===================================================================
 # SOURCE GROUPS
 #===================================================================
 
@@ -142,6 +168,7 @@ add_executable(qbsp ${QBSP_FILES})
 add_executable(qvis ${QVIS_FILES})
 add_executable(qrad ${QRAD_FILES})
 add_executable(qcc ${QCC_FILES})
+add_executable(qfiles ${QFILES_FILES})
 
 target_include_directories(qbsp PUBLIC
     "${includepathQBSP}"
@@ -157,4 +184,8 @@ target_include_directories(qrad PUBLIC
 
 target_include_directories(qcc PUBLIC
     "${includepathQVIS}"
+)
+
+target_include_directories(qfiles PUBLIC
+    "${includepathQFILES}"
 )
