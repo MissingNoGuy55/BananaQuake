@@ -20,6 +20,12 @@
 *.user
 *.vcxproj
 *.7z
+*.map
+*.lmp
+*.zip
+*.json
+*.db
+*.suo
 
 /WinQuake/progs.dat
 /WinQuake/id1/*
@@ -42,3 +48,9 @@
 #/tools/qcc/.vs
 /WinQuake/scitech-mgl/*
 /WinQuake/build/*
+/WinQuake/svgalib/*
+/WinQuake/tracy/*
+/WinQuake/vorbis-svn/*
+/WinQuake/7z/*
+/WinQuake/autosave/*
+/WinQuake/build
