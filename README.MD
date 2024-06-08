@@ -12,7 +12,6 @@ Many QoL fixes from QuakeSpasm.
 
 ## What it doesn't have
 
-It is not very clean, and some of it is a total mess (looking at you, sound system)! QCC will also not build
-with the current code setup.
+It is not very clean, and some of it is a total mess (looking at you, sound system)!
 
 There are still many bugs, particularly with lighting in a select few levels like E3M1 on x64 and x86_64. There are also some crashes here and there.
