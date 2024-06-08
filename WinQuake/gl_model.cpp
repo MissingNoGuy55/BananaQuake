@@ -237,6 +237,9 @@ Mod_LoadTextures
 */
 void Mod_LoadTextures (lump_t *l)
 {
+	if (cls.state == ca_dedicated)
+		return;
+
 	int		i, j, pixels, num, max, altmax;
 	miptex_t	*mt;
 	texture_t	*tx, *tx2;
@@ -398,6 +401,9 @@ Missi: some stuff from QuakeSpasm ported to here, mostly just for .lit support (
 */
 void Mod_LoadLighting (lump_t *l)
 {
+	if (cls.state == ca_dedicated)
+		return;
+
 	int i, mark;
 	byte* in, * out, * data;
 	byte d, q64_b0, q64_b1;

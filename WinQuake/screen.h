@@ -52,7 +52,6 @@ extern cvar_t scr_viewsize;
 extern	int			scr_copytop;
 extern	int			scr_copyeverything;
 
-#ifndef QUAKE_TOOLS	// Missi: already defined in QCC (12/3/2022)
 typedef enum {
 	CANVAS_NONE,
 	CANVAS_DEFAULT,
@@ -66,7 +65,6 @@ typedef enum {
 	CANVAS_TOPRIGHT,
 	CANVAS_INVALID = -1
 } canvastype;
-#endif
 
 extern bool		block_drawing;
 

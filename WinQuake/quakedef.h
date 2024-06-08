@@ -25,9 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define TRACY_ENABLE
 
-#ifndef QUAKE_TOOLS
 #define	QUAKE_GAME			// as opposed to utilities
-#endif
 
 #define	VERSION				1.09
 #define	GLQUAKE_VERSION		1.00
@@ -73,9 +71,7 @@ using cxxstring = std::string;
 template<typename T>
 using cxxvector = std::vector<T>;
 
-#ifndef QUAKE_TOOLS
 #include <SDL.h>
-#endif
 
 #ifdef GLQUAKE
 #include <SDL_opengl.h>
@@ -345,7 +341,6 @@ template<typename T = CSoftwareRenderer>
 #endif
 extern T* ResolveRenderer();
 
-#ifndef QUAKE_TOOLS
 template<typename T>
 T* ResolveRenderer()
 {
@@ -355,4 +350,3 @@ T* ResolveRenderer()
 	return g_SoftwareRenderer;
 #endif
 };
-#endif

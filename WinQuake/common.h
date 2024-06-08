@@ -295,7 +295,6 @@ extern CFileSystem* g_FileSystem;
 
 //============================================================================
 
-#ifndef QUAKE_TOOLS
 
 template<typename T>
 int             loadsize;
@@ -440,6 +439,6 @@ T* COM_LoadStackFile(const char* path, void* buffer, int bufsize, uintptr_t* pat
 
 	return (T*)buf;
 }
-#endif
+
 
 #endif

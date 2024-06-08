@@ -50,15 +50,11 @@ HANDLE	heventChild;
 template<typename T>
 int Sys_FileRead(int handle, T* dest, size_t count)
 {
-#ifndef QUAKE_TOOLS
 	int		t, x;
 	t = VID_ForceUnlockedAndReturnState();
 	x = fread(dest, 1, count, sys_handles[handle]);
 	VID_ForceLockState(t);
 	return x;
-#else
-	return -1;
-#endif
 }
 
 /*

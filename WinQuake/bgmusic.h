@@ -7,9 +7,7 @@ public:
 	CBackgroundMusic();
 	~CBackgroundMusic();
 
-#ifndef QUAKE_TOOLS
 	bool BGM_Init();
-#endif
 
 	void BGM_Shutdown(void);
 

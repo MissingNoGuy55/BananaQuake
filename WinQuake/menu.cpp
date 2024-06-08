@@ -1095,12 +1095,10 @@ void M_Menu_Options_f (void)
 	m_entersound = true;
 
 #ifdef _WIN32
-#ifndef QUAKE_TOOLS
 	if ((options_cursor == 13) && (modestate != MS_WINDOWED))
 	{
 		options_cursor = 0;
 	}
-#endif
 #endif
 }
 
@@ -1313,13 +1311,11 @@ void M_Options_Draw (void)
 		M_Print(220, 128, vidMode);
 	}
 #ifdef _WIN32
-#ifndef QUAKE_TOOLS
 	if (modestate == MS_WINDOWED)
 	{
 		M_Print (16, 136, "             Use Mouse");
 		M_DrawCheckbox (220, 136, _windowed_mouse.value);
 	}
-#endif
 #elif __linux__
 
 #endif
@@ -1412,7 +1408,6 @@ void M_Options_Key (int k)
 	}
 
 #ifdef _WIN32
-#ifndef QUAKE_TOOLS
 	if ((options_cursor == 13) && (modestate != MS_WINDOWED))
 	{
 		if (k == K_UPARROW)
@@ -1420,7 +1415,6 @@ void M_Options_Key (int k)
 		else
 			options_cursor = 0;
 	}
-#endif
 #endif
 }
 

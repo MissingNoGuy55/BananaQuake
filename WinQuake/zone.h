@@ -597,7 +597,7 @@ extern CMemCache* g_MemCache;
 
 ============================================================
 */
-#ifndef QUAKE_TOOLS
+
 /*
 ============
 Cache_Init
@@ -1306,6 +1306,5 @@ inline void CMemBlock<T, I>::Purge(int numElements)
 
 	m_pMemory = (T*)realloc(m_pMemory, size * sizeof(T));
 }
-#endif
 #endif
  

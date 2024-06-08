@@ -66,9 +66,7 @@ cvar_t	gl_cshiftpercent = {"gl_cshiftpercent", "100", false};
 
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 
-#ifndef QUAKE_TOOLS
 extern	int			in_forward, in_forward2, in_back;
-#endif
 
 /*
 ===============
@@ -77,9 +75,9 @@ V_CalcRoll
 Used by view and sv_user
 ===============
 */
-#ifndef QUAKE_TOOLS
+
 vec3_t	forward, right, up;
-#endif
+
 float V_CalcRoll (vec3_t angles, vec3_t velocity)
 {
 	float	sign;
@@ -308,7 +306,7 @@ bool V_CheckGamma (void)
 	return true;
 }
 
-#ifndef QUAKE_TOOLS
+
 
 /*
 ===============
@@ -380,7 +378,7 @@ void V_ParseDamage (void)
 	v_dmg_time = v_kicktime.value;
 }
 
-#endif
+
 
 /*
 ==================
@@ -757,7 +755,7 @@ float angledelta (float a)
 		a -= 360;
 	return a;
 }
-#ifndef QUAKE_TOOLS
+
 /*
 ==================
 CalcGunAngle
@@ -815,7 +813,7 @@ void CalcGunAngle (void)
 	cl.viewent.angles[PITCH] -= v_idlescale.value * sin(cl.time*v_ipitch_cycle.value) * v_ipitch_level.value;
 	cl.viewent.angles[YAW] -= v_idlescale.value * sin(cl.time*v_iyaw_cycle.value) * v_iyaw_level.value;
 }
-#endif
+
 /*
 ==============
 V_BoundOffsets
@@ -866,7 +864,7 @@ V_CalcViewRoll
 Roll is induced by movement and damage
 ==============
 */
-#ifndef QUAKE_TOOLS
+
 void V_CalcViewRoll (void)
 {
 	float		side;
@@ -888,7 +886,7 @@ void V_CalcViewRoll (void)
 	}
 
 }
-#endif
+
 
 /*
 ==================
@@ -896,7 +894,6 @@ V_CalcIntermissionRefdef
 
 ==================
 */
-#ifndef QUAKE_TOOLS
 void V_CalcIntermissionRefdef (void)
 {
 	entity_t	*ent, *view;
@@ -917,14 +914,13 @@ void V_CalcIntermissionRefdef (void)
 	V_AddIdle ();
 	v_idlescale.value = old;
 }
-#endif
+
 /*
 ==================
 V_CalcRefdef
 
 ==================
 */
-#ifndef QUAKE_TOOLS
 void V_CalcRefdef (void)
 {
 	entity_t	*ent, *view;
@@ -1045,7 +1041,6 @@ else
 	if (chase_active.value)
 		Chase_Update ();
 }
-#endif
 /*
 ==================
 V_RenderView
@@ -1068,7 +1063,6 @@ void V_RenderView (void)
 		Cvar_Set ("scr_ofsy", "0");
 		Cvar_Set ("scr_ofsz", "0");
 	}
-#ifndef QUAKE_TOOLS
 	if (cl.intermission)
 	{	// intermission / finale rendering
 		V_CalcIntermissionRefdef ();	
@@ -1078,7 +1072,6 @@ void V_RenderView (void)
 		if (!cl.paused /* && (sv.maxclients > 1 || key_dest == key_game) */ )
 			V_CalcRefdef ();
 	}
-#endif
 #ifndef GLQUAKE
 	g_CoreRenderer->R_PushDlights ();
 #else

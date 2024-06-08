@@ -110,15 +110,11 @@ int			clearnotify;
 
 vrect_t		scr_vrect;
 
-#ifndef QUAKE_TOOLS
-
 bool	scr_disabled_for_loading;
 bool	scr_drawloading;
 float		scr_disabled_time;
 
 bool	block_drawing;
-
-#endif
 
 void SCR_ScreenShot_f (void);
 

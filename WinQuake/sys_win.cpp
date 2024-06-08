@@ -41,7 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PAUSE_SLEEP		50				// sleep time on pause or minimization
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
 
-#ifndef QUAKE_TOOLS // Missi: considered redefinitions in QCC (12/3/2022)
 
 int			starttime;
 bool	ActiveApp, Minimized;
@@ -62,7 +61,6 @@ static HANDLE	tevent;
 static HANDLE	hFile;
 static HANDLE	heventParent;
 static HANDLE	heventChild;
-#endif
 
 static unsigned int ceil_cw, single_cw, full_cw, cw, pushed_cw;
 static unsigned int fpenv[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -137,18 +135,18 @@ int filelength (FILE *f)
 {
 	int		pos;
 	int		end;
-#ifndef QUAKE_TOOLS
+
 	int		t;
 	t = VID_ForceUnlockedAndReturnState ();
-#endif
+
 	pos = ftell (f);
 	fseek (f, 0, SEEK_END);
 	end = ftell (f);
 	fseek (f, pos, SEEK_SET);
 
-#ifndef QUAKE_TOOLS
+
 	VID_ForceLockState (t);
-#endif
+
 
 	return end;
 }
@@ -160,9 +158,9 @@ int Sys_FileOpenRead (const char *path, int *hndl)
 	int		i = 0, retval = 0;
 	int		t = 0;
 
-#ifndef QUAKE_TOOLS
+
 	t = VID_ForceUnlockedAndReturnState ();
-#endif
+
 
 	i = findhandle ();
 
@@ -180,9 +178,9 @@ int Sys_FileOpenRead (const char *path, int *hndl)
 		retval = filelength(f);
 	}
 
-#ifndef QUAKE_TOOLS
+
 	VID_ForceLockState (t);
-#endif
+
 
 	return retval;
 }
@@ -194,9 +192,9 @@ int Sys_FileOpenWrite (const char *path)
 	int		t = 0;
 	char	p[MAX_OSPATH];
 	errno_t err;
-#ifndef QUAKE_TOOLS
+
 	t = VID_ForceUnlockedAndReturnState ();
-#endif
+
 	i = findhandle ();
 
 	Q_strcpy(p, path);
@@ -206,9 +204,9 @@ int Sys_FileOpenWrite (const char *path)
 		Sys_Error ("Error opening %s: %s", path,strerror_s(p,strlen(path),errno));
 	sys_handles[i] = f;
 	
-#ifndef QUAKE_TOOLS
+
 	VID_ForceLockState (t);
-#endif
+
 
 	return i;
 }
@@ -231,41 +229,41 @@ int Sys_FileType(const char* path)
 void Sys_FileClose (int handle)
 {
 	int		t;
-#ifndef QUAKE_TOOLS
+
 	t = VID_ForceUnlockedAndReturnState ();
-#endif
+
 	fclose (sys_handles[handle]);
 	sys_handles[handle] = NULL;
 
-#ifndef QUAKE_TOOLS
+
 	VID_ForceLockState (t);
-#endif
+
 }
 
 void Sys_FileSeek (int handle, int position)
 {
-#ifndef QUAKE_TOOLS
+
 	int		t;
 	t = VID_ForceUnlockedAndReturnState ();
-#endif
+
 	fseek (sys_handles[handle], position, SEEK_SET);
 
-#ifndef QUAKE_TOOLS
+
 	VID_ForceLockState (t);
-#endif
+
 }
 
 int Sys_FileWrite (int handle, void *data, int count)
 {
 	int		x;
-#ifndef QUAKE_TOOLS
+
 	int		t;
 	t = VID_ForceUnlockedAndReturnState ();
-#endif
+
 	x = fwrite (data, 1, count, sys_handles[handle]);
-#ifndef QUAKE_TOOLS
+
 	VID_ForceLockState (t);
-#endif
+
 	return x;
 }
 
@@ -394,14 +392,12 @@ void UnmaskExceptions(void)
 
 static void Sys_SetTimerResolution(void)
 {
-#ifndef QUAKE_TOOLS
 	/* Set OS timer resolution to 1ms.
 	   Works around buffer underruns with directsound and SDL2, but also
 	   will make Sleep()/SDL_Dleay() accurate to 1ms which should help framerate
 	   stability.
 	*/
 	timeBeginPeriod(1);
-#endif
 }
 
 
@@ -454,9 +450,7 @@ void Sys_Error (const char *error, ...)
 	if (!in_sys_error3)
 	{
 		in_sys_error3 = 1;
-#ifndef QUAKE_TOOLS
 		VID_ForceUnlockedAndReturnState ();
-#endif
 	}
 
 	va_start (argptr, error);
@@ -555,9 +549,7 @@ void Sys_Warning(const char* fmt, ...)
 void Sys_Quit (void)
 {
 
-#ifndef QUAKE_TOOLS
 	VID_ForceUnlockedAndReturnState ();
-#endif
 
 	host->Host_Shutdown();
 
@@ -579,9 +571,7 @@ int	Sys_FileTime(const char* path)
 	errno_t err;
 	int		t, retval;
 
-#ifndef QUAKE_TOOLS
 	t = VID_ForceUnlockedAndReturnState();
-#endif
 
 	err = fopen_s(&f, path, "r+");
 
@@ -595,9 +585,7 @@ int	Sys_FileTime(const char* path)
 		retval = -1;
 	}
 
-#ifndef QUAKE_TOOLS
 	VID_ForceLockState(t);
-#endif
 
 	return retval;
 }
@@ -1069,7 +1057,6 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		}
 		else
 		{
-#ifndef QUAKE_TOOLS
 		// yield the CPU for a little while when paused, minimized, or not the focus
 			if ((cl.paused && (!ActiveApp && !DDActive)) || Minimized || block_drawing)
 			{
@@ -1080,7 +1067,6 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 			{
 				SleepUntilInput (NOT_FOCUS_SLEEP);
 			}
-#endif
 			newtime = Sys_DoubleTime ();
 			time = newtime - oldtime;
 		}

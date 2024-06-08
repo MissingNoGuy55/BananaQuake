@@ -448,8 +448,6 @@ extern int		snd_blocked;
 
 extern CSoundDMA* g_SoundSystem;
 
-#ifndef QUAKE_TOOLS
 extern SDL_AudioDeviceID g_SoundDeviceID;
-#endif
 
 #endif

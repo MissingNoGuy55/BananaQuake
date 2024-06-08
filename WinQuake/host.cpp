@@ -665,11 +665,8 @@ void CQuakeHost::_Host_Frame (float time)
 // get new key events
 	Sys_SendKeyEvents ();
 
-
-#ifndef QUAKE_TOOLS
 // allow mice or other external controllers to add commands
 	IN_Commands ();
-#endif
 
 // process console commands
 	g_pCmdBuf->Cbuf_Execute ();
@@ -721,19 +718,20 @@ void CQuakeHost::_Host_Frame (float time)
 		time2 = Sys_DoubleTime ();
 		
 // update audio
-#ifndef QUAKE_TOOLS
-	g_BGM->BGM_Update();
-	
-	if (cls.signon == SIGNONS)
+	if (cls.state != ca_dedicated)
 	{
-		g_SoundSystem->S_Update (r_origin, vpn, vright, vup);
-		CL_DecayLights ();
-	}
-	else
-		g_SoundSystem->S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+		g_BGM->BGM_Update();
 
-	CDAudio_Update();
-#endif
+		if (cls.signon == SIGNONS)
+		{
+			g_SoundSystem->S_Update(r_origin, vpn, vright, vup);
+			CL_DecayLights();
+		}
+		else
+			g_SoundSystem->S_Update(vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+
+		CDAudio_Update();
+	}
 
 	if (host_speeds.value)
 	{
@@ -954,11 +952,10 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		g_SoundSystem->S_Init();	
 #endif
 
-#ifndef QUAKE_TOOLS
 		CDAudio_Init ();
 		g_BGM = new CBackgroundMusic;
 		g_BGM->BGM_Init();
-#endif
+
 		Sbar_Init ();
 		CL_Init ();
 	}
@@ -1000,14 +997,12 @@ void CQuakeHost::Host_Shutdown(void)
 	scr_disabled_for_loading = true;
 
 	Host_WriteConfiguration (); 
-#ifndef QUAKE_TOOLS
 	CDAudio_Shutdown ();
-#endif
 	NET_Shutdown ();
-#ifndef QUAKE_TOOLS
+
 	if (g_SoundSystem)
 		g_SoundSystem->S_Shutdown();
-#endif
+
 	delete g_SoundSystem;
 
 	IN_Shutdown ();

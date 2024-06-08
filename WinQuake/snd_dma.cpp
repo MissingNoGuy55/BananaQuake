@@ -219,9 +219,7 @@ void CSoundDMA::S_Init (void)
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound("ambience/water1.wav");
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound("ambience/wind2.wav");
 
-#ifndef QUAKE_TOOLS
 	S_CodecInit();
-#endif
 
 	S_StopAllSounds (true);
 }
@@ -910,10 +908,8 @@ void CSoundDMA::GetSoundtime(void)
 void CSoundDMA::S_ExtraUpdate (void)
 {
 
-#ifndef QUAKE_TOOLS
 #ifdef _WIN32
 	IN_Accumulate ();
-#endif
 #endif
 
 	if (snd_noextraupdate.value)
