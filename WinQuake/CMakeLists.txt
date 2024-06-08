@@ -585,6 +585,8 @@ server.cpp
 snd_codec.cpp
 snd_dma.cpp
 snd_mem.cpp
+snd_mp3.cpp
+snd_mp3tag.cpp
 snd_mix.cpp
 snd_vorbis.cpp
 snd_wave.cpp
@@ -994,6 +996,7 @@ target_link_libraries(bananaquakeopengl Xxf86dga)
 target_link_libraries(bananaquakeopengl Xxf86vm)
 
 target_link_libraries(bananaquakeopengl m)
+target_link_libraries(bananaquakeopengl mad)
 target_link_libraries(bananaquakeopengl dl)
 target_link_libraries(bananaquakeopengl vorbis)
 target_link_libraries(bananaquakeopengl vorbisfile)
