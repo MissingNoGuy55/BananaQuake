@@ -159,9 +159,10 @@ R_MarkLights
 void CGLRenderer::R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 {
 	mplane_t	*splitplane;
-	float		dist;
+	float		dist, l, maxdist;
+	vec3_t		impact;
 	msurface_t	*surf;
-	int			i;
+	int			i, j, s, t;
 	
 	if (node->contents < 0)
 		return;
@@ -182,18 +183,34 @@ void CGLRenderer::R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 		
 // mark the polygons
 	surf = cl.worldmodel->surfaces + node->firstsurface;
-	for (i=0 ; i<node->numsurfaces ; i++, surf++)
+	for (i = 0; i < node->numsurfaces; i++, surf++)
 	{
-		if (surf->dlightframe != r_dlightframecount)
+		for (j = 0; j < 3; j++)
+			impact[j] = light->origin[j] - surf->plane->normal[j] * dist;
+		// clamp center of light to corner and check brightness
+		l = DotProduct(impact, surf->texinfo->vecs[0]) + surf->texinfo->vecs[0][3] - surf->texturemins[0];
+		s = l + 0.5; if (s < 0) s = 0; else if (s > surf->extents[0]) s = surf->extents[0];
+		s = l - s;
+		l = DotProduct(impact, surf->texinfo->vecs[1]) + surf->texinfo->vecs[1][3] - surf->texturemins[1];
+		t = l + 0.5; if (t < 0) t = 0; else if (t > surf->extents[1]) t = surf->extents[1];
+		t = l - t;
+		// compare to minimum light
+		if ((s * s + t * t + dist * dist) < maxdist)
 		{
-			surf->dlightbits = 0;
-			surf->dlightframe = r_dlightframecount;
+			if (surf->dlightframe != r_dlightframecount) // not dynamic until now
+			{
+				surf->dlightbits[bit >> 5] = 1U << (bit & 31);
+				surf->dlightframe = r_dlightframecount;
+			}
+			else // already dynamic
+				surf->dlightbits[bit >> 5] |= 1U << (bit & 31);
 		}
-		surf->dlightbits |= bit;
 	}
 
-	R_MarkLights (light, bit, node->children[0]);
-	R_MarkLights (light, bit, node->children[1]);
+	if (node->children[0]->contents >= 0)
+		R_MarkLights(light, bit, node->children[0]);
+	if (node->children[1]->contents >= 0)
+		R_MarkLights(light, bit, node->children[1]);
 }
 
 
@@ -233,8 +250,16 @@ LIGHT SAMPLING
 
 mplane_t		*lightplane;
 vec3_t			lightspot;
+vec3_t			lightcolor; //johnfitz -- lit support via lordhavoc -- Missi: copied from QuakeSpasm (6/7/2024)
 
-int CGLRenderer::RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
+/*
+=============
+CGLRenderer::RecursiveLightPoint
+
+Missi: most of this function was refactored with code from QuakeSpasm while attempting to keep it as close to the original as possible. (6/7/2024)
+=============
+*/
+int CGLRenderer::RecursiveLightPoint (vec3_t color, mnode_t* node, vec3_t rayorg, vec3_t start, vec3_t end, float* maxdist)
 {
 	int			r;
 	float		front, back, frac;
@@ -242,10 +267,9 @@ int CGLRenderer::RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	mplane_t	*plane;
 	vec3_t		mid;
 	msurface_t	*surf;
-	int			s, t, ds, dt;
+	int			ds, dt;
 	int			i;
 	mtexinfo_t	*tex;
-	byte		*lightmap;
 	unsigned	scale;
 	int			maps;
 
@@ -261,7 +285,7 @@ int CGLRenderer::RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	side = front < 0;
 	
 	if ( (back < 0) == side)
-		return RecursiveLightPoint (node->children[side], start, end);
+		return RecursiveLightPoint (color, node->children[side], rayorg, start, end, maxdist);
 	
 	frac = front / (front-back);
 	mid[0] = start[0] + (end[0] - start[0])*frac;
@@ -269,7 +293,7 @@ int CGLRenderer::RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	mid[2] = start[2] + (end[2] - start[2])*frac;
 	
 // go down front side	
-	r = RecursiveLightPoint (node->children[side], start, mid);
+	r = RecursiveLightPoint (color, node->children[front < 0], rayorg, start, mid, maxdist);
 	if (r >= 0)
 		return r;		// hit something
 		
@@ -278,78 +302,106 @@ int CGLRenderer::RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 		
 // check for impact on this node
 	VectorCopy (mid, lightspot);
-	lightplane = plane;
+	//lightplane = plane;
 
 	surf = cl.worldmodel->surfaces + node->firstsurface;
 	for (i=0 ; i<node->numsurfaces ; i++, surf++)
 	{
+		float sfront, sback, dist;
+		vec3_t raydelta;
+
 		if (surf->flags & SURF_DRAWTILED)
 			continue;	// no lightmaps
 
 		tex = surf->texinfo;
 		
-		s = DotProduct (mid, tex->vecs[0]) + tex->vecs[0][3];
-		t = DotProduct (mid, tex->vecs[1]) + tex->vecs[1][3];;
+		ds = (int)((double)DoublePrecisionDotProduct(mid, surf->texinfo->vecs[0]) + surf->texinfo->vecs[0][3]);
+		dt = (int)((double)DoublePrecisionDotProduct(mid, surf->texinfo->vecs[1]) + surf->texinfo->vecs[1][3]);
 
-		if (s < surf->texturemins[0] ||
-		t < surf->texturemins[1])
+		if (ds < surf->texturemins[0] ||
+		dt < surf->texturemins[1])
 			continue;
 		
-		ds = s - surf->texturemins[0];
-		dt = t - surf->texturemins[1];
+		ds -= surf->texturemins[0];
+		dt -= surf->texturemins[1];
 		
 		if ( ds > surf->extents[0] || dt > surf->extents[1] )
 			continue;
 
+		if (surf->plane->type < 3)
+		{
+			sfront = rayorg[surf->plane->type] - surf->plane->dist;
+			sback = end[surf->plane->type] - surf->plane->dist;
+		}
+		else
+		{
+			sfront = DotProduct(rayorg, surf->plane->normal) - surf->plane->dist;
+			sback = DotProduct(end, surf->plane->normal) - surf->plane->dist;
+		}
+		VectorSubtract(end, rayorg, raydelta);
+		dist = sfront / (sfront - sback) * VectorLength(raydelta);
+
 		if (!surf->samples)
 			return 0;
 
-		ds >>= 4;
-		dt >>= 4;
-
-		lightmap = surf->samples;
 		r = 0;
-		if (lightmap)
+		if (dist < *maxdist)
 		{
+			// LordHavoc: enhanced to interpolate lighting
+			byte* lightmap;
+			int maps, line3, dsfrac = ds & 15, dtfrac = dt & 15, r00 = 0, g00 = 0, b00 = 0, r01 = 0, g01 = 0, b01 = 0, r10 = 0, g10 = 0, b10 = 0, r11 = 0, g11 = 0, b11 = 0;
+			float scale;
+			line3 = ((surf->extents[0] >> 4) + 1) * 3;
 
-			lightmap += dt * ((surf->extents[0]>>4)+1) + ds;
+			lightmap = surf->samples + ((dt >> 4) * ((surf->extents[0] >> 4) + 1) + (ds >> 4)) * 3; // LordHavoc: *3 for color -- Missi: copied from QuakeSpasm (6/7/2024)
 
-			for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ;
-					maps++)
+			for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++)
 			{
-				scale = d_lightstylevalue[surf->styles[maps]];
-				r += *lightmap * scale;
-				lightmap += ((surf->extents[0]>>4)+1) *
-						((surf->extents[1]>>4)+1);
+				scale = (float)d_lightstylevalue[surf->styles[maps]] * 1.0 / 256.0;
+				r00 += (float)lightmap[0] * scale; g00 += (float)lightmap[1] * scale; b00 += (float)lightmap[2] * scale;
+				r01 += (float)lightmap[3] * scale; g01 += (float)lightmap[4] * scale; b01 += (float)lightmap[5] * scale;
+				r10 += (float)lightmap[line3 + 0] * scale; g10 += (float)lightmap[line3 + 1] * scale; b10 += (float)lightmap[line3 + 2] * scale;
+				r11 += (float)lightmap[line3 + 3] * scale; g11 += (float)lightmap[line3 + 4] * scale; b11 += (float)lightmap[line3 + 5] * scale;
+				lightmap += ((surf->extents[0] >> 4) + 1) * ((surf->extents[1] >> 4) + 1) * 3; // LordHavoc: *3 for colored lighting -- Missi: copied from QuakeSpasm (6/7/2024)
 			}
-			
-			r >>= 8;
+
+			color[0] += (float)((int)((((((((r11 - r10) * dsfrac) >> 4) + r10) - ((((r01 - r00) * dsfrac) >> 4) + r00)) * dtfrac) >> 4) + ((((r01 - r00) * dsfrac) >> 4) + r00)));
+			color[1] += (float)((int)((((((((g11 - g10) * dsfrac) >> 4) + g10) - ((((g01 - g00) * dsfrac) >> 4) + g00)) * dtfrac) >> 4) + ((((g01 - g00) * dsfrac) >> 4) + g00)));
+			color[2] += (float)((int)((((((((b11 - b10) * dsfrac) >> 4) + b10) - ((((b01 - b00) * dsfrac) >> 4) + b00)) * dtfrac) >> 4) + ((((b01 - b00) * dsfrac) >> 4) + b00)));
 		}
 		
 		return r;
 	}
 
 // go down back side
-	return RecursiveLightPoint (node->children[!side], mid, end);
+	return RecursiveLightPoint (color, node->children[!side], rayorg, mid, end, maxdist);
 }
 
+/*
+=============
+R_LightPoint
+
+Missi: stuff ported from QuakeSpasm for light color support (6/7/2024)
+=============
+*/
 int CGLRenderer::R_LightPoint (vec3_t p)
 {
 	vec3_t		end;
 	int			r;
+	float		maxdist = 8192.0f;
 	
 	if (!cl.worldmodel->lightdata)
+	{
+		lightcolor[0] = lightcolor[1] = lightcolor[2] = 255;
 		return 255;
+	}
 	
 	end[0] = p[0];
 	end[1] = p[1];
-	end[2] = p[2] - 2048;
+	end[2] = p[2] - maxdist;
 	
-	r = RecursiveLightPoint (cl.worldmodel->nodes, p, end);
-	
-	if (r == -1)
-		r = 0;
-
-	return r;
+	lightcolor[0] = lightcolor[1] = lightcolor[2] = 0;
+	RecursiveLightPoint(lightcolor, cl.worldmodel->nodes, p, p, end, &maxdist);
+	return ((lightcolor[0] + lightcolor[1] + lightcolor[2]) * (1.0f / 3.0f));
 }
 

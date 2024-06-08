@@ -19,12 +19,17 @@
 // cmdlib.c
 
 #include "cmdlib.h"
-#include <windows.h>
 
-#ifndef _WIN32
-#include <sys/time.h>
-#else
+#ifdef _WIN32
+#include <windows.h>
+#include <io.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <share.h>
 #include <sysinfoapi.h>
+#else
+#include <sys/time.h>
 #endif
 
 #define PATHSEPERATOR   '/'
@@ -262,7 +267,7 @@ Checks for the given parameter in the program's command line arguments
 Returns the argument number (1 to argc-1) or 0 if not present
 =================
 */
-int CheckParm (char *check)
+int CheckParm (const char *check)
 {
 	int             i;
 
@@ -275,6 +280,19 @@ int CheckParm (char *check)
 	return 0;
 }
 
+void FixupSlashes(char* src, size_t len)
+{
+	int pos = 0;
+
+	while (*src)
+	{
+		if (*src == '\\')
+		{
+			*src == '/';
+		}
+		src++;
+	}
+}
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -319,39 +337,47 @@ void SafeWrite(int handle, void* buffer, long count)
 		Error("File write failure");
 }
 #else
-FILE* SafeOpenWrite(char* filename)
+int SafeOpenWrite(char* filename)
 {
-	FILE*     handle;
+	int hnd = 0;
 
-	handle = fopen(filename, "rb+");
+	FixupSlashes(filename, strlen(filename));
 
-	if (!handle)
+	errno_t err = _sopen_s(&hnd, filename, _O_WRONLY | _O_BINARY | _O_CREAT, _SH_DENYNO, _S_IWRITE);
+
+	if (err != 0)
 		Error("Error opening %s: %s", filename, strerror(errno));
 
-	return handle;
+	return hnd;
 }
-FILE* SafeOpenRead(char* filename)
+int SafeOpenRead(char* filename)
 {
-	FILE* handle;
+	int hnd = 0;
 
-	handle = fopen(filename, "rb");
+	FixupSlashes(filename, strlen(filename));
+	errno_t err = _sopen_s(&hnd, filename, (_O_RDONLY | _O_BINARY), _SH_DENYWR, _S_IREAD);
 
-	if (!handle)
-		Error("Error opening %s: %s", filename, strerror(errno));
+	if (err != 0)
+		Error("Error opening %s: %s", filename, strerror(err));
 
-	return handle;
-}
-void SafeRead(FILE* handle, void* buffer, long count)
-{
-	if (fread(buffer, sizeof(long), count, handle) != count)
-		Error("File read failure");
+	return hnd;
 }
 
-
-void SafeWrite(FILE* handle, void* buffer, long count)
+void SafeRead(int handle, void* buffer, long count)
 {
-	if (fwrite(buffer, sizeof(long), count, handle) != count)
-		Error("File write failure");
+	long read = _read(handle, buffer, count);
+	
+	if (read != count)
+		Error("File read failure. Expected %d bytes, got %d. %s", count, read, strerror(errno));
+}
+
+
+void SafeWrite(int handle, void* buffer, long count)
+{
+	long written = _write(handle, buffer, count);
+
+	if (written != count)
+		Error("File write failure. Expected %d bytes, got %d. %s", count, written, strerror(errno));
 }
 #endif
 
@@ -394,17 +420,16 @@ long    LoadFile (char *filename, void **bufferptr)
 #else
 long    LoadFile(char* filename, void** bufferptr)
 {
-	FILE*   handle;
-	long    length;
-	void* buffer;
+	int   handle = 0;
+	size_t    length = 0;
+	void* buffer = nullptr;
 
 	handle = SafeOpenRead(filename);
-	fseek(handle, 0, SEEK_END);
-	length = ftell(handle);
+	_lseek(handle, 0, SEEK_CUR);
+	length = _filelength(handle);
 	buffer = SafeMalloc(length + 1);
 	((byte*)buffer)[length] = 0;
 	SafeRead(handle, buffer, length);
-	fclose(handle);
 
 	*bufferptr = buffer;
 	return length;
@@ -428,11 +453,11 @@ void    SaveFile (char *filename, void *buffer, long count)
 #else
 void    SaveFile(char* filename, void* buffer, long count)
 {
-	FILE*	handle;
+	int	handle;
 
 	handle = SafeOpenWrite(filename);
 	SafeWrite(handle, buffer, count);
-	fclose(handle);
+	_close(handle);
 }
 #endif
 

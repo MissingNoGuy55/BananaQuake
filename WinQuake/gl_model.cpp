@@ -287,24 +287,13 @@ void Mod_LoadTextures (lump_t *l)
 			g_GLRenderer->R_InitSky (tx);
 		else
 		{
-			offset = (uintptr_t)(mt + 1) - (uintptr_t)mod_base;
+			offset = (src_offset_t)(mt + 1) - (src_offset_t)mod_base;
 
 			//texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
-			tx->gltexture = g_GLRenderer->GL_LoadTexture (loadmodel, mt->name, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), offset, TEXPREF_MIPMAP);
+			tx->gltexture = g_GLRenderer->GL_LoadTexture (loadmodel, mt->name, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), offset, TEXPREF_NONE);
 			//texture_mode = GL_LINEAR;
 		}
 	}
-
-	typedef struct test_s
-	{
-
-		test_s* next;
-		test_s* prev;
-
-		int id;
-
-	}	test_t;
-
 
 //
 // sequence the animations
@@ -403,17 +392,84 @@ void Mod_LoadTextures (lump_t *l)
 /*
 =================
 Mod_LoadLighting
+
+Missi: some stuff from QuakeSpasm ported to here, mostly just for .lit support (6/7/2024)
 =================
 */
 void Mod_LoadLighting (lump_t *l)
 {
+	int i, mark;
+	byte* in, * out, * data;
+	byte d, q64_b0, q64_b1;
+	char litfilename[MAX_OSPATH];
+	uintptr_t path_id;
+
+	loadmodel->lightdata = NULL;
+	// LordHavoc: check for a .lit file
+	Q_strlcpy(litfilename, loadmodel->name, sizeof(litfilename));
+	g_Common->COM_StripExtension(litfilename, litfilename);
+	Q_strlcat(litfilename, ".lit", sizeof(litfilename));
+	mark = g_MemCache->Hunk_LowMark();
+
+	data = COM_LoadHunkFile<byte>(litfilename, &path_id);
+	if (data)
+	{
+		// use lit file only from the same gamedir as the map
+		// itself or from a searchpath with higher priority.
+		if (path_id < loadmodel->path_id)
+		{
+			g_MemCache->Hunk_FreeToLowMark(mark);
+			Con_DPrintf("ignored %s from a gamedir with lower priority\n", litfilename);
+		}
+		else
+			if (data[0] == 'Q' && data[1] == 'L' && data[2] == 'I' && data[3] == 'T')
+			{
+				i = LittleLong(((int*)data)[1]);
+				if (i == 1)
+				{
+					if (8 + l->filelen * 3 == g_Common->com_filesize)
+					{
+						Con_DPrintf("%s loaded\n", litfilename);
+						loadmodel->lightdata = data + 8;
+						return;
+					}
+					g_MemCache->Hunk_FreeToLowMark(mark);
+					Con_Printf("Outdated .lit file (%s should be %u bytes, not %u)\n", litfilename, 8 + l->filelen * 3, g_Common->com_filesize);
+				}
+				else
+				{
+					g_MemCache->Hunk_FreeToLowMark(mark);
+					Con_Printf("Unknown .lit file version (%d)\n", i);
+				}
+			}
+			else
+			{
+				g_MemCache->Hunk_FreeToLowMark(mark);
+				Con_Printf("Corrupt .lit file (old version?), ignoring\n");
+			}
+	}
 	if (!l->filelen)
 	{
 		loadmodel->lightdata = NULL;
 		return;
 	}
+
+#ifdef OLD_LIGHTING
 	loadmodel->lightdata = g_MemCache->Hunk_AllocName<byte>( l->filelen, loadname);
 	memcpy (loadmodel->lightdata, mod_base + l->fileofs, l->filelen);
+#else
+	loadmodel->lightdata = (byte*)g_MemCache->Hunk_AllocName<byte>(l->filelen * 3, litfilename);
+	in = loadmodel->lightdata + l->filelen * 2; // place the file at the end, so it will not be overwritten until the very last write
+	out = loadmodel->lightdata;
+	memcpy(in, mod_base + l->fileofs, l->filelen);
+	for (i = 0; i < l->filelen; i++)
+	{
+		d = *in++;
+		*out++ = d;
+		*out++ = d;
+		*out++ = d;
+	}
+#endif
 }
 
 
@@ -688,7 +744,7 @@ void Mod_LoadFaces (lump_t *l)
 {
 	dface_t		*in;
 	msurface_t 	*out;
-	int			i, count, surfnum;
+	int			i, count, surfnum, lofs;
 	int			planenum, side;
 
 	in = reinterpret_cast<dface_t*>((mod_base + l->fileofs));
@@ -721,11 +777,11 @@ void Mod_LoadFaces (lump_t *l)
 
 		for (i=0 ; i<MAXLIGHTMAPS ; i++)
 			out->styles[i] = in->styles[i];
-		i = LittleLong(in->lightofs);
+		lofs = LittleLong(in->lightofs);
 		if (i == -1)
 			out->samples = NULL;
 		else
-			out->samples = loadmodel->lightdata + i;
+			out->samples = loadmodel->lightdata + (lofs * 3);
 		
 	// set the drawing flags flag
 	

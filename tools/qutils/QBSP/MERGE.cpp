@@ -11,7 +11,7 @@ CheckColinear
 
 ================
 */
-void CheckColinear (CFace *f)
+void CheckColinear (face_t *f)
 {
 	int			i, j;
 	vec3_t		v1, v2;
@@ -46,10 +46,10 @@ Returns NULL if the faces couldn't be merged, or the new face.
 The originals will NOT be freed.
 =============
 */
-CFace* TryMerge (CFace* f1, CFace* f2)
+face_t *TryMerge (face_t *f1, face_t *f2)
 {
 	vec_t		*p1, *p2, *p3, *p4, *back;
-	CFace*		newf;
+	face_t		*newf;
 	int			i, j, k, l;
 	vec3_t		normal, delta, planenormal;
 	vec_t		dot;
@@ -171,11 +171,11 @@ MergeFaceToList
 ===============
 */
 bool	mergedebug;
-CFace* MergeFaceToList (CFace* face, CFace* list)
+face_t *MergeFaceToList (face_t *face, face_t *list)
 {	
-	CFace*	newf = NULL, *f = NULL;
+	face_t	*newf, *f;
 	
-	for (f = list; f ; f = f->next)
+	for (f=list ; f ; f=f->next)
 	{
 //CheckColinear (f);		
 if (mergedebug)
@@ -188,7 +188,7 @@ Draw_SetBlack ();
 		newf = TryMerge (face, f);
 		if (!newf)
 			continue;
-		//FreeFace (face);
+		FreeFace (face);
 		f->numpoints = -1;		// merged out
 		return MergeFaceToList (newf, list);
 	}
@@ -204,11 +204,11 @@ Draw_SetBlack ();
 FreeMergeListScraps
 ===============
 */
-CFace* FreeMergeListScraps (CFace* merged)
+face_t *FreeMergeListScraps (face_t *merged)
 {
-	CFace* head = NULL;
-	CFace* next = NULL;
+	face_t	*head, *next;
 	
+	head = NULL;
 	for ( ; merged ; merged = next)
 	{
 		next = merged->next;
@@ -232,21 +232,19 @@ MergePlaneFaces
 */
 void MergePlaneFaces (surface_t *plane)
 {
-	CFace*		f1, *next;
-	CFace*		merged;
-	int i;
+	face_t	*f1, *next;
+	face_t	*merged;
 	
 	merged = NULL;
 	
-	for (i = 0, f1 = plane->faces; f1; f1 = next, i++)
+	for (f1 = plane->faces ; f1 ; f1 = next)
 	{
 		next = f1->next;
 		merged = MergeFaceToList (f1, merged);
 	}
 
 // chain all of the non-empty faces to the plane
-	plane->faces = FreeMergeListScraps(merged);
-
+	plane->faces = FreeMergeListScraps (merged);
 }
 
 
@@ -259,8 +257,7 @@ void MergeAll (surface_t *surfhead)
 {
 	surface_t       *surf;
 	int                     mergefaces;
-	int i;
-	CFace* f;
+	face_t          *f;
 	
 	printf ("---- MergeAll ----\n");
 
@@ -268,10 +265,10 @@ void MergeAll (surface_t *surfhead)
 	for (surf = surfhead ; surf ; surf=surf->next)
 	{
 		MergePlaneFaces (surf);
-		Draw_ClearWindow ();
-		for (i = 0, f = surf->faces; f; f = f->next, i++)
+Draw_ClearWindow ();
+		for (f=surf->faces ; f ; f=f->next)
 		{
-		Draw_DrawFace (f);
+Draw_DrawFace (f);
 			mergefaces++;
 		}
 	}

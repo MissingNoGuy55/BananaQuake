@@ -1,9 +1,9 @@
 
 // bsp5.h
 
-#include "cmdlib.h"
-#include "mathlib.h"
-#include "bspfile.h"
+#include "common/cmdlib.h"
+#include "common/mathlib.h"
+#include "common/bspfile.h"
 
 typedef struct
 {
@@ -40,7 +40,7 @@ void CheckWinding (winding_t *w);
 winding_t	*NewWinding (int points);
 void		FreeWinding (winding_t *w);
 winding_t	*CopyWinding (winding_t *w);
-winding_t	*ClipWinding (winding_t *in, plane_t *split, qboolean keepon);
+winding_t	*ClipWinding (winding_t *in, plane_t *split, bool keepon);
 void	DivideWinding (winding_t *in, plane_t *split, winding_t **front, winding_t **back);
 
 //============================================================================
@@ -74,7 +74,7 @@ typedef struct surface_s
 	int			planenum;
 	int			outputplanenum;		// only valid after WriteSurfacePlanes
 	vec3_t		mins, maxs;
-	qboolean		onnode;				// true if surface has already been used
+	bool		onnode;				// true if surface has already been used
 									// as a splitting node
 	face_t		*faces;	// links to all the faces on either side of the surf
 } surface_t;
@@ -154,7 +154,7 @@ void SplitFace (face_t *in, plane_t *split, face_t **front, face_t **back);
 void DivideFacet (face_t *in, plane_t *split, face_t **front, face_t **back);
 void CalcSurfaceInfo (surface_t *surf);
 void SubdivideFace (face_t *f, face_t **prevptr);
-node_t *SolidBSP (surface_t *surfhead, qboolean midsplit);
+node_t *SolidBSP (surface_t *surfhead, bool midsplit);
 
 //=============================================================================
 
@@ -252,15 +252,15 @@ void DrawTri (vec3_t p1, vec3_t p2, vec3_t p3);
 
 // outside.c
 
-qboolean FillOutside (node_t *node);
+bool FillOutside (node_t *node);
 
 //=============================================================================
 
-extern	qboolean	drawflag;
-extern	qboolean nofill;
-extern	qboolean notjunc;
-extern	qboolean noclip;
-extern	qboolean	verbose;
+extern	bool	drawflag;
+extern	bool nofill;
+extern	bool notjunc;
+extern	bool noclip;
+extern	bool	verbose;
 
 extern	int		subdivide_size;
 
@@ -268,7 +268,7 @@ extern	int		hullnum;
 
 extern	brushset_t	*brushset;
 
-void qprintf (char *fmt, ...);	// only prints if verbose
+void qprintf (const char *fmt, ...);	// only prints if verbose
 
 extern	int		valid;
 
@@ -276,7 +276,7 @@ extern	char	portfilename[1024];
 extern	char	bspfilename[1024];
 extern	char	pointfilename[1024];
 
-extern	qboolean	worldmodel;
+extern	bool	worldmodel;
 
 
 // misc functions

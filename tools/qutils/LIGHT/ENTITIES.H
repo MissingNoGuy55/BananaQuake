@@ -24,9 +24,9 @@ typedef struct entity_s
 extern	entity_t	entities[MAX_MAP_ENTITIES];
 extern	int			num_entities;
 
-char 	*ValueForKey (entity_t *ent, char *key);
-void 	SetKeyValue (entity_t *ent, char *key, char *value);
-float	FloatForKey (entity_t *ent, char *key);
+const char 	*ValueForKey (entity_t *ent, const char *key);
+void 	SetKeyValue (entity_t *ent, const char *key, char *value);
+float	FloatForKey (entity_t *ent, const char *key);
 void 	GetVectorForKey (entity_t *ent, char *key, vec3_t vec);
 
 void LoadEntities (void);

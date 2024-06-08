@@ -284,7 +284,9 @@ double	r_avertexnormals[NUMVERTEXNORMALS][3] = {
 };
 
 vec3_t	shadevector;
-float	shadelight, ambientlight;
+extern vec3_t	lightcolor;
+float	ambientlight;
+//float	shadelight;
 
 // precalculated dot products for quantized angles
 #define SHADEDOT_QUANT 16
@@ -319,6 +321,7 @@ GL_DrawAliasFrame
 void CGLRenderer::GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 {
 	float 	l;
+	float	vertcolor[4];
 	trivertx_t *verts;
 	int		*order;
 	int		count;
@@ -350,8 +353,10 @@ void CGLRenderer::GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 			order += 2;
 
 			// normals and vertexes come from the frame list
-			l = shadedots[verts->lightnormalindex] * shadelight;
-			glColor3f (l, l, l);
+			vertcolor[0] = shadedots[verts->lightnormalindex] * lightcolor[0];
+			vertcolor[1] = shadedots[verts->lightnormalindex] * lightcolor[1];
+			vertcolor[2] = shadedots[verts->lightnormalindex] * lightcolor[2];
+			glColor4f (vertcolor[0], vertcolor[1], vertcolor[2], vertcolor[3]);
 			glVertex3f (verts->v[0], verts->v[1], verts->v[2]);
 			verts++;
 		} while (--count);
@@ -475,6 +480,18 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 	aliashdr_t	*paliashdr;
 	float		an;
 	int			anim;
+	int			quantizedangle;
+
+	// if the initial trace is completely black, try again from above
+	// this helps with models whose origin is slightly below ground level
+	// (e.g. some of the candles in the DOTM start map)
+	if (!R_LightPoint(e->origin))
+	{
+		vec3_t lpos;
+		VectorCopy(e->origin, lpos);
+		lpos[2] += e->model->maxs[2] * 0.5f;
+		R_LightPoint(lpos);
+	}
 
 	clmodel = currententity->model;
 
@@ -492,55 +509,65 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 	// get lighting information
 	//
 
-	ambientlight = shadelight = R_LightPoint (currententity->origin);
+	ambientlight = R_LightPoint (currententity->origin);
 
 	// allways give the gun some light
-	if (e == &cl.viewent && ambientlight < 24)
-		ambientlight = shadelight = 24;
-
-	for (lnum=0 ; lnum<MAX_DLIGHTS ; lnum++)
+	if (e == &cl.viewent)
 	{
-		if (cl_dlights[lnum].die >= cl.time)
+		add = 72.0f - (lightcolor[0] + lightcolor[1] + lightcolor[2]);
+		if (add > 0.0f)
 		{
-			VectorSubtract (currententity->origin,
-							cl_dlights[lnum].origin,
-							dist);
-			add = cl_dlights[lnum].radius - Length(dist);
+			lightcolor[0] += add / 3.0f;
+			lightcolor[1] += add / 3.0f;
+			lightcolor[2] += add / 3.0f;
+		}
+	}
 
+	for (i=0 ; i<MAX_DLIGHTS ; i++)
+	{
+		if (cl_dlights[i].die >= cl.time)
+		{
+			VectorSubtract(currententity->origin, cl_dlights[i].origin, dist);
+			add = cl_dlights[i].radius - VectorLength(dist);
 			if (add > 0) {
-				ambientlight += add;
-				//ZOID models should be affected by dlights as well
-				shadelight += add;
+				VectorMA(lightcolor, add, cl_dlights[i].color, lightcolor);
 			}
 		}
 	}
 
 	// clamp lighting so it doesn't overbright as much
-	if (ambientlight > 128)
-		ambientlight = 128;
-	if (ambientlight + shadelight > 192)
-		shadelight = 192 - ambientlight;
+	add = 288.0f / (lightcolor[0] + lightcolor[1] + lightcolor[2]);
+	if (add < 1.0f)
+		VectorScale(lightcolor, add, lightcolor);
 
 	// ZOID: never allow players to go totally black
-	i = currententity - cl_entities;
-	if ((uintptr_t)e >= (uintptr_t)&cl_entities[1] && (uintptr_t)e <= (uintptr_t)&cl_entities[cl.maxclients] /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
-		if (ambientlight < 8)
-			ambientlight = shadelight = 8;
+	if (currententity > cl_entities && currententity <= cl_entities + cl.maxclients)
+	{
+		add = 24.0f - (lightcolor[0] + lightcolor[1] + lightcolor[2]);
+		if (add > 0.0f)
+		{
+			lightcolor[0] += add / 3.0f;
+			lightcolor[1] += add / 3.0f;
+			lightcolor[2] += add / 3.0f;
+		}
+	}
 
 	// HACK HACK HACK -- no fullbright colors, so make torches full light
 	if (!strcmp (clmodel->name, "progs/flame2.mdl")
 		|| !strcmp (clmodel->name, "progs/flame.mdl") )
-		ambientlight = shadelight = 256;
+		ambientlight = 256; // shadelight = 256;
 
-	shadedots = r_avertexnormal_dots[((int)(e->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
-	shadelight = shadelight / 200.0;
+	quantizedangle = ((int)(e->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1);
 	
-	an = e->angles[1]/180*M_PI;
+	an = (quantizedangle / 16.0) * 2.0 * 3.14159;
 	shadevector[0] = cos(-an);
 	shadevector[1] = sin(-an);
 	shadevector[2] = 1;
-	VectorNormalize (shadevector);
+	VectorNormalize(shadevector);
 
+	shadedots = r_avertexnormal_dots[quantizedangle];
+	VectorScale(lightcolor, 1.0f / 200.0f, lightcolor);
+	
 	//
 	// locate the proper data
 	//

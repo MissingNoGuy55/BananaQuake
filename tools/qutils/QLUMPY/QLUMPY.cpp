@@ -15,8 +15,8 @@ char			destfile[1024];
 
 byte            *lumpbuffer, *lump_p;
 
-qboolean		savesingle;
-qboolean		outputcreated;
+bool		savesingle;
+bool		outputcreated;
 
 /*
 =============================================================================

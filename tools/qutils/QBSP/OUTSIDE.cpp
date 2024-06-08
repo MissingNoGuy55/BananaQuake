@@ -148,9 +148,8 @@ ClearOutFaces
 */
 void ClearOutFaces (node_t *node)
 {
-	CFace	*fp;
-	int i = 0;
-
+	face_t	**fp;
+	
 	if (node->planenum != -1)
 	{
 		ClearOutFaces (node->children[0]);
@@ -160,10 +159,10 @@ void ClearOutFaces (node_t *node)
 	if (node->contents != CONTENTS_SOLID)
 		return;
 
-	for (i = 0, fp = node->markfaces; fp ; fp++)
+	for (fp=node->markfaces ; *fp ; fp++)
 	{
 	// mark all the original faces that are removed
-		(fp)->numpoints = 0;
+		(*fp)->numpoints = 0;
 	}
 	node->faces = NULL;
 }
@@ -227,8 +226,8 @@ bool FillOutside (node_t *node)
 	{
 		v = entities[hit_occupied].origin;
 		qprintf ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-		qprintf ("reached occupant %s at: (%4.0f,%4.0f,%4.0f)\n"
-		, entities[hit_occupied].classname, v[0], v[1], v[2]);
+		qprintf ("reached occupant at: (%4.0f,%4.0f,%4.0f)\n"
+		, v[0], v[1], v[2]);
 		qprintf ("no filling performed\n");
 		if (!hullnum)
 			fclose (leakfile);

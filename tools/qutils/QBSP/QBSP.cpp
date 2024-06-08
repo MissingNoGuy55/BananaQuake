@@ -3,10 +3,6 @@
 #include "bsp5.h"
 
 //
-// Missi: forward declarations for things from Quake (2/2/2023)
-//
-
-//
 // command line flags
 //
 bool	drawflag;
@@ -17,6 +13,7 @@ bool onlyents;
 bool	verbose = true;
 bool	allverbose;
 bool	usehulls;
+bool	overrideproject;
 
 int		subdivide_size = 240;
 
@@ -37,7 +34,7 @@ int		hullnum;
 
 //===========================================================================
 
-void qprintf (char *fmt, ...)
+void qprintf (const char *fmt, ...)
 {
 	va_list argptr;
 
@@ -425,26 +422,27 @@ void FreeWinding (winding_t *w)
 AllocFace
 ===========
 */
-CFace* AllocFace (void)
+face_t *AllocFace (void)
 {
-	CFace* f = new CFace;
+	face_t	*f;
 	
 	c_activefaces++;
 	if (c_activefaces > c_peakfaces)
 		c_peakfaces = c_activefaces;
 		
-	//f = (std::unique_ptr<CFace> )malloc (sizeof(std::unique_ptr<CFace>));
-	//memset (f, 0, sizeof(std::unique_ptr<CFace>));
+	f = (face_t*)malloc (sizeof(face_t));
+	memset (f, 0, sizeof(face_t));
 	f->planenum = -1;
 
 	return f;
 }
 
 
-void FreeFace (CFace* f)
+void FreeFace (face_t *f)
 {
 	c_activefaces--;
-	memset (f,0xff,sizeof(CFace));
+//	memset (f,0xff,sizeof(face_t));
+	free (f);
 }
 
 
@@ -956,6 +954,9 @@ int main (int argc, char **argv)
 	double		start, end;
 	char		sourcename[1024];
 	char		destname[1024];
+
+	myargc = argc;
+	myargv = argv;
 	
 //	malloc_debug (15);
 
@@ -980,6 +981,8 @@ int main (int argc, char **argv)
 			allverbose = true;
 		else if (!strcmp (argv[i],"-usehulls"))
 			usehulls = true;		// don't fork -- use the existing files
+		else if (!strcmp(argv[i], "-proj"))
+			overrideproject = true;		// don't fork -- use the existing files
 		else if (!strcmp (argv[i],"-hullnum"))
 		{
 			hullnum = atoi(argv[i+1]);
@@ -1008,18 +1011,27 @@ int main (int argc, char **argv)
 //
 // create destination name if not specified
 //
-	strcpy (sourcename, argv[i]);
+
+	int j = 0;
+
+	for (; j < myargc; j++)
+	{
+		if (strstr(myargv[j], ".map") != nullptr)
+			break;
+	}
+
+	strcpy (sourcename, argv[j]);
 	DefaultExtension (sourcename, ".map");
 	
-	if (i != argc - 2)
+	if (j != argc - 2)
 	{
-		strcpy (destname, argv[i]);
+		strcpy (destname, argv[j]);
 		StripExtension (destname);
 		strcat (destname, ".bsp");
 		printf ("outputfile: %s\n", destname);
 	}
 	else
-		strcpy (destname, argv[i+1]);
+		strcpy (destname, argv[j+1]);
 
 //
 // do it!

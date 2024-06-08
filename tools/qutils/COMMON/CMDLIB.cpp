@@ -59,6 +59,7 @@ gamedir will hold qdir + the game directory (id1, id2, etc)
 
 char		qdir[1024];
 char		gamedir[1024];
+char		projectpath[1024];
 
 void SetQdirFromPath (char *path)
 {
@@ -72,12 +73,24 @@ void SetQdirFromPath (char *path)
 		path = temp;
 	}
 
+	int test = CheckParm("-proj");
+
+	if (test != 0)
+	{
+		path = myargv[test+1];
+	}
+
+	char wd[512] = {};
+	Q_getwd(wd);
+
+	strncpy(qdir, wd, strlen(wd)-1);
+
 	// search for "quake" in path
 
-	for (c=path ; *c ; c++)
-		if (!Q_strncasecmp (c, "WinQuake", 8))
+	/*for (c=path ; *c ; c++)
+		if (!Q_strncasecmp (c, "Quake", 5) || !Q_strcasecmp(c, projectpath))
 		{
-			strncpy (qdir, path, c+9-path);
+			strncpy (qdir, path, c+6-path);
 			printf ("qdir: %s\n", qdir);
 			c += 6;
 			while (*c)
@@ -93,7 +106,7 @@ void SetQdirFromPath (char *path)
 			Error ("No gamedir in %s", path);
 			return;
 		}
-	Error ("SeetQdirFromPath: no 'quake' in %s", path);
+	Error ("SeetQdirFromPath: no 'quake' in %s", path);*/
 }
 
 char *ExpandPath (char *path)
@@ -287,7 +300,7 @@ skipwhite:
 }
 
 
-int Q_strncasecmp (const char *s1, const char *s2, int n)
+int Q_strncasecmp (const char *s1, const char *s2, size_t n)
 {
 	int		c1, c2;
 	
@@ -315,7 +328,7 @@ int Q_strncasecmp (const char *s1, const char *s2, int n)
 	return -1;
 }
 
-int Q_strcasecmp (char *s1, char *s2)
+int Q_strcasecmp (const char *s1, const char *s2)
 {
 	return Q_strncasecmp (s1, s2, 99999);
 }
@@ -363,7 +376,7 @@ Checks for the given parameter in the program's command line arguments
 Returns the argument number (1 to argc-1) or 0 if not present
 =================
 */
-int CheckParm (char *check)
+int CheckParm (const char *check)
 {
 	int             i;
 
@@ -397,7 +410,7 @@ int filelength (FILE *f)
 }
 
 
-FILE *SafeOpenWrite (char *filename)
+FILE *SafeOpenWrite (const char *filename)
 {
 	FILE	*f;
 
@@ -409,7 +422,7 @@ FILE *SafeOpenWrite (char *filename)
 	return f;
 }
 
-FILE *SafeOpenRead (char *filename)
+FILE *SafeOpenRead (const char *filename)
 {
 	FILE	*f;
 
@@ -476,7 +489,7 @@ void    SaveFile (char *filename, void *buffer, int count)
 
 
 
-void DefaultExtension (char *path, char *extension)
+void DefaultExtension (char *path, const char *extension)
 {
 	char    *src;
 //

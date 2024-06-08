@@ -75,7 +75,7 @@ def_t	def_cppvector = {&type_cppvector, "temp"};
 
 def_t	def_ret, def_parms[MAX_PARMS];
 
-def_t	*def_for_type[9] = {&def_void, &def_string, &def_float, &def_vector, &def_entity, &def_field, &def_function, &def_cppvector, &def_pointer};
+def_t	*def_for_type[9] = {&def_void, &def_string, &def_float, &def_vector, &def_entity, &def_field, &def_function, &def_pointer, &def_cppvector};
 
 void PR_LexWhitespace (void);
 

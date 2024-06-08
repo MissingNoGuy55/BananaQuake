@@ -42,13 +42,16 @@ void CGLRenderer::R_AddDynamicLights (msurface_t *surf)
 	int			smax, tmax;
 	mtexinfo_t	*tex;
 
+	float		cred, cgreen, cblue, brightness;
+	unsigned* bl;
+
 	smax = (surf->extents[0]>>4)+1;
 	tmax = (surf->extents[1]>>4)+1;
 	tex = surf->texinfo;
 
 	for (lnum=0 ; lnum<MAX_DLIGHTS ; lnum++)
 	{
-		if ( !(surf->dlightbits & (1<<lnum) ) )
+		if (!(surf->dlightbits[lnum >> 5] & (1U << (lnum & 31))))
 			continue;		// not lit by this light
 
 		rad = cl_dlights[lnum].radius;
@@ -72,7 +75,40 @@ void CGLRenderer::R_AddDynamicLights (msurface_t *surf)
 		local[0] -= surf->texturemins[0];
 		local[1] -= surf->texturemins[1];
 		
-		for (t = 0 ; t<tmax ; t++)
+		// Missi: copied from QuakeSpasm (6/7/2024)
+		bl = blocklights;
+		cred = cl_dlights[lnum].color[0] * 256.0f;
+		cgreen = cl_dlights[lnum].color[1] * 256.0f;
+		cblue = cl_dlights[lnum].color[2] * 256.0f;
+		//
+		for (t = 0; t < tmax; t++)
+		{
+			td = local[1] - t * 16;
+			if (td < 0)
+				td = -td;
+			for (s = 0; s < smax; s++)
+			{
+				sd = local[0] - s * 16;
+				if (sd < 0)
+					sd = -sd;
+				if (sd > td)
+					dist = sd + (td >> 1);
+				else
+					dist = td + (sd >> 1);
+				if (dist < minlight)
+					// Missi: copied from QuakeSpasm (6/7/2024)
+				{
+					brightness = rad - dist;
+					bl[0] += (int)(brightness * cred);
+					bl[1] += (int)(brightness * cgreen);
+					bl[2] += (int)(brightness * cblue);
+				}
+				bl += 3;
+				//
+			}
+		}
+
+		/*for (t = 0; t<tmax; t++)
 		{
 			td = local[1] - t*16;
 			if (td < 0)
@@ -89,7 +125,7 @@ void CGLRenderer::R_AddDynamicLights (msurface_t *surf)
 				if (dist < minlight)
 					blocklights[t*smax + s] += (rad - dist)*256;
 			}
-		}
+		}*/
 	}
 }
 
@@ -107,6 +143,7 @@ void CGLRenderer::R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	int			smax, tmax;
 	int			t;
 	int			i, j, size;
+	unsigned	r, g, b;
 	int			maps;
 	unsigned	scale;
 	int			lightadj[4];
@@ -121,72 +158,84 @@ void CGLRenderer::R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	size = smax*tmax;
 	lightmap = surf->samples;
 
-// set to full bright if no light data
-	if (r_fullbright.value || !cl.worldmodel->lightdata)
+	if (cl.worldmodel->lightdata)
 	{
-		for (i=0 ; i<size ; i++)
-			blocklights[i] = 255*256;
-		goto store;
-	}
+		// set to full bright if no light data
+		memset(&blocklights[0], 0, size * 3 * sizeof(unsigned int)); // Missi: copied from QuakeSpasm (6/7/2024)
 
-// clear to no light
-	for (i=0 ; i<size ; i++)
-		blocklights[i] = 0;
+		// clear to no light
+		for (i = 0; i < size; i++)
+			blocklights[i] = 0;
 
-// add all the lightmaps
-	if (lightmap)
-		for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ;
-			 maps++)
+		// add all the lightmaps
+		if (lightmap)
+			for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255;
+				maps++)
 		{
 			scale = d_lightstylevalue[surf->styles[maps]];
 			surf->cached_light[maps] = scale;	// 8.8 fraction
-			for (i=0 ; i<size ; i++)
-				blocklights[i] += lightmap[i] * scale;
-			lightmap += size;	// skip to next lightmap
+			// Missi: copied from QuakeSpasm (6/7/2024)
+			bl = blocklights;
+			for (i = 0; i < size; i++)
+			{
+				*bl++ += *lightmap++ * scale;
+				*bl++ += *lightmap++ * scale;
+				*bl++ += *lightmap++ * scale;
+			}
+			//
 		}
 
-// add all the dynamic lights
-	if (surf->dlightframe == r_framecount)
-		R_AddDynamicLights (surf);
+		// add all the dynamic lights
+		if (surf->dlightframe == r_framecount)
+			R_AddDynamicLights(surf);
+	}
+	else
+	{
+		// set to full bright if no light data
+		memset(&blocklights[0], 255, size * 3 * sizeof(unsigned int)); // Missi: copied from QuakeSpasm (6/7/2024)
+	}
 
-// bound, invert, and shift
-store:
+	// bound, invert, and shift
 	switch (gl_lightmap_format)
 	{
 	case GL_RGBA:
-		stride -= (smax<<2);
+		stride -= smax * 4;
 		bl = blocklights;
-		for (i=0 ; i<tmax ; i++, dest += stride)
+		for (i = 0; i < tmax; i++, dest += stride)
 		{
-			for (j=0 ; j<smax ; j++)
-			{
-				t = *bl++;
-				t >>= 7;
-				if (t > 255)
-					t = 255;
-				dest[3] = 255-t;
-				dest += 4;
+			for (j = 0; j < smax; j++)
+			{			
+				r = *bl++ >> 7;
+				g = *bl++ >> 7;
+				b = *bl++ >> 7;
+
+				*dest++ = (r > 255) ? 255 : r;
+				*dest++ = (g > 255) ? 255 : g;
+				*dest++ = (b > 255) ? 255 : b;
+				*dest++ = 255;
 			}
 		}
 		break;
-	case GL_ALPHA:
-	case GL_LUMINANCE:
-	case GL_INTENSITY:
+	case GL_BGRA:
+		stride -= smax * 4;
 		bl = blocklights;
-		for (i=0 ; i<tmax ; i++, dest += stride)
+		for (i = 0; i < tmax; i++, dest += stride)
 		{
-			for (j=0 ; j<smax ; j++)
+			for (j = 0; j < smax; j++)
 			{
-				t = *bl++;
-				t >>= 7;
-				if (t > 255)
-					t = 255;
-				dest[j] = 255-t;
+				r = *bl++ >> 7;
+				g = *bl++ >> 7;
+				b = *bl++ >> 7;
+
+				*dest++ = (b > 255) ? 255 : b;
+				*dest++ = (g > 255) ? 255 : g;
+				*dest++ = (r > 255) ? 255 : r;
+				*dest++ = 255;
 			}
 		}
 		break;
 	default:
-		Sys_Error ("Bad lightmap format");
+		Sys_Error("R_BuildLightMap: bad lightmap format");
 	}
 }
 
@@ -553,6 +602,10 @@ void CGLRenderer::R_BlendLightmaps (void)
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glColor4f (0,0,0,1);
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	else if (gl_lightmap_format == GL_RGBA)
+	{
+		glBlendFunc(GL_ZERO, GL_SRC_COLOR); //modulate
 	}
 
 	if (!r_lightmap.value)

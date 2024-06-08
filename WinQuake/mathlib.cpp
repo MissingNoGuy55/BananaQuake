@@ -31,6 +31,11 @@ int nanmask = 255<<23;
 
 #define DEG2RAD( a ) ( a * M_PI ) / 180.0F
 
+vec_t VectorLength(vec3_t v)
+{
+	return sqrt(DotProduct(v, v));
+}
+
 void ProjectPointOnPlane( vec3_t dst, const vec3_t p, const vec3_t normal )
 {
 	float d;

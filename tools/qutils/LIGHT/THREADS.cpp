@@ -1,5 +1,5 @@
 
-#include "cmdlib.h"
+#include "common/cmdlib.h"
 #include "threads.h"
 
 #ifdef __alpha

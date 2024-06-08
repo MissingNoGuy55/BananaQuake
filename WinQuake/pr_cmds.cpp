@@ -1071,6 +1071,11 @@ void PF_precache_file (void)
 	G_INT(OFS_RETURN) = G_INT(OFS_PARM0);
 }
 
+void PF_MoveToGoal(void)
+{	// precache_file is only used to copy files with qcc, it does nothing
+	sv->SV_MoveToGoal();
+}
+
 void PF_precache_sound (void)
 {
 	const char	*s;
@@ -1850,11 +1855,11 @@ CPPVectorAdd (entity, minvector, maxvector)
 */
 void PF_CPPVectorAdd(void)
 {
-	CQVector<void*>* vec;
+	cxxvector<void*>* vec = nullptr;
 
 	vec = G_CPPVECTOR(OFS_PARM0);
 
-	vec->AddToTail((void*)OFS_PARM0);
+	vec->push_back((void*)OFS_PARM0);
 }
 
 void PF_Fixme (void)
@@ -1944,7 +1949,7 @@ PF_Fixme,
 PF_Fixme,
 #endif
 
-CQuakeServer::SV_MoveToGoal,	// Missi: this is UGLY (6/7/2022)
+PF_MoveToGoal,	// Missi: this is UGLY (6/7/2022)
 PF_precache_file,
 PF_makestatic,
 
@@ -1960,8 +1965,7 @@ PF_precache_model,
 PF_precache_sound,		// precache_sound2 is different only for qcc
 PF_precache_file,
 
-PF_setspawnparms,
-PF_CPPVectorAdd
+PF_setspawnparms
 };
 
 builtin_t *pr_builtins = pr_builtin;

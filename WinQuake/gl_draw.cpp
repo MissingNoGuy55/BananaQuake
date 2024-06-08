@@ -1137,10 +1137,7 @@ void CGLRenderer::GL_FreeTexture(CGLTexture* kill)
 
 /*
 ================
-CGLRenderer::GL_DeleteTexture -- ericw
-
-Wrapper around glDeleteTextures that also clears the given texture number
-from our per-TMU cached texture binding table.
+CGLRenderer::GL_DeleteTexture -- Missi: copied from QuakeSpasm (6/7/2024)
 ================
 */
 void CGLRenderer::GL_DeleteTexture(CGLTexture* texture)

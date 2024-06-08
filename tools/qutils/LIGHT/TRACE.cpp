@@ -59,7 +59,7 @@ Loads the node structure out of a .bsp file to be used for light occlusion
 */
 void MakeTnodes (dmodel_t *bm)
 {
-	tnode_p = tnodes = malloc(numnodes * sizeof(tnode_t));
+	tnode_p = tnodes = (tnode_t*)malloc(numnodes * sizeof(tnode_t));
 	
 	MakeTnode (0);
 }
@@ -90,7 +90,7 @@ typedef struct
 TestLine
 ==============
 */
-qboolean TestLine (vec3_t start, vec3_t stop)
+bool TestLine (vec3_t start, vec3_t stop)
 {
 	int				node;
 	float			front, back;

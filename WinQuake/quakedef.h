@@ -68,6 +68,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 using cxxstring = std::string;
 
+template<typename T>
+using cxxvector = std::vector<T>;
+
 #ifndef QUAKE_TOOLS
 #include <SDL.h>
 #endif
@@ -247,13 +250,14 @@ typedef uintptr_t src_offset_t;
 // Use for multiplayer testing only - VERY dangerous!!!
 // #define IDGODS
 
+#include "mathlib.h"
+
 #include "common.h"
 #include "bspfile.h"
 #include "vid.h"
 #include "sys.h"
 #include "zone.h"
 
-#include "mathlib.h"
 #include "utils.h"
 
 typedef struct
@@ -278,6 +282,7 @@ typedef struct
 #include "render.h"
 #include "client.h"
 #include "progs.h"
+
 #include "server.h"
 #include "strl_fn.h"	// Missi (1/10/2023)
 #include "cfgfile.h"	// Missi (1/10/2023)

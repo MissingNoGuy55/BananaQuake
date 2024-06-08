@@ -81,6 +81,7 @@ int BoxOnPlaneSide(vec3_t emins, vec3_t emaxs, mplane_t* p);
 float	anglemod(float a);
 
 void RotatePointAroundVector(vec3_t dst, const vec3_t dir, const vec3_t point, float degrees);
+vec_t VectorLength(vec3_t v);
 
 #define BOX_ON_PLANE_SIDE(emins, emaxs, p)	\
 	(((p)->type < 3)?						\

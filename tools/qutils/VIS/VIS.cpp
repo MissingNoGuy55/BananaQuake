@@ -13,7 +13,7 @@ leaf_t		*leafs;
 int			c_portaltest, c_portalpass, c_portalcheck;
 
 
-qboolean		showgetleaf = true;
+bool		showgetleaf = true;
 
 int		leafon;			// the next leaf to be given to a thread to process
 
@@ -35,8 +35,8 @@ int			numthreads = 4;
 int			numthreads = 1;
 #endif
 
-qboolean		fastvis;
-qboolean		verbose;
+bool		fastvis;
+bool		verbose;
 int			testlevel = 2;
 
 #if 0
@@ -123,7 +123,7 @@ winding_t *NewWinding (int points)
 		Error ("NewWinding: %i points", points);
 	
 	size = (int)((winding_t *)0)->points[points];
-	w = malloc (size);
+	w = (winding_t*)malloc (size);
 	memset (w, 0, size);
 	
 	return w;
@@ -169,7 +169,7 @@ winding_t	*CopyWinding (winding_t *w)
 	winding_t	*c;
 	
 	size = (int)((winding_t *)0)->points[w->numpoints];
-	c = malloc (size);
+	c = (winding_t*)malloc (size);
 	memcpy (c, w, size);
 	c->original = false;
 	return c;
@@ -186,7 +186,7 @@ If keepon is true, an exactly on-plane winding will be saved, otherwise
 it will be clipped away.
 ==================
 */
-winding_t *ClipWinding (winding_t *in, plane_t *split, qboolean keepon)
+winding_t *ClipWinding (winding_t *in, plane_t *split, bool keepon)
 {
 	vec_t	dists[MAX_POINTS_ON_WINDING];
 	int		sides[MAX_POINTS_ON_WINDING];
@@ -562,7 +562,7 @@ PASSAGE CALCULATION (not used yet...)
 
 int		count_sep;
 
-qboolean PlaneCompare (plane_t *p1, plane_t *p2)
+bool PlaneCompare (plane_t *p1, plane_t *p2)
 {
 	int		i;
 
@@ -584,7 +584,7 @@ sep_t	*Findpassages (winding_t *source, winding_t *pass)
 	float		d;
 	double		length;
 	int			counts[3];
-	qboolean		fliptest;
+	bool		fliptest;
 	sep_t		*sep, *list;
 	
 	list = NULL;
@@ -686,7 +686,7 @@ sep_t	*Findpassages (winding_t *source, winding_t *pass)
 		//
 			count_sep++;
 
-			sep = malloc(sizeof(*sep));
+			sep = (sep_t*)malloc(sizeof(*sep));
 			sep->next = list;
 			list = sep;
 			sep->plane = plane;
@@ -741,11 +741,11 @@ void CalcPassages (void)
 				{
 //					Error ("No seperating planes found in portal pair");
 					count_sep++;
-					sep = malloc(sizeof(*sep));
+					sep = (sep_t*)malloc(sizeof(*sep));
 					sep->next = NULL;
 					sep->plane = p1->plane;
 				}
-				passages = malloc(sizeof(*passages));
+				passages = (passage_t*)malloc(sizeof(*passages));
 				passages->planes = sep;
 				passages->from = p1->leaf;
 				passages->to = p2->leaf;
@@ -803,10 +803,10 @@ void LoadPortals (char *name)
 	bitlongs = bitbytes/sizeof(long);
 	
 // each file portal is split into two memory portals
-	portals = malloc(2*numportals*sizeof(portal_t));
+	portals = (portal_t*)malloc(2*numportals*sizeof(portal_t));
 	memset (portals, 0, 2*numportals*sizeof(portal_t));
 	
-	leafs = malloc(portalleafs*sizeof(leaf_t));
+	leafs = (leaf_t*)malloc(portalleafs*sizeof(leaf_t));
 	memset (leafs, 0, portalleafs*sizeof(leaf_t));
 
 	originalvismapsize = portalleafs*((portalleafs+7)/8);
@@ -937,7 +937,7 @@ int main (int argc, char **argv)
 	
 	LoadPortals (portalfile);
 	
-	uncompressed = malloc(bitbytes*portalleafs);
+	uncompressed = (byte*)malloc(bitbytes*portalleafs);
 	memset (uncompressed, 0, bitbytes*portalleafs);
 	
 //	CalcPassages ();

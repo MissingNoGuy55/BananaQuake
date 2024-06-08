@@ -29,7 +29,7 @@ wvert_t	wverts[MAXWVERTS];
 wedge_t	wedges[MAXWEDGES];
 
 
-void PrintFace (std::unique_ptr<CFace> f)
+void PrintFace (face_t *f)
 {
 	int		i;
 	
@@ -241,7 +241,7 @@ AddFaceEdges
 
 ===============
 */
-void AddFaceEdges (CFace* f)
+void AddFaceEdges (face_t *f)
 {
 	int		i, j;
 	
@@ -256,17 +256,17 @@ void AddFaceEdges (CFace* f)
 //============================================================================
 
 // a specially allocated face that can hold hundreds of edges if needed
-std::unique_ptr<CFace>	superfacebuf[8192];
-std::vector<CFace*> superface;
+byte	superfacebuf[8192];
+face_t	*superface = (face_t *)superfacebuf;
 
-void FixFaceEdges (std::unique_ptr<CFace> f);
+void FixFaceEdges (face_t *f);
 
-CFace*				newlist;
+face_t	*newlist;
 
-void SplitFaceForTjunc (CFace* f, CFace* original)
+void SplitFaceForTjunc (face_t *f, face_t *original)
 {
 	int			i;
-	CFace*		cnew, *chain;
+	face_t		*fnew, *chain;
 	vec3_t		dir, test;
 	vec_t		v;
 	int			firstcorner, lastcorner;
@@ -277,7 +277,7 @@ void SplitFaceForTjunc (CFace* f, CFace* original)
 		if (f->numpoints <= MAXPOINTS)
 		{	// the face is now small enough without more cutting
 			// so copy it back to the original
-			original = f;
+			*original = *f;
 			original->original = chain;
 			original->next = newlist;
 			newlist = original;
@@ -331,33 +331,33 @@ restart:
 	// cut off as big a piece as possible, less than MAXPOINTS, and not
 	// past lastcorner
 			
-		cnew = NewFaceFromFace (f);
+		fnew = NewFaceFromFace (f);
 		if (f->original)
 			Error ("SplitFaceForTjunc: f->original");
 			
-		cnew->original = chain;
-		chain = cnew;
-		cnew->next = newlist;
-		newlist = cnew;
+		fnew->original = chain;
+		chain = fnew;
+		fnew->next = newlist;
+		newlist = fnew;
 		if (f->numpoints - firstcorner <= MAXPOINTS)
-			cnew->numpoints = firstcorner+2;
+			fnew->numpoints = firstcorner+2;
 		else if (lastcorner+2 < MAXPOINTS &&
 		f->numpoints - lastcorner <= MAXPOINTS)
-			cnew->numpoints = lastcorner+2;
+			fnew->numpoints = lastcorner+2;
 		else
-			cnew->numpoints = MAXPOINTS;
+			fnew->numpoints = MAXPOINTS;
 
-		for (i=0 ; i<cnew->numpoints ; i++)
+		for (i=0 ; i<fnew->numpoints ; i++)
 		{
-			VectorCopy (f->pts[i], cnew->pts[i]);
+			VectorCopy (f->pts[i], fnew->pts[i]);
 		}
 		
 		
-		for (i=cnew->numpoints-1 ; i<f->numpoints ; i++)
+		for (i=fnew->numpoints-1 ; i<f->numpoints ; i++)
 		{
-			VectorCopy (f->pts[i], f->pts[i-(cnew->numpoints-2)]);
+			VectorCopy (f->pts[i], f->pts[i-(fnew->numpoints-2)]);
 		}
-		f->numpoints -= (cnew->numpoints-2);
+		f->numpoints -= (fnew->numpoints-2);
 	} while (1);
 
 }
@@ -369,22 +369,21 @@ FixFaceEdges
 
 ===============
 */
-void FixFaceEdges (CFace* f)
+void FixFaceEdges (face_t *f)
 {
 	int		i, j, k;
 	wedge_t	*w;
 	wvert_t	*v;
 	vec_t	t1, t2;
-	CFace* sface;
 
-	superface.push_back(f);
+	*superface = *f;
 	
 restart:
-	for (i=0, sface = superface.at(i); i < sface->numpoints; i++)
+	for (i=0 ; i < superface->numpoints ; i++)
 	{
-		 j = (i+1)%sface->numpoints;
+		 j = (i+1)%superface->numpoints;
 
-		w = FindEdge (sface->pts[i], sface->pts[j], &t1, &t2);
+		w = FindEdge (superface->pts[i], superface->pts[j], &t1, &t2);
 		
 		for (v=w->head.next ; v->t < t1 + T_EPSILON ; v = v->next)
 		{
@@ -394,20 +393,20 @@ restart:
 		{
 			tjuncs++;
 		// insert a new vertex here
-			for (k = sface->numpoints ; k> j ; k--)
+			for (k = superface->numpoints ; k> j ; k--)
 			{
-				VectorCopy (sface->pts[k-1], sface->pts[k]);
+				VectorCopy (superface->pts[k-1], superface->pts[k]);
 			}
-			VectorMA (w->origin, v->t, w->dir, sface->pts[j]);
-			sface->numpoints++;
+			VectorMA (w->origin, v->t, w->dir, superface->pts[j]);
+			superface->numpoints++;
 			goto restart;	
 		}
 	}
 
 
-	if (sface->numpoints <= MAXPOINTS)
+	if (superface->numpoints <= MAXPOINTS)
 	{
-		f = sface;
+		*f = *superface;
 		f->next = newlist;
 		newlist = f;
 		return;
@@ -415,7 +414,7 @@ restart:
 
 // the face needs to be split into multiple faces because of too many edges
 
-	SplitFaceForTjunc (sface, f);
+	SplitFaceForTjunc (superface, f);
 
 }
 
@@ -424,13 +423,12 @@ restart:
 
 void tjunc_find_r (node_t *node)
 {
-	CFace*	f;
-	int i = 0;
+	face_t	*f;
 
 	if (node->planenum == PLANENUM_LEAF)
 		return;
 		
-	for (i = 0, f = node->faces; f ; i++, f = f->next)
+	for (f=node->faces ; f ; f=f->next)
 		AddFaceEdges (f);
 		
 	tjunc_find_r (node->children[0]);
@@ -439,15 +437,14 @@ void tjunc_find_r (node_t *node)
 
 void tjunc_fix_r (node_t *node)
 {
-	CFace*	f, *next;
-	int i = 0;
+	face_t	*f, *next;
 
 	if (node->planenum == PLANENUM_LEAF)
 		return;
 		
 	newlist = NULL;
 	
-	for (i = 0, f = node->faces; f ; i++, f = next)
+	for (f=node->faces ; f ; f=next)
 	{
 		next = f->next;
 		FixFaceEdges (f);

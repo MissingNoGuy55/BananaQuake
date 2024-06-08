@@ -57,6 +57,14 @@ vec3_t					vec3_origin;
 ===============================================================================
 */
 
+
+
+/*
+===============================================================================
+						STUFF DEFINED IN QUAKE
+===============================================================================
+*/
+
 int NUM_FOR_EDICT(edict_t* e)
 {
 	int		b;
@@ -1166,6 +1174,11 @@ void PF_precache_file (void)
 	G_INT(OFS_RETURN) = G_INT(OFS_PARM0);
 }
 
+void PF_MoveToGoal (void)
+{	// precache_file is only used to copy files with qcc, it does nothing
+	sv->SV_MoveToGoal();
+}
+
 void PF_precache_sound (void)
 {
 	const char	*s;
@@ -1714,97 +1727,95 @@ void PF_Fixme (void)
 	PR_RunError ("unimplemented bulitin");
 }
 
-
-
 builtin_t pr_builtin[] =
 {
 	PF_Fixme,
-PF_makevectors,	// void(entity e)	makevectors 		= #1;
-PF_setorigin,	// void(entity e, vector o) setorigin	= #2;
-PF_setmodel,	// void(entity e, string m) setmodel	= #3;
-PF_setsize,	// void(entity e, vector min, vector max) setsize = #4;
-PF_Fixme,	// void(entity e, vector min, vector max) setabssize = #5;
-PF_break,	// void() break						= #6;
-PF_random,	// float() random						= #7;
-PF_sound,	// void(entity e, float chan, string samp) sound = #8;
-PF_normalize,	// vector(vector v) normalize			= #9;
-PF_error,	// void(string e) error				= #10;
-PF_objerror,	// void(string e) objerror				= #11;
-PF_vlen,	// float(vector v) vlen				= #12;
-PF_vectoyaw,	// float(vector v) vectoyaw		= #13;
-PF_Spawn,	// entity() spawn						= #14;
-PF_Remove,	// void(entity e) remove				= #15;
-PF_traceline,	// float(vector v1, vector v2, float tryents) traceline = #16;
-PF_checkclient,	// entity() clientlist					= #17;
-PF_Find,	// entity(entity start, .string fld, string match) find = #18;
-PF_precache_sound,	// void(string s) precache_sound		= #19;
-PF_precache_model,	// void(string s) precache_model		= #20;
-PF_stuffcmd,	// void(entity client, string s)stuffcmd = #21;
-PF_findradius,	// entity(vector org, float rad) findradius = #22;
-PF_bprint,	// void(string s) bprint				= #23;
-PF_sprint,	// void(entity client, string s) sprint = #24;
-PF_dprint,	// void(string s) dprint				= #25;
-PF_ftos,	// void(string s) ftos				= #26;
-PF_vtos,	// void(string s) vtos				= #27;
-PF_coredump,
-PF_traceon,
-PF_traceoff,
-PF_eprint,	// void(entity e) debug print an entire entity
-PF_walkmove, // float(float yaw, float dist) walkmove
-PF_Fixme, // float(float yaw, float dist) walkmove
-PF_droptofloor,
-PF_lightstyle,
-PF_rint,
-PF_floor,
-PF_ceil,
-PF_Fixme,
-PF_checkbottom,
-PF_pointcontents,
-PF_Fixme,
-PF_fabs,
-PF_aim,
-PF_cvar,
-PF_localcmd,
-PF_nextent,
-PF_particle,
-PF_changeyaw,
-PF_Fixme,
-PF_vectoangles,
+	PF_makevectors,	// void(entity e)	makevectors 		= #1;
+	PF_setorigin,	// void(entity e, vector o) setorigin	= #2;
+	PF_setmodel,	// void(entity e, string m) setmodel	= #3;
+	PF_setsize,	// void(entity e, vector min, vector max) setsize = #4;
+	PF_Fixme,	// void(entity e, vector min, vector max) setabssize = #5;
+	PF_break,	// void() break						= #6;
+	PF_random,	// float() random						= #7;
+	PF_sound,	// void(entity e, float chan, string samp) sound = #8;
+	PF_normalize,	// vector(vector v) normalize			= #9;
+	PF_error,	// void(string e) error				= #10;
+	PF_objerror,	// void(string e) objerror				= #11;
+	PF_vlen,	// float(vector v) vlen				= #12;
+	PF_vectoyaw,	// float(vector v) vectoyaw		= #13;
+	PF_Spawn,	// entity() spawn						= #14;
+	PF_Remove,	// void(entity e) remove				= #15;
+	PF_traceline,	// float(vector v1, vector v2, float tryents) traceline = #16;
+	PF_checkclient,	// entity() clientlist					= #17;
+	PF_Find,	// entity(entity start, .string fld, string match) find = #18;
+	PF_precache_sound,	// void(string s) precache_sound		= #19;
+	PF_precache_model,	// void(string s) precache_model		= #20;
+	PF_stuffcmd,	// void(entity client, string s)stuffcmd = #21;
+	PF_findradius,	// entity(vector org, float rad) findradius = #22;
+	PF_bprint,	// void(string s) bprint				= #23;
+	PF_sprint,	// void(entity client, string s) sprint = #24;
+	PF_dprint,	// void(string s) dprint				= #25;
+	PF_ftos,	// void(string s) ftos				= #26;
+	PF_vtos,	// void(string s) vtos				= #27;
+	PF_coredump,
+	PF_traceon,
+	PF_traceoff,
+	PF_eprint,	// void(entity e) debug print an entire entity
+	PF_walkmove, // float(float yaw, float dist) walkmove
+	PF_Fixme, // float(float yaw, float dist) walkmove
+	PF_droptofloor,
+	PF_lightstyle,
+	PF_rint,
+	PF_floor,
+	PF_ceil,
+	PF_Fixme,
+	PF_checkbottom,
+	PF_pointcontents,
+	PF_Fixme,
+	PF_fabs,
+	PF_aim,
+	PF_cvar,
+	PF_localcmd,
+	PF_nextent,
+	PF_particle,
+	PF_changeyaw,
+	PF_Fixme,
+	PF_vectoangles,
 
-PF_WriteByte,
-PF_WriteChar,
-PF_WriteShort,
-PF_WriteLong,
-PF_WriteCoord,
-PF_WriteAngle,
-PF_WriteString,
-PF_WriteEntity,
+	PF_WriteByte,
+	PF_WriteChar,
+	PF_WriteShort,
+	PF_WriteLong,
+	PF_WriteCoord,
+	PF_WriteAngle,
+	PF_WriteString,
+	PF_WriteEntity,
 
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
+	PF_Fixme,
+	PF_Fixme,
+	PF_Fixme,
+	PF_Fixme,
+	PF_Fixme,
+	PF_Fixme,
+	PF_Fixme,
 
-sv->SV_MoveToGoal,
-PF_precache_file,
-PF_makestatic,
+	PF_MoveToGoal,
+	PF_precache_file,
+	PF_makestatic,
 
-PF_changelevel,
-PF_Fixme,
+	PF_changelevel,
+	PF_Fixme,
 
-PF_cvar_set,
-PF_centerprint,
+	PF_cvar_set,
+	PF_centerprint,
 
-PF_ambientsound,
+	PF_ambientsound,
 
-PF_precache_model,
-PF_precache_sound,		// precache_sound2 is different only for qcc
-PF_precache_file,
+	PF_precache_model,
+	PF_precache_sound,		// precache_sound2 is different only for qcc
+	PF_precache_file,
 
-PF_setspawnparms
+	PF_setspawnparms
 };
 
 builtin_t *pr_builtins = pr_builtin;

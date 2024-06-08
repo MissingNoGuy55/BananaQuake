@@ -9,7 +9,7 @@ int			pr_edict_size;
 //========================================
 
 def_t		*pr_scope;		// the function being parsed, or NULL
-qboolean	pr_dumpasm;
+bool	pr_dumpasm;
 string_t	s_file;			// filename for function definition
 
 int			locals_end;		// for tracking local variables vs temps
@@ -150,7 +150,7 @@ def_t *PR_Statement ( opcode_t *op, def_t *var_a, def_t *var_b)
 	}
 	else
 	{	// allocate result space
-		var_c = malloc (sizeof(def_t));
+		var_c = (def_t*)malloc (sizeof(def_t));
 		memset (var_c, 0, sizeof(def_t));
 		var_c->ofs = numpr_globals;
 		var_c->type = op->type_c->type;
@@ -213,7 +213,7 @@ def_t	*PR_ParseImmediate (void)
 	}
 	
 // allocate a new one
-	cn = malloc (sizeof(def_t));
+	cn = (def_t*)malloc (sizeof(def_t));
 	cn->next = NULL;
 
 	pr.def_tail->next = cn;
@@ -483,7 +483,7 @@ def_t *PR_Expression (int priority)
 				if (e2->type->aux_type)
 					type_c = e2->type->aux_type->type;
 				else
-					type_c = -1;	// not a field
+					type_c = (etype_t)-1;	// not a field
 			}
 			else
 				type_c = ev_void;
@@ -669,7 +669,7 @@ function_t *PR_ParseImmediateStatements (type_t *type)
 	function_t	*f;
 	def_t		*defs[MAX_PARMS];
 	
-	f = malloc (sizeof(function_t));
+	f = (function_t*)malloc (sizeof(function_t));
 
 //
 // check for builtin function definition #1, #2, etc
@@ -728,91 +728,85 @@ If type is NULL, it will match any type
 If allocate is true, a new def will be allocated if it can't be found
 ============
 */
-def_t *PR_GetDef (type_t *type, char *name, def_t *scope, qboolean allocate)
+def_t *PR_GetDef (type_t *type, char *name, def_t *scope, bool allocate)
 {
-	def_t		*def, **old;
+	def_t* def;
 	char element[MAX_NAME];
 
-// see if the name is already in use
-	old = &pr.search;
-	for (def = *old ; def ; old=&def->search_next,def = *old)
-		if (!strcmp(def->name,name) )
+	// see if the name is already in use
+	for (def = pr.def_head.next; def; def = def->next)
+		if (!strcmp(def->name, name))
 		{
-			if ( def->scope && def->scope != scope)
+			if (def->scope && def->scope != scope)
 				continue;		// in a different function
-			
-			if (type && def->type != type)
-				PR_ParseError ("Type mismatch on redeclaration of %s",name);
 
-			// move to head of list to find fast next time
-			*old = def->search_next;
-			def->search_next = pr.search;
-			pr.search = def;
+			if (type && def->type != type)
+				PR_ParseError("Type mismatch on redeclaration of %s", name);
 			return def;
 		}
-	
+
 	if (!allocate)
 		return NULL;
-		
-// allocate a new def
-	def = malloc (sizeof(def_t));
-	memset (def, 0, sizeof(*def));
+
+	// allocate a new def
+	def = (def_t*)malloc(sizeof(def_t));
+	memset(def, 0, sizeof(*def));
 	def->next = NULL;
 	pr.def_tail->next = def;
 	pr.def_tail = def;
 
-	def->search_next = pr.search;
-	pr.search = def;
+	char test[64];
 
-	def->name = malloc (strlen(name)+1);
-	strcpy (def->name, name);
+	def->name = (const char*)malloc(strlen(name) + 1);
+	strcpy(test, name);
+	def->name = _strdup(test);
 	def->type = type;
 
 	def->scope = scope;
-	
+
 	def->ofs = numpr_globals;
 	pr_global_defs[numpr_globals] = def;
 
-//
-// make automatic defs for the vectors elements
-// .origin can be accessed as .origin_x, .origin_y, and .origin_z
-//
+	//
+	// make automatic defs for the vectors elements
+	// .origin can be accessed as .origin_x, .origin_y, and .origin_z
+	//
 	if (type->type == ev_vector)
-	{		
-		sprintf (element, "%s_x",name);
-		PR_GetDef (&type_float, element, scope, true);
-		
-		sprintf (element, "%s_y",name);
-		PR_GetDef (&type_float, element, scope, true);
-		
-		sprintf (element, "%s_z",name);
-		PR_GetDef (&type_float, element, scope, true);
+	{
+		sprintf(element, "%s_x", name);
+		PR_GetDef(&type_float, element, scope, true);
+
+		sprintf(element, "%s_y", name);
+		PR_GetDef(&type_float, element, scope, true);
+
+		sprintf(element, "%s_z", name);
+		PR_GetDef(&type_float, element, scope, true);
 	}
 	else
 		numpr_globals += type_size[type->type];
 
 	if (type->type == ev_field)
 	{
-		*(int *)&pr_globals[def->ofs] = pr.size_fields;
-		
+		*(int*)&pr_globals[def->ofs] = pr.size_fields;
+
 		if (type->aux_type->type == ev_vector)
 		{
-			sprintf (element, "%s_x",name);
-			PR_GetDef (&type_floatfield, element, scope, true);
-			
-			sprintf (element, "%s_y",name);
-			PR_GetDef (&type_floatfield, element, scope, true);
-			
-			sprintf (element, "%s_z",name);
-			PR_GetDef (&type_floatfield, element, scope, true);
+			sprintf(element, "%s_x", name);
+			PR_GetDef(&type_floatfield, element, scope, true);
+
+			sprintf(element, "%s_y", name);
+			PR_GetDef(&type_floatfield, element, scope, true);
+
+			sprintf(element, "%s_z", name);
+			PR_GetDef(&type_floatfield, element, scope, true);
 		}
 		else
 			pr.size_fields += type_size[type->aux_type->type];
 	}
 
-//	if (pr_dumpasm)
-//		PR_PrintOfs (def->ofs);
-		
+	//	if (pr_dumpasm)
+	//		PR_PrintOfs (def->ofs);
+
 	return def;
 }
 
@@ -899,7 +893,7 @@ PR_CompileFile
 compiles the 0 terminated text, adding defintions to the pr structure
 ============
 */
-qboolean	PR_CompileFile (char *string, char *filename)
+bool	PR_CompileFile (char *string, char *filename)
 {	
 	if (!pr.memory)
 		Error ("PR_CompileFile: Didn't clear");

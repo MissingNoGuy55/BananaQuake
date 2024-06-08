@@ -415,8 +415,6 @@ T* COM_LoadHunkFile(const char* path, uintptr_t* path_id)
 {
 	return COM_LoadFile<T>(path, HUNK_FULL, path_id);
 }
-
-
 template<typename T>
 T* COM_LoadTempFile(const char* path, uintptr_t* path_id)
 {

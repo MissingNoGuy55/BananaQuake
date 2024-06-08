@@ -319,7 +319,7 @@ public:
 	void BoundPoly(int numverts, float* verts, vec3_t mins, vec3_t maxs);
 	void SubdividePolygon(int numverts, float* verts);
 
-	int RecursiveLightPoint(mnode_t* node, vec3_t start, vec3_t end);
+	int RecursiveLightPoint(vec3_t color, mnode_t* node, vec3_t rayorg, vec3_t start, vec3_t end, float* maxdist);
 
 	void R_Init(void);
 	void R_InitParticleTexture(void);

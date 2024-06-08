@@ -82,7 +82,7 @@ int	FindTexinfo (texinfo_t *t)
 
 //============================================================================
 
-#define	MAXTOKEN	1024	// Missi: was 128 (2/2/2023)
+#define	MAXTOKEN	128
 
 char	token[MAXTOKEN];
 bool	unget;
@@ -182,10 +182,9 @@ entity_t	*mapent;
 ParseEpair
 =================
 */
-char* ParseEpair (char* out)
+void ParseEpair (void)
 {
-	epair_t	*e = NULL;
-	bool	classname = false;
+	epair_t	*e;
 	
 	e = (epair_t*)malloc (sizeof(epair_t));
 	memset (e, 0, sizeof(epair_t));
@@ -195,22 +194,10 @@ char* ParseEpair (char* out)
 	if (strlen(token) >= MAX_KEY-1)
 		Error ("ParseEpar: token too long");
 	e->key = copystring(token);
-	if (!strcmp(token, "classname"))
-	{
-		classname = true;
-	}
 	GetToken (false);
 	if (strlen(token) >= MAX_VALUE-1)
 		Error ("ParseEpar: token too long");
 	e->value = copystring(token);
-
-	if (classname)
-	{
-		strcpy(out, token);
-		return out;
-	}
-
-	return NULL;
 }
 
 //============================================================================
@@ -269,9 +256,6 @@ void ParseBrush (void)
 	mface_t		*f, *f2;
 	vec3_t		planepts[3];
 	vec3_t			t1, t2, t3;
-	float			texpts[3], texpts2[3];	// Missi (2/2/2023)
-	float			texoff = 0.0f, texoff2 = 0.0f;
-	int			off = 0, off2 = 0;	// Missi (2/2/2023)
 	int			i,j;
 	texinfo_t	tx;
 	vec_t		d;
@@ -295,7 +279,7 @@ void ParseBrush (void)
 			if (i != 0)
 				GetToken (true);
 			if (strcmp (token, "(") )
-				Error ("ParseBrush: token \"(\" not found");
+				Error ("parsing brush");
 			
 			for (j=0 ; j<3 ; j++)
 			{
@@ -305,7 +289,7 @@ void ParseBrush (void)
 			
 			GetToken (false);
 			if (strcmp (token, ")") )
-				Error ("ParseBrush: token \")\" not found");
+				Error ("parsing brush");
 				
 		}
 
@@ -313,64 +297,10 @@ void ParseBrush (void)
 		memset (&tx, 0, sizeof(tx));
 		GetToken (false);
 		tx.miptex = FindMiptex (token);
-		GetToken(false);
-
-		// Missi: find Valve definition stuff (2/2/2023)
-		// Quake standard .map line: "( x1 y1 z1 ) ( x2 y2 z2 ) ( x3 y3 z3 ) TEXTURE Xoffset Yoffset rotation Xscale Yscale"
-		// Valve standard .map line: "( x1 y1 z1 ) ( x2 y2 z2 ) ( x3 y3 z3 ) TEXTURE [ Tx1 Ty1 Tz1 Toffset1 ] [ Tx2 Ty2 Tz2 Toffset2 ] rotation Xscale Yscale"
-		// get the tex points
-		for (i = 0; i < 1; i++)
-		{
-			if (i != 0)
-				GetToken(true);
-			if (strcmp(token, "["))
-				Error("ParseBrush: token \"[\" not found");
-
-			for (j = 0; j < 3; j++)
-			{
-				GetToken(false);
-				texpts[j] = atoi(token);	// Missi: fill Tx1, Ty1, and Tz1 (2/3/2023)
-			}
-
-			GetToken(false);
-			texoff = atoi(token);	// Missi: get Toffset1 (2/3/2023)
-			GetToken(false);
-
-			if (strcmp(token, "]"))
-				Error("ParseBrush: token \"]\" not found");
-
-		}
-
-		GetToken(false);
-
-		for (i = 0; i < 1; i++)
-		{
-			if (i != 0)
-				GetToken(true);
-			if (strcmp(token, "["))
-				Error("ParseBrush: token \"[\" not found");
-
-			for (j = 0; j < 3; j++)
-			{
-				GetToken(false);
-				texpts2[j] = atoi(token);	// Missi: fill Tx2, Ty2, and Tz2 (2/3/2023)
-			}
-			GetToken(false);
-			texoff2 = atoi(token);	// Missi: get Toffset2 (2/3/2023)
-			GetToken(false);
-
-			rotate = atoi(token);
-			if (strcmp(token, "]"))
-				Error("ParseBrush: token \"]\" not found");
-
-		}
-
-		shift[0] = texoff;
-		shift[1] = texoff2;
-
-		/*shift[0] = atoi(token);
 		GetToken (false);
-		shift[1] = atoi(token);*/
+		shift[0] = atoi(token);
+		GetToken (false);
+		shift[1] = atoi(token);
 		GetToken (false);
 		rotate = atoi(token);	
 		GetToken (false);
@@ -495,8 +425,6 @@ ParseEntity
 */
 bool	ParseEntity (void)
 {
-	static char	classname[64] = {};
-
 	if (!GetToken (true))
 		return false;
 
@@ -518,13 +446,7 @@ bool	ParseEntity (void)
 		if (!strcmp (token, "{") )
 			ParseBrush ();
 		else
-			ParseEpair (classname);
-
-		if (classname != '\0')
-		{
-			printf("ParseEntity: parsed %s\n", classname);
-			strcpy(mapent->classname, classname);
-		}
+			ParseEpair ();
 	} while (1);
 	
 	GetVectorForKey (mapent, "origin", mapent->origin);
@@ -569,7 +491,7 @@ void PrintEntity (entity_t *ent)
 }
 
 
-char 	*ValueForKey (entity_t *ent, char *key)
+const char 	*ValueForKey (entity_t *ent, const char *key)
 {
 	epair_t	*ep;
 	
@@ -579,7 +501,7 @@ char 	*ValueForKey (entity_t *ent, char *key)
 	return "";
 }
 
-void 	SetKeyValue (entity_t *ent, char *key, char *value)
+void 	SetKeyValue (entity_t *ent, const char *key, char *value)
 {
 	epair_t	*ep;
 	
@@ -593,21 +515,21 @@ void 	SetKeyValue (entity_t *ent, char *key, char *value)
 	ep = (epair_t*)malloc (sizeof(*ep));
 	ep->next = ent->epairs;
 	ent->epairs = ep;
-	ep->key = copystring(key);
+	ep->key = key;
 	ep->value = copystring(value);
 }
 
 float	FloatForKey (entity_t *ent, char *key)
 {
-	char	*k;
+	const char	*k;
 	
 	k = ValueForKey (ent, key);
 	return atof(k);
 }
 
-void 	GetVectorForKey (entity_t *ent, char *key, vec3_t vec)
+void 	GetVectorForKey (entity_t *ent, const char *key, vec3_t vec)
 {
-	char	*k;
+	const char	*k;
 	double	v1, v2, v3;
 
 	k = ValueForKey (ent, key);
@@ -619,17 +541,6 @@ void 	GetVectorForKey (entity_t *ent, char *key, vec3_t vec)
 	vec[2] = v3;
 }
 
-const char* GetEntityKeyValue(const char* in)
-{
-	for (int i = 0; i < num_entities; i++)
-	{
-		if (!strcmp(in, entities[i].classname));
-		{
-			return in;
-		}
-	}
-	return NULL;
-}
 
 void WriteEntitiesToString (void)
 {

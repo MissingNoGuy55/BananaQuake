@@ -238,6 +238,9 @@ There are no ++ / -- operators, or operate/assign operators.
 typedef int	gofs_t;				// offset in global data block
 typedef struct function_s function_t;
 
+template<typename T>
+using cxxvector = std::vector<T>;
+
 #define	MAX_PARMS	8
 
 typedef struct type_s
@@ -281,15 +284,15 @@ typedef union eval_s
 	func_t				function;
 	int					_int;
 	union eval_s		*ptr;
-	std::vector<void*>*	cppvector;
+	cxxvector<void*>*	cppvector;
 } eval_t;	
 
 extern	int		type_size[9];
 extern	def_t	*def_for_type[9];
 
-extern	type_t	type_void, type_string, type_float, type_vector, type_entity, type_field, type_function, type_pointer, type_floatfield;
+extern	type_t	type_void, type_string, type_float, type_vector, type_entity, type_field, type_function, type_pointer, type_floatfield, type_cppvector;
 
-extern	def_t	def_void, def_string, def_float, def_vector, def_entity, def_field, def_function, def_pointer, def_cppvector;
+extern	def_t	def_void, def_string, def_float, def_vector, def_entity, def_field, def_function, def_pointer, def_floatfield, def_cppvector;
 
 struct function_s
 {
@@ -311,9 +314,9 @@ typedef struct
 	int			max_memory;
 	int			current_memory;
 	type_t		*types;
-	
-	def_t		def_head;		// unused head of linked list
-	def_t		*def_tail;		// add new defs after this and move it
+
+	def_t		def_head;
+	def_t*		def_tail;
 	
 	int			size_fields;
 } pr_info_t;
@@ -397,13 +400,14 @@ extern	bool	pr_trace;
 #define	G_INT(o) (*(int *)&pr_globals[o])
 #define	G_VECTOR(o) (&pr_globals[o])
 #define	G_STRING(o) (strings + *(string_t *)&pr_globals[o])
+#define G_CPPVECTOR(o) ((cxxvector<void*>*)&pr_globals[o])
 #define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
 
 char *PR_ValueString (etype_t type, void *val);
 
 void PR_ClearGrabMacros (void);
 
-bool	PR_CompileFile (char *string, char *filename);
+bool	PR_CompileFile (char *string, const char *filename);
 
 extern	bool	pr_dumpasm;
 

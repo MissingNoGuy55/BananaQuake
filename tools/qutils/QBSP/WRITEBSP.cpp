@@ -149,9 +149,8 @@ WriteLeaf
 */
 void WriteLeaf (node_t *node)
 {
-	CFace		*fp, *f;
+	face_t		**fp, *f;
 	dleaf_t		*leaf_p;
-	int i;
 		
 // emit a leaf
 	leaf_p = &dleafs[numleafs];
@@ -172,17 +171,17 @@ void WriteLeaf (node_t *node)
 //
 	leaf_p->firstmarksurface = nummarksurfaces;
 	
-	for (i = 0, fp = node->markfaces; fp ; i++, fp++)
+	for (fp=node->markfaces ; *fp ; fp++)
 	{
 	// emit a marksurface
 		if (nummarksurfaces == MAX_MAP_MARKSURFACES)
 			Error ("nummarksurfaces == MAX_MAP_MARKSURFACES");
-		f = fp;
+		f = *fp;
 		do
 		{
 			dmarksurfaces[nummarksurfaces] =  f->outputnumber;
 			nummarksurfaces++;
-			f = f->original;		// grab tjunction split faces
+			f=f->original;		// grab tjunction split faces
 		} while (f);
 	}
 	
@@ -348,7 +347,7 @@ void CleanupName (char *in, char *out)
 TEX_InitFromWad
 =================
 */
-void	TEX_InitFromWad (char *path)
+void	TEX_InitFromWad (const char *path)
 {
 	int			i;
 	
@@ -414,7 +413,7 @@ void AddAnimatingTextures (void)
 	{
 		if (miptex[i][0] != '+')
 			continue;
-		strcpy_s (name, miptex[i]);
+		strcpy (name, miptex[i]);
 
 		for (j=0 ; j<20 ; j++)
 		{
@@ -447,13 +446,20 @@ void WriteMiptex (void)
 	int		i, len;
 	byte	*data;
 	dmiptexlump_t	*l;
-	char	*path;
-	char	fullpath[1024];
+	const char	*path;
+	char	fullpath[1024] = {};
+	char	wadtowrite[1024] = {};
+	char	wadpaths[1024] = {};
+	char*	wad[1024] = {};
+	char newpath[1024] = {};
 
 	path = ValueForKey (&entities[0], "_wad");
 	if (!path || !path[0])
 	{
 		path = ValueForKey (&entities[0], "wad");
+
+		snprintf(newpath, sizeof(newpath), "%s/%s", qdir, path);
+
 		if (!path || !path[0])
 		{
 			printf ("WARNING: no wadfile specified\n");
@@ -461,10 +467,51 @@ void WriteMiptex (void)
 			return;
 		}
 	}
-	
-	sprintf (fullpath, "%s/%s", gamedir, path);
 
-	TEX_InitFromWad (fullpath);
+	/*int wad_count = 0;
+	int count = 0;
+	int pos = 0;
+	int curpos = 0;
+	bool done = false;
+
+	while (!done)
+	{
+		for (; path[pos]; pos++, curpos++)
+		{
+			if (path[curpos] == ';')
+			{
+				wad[wad_count] = (char*)malloc(1024);
+				strcpy(wad[wad_count], wadtowrite);
+				pos = 0;
+				wad_count++;
+				curpos++;
+				memset(wadtowrite, 0, sizeof(wadtowrite));
+			}
+			wadtowrite[pos] = path[curpos];
+
+			if (!path[curpos])
+			{
+				wad[wad_count] = (char*)malloc(1024);
+				strcpy(wad[wad_count], wadtowrite);
+
+				done = true;
+				break;
+			}
+		}
+	}
+
+	if (wad_count == 0)
+	{
+		sprintf (fullpath, "%s/%s", gamedir, path);
+	}
+
+	for (int i = 0; wad[i]; i++)
+	{
+		snprintf(wadpaths, sizeof(wadpaths), "%s/%s", gamedir, wad[i]);
+		TEX_InitFromWad (wadpaths);
+	}*/
+
+	TEX_InitFromWad(newpath);
 	
 	AddAnimatingTextures ();
 

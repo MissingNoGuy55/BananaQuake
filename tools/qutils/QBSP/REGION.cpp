@@ -45,7 +45,7 @@ void ClearRegionSize (void)
 	region_maxs[0] = region_maxs[1] = region_maxs[2] = -9999;
 }
 
-void AddFaceToRegionSize (CFace* f)
+void AddFaceToRegionSize (face_t *f)
 {
 	int		i;
 
@@ -58,7 +58,7 @@ void AddFaceToRegionSize (CFace* f)
 CanJoinFaces
 ==============
 */
-bool CanJoinFaces (CFace* f, CFace* f2)
+bool CanJoinFaces (face_t *f, face_t *f2)
 {
 	vec3_t		oldmins, oldmaxs;
 	int			i;
@@ -107,10 +107,10 @@ bool CanJoinFaces (CFace* f, CFace* f2)
 RecursiveGrowRegion
 ==============
 */
-void RecursiveGrowRegion (dface_t *r, CFace* f)
+void RecursiveGrowRegion (dface_t *r, face_t *f)
 {
 	int		e;
-	CFace*	f2;
+	face_t	*f2;
 	int		i;
 	
 	if (f->outputnumber == numfaces)
@@ -295,8 +295,7 @@ return;
 		}
 
 
-		edgefaces[e2][0] = NULL;
-		edgefaces[e2][1] = NULL;
+		edgefaces[e2][0] = edgefaces[e2][1] = NULL;
 	}
 }
 
@@ -406,7 +405,7 @@ GrowNodeRegion_r
 void GrowNodeRegion_r (node_t *node)
 {
 	dface_t		*r;
-	CFace*		f;
+	face_t		*f;
 	int			i;
 
 	if (node->planenum == PLANENUM_LEAF)
@@ -414,7 +413,7 @@ void GrowNodeRegion_r (node_t *node)
 
 	node->firstface = numfaces;
 
-	for (i = 0, f = node->faces; f ; f = f->next)
+	for (f=node->faces ; f ; f=f->next)
 	{
 //		if (f->outputnumber != -1)
 //			continue;	// allready grown into an earlier region

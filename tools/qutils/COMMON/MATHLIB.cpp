@@ -19,7 +19,7 @@ double VectorLength(vec3_t v)
 	return length;
 }
 
-int VectorCompare (vec3_t v1, vec3_t v2)
+bool VectorCompare (vec3_t v1, vec3_t v2)
 {
 	int		i;
 	

@@ -1,5 +1,7 @@
 
 #include "qcc.h"
+#include <direct.h>
+#include <io.h>
 
 char		sourcedir[1024];
 char		destfile[1024];
@@ -29,7 +31,7 @@ int			numsounds;
 
 char		precache_models[MAX_MODELS][MAX_DATA_PATH];
 int			precache_models_block[MAX_SOUNDS];
-int			nummodels;
+//int			nummodels;
 
 char		precache_files[MAX_FILES][MAX_DATA_PATH];
 int			precache_files_block[MAX_SOUNDS];
@@ -75,7 +77,7 @@ void WriteFiles (void)
 
 
 // CopyString returns an offset from the string heap
-int	CopyString (char *str)
+int	CopyString (const char *str)
 {
 	int		old;
 	
@@ -533,7 +535,7 @@ void	PR_BeginCompilation (void *memory, int memsize)
 {
 	int		i;
 	
-	pr.memory = memory;
+	pr.memory = (const char*)memory;
 	pr.max_memory = memsize;
 	
 	numpr_globals = RESERVED_OFS;
@@ -556,10 +558,10 @@ called after all files are compiled to check for errors
 Returns false if errors were detected.
 ==============
 */
-qboolean	PR_FinishCompilation (void)
+bool	PR_FinishCompilation (void)
 {
 	def_t		*d;
-	qboolean	errors;
+	bool	errors;
 	
 	errors = false;
 	
@@ -592,7 +594,7 @@ Returns a crc of the header, to be stored in the progs file for comparison
 at load time.
 ============
 */
-int	PR_WriteProgdefs (char *filename)
+int	PR_WriteProgdefs (const char *filename)
 {
 	def_t	*d;
 	FILE	*f;
@@ -708,6 +710,246 @@ void PrintFunction (char *name)
 	}
 }
 
+/*
+==============================================================================
+
+DIRECTORY COPYING / PACKFILE CREATION
+
+==============================================================================
+*/
+
+typedef struct
+{
+	char	name[56];
+	int		filepos, filelen;
+} packfile_t;
+
+typedef struct
+{
+	char	id[4];
+	int		dirofs;
+	int		dirlen;
+} packheader_t;
+
+packfile_t	pfiles[4096], * pf;
+FILE*		packhandle;
+int			packbytes;
+
+void Sys_mkdir(const wchar_t* path)
+{
+#ifdef __linux__
+	if (mkdir(path, 0777) != -1)
+		return;
+	if (errno != EEXIST)
+		Error("mkdir %s: %s", path, strerror(errno));
+#else
+	_wmkdir(path);
+#endif
+}
+
+/*
+===========
+PackFile
+
+Copy a file into the pak file
+===========
+*/
+void PackFile(char* src, char* name)
+{
+	FILE*	in = 0;
+	int		remaining = 0, count = 0;
+	char	buf[4096] = {};
+
+	if ((byte*)pf - (byte*)pfiles > sizeof(pfiles))
+		Error("Too many files in pak file");
+
+	in = SafeOpenRead(src);
+
+	fseek(in, 0, SEEK_END);
+	remaining = ftell(in);
+	rewind(in);
+
+	pf->filepos = LittleLong(fseek(packhandle, 0, SEEK_CUR));
+	pf->filelen = LittleLong(remaining);
+	strcpy(pf->name, name);
+	printf("%64s : %7i\n", pf->name, remaining);
+
+	packbytes += remaining;
+
+	while (remaining)
+	{
+		if (remaining < sizeof(buf))
+			count = remaining;
+		else
+			count = sizeof(buf);
+		SafeRead(in, buf, count);
+		SafeWrite(packhandle, buf, count);
+		remaining -= count;
+	}
+
+	fclose(in);
+	pf++;
+}
+
+
+/*
+===========
+CopyAFile
+
+Copies a file, creating any directories needed
+===========
+*/
+void CopyAFile(char* src, char* dest)
+{
+	FILE*	in, *out;
+	int		remaining, count;
+	char	buf[4096];
+
+	printf("%s to %s\n", src, dest);
+
+	in = SafeOpenRead(src);
+
+	fseek(in, 0, SEEK_END);
+	remaining = ftell(in);
+	rewind(in);
+
+	CreatePath(dest);
+	out = SafeOpenWrite(dest);
+
+	while (remaining)
+	{
+		if (remaining < sizeof(buf))
+			count = remaining;
+		else
+			count = sizeof(buf);
+		SafeRead(in, buf, count);
+		SafeWrite(out, buf, count);
+		remaining -= count;
+	}
+
+	fclose(in);
+	fclose(out);
+}
+
+
+/*
+===========
+CopyFiles
+===========
+*/
+void CopyFiles(void)
+{
+	int		i = 0, p = 0;
+	char	srcdir[1024] = {}, destdir[1024] = {};
+	char	srcfile[1024] = {}, destfile[1024] = {};
+	int		copytype = 0;
+	char	name[1024] = {};
+	packheader_t	header = {};
+	int		dirlen = 0;
+	int		blocknum = 0;
+	unsigned short		crc = 0;
+
+	printf("%3i unique precache_sounds\n", numsounds);
+	printf("%3i unique precache_models\n", nummodels);
+
+	copytype = 0;
+
+	p = CheckParm("-copy");
+	if (p && p < myargc - 2)
+	{	// create a new directory tree
+		copytype = 1;
+
+		strcpy(srcdir, myargv[p + 1]);
+		strcpy(destdir, myargv[p + 2]);
+		if (srcdir[strlen(srcdir) - 1] != '/')
+			strcat(srcdir, "/");
+		if (destdir[strlen(destdir) - 1] != '/')
+			strcat(destdir, "/");
+	}
+
+	blocknum = 1;
+	p = CheckParm("-pak2");
+	if (p && p < myargc - 2)
+		blocknum = 2;
+	else
+		p = CheckParm("-pak");
+	if (p && p < myargc - 2)
+	{	// create a pak file
+		strcpy(srcdir, myargv[p + 1]);
+		strcpy(destdir, myargv[p + 2]);
+		if (srcdir[strlen(srcdir) - 1] != '/')
+			strcat(srcdir, "/");
+		DefaultExtension(destdir, ".pak");
+
+		pf = pfiles;
+		packhandle = SafeOpenWrite(destdir);
+		SafeWrite(packhandle, &header, sizeof(header));
+		copytype = 2;
+	}
+
+	if (!copytype)
+		return;
+
+	for (i = 0; i < numsounds; i++)
+	{
+		if (precache_sounds_block[i] != blocknum)
+			continue;
+		sprintf(name, "sound/%s", precache_sounds[i]);
+		sprintf(srcfile, "%s%s", srcdir, name);
+		sprintf(destfile, "%s%s", destdir, name);
+		if (copytype == 1)
+			CopyAFile(srcfile, destfile);
+		else
+			PackFile(srcfile, name);
+	}
+	for (i = 0; i < nummodels; i++)
+	{
+		if (precache_models_block[i] != blocknum)
+			continue;
+		sprintf(srcfile, "%s%s", srcdir, precache_models[i]);
+		sprintf(destfile, "%s%s", destdir, precache_models[i]);
+		if (copytype == 1)
+			CopyAFile(srcfile, destfile);
+		else
+			PackFile(srcfile, precache_models[i]);
+	}
+	for (i = 0; i < numfiles; i++)
+	{
+		if (precache_files_block[i] != blocknum)
+			continue;
+		sprintf(srcfile, "%s%s", srcdir, precache_files[i]);
+		sprintf(destfile, "%s%s", destdir, precache_files[i]);
+		if (copytype == 1)
+			CopyAFile(srcfile, destfile);
+		else
+			PackFile(srcfile, precache_files[i]);
+	}
+
+	if (copytype == 2)
+	{
+		header.id[0] = 'P';
+		header.id[1] = 'A';
+		header.id[2] = 'C';
+		header.id[3] = 'K';
+		dirlen = (byte*)pf - (byte*)pfiles;
+		header.dirofs = LittleLong(ftell(packhandle));
+		header.dirlen = LittleLong(dirlen);
+
+		SafeWrite(packhandle, pfiles, dirlen);
+
+		fseek(packhandle, 0, SEEK_SET);
+		SafeWrite(packhandle, &header, sizeof(header));
+		fclose(packhandle);
+
+		// do a crc of the file
+		CRC_Init(&crc);
+		for (i = 0; i < dirlen; i++)
+			CRC_ProcessByte(&crc, ((byte*)pfiles)[i]);
+
+		i = pf - pfiles;
+		printf("%i files packed in %i bytes (%i crc)\n", i, packbytes, crc);
+	}
+}
 
 //============================================================================
 
@@ -752,7 +994,7 @@ void main (int argc, char **argv)
 	InitData ();
 	
 	sprintf (filename, "%sprogs.src", sourcedir);
-	LoadFile (filename, (void *)&src);
+	LoadFile (filename, (void **)&src);
 	
 	src = COM_Parse (src);
 	if (!src)
@@ -772,7 +1014,7 @@ void main (int argc, char **argv)
 			break;
 		sprintf (filename, "%s%s", sourcedir, com_token);
 		printf ("compiling %s\n", filename);
-		LoadFile (filename, (void *)&src2);
+		LoadFile (filename, (void **)&src2);
 
 		if (!PR_CompileFile (src2, filename) )
 			exit (1);
@@ -794,14 +1036,17 @@ void main (int argc, char **argv)
 	}
 	
 	
-// write progdefs.h
+	// write progdefs.h
 	crc = PR_WriteProgdefs ("progdefs.h");
 	
-// write data file
+	// write data file
 	WriteData (crc);
 	
-// write files.dat
+	// write files.dat
 	WriteFiles ();
+
+	// report / copy the data files
+	CopyFiles();
 
 	stop = I_FloatTime ();
 	printf ("%i seconds elapsed.\n", (int)(stop-start));

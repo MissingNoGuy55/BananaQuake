@@ -117,7 +117,7 @@ int NUM_FOR_EDICT(edict_t *e);
 #define	G_VECTOR(o) (&pr_globals[o])
 #define	G_STRING(o)		(PR_GetString(*(string_t *)&pr_globals[o]))
 #define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
-#define G_CPPVECTOR(o) ((CQVector<void*>*)&pr_globals[o])
+#define G_CPPVECTOR(o) ((cxxvector<void*>*)&pr_globals[o])
 
 #define	E_FLOAT(e,o) (((float*)&e->v)[o])
 #define	E_INT(e,o) (*(int *)&((float*)&e->v)[o])

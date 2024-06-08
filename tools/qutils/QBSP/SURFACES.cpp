@@ -23,14 +23,14 @@ If the face is >256 in either texture direction, carve a valid sized
 piece off and insert the remainder in the next link
 ===============
 */
-void SubdivideFace (CFace* f, CFace** prevptr)
+void SubdivideFace (face_t *f, face_t **prevptr)
 {
-	float		mins = 0.0f, maxs = 0.0f;
-	vec_t		v = {};
-	int			axis = 0, i = 0;
-	plane_t		plane = {};
-	CFace*		front = NULL, *back = NULL, *next = NULL;
-	texinfo_t	*tex = NULL;
+	float		mins, maxs;
+	vec_t		v;
+	int			axis, i;
+	plane_t		plane;
+	face_t		*front, *back, *next;
+	texinfo_t	*tex;
 
 // special (non-surface cached) faces don't need subdivision
 	tex = &texinfo[f->texturenum];
@@ -66,7 +66,7 @@ void SubdivideFace (CFace* f, CFace** prevptr)
 			VectorNormalize (plane.normal);			
 			plane.dist = (mins + subdivide_size - 16)/v;
 			next = f->next;
-			SplitFace(f, &plane, &front, &back);
+			SplitFace (f, &plane, &front, &back);
 			if (!front || !back)
 				Error ("SubdivideFace: didn't split the polygon");
 			*prevptr = back;
@@ -86,14 +86,13 @@ SubdivideFaces
 void SubdivideFaces (surface_t *surfhead)
 {
 	surface_t       *surf;
-	CFace*          f , **prevptr;
-	int i;
+	face_t          *f , **prevptr;
 
 	qprintf ("--- SubdivideFaces ---\n");
 
 	subdivides = 0;
 
-	for (i = 0, surf = surfhead ; surf ; surf=surf->next, i++)
+	for (surf = surfhead ; surf ; surf=surf->next)
 	{
 		prevptr = &surf->faces;
 		while (1)
@@ -124,27 +123,24 @@ have inside faces.
 
 void GatherNodeFaces_r (node_t *node)
 {
-	CFace*	f, *next;
+	face_t	*f, *next;
 	
 	if (node->planenum != PLANENUM_LEAF)
 	{
 //
 // decision node
 //
-		for (int i = 0; i < numfaces; i++)
+		for (f=node->faces ; f ; f=next)
 		{
-			for (f = node->faces; f; f = next)
+			next = f->next;
+			if (!f->numpoints)
+			{	// face was removed outside
+				FreeFace (f);
+			}
+			else
 			{
-				next = f->next;
-				if (!f->numpoints)
-				{	// face was removed outside
-					FreeFace(f);
-				}
-				else
-				{
-					f->next = validfaces[f->planenum];
-					validfaces[f->planenum] = f;
-				}
+				f->next = validfaces[f->planenum];
+				validfaces[f->planenum] = f;
 			}
 		}
 		
@@ -194,7 +190,7 @@ int		c_cornerverts;
 hashvert_t	hvertex[MAX_MAP_VERTS];
 hashvert_t	*hvert_p;
 
-CFace*	edgefaces[MAX_MAP_EDGES][2];
+face_t		*edgefaces[MAX_MAP_EDGES][2];
 int		firstmodeledge = 1;
 int		firstmodelface;
 
@@ -327,7 +323,7 @@ Don't allow four way edges
 */
 int	c_tryedges;
 
-int GetEdge (vec3_t p1, vec3_t p2, CFace* f)
+int GetEdge (vec3_t p1, vec3_t p2, face_t *f)
 {
 	int		v1, v2;
 	dedge_t	*edge;
@@ -369,17 +365,17 @@ int GetEdge (vec3_t p1, vec3_t p2, CFace* f)
 FindFaceEdges
 ==================
 */
-void FindFaceEdges (CFace* face)
+void FindFaceEdges (face_t *face)
 {
 	int		i;
 
-	face->outputnumber = -1;
+	face->outputnumber = -1;	
 	if (face->numpoints > MAXEDGES)
 		Error ("WriteFace: %i points", face->numpoints);
 
 	for (i=0; i<face->numpoints ; i++)
 		face->edges[i] =  GetEdge
-		(face->pts[i], face->pts[(i+1)%face->numpoints], face);
+		(face->pts[i], face->pts[(i+1)%face->numpoints], face);	
 }
 
 /*
@@ -426,7 +422,7 @@ void CheckEdges (void)
 	dedge_t	*edge;
 	int		i;
 	dvertex_t	*d1, *d2;
-	CFace*		f1, *f2;
+	face_t		*f1, *f2;
 	int		c_nonconvex;
 	int		c_multitexture;
 	
@@ -479,14 +475,12 @@ MakeFaceEdges_r
 */
 void MakeFaceEdges_r (node_t *node)
 {
+	face_t	*f;
 	
 	if (node->planenum == PLANENUM_LEAF)
 		return;
-
-	int i = 0;
-	CFace* f;
 		
-	for (i = 0, f = node->faces; f; i++, f = f->next)
+	for (f=node->faces ; f ; f=f->next)
 		FindFaceEdges (f);
 		
 	MakeFaceEdges_r (node->children[0]);

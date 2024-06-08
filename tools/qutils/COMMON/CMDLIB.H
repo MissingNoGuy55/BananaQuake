@@ -11,11 +11,7 @@
 #include <time.h>
 #include <stdarg.h>
 
-#ifndef __BYTEBOOL__
-#define __BYTEBOOL__
-typedef enum {false, true} qboolean;
 typedef unsigned char byte;
-#endif
 
 // the dec offsetof macro doesn't work very well...
 #define myoffsetof(type,identifier) ((size_t)&((type *)0)->identifier)
@@ -27,8 +23,8 @@ extern char **myargv;
 
 char *strupr (char *in);
 char *strlower (char *in);
-int Q_strncasecmp (char *s1, char *s2, int n);
-int Q_strcasecmp (char *s1, char *s2);
+int Q_strncasecmp(const char* s1, const char* s2, size_t n);
+int Q_strcasecmp (const char *s1, const char *s2);
 void Q_getwd (char *out);
 
 int filelength (FILE *f);
@@ -45,18 +41,18 @@ char *ExpandPathAndArchive (char *path);
 
 double I_FloatTime (void);
 
-void	Error (char *error, ...);
-int		CheckParm (char *check);
+void	Error (const char *error, ...);
+int		CheckParm (const char *check);
 
-FILE	*SafeOpenWrite (char *filename);
-FILE	*SafeOpenRead (char *filename);
+FILE	*SafeOpenWrite (const char *filename);
+FILE	*SafeOpenRead (const char *filename);
 void	SafeRead (FILE *f, void *buffer, int count);
 void	SafeWrite (FILE *f, void *buffer, int count);
 
 int		LoadFile (char *filename, void **bufferptr);
 void	SaveFile (char *filename, void *buffer, int count);
 
-void 	DefaultExtension (char *path, char *extension);
+void 	DefaultExtension (char *path, const char *extension);
 void 	DefaultPath (char *path, char *basepath);
 void 	StripFilename (char *path);
 void 	StripExtension (char *path);
@@ -78,7 +74,7 @@ float	LittleFloat (float l);
 char *COM_Parse (char *data);
 
 extern	char		com_token[1024];
-extern	qboolean	com_eof;
+extern	bool		com_eof;
 
 char *copystring(char *s);
 
@@ -90,7 +86,7 @@ unsigned short CRC_Value(unsigned short crcvalue);
 void	CreatePath (char *path);
 void CopyFile (char *from, char *to);
 
-extern	qboolean		archive;
+extern	bool			archive;
 extern	char			archivedir[1024];
 
 

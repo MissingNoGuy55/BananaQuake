@@ -9,7 +9,7 @@ void Draw_AddToBounds (vec3_t v)
 {
 }
 
-void Draw_DrawFace (CFace* f)
+void Draw_DrawFace (face_t *f)
 {
 }
 

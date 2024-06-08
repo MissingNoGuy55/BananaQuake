@@ -1,8 +1,6 @@
 // csg4.c
 
 #include "bsp5.h"
-#include <memory>
-#include <tuple>
 
 /*
 
@@ -12,17 +10,17 @@ Brushes that touch still need to be split at the cut point to make a tjunction
 
 */
 
-CFace*	validfaces[MAX_MAP_PLANES];
+face_t	*validfaces[MAX_MAP_PLANES];
 
 
-CFace*	inside, *outside;
+face_t	*inside, *outside;
 int		brushfaces;
 int		csgfaces;
 int		csgmergefaces;
 
-void DrawList (CFace* list)
+void DrawList (face_t *list)
 {
-	for ( ; list ; list = list->next)
+	for ( ; list ; list=list->next)
 		Draw_DrawFace (list);
 }
 
@@ -35,14 +33,14 @@ Duplicates the non point information of a face, used by SplitFace and
 MergeFace.
 ==================
 */
-CFace* NewFaceFromFace (CFace* in)
+face_t *NewFaceFromFace (face_t *in)
 {
-	auto newf = new CFace;
+	face_t	*newf;
 	
-	//newf = AllocFace ();
+	newf = AllocFace ();
 
 	newf->planenum = in->planenum;
-	newf->texturenum = in->texturenum;
+	newf->texturenum = in->texturenum;	
 	newf->planeside = in->planeside;
 	newf->original = in->original;
 	newf->contents[0] = in->contents[0];
@@ -58,19 +56,20 @@ SplitFace
 
 ==================
 */
-void SplitFace(CFace* in, plane_t* split, CFace** front, CFace** back)
+void SplitFace (face_t *in, plane_t *split, face_t **front, face_t **back)
 {
-	vec_t	dists[MAXEDGES + 1] = {};
-	int		sides[MAXEDGES + 1] = {};
-	int		counts[3] = {};
-	vec_t	dot = 0.0f;
-	int		i = 0, j = 0;
-	CFace	*newf = NULL, *new2 = NULL;
-	vec_t	*p1 = NULL, *p2 = NULL;
-	vec3_t	mid = {};
+	vec_t	dists[MAXEDGES+1];
+	int		sides[MAXEDGES+1];
+	int		counts[3];
+	vec_t	dot;
+	int		i, j;
+	face_t	*newf, *new2;
+	vec_t	*p1, *p2;
+	vec3_t	mid;
 	
 	if (in->numpoints < 0)
 		Error ("SplitFace: freed face");
+	counts[0] = counts[1] = counts[2] = 0;
 
 // determine sides for each point
 	for (i=0 ; i<in->numpoints ; i++)
@@ -102,9 +101,6 @@ void SplitFace(CFace* in, plane_t* split, CFace** front, CFace** back)
 		return;
 	}
 	
-	// newf
-	// new2
-
 	*back = newf = NewFaceFromFace (in);
 	*front = new2 = NewFaceFromFace (in);
 	
@@ -169,9 +165,7 @@ CheckFace (new2);
 #endif
 
 // free the original face now that is is represented by the fragments
-	//FreeFace (in);
-
-	return;
+	FreeFace (in);
 }
 
 /*
@@ -188,15 +182,15 @@ frontside is the side of the plane that holds the outside list
 */
 void ClipInside (int splitplane, int frontside, bool precedence)
 {
-	CFace*	f = NULL, *next = NULL;
-	CFace*	frags[2] = {};
-	CFace*	insidelist = NULL;
-	plane_t *split = NULL;
+	face_t	*f, *next;
+	face_t	*frags[2];
+	face_t	*insidelist;
+	plane_t *split;
 	
 	split = &planes[splitplane];
 	
 	insidelist = NULL;
-	for (f=inside; f ; f = next)
+	for (f=inside ; f ; f=next)
 	{
 		next = f->next;
 		
@@ -215,7 +209,7 @@ void ClipInside (int splitplane, int frontside, bool precedence)
 		}
 		else
 		{	// proper split
-			SplitFace(f, split, &frags[0], &frags[1]);
+			SplitFace (f, split, &frags[0], &frags[1]);
 		}
 		
 		if (frags[frontside])
@@ -243,13 +237,11 @@ Saves all of the faces in the outside list to the bsp plane list
 */
 void SaveOutside (bool mirror)
 {
-	CFace*  f, *next; 
-	CFace*	newf;
-	CFace*	face;
-	int		i, j;
+	face_t	*f , *next, *newf;
+	int		i;
 	int		planenum;
 		
-	for (f = outside; f ; f = next)
+	for (f=outside ; f ; f=next)
 	{
 		next = f->next;
 		csgfaces++;
@@ -290,9 +282,9 @@ Free all the faces that got clipped out
 */
 void FreeInside (int contents)
 {
-	CFace* f, *next;
+	face_t	*f, *next;
 	
-	for (f = inside; f ; f = next)
+	for (f=inside ; f ; f=next)
 	{
 		next = f->next;
 		
@@ -302,8 +294,8 @@ void FreeInside (int contents)
 			f->next = outside;
 			outside = f;
 		}
-		/*else
-			FreeFace (f);*/
+		else
+			FreeFace (f);
 	}
 }
 
@@ -320,9 +312,9 @@ faces.
 */
 surface_t *BuildSurfaces (void)
 {
-	CFace**			f;
-	CFace*			count;
-	int				i, j;
+	face_t			**f;
+	face_t			*count;
+	int				i;
 	surface_t		*s;
 	surface_t		*surfhead;
 	
@@ -340,7 +332,7 @@ surface_t *BuildSurfaces (void)
 		s->next = surfhead;
 		surfhead = s;
 		s->faces = *f;
-		for (count = s->faces; count; count = count->next)
+		for (count = s->faces ; count ; count=count->next)
 			csgmergefaces++;
 		CalcSurfaceInfo (s);	// bounding box and flags
 	}	
@@ -357,13 +349,11 @@ CopyFacesToOutside
 */
 void CopyFacesToOutside (brush_t *b)
 {
-	CFace* f = NULL;
-	CFace* newf;
-	int i;
-
+	face_t		*f, *newf;
+	
 	outside = NULL;
 	
-	for (i = 0, f = b->faces.at(i); f ; i++, f = f->next)
+	for (f=b->faces ; f ; f=f->next)
 	{
 		brushfaces++;
 #if 0
@@ -375,8 +365,8 @@ void CopyFacesToOutside (brush_t *b)
 	printf ("\n");
 }
 #endif
-		//newf = AllocFace ();
-		newf = f;
+		newf = AllocFace ();
+		*newf = *f;
 		newf->next = outside;
 		newf->contents[0] = CONTENTS_EMPTY;
 		newf->contents[1] = b->contents;
@@ -397,17 +387,13 @@ surface_t *CSGFaces (brushset_t *bs)
 	brush_t		*b1, *b2;
 	int			i;
 	bool		overwrite;
-	CFace*		f;
+	face_t		*f;
 	surface_t	*surfhead;
-	const int validfacessize = (sizeof(validfaces) / sizeof(validfaces[0]));
 
 	qprintf ("---- CSGFaces ----\n");
 
-	//memset (validfaces, 0, sizeof(validfaces));
-
-	/*for (i = 0; i < validfacessize; i++) {
-		validfaces[i] = new CFace;
-	}*/
+	memset (validfaces, 0, sizeof(validfaces));
+	
 	csgfaces = brushfaces = csgmergefaces = 0;
 	
 	Draw_ClearWindow ();
@@ -444,7 +430,7 @@ surface_t *CSGFaces (brushset_t *bs)
 			inside = outside;
 			outside = NULL;
 			
-			for (f = b2->faces.at(0); f ; f = f->next)
+			for (f=b2->faces ; f ; f=f->next)
 				ClipInside (f->planenum, f->planeside, overwrite);
 
 		// these faces are continued in another brush, so get rid of them

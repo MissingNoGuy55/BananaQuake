@@ -18,7 +18,15 @@
 */
 
 #include	"qcc.h"
-
+#ifdef _WIN32
+#include <windows.h>
+#include <io.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <share.h>
+#include <sysinfoapi.h>
+#endif
 
 char		destfile[1024];
 
@@ -53,6 +61,8 @@ char		precache_files[MAX_FILES][MAX_DATA_PATH];
 int			precache_files_block[MAX_SOUNDS];
 int			numfiles;
 
+// type_void, type_string, type_float, type_vector, type_entity, type_field, type_function, type_pointer, type_floatfield, type_cppvector
+int		type_size[9] = { 1,sizeof(string_t) / 4,1,3,1,1,sizeof(func_t) / 4,sizeof(void*) / 4, sizeof(std::vector<void*>) };
 
 /*
 =================
@@ -184,11 +194,7 @@ void WriteData (int crc)
 	def_t		*def;
 	ddef_t		*dd;
 	dprograms_t	progs;
-#ifdef __linux__
 	int			h;
-#else
-	FILE*		h;
-#endif
 	int			i;
 
 	for (def = pr.def_head.next ; def ; def = def->next)
@@ -232,22 +238,20 @@ strofs = (strofs+3)&~3;
 	printf ("%6i numfielddefs\n", numfielddefs);
 	printf ("%6i numpr_globals\n", numpr_globals);
 	
+	int pos = 0;
+	int lastpos = 0;
+
 	h = SafeOpenWrite (destfile);
 	SafeWrite (h, &progs, sizeof(progs));
 
-#ifdef __linux__
-	progs.ofs_strings = lseek (h, 0, SEEK_CUR);
-#else
-	progs.ofs_strings = fseek (h, 0, SEEK_CUR);
-#endif
+	progs.ofs_strings = _lseek (h, 0, SEEK_CUR);
 	progs.numstrings = strofs;
 	SafeWrite (h, strings, strofs);
 
-#ifdef __linux__
-	progs.ofs_statements = lseek (h, 0, SEEK_CUR);
-#else
-	progs.ofs_statements = fseek (h, 0, SEEK_CUR);
-#endif
+	printf("progs.ofs_strings = %6i\n", progs.ofs_strings);
+
+	progs.ofs_statements = _lseek (h, 0, SEEK_CUR);
+
 	progs.numstatements = numstatements;
 	for (i=0 ; i<numstatements ; i++)
 	{
@@ -258,10 +262,12 @@ strofs = (strofs+3)&~3;
 	}
 	SafeWrite (h, statements, numstatements*sizeof(dstatement_t));
 
+	printf("progs.ofs_statements = %6i\n", progs.ofs_statements);
+
 #ifdef __linux__
 	progs.ofs_functions = lseek (h, 0, SEEK_CUR);
 #else
-	progs.ofs_functions = fseek(h, 0, SEEK_CUR);
+	progs.ofs_functions = _lseek(h, 0, SEEK_CUR);
 #endif
 	progs.numfunctions = numfunctions;
 	for (i=0 ; i<numfunctions ; i++)
@@ -275,10 +281,12 @@ strofs = (strofs+3)&~3;
 	}	
 	SafeWrite (h, functions, numfunctions*sizeof(dfunction_t));
 
+	printf("progs.ofs_functions = %6i\n", progs.ofs_functions);
+
 #ifdef __linux__
 	progs.ofs_globaldefs = lseek (h, 0, SEEK_CUR);
 #else
-	progs.ofs_globaldefs = fseek (h, 0, SEEK_CUR);
+	progs.ofs_globaldefs = _lseek(h, 0, SEEK_CUR);
 #endif
 	progs.numglobaldefs = numglobaldefs;
 	for (i=0 ; i<numglobaldefs ; i++)
@@ -289,10 +297,12 @@ strofs = (strofs+3)&~3;
 	}
 	SafeWrite (h, globals, numglobaldefs*sizeof(ddef_t));
 
+	printf("progs.ofs_globaldefs = %6i\n", progs.ofs_globaldefs);
+
 #ifdef __linux__
 	progs.ofs_fielddefs = lseek (h, 0, SEEK_CUR);
 #else
-
+	progs.ofs_fielddefs = _lseek(h, 0, SEEK_CUR);
 #endif
 	progs.numfielddefs = numfielddefs;
 	for (i=0 ; i<numfielddefs ; i++)
@@ -302,31 +312,57 @@ strofs = (strofs+3)&~3;
 		fields[i].s_name = LittleLong (fields[i].s_name);
 	}
 	SafeWrite (h, fields, numfielddefs*sizeof(ddef_t));
+	
+	printf("progs.ofs_fielddefs = %6i\n", progs.ofs_fielddefs);
 
 #ifdef __linux__
 	progs.ofs_globals = lseek (h, 0, SEEK_CUR);
 #else
-	progs.ofs_globals = fseek(h, 0, SEEK_CUR);
+	progs.ofs_globals = _lseek(h, 0, SEEK_CUR);
 #endif
 	progs.numglobals = numpr_globals;
 	for (i=0 ; i<numpr_globals ; i++)
 		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
 	SafeWrite (h, pr_globals, numpr_globals*4);
 
-	printf ("%6i TOTAL SIZE\n", (int)fseek (h, 0, SEEK_CUR));	
+	printf("progs.ofs_globals = %6i\n", progs.ofs_globals);
 
 	progs.entityfields = pr.size_fields;
 
 	progs.version = PROG_VERSION;
 	progs.crc = crc;
+
+	unsigned int size = _tell(h);
+	char str[256] = {};
+
+	if (size > 1000000000)
+	{
+		snprintf(str, sizeof(str), "TOTAL SIZE: %u BYTES (%u %s)", size, (size / 1000000000), "GB");
+		printf("%s\n", str);
+	}
+	else if (size > 1000000)
+	{
+		snprintf(str, sizeof(str), "TOTAL SIZE: %u BYTES (%u %s)", size, (size / 1000000), "MB");
+		printf ("%s\n", str);
+	}
+	else if (size > 1000)
+	{
+		snprintf(str, sizeof(str), "TOTAL SIZE: %u BYTES (%u %s)", size, (size / 1000), "KB");
+		printf("%s\n", str);
+	}
+	else
+	{
+		printf ("%u TOTAL SIZE\n", size);
+	}
+
+	//printf ("%6i TOTAL SIZE\n", str);
 	
 // byte swap the header and write it out
 	for (i=0 ; i<sizeof(progs)/4 ; i++)
 		((int *)&progs)[i] = LittleLong ( ((int *)&progs)[i] );		
-	fseek (h, 0, SEEK_SET);
+	_lseek (h, 0, SEEK_SET);
 	SafeWrite (h, &progs, sizeof(progs));
-	fclose (h);
-	
+	_close (h);
 }
 
 
@@ -435,6 +471,9 @@ char *PR_ValueString (etype_t type, void *val)
 		break;
 	case ev_pointer:
 		sprintf (line, "pointer");
+		break;
+	case ev_cppvector:
+		sprintf (line, "C++ vector");
 		break;
 	default:
 		sprintf (line, "bad type %i", type);
@@ -731,6 +770,9 @@ int	PR_WriteProgdefs (const char *filename)
 		case ev_entity:
 			fprintf (f,"\tint\t%s;\n",d->name);
 			break;
+		case ev_cppvector:
+			fprintf (f,"\tcxxvector<void*>* %s;\n",d->name);
+			break;
 		default:
 			fprintf (f,"\tint\t%s;\n",d->name);
 			break;
@@ -765,6 +807,9 @@ int	PR_WriteProgdefs (const char *filename)
 			break;
 		case ev_entity:
 			fprintf (f,"\tint\t%s;\n",d->name);
+			break;
+		case ev_cppvector:
+			fprintf(f, "\tcxxvector<void*>* %s;\n", d->name);
 			break;
 		default:
 			fprintf (f,"\tint\t%s;\n",d->name);
@@ -834,7 +879,7 @@ typedef struct
 } packheader_t;
 
 packfile_t	pfiles[4096], *pf;
-FILE*		packhandle;
+int			packhandle;
 int			packbytes;
 
 void Sys_mkdir (const wchar_t *path)
@@ -884,17 +929,18 @@ Copy a file into the pak file
 */
 void PackFile (char *src, char *name)
 {
-	FILE*	in;
-	int		remaining, count;
-	char	buf[4096];
+	int		in = 0;
+	int		remaining = 0, count = 0;
+	char	buf[4096] = {};
 	
 	if ( (byte *)pf - (byte *)pfiles > sizeof(pfiles) )
 		Error ("Too many files in pak file");
 	
 	in = SafeOpenRead (src);
-	remaining = filelength (in);
 
-	pf->filepos = LittleLong (fseek (packhandle, 0, SEEK_CUR));
+	remaining = _filelength(in);
+
+	pf->filepos = LittleLong (_lseek (packhandle, 0, SEEK_CUR));
 	pf->filelen = LittleLong (remaining);
 	strcpy (pf->name, name);
 	printf ("%64s : %7i\n", pf->name, remaining);
@@ -912,28 +958,28 @@ void PackFile (char *src, char *name)
 		remaining -= count;
 	}
 
-	fclose (in);
+	_close (in);
 	pf++;
 }
 
 
 /*
 ===========
-CopyFile
+CopyAFile
 
 Copies a file, creating any directories needed
 ===========
 */
-void CopyFile (char *src, char *dest)
+void CopyAFile (char *src, char *dest)
 {
-	FILE*	in, *out;
+	int		in, out;
 	int		remaining, count;
 	char	buf[4096];
 	
 	printf ("%s to %s\n", src, dest);
 
 	in = SafeOpenRead (src);
-	remaining = filelength (in);
+	remaining = _filelength (in);
 	
 	CreatePath (dest);
 	out = SafeOpenWrite (dest);
@@ -949,8 +995,8 @@ void CopyFile (char *src, char *dest)
 		remaining -= count;
 	}
 
-	fclose (in);
-	fclose (out);	
+	_close (in);
+	_close (out);	
 }
 
 
@@ -961,15 +1007,15 @@ CopyFiles
 */
 void CopyFiles (void)
 {
-	int		i, p;
-	char	srcdir[1024], destdir[1024];
-	char	srcfile[1024], destfile[1024];
-	int		copytype;
-	char	name[1024];
-	packheader_t	header;
-	int		dirlen;
-	int		blocknum;
-	unsigned short		crc;
+	int		i = 0, p = 0;
+	char	srcdir[1024] = {}, destdir[1024] = {};
+	char	srcfile[1024] = {}, destfile[1024] = {};
+	int		copytype = 0;
+	char	name[1024] = {};
+	packheader_t	header = {};
+	int		dirlen = 0;
+	int		blocknum = 0;
+	unsigned short		crc = 0;
 
 	printf ("%3i unique precache_sounds\n", numsounds);
 	printf ("%3i unique precache_models\n", nummodels);
@@ -1020,7 +1066,7 @@ void CopyFiles (void)
 		sprintf (srcfile,"%s%s",srcdir, name);
 		sprintf (destfile,"%s%s",destdir, name);
 		if (copytype == 1)
-			CopyFile (srcfile, destfile);
+			CopyAFile (srcfile, destfile);
 		else
 			PackFile (srcfile, name);
 	}
@@ -1031,7 +1077,7 @@ void CopyFiles (void)
 		sprintf (srcfile,"%s%s",srcdir, precache_models[i]);
 		sprintf (destfile,"%s%s",destdir, precache_models[i]);
 		if (copytype == 1)
-			CopyFile (srcfile, destfile);
+			CopyAFile (srcfile, destfile);
 		else
 			PackFile (srcfile, precache_models[i]);
 	}
@@ -1042,7 +1088,7 @@ void CopyFiles (void)
 		sprintf (srcfile,"%s%s",srcdir, precache_files[i]);
 		sprintf (destfile,"%s%s",destdir, precache_files[i]);
 		if (copytype == 1)
-			CopyFile (srcfile, destfile);
+			CopyAFile (srcfile, destfile);
 		else
 			PackFile (srcfile, precache_files[i]);
 	}
@@ -1054,14 +1100,14 @@ void CopyFiles (void)
 		header.id[2] = 'C';
 		header.id[3] = 'K';
 		dirlen = (byte *)pf - (byte *)pfiles;
-		header.dirofs = LittleLong(fseek (packhandle, 0, SEEK_CUR));
+		header.dirofs = LittleLong(_lseek (packhandle, 0, SEEK_CUR));
 		header.dirlen = LittleLong(dirlen);
 		
 		SafeWrite (packhandle, pfiles, dirlen);
 	
-		fseek (packhandle, 0, SEEK_SET);
+		_lseek(packhandle, 0, SEEK_SET);
 		SafeWrite (packhandle, &header, sizeof(header));
-		fclose (packhandle);	
+		_close (packhandle);	
 	
 	// do a crc of the file
 		CRC_Init (&crc);
@@ -1082,11 +1128,11 @@ main
 */
 void main (int argc, char **argv)
 {
-	char	*src;
-	char	*src2;
-	char	filename[1024];
-	int		p, crc;
-	char	sourcedir[1024];
+	char	*src = nullptr;
+	char	*src2 = nullptr;
+	char	filename[1024] = {};
+	int		p = 0, crc = 0;
+	char	sourcedir[1024] = {};
 
 	myargc = argc;
 	myargv = argv;
@@ -1119,7 +1165,10 @@ void main (int argc, char **argv)
 	src = COM_Parse (src);
 	if (!src)
 		Error ("No destination filename.  qcc -help for info.\n");
-	strcpy (destfile, com_token);
+
+	snprintf(destfile, sizeof(destfile), "%s%s", sourcedir, com_token);
+
+	//strcpy (destfile, com_token);
 	printf ("outputfile: %s\n", destfile);
 	
 	pr_dumpasm = false;

@@ -1,7 +1,7 @@
 
-#include "cmdlib.h"
-#include "mathlib.h"
-#include "bspfile.h"
+#include "common/cmdlib.h"
+#include "common/mathlib.h"
+#include "common/bspfile.h"
 #include "entities.h"
 #include "threads.h"
 
@@ -10,7 +10,7 @@
 #define	MAXLIGHTS			1024
 
 void LoadNodes (char *file);
-qboolean TestLine (vec3_t start, vec3_t stop);
+bool TestLine (vec3_t start, vec3_t stop);
 
 void LightFace (int surfnum);
 void LightLeaf (dleaf_t *leaf);
@@ -33,6 +33,6 @@ extern	vec3_t	bsp_yvector;
 void TransformSample (vec3_t in, vec3_t out);
 void RotateSample (vec3_t in, vec3_t out);
 
-extern	qboolean	extrasamples;
+extern	bool	extrasamples;
 
 extern	float		minlights[MAX_MAP_FACES];

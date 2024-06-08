@@ -17,7 +17,7 @@ typedef struct mbrush_s
 typedef struct epair_s
 {
 	struct epair_s	*next;
-	char	*key;
+	const char	*key;
 	char	*value;
 } epair_t;
 
@@ -42,9 +42,9 @@ void 	LoadMapFile (char *filename);
 int		FindMiptex (char *name);
 
 void	PrintEntity (entity_t *ent);
-char 	*ValueForKey (entity_t *ent, char *key);
-void	SetKeyValue (entity_t *ent, char *key, char *value);
-float	FloatForKey (entity_t *ent, char *key);
-void 	GetVectorForKey (entity_t *ent, char *key, vec3_t vec);
+const char 	*ValueForKey (entity_t *ent, const char *key);
+void	SetKeyValue (entity_t *ent, const char *key, char *value);
+float	FloatForKey (entity_t *ent, const char *key);
+void 	GetVectorForKey (entity_t *ent, const char *key, vec3_t vec);
 
 void	WriteEntitiesToString (void);

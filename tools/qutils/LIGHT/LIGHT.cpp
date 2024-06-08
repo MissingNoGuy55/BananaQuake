@@ -20,7 +20,7 @@ int			bspfileface;	// next surface to dispatch
 
 vec3_t	bsp_origin;
 
-qboolean	extrasamples;
+bool	extrasamples;
 
 float		minlights[MAX_MAP_FACES];
 
@@ -30,7 +30,7 @@ byte *GetFileSpace (int size)
 	byte	*buf;
 	
 	LOCK;
-	file_p = (byte *)(((long)file_p + 3)&~3);
+	file_p = (byte *)(((size_t)file_p + 3)&~3);
 	buf = file_p;
 	file_p += size;
 	UNLOCK;

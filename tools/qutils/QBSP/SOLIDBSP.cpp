@@ -19,7 +19,7 @@ FaceSide
 For BSP hueristic
 ==================
 */
-int FaceSide (CFace* in, plane_t *split)
+int FaceSide (face_t *in, plane_t *split)
 {
 	int		frontcount, backcount;
 	vec_t	dot;
@@ -155,11 +155,11 @@ The real BSP hueristic
 */
 surface_t *ChoosePlaneFromList (surface_t *surfaces, vec3_t mins, vec3_t maxs, bool usefloors)
 {
-	int			j,k,l,m;
+	int			j,k,l;
 	surface_t	*p, *p2, *bestsurface;
 	vec_t		bestvalue, bestdistribution, value, dist;
 	plane_t		*plane;
-	CFace*		f;
+	face_t		*f;
 	
 //
 // pick the plane that splits the least
@@ -186,7 +186,7 @@ surface_t *ChoosePlaneFromList (surface_t *surfaces, vec3_t mins, vec3_t maxs, b
 			if (p2->onnode)
 				continue;
 				
-			for (m = 0, f = p2->faces; f ; f = f->next)
+			for (f=p2->faces ; f ; f=f->next)
 			{
 				if (FaceSide (f, plane) == SIDE_ON)
 				{
@@ -321,7 +321,7 @@ Calculates the bounding box
 void CalcSurfaceInfo (surface_t *surf)
 {
 	int		i,j;
-	CFace*	f;
+	face_t	*f;
 	
 	if (!surf->faces)
 		Error ("CalcSurfaceInfo: surface without a face");
@@ -335,22 +335,18 @@ void CalcSurfaceInfo (surface_t *surf)
 		surf->maxs[i] = -99999;
 	}
 
-	for (i = 0, f = surf->faces; f; f = f->next, i++)
+	for (f=surf->faces ; f ; f=f->next)
 	{
-		if (f->contents[0] >= 0 || f->contents[1] >= 0)
-		{
-			Error("Bad contents");
-			for (i = 0; i < f->numpoints; i++)
+if (f->contents[0] >= 0 || f->contents[1] >= 0)
+Error ("Bad contents");
+		for (i=0 ; i<f->numpoints ; i++)
+			for (j=0 ; j<3 ; j++)
 			{
-				for (j = 0; j < 3; j++)
-				{
-					if (f->pts[i][j] < surf->mins[j])
-						surf->mins[j] = f->pts[i][j];
-					if (f->pts[i][j] > surf->maxs[j])
-						surf->maxs[j] = f->pts[i][j];
-				}
+				if (f->pts[i][j] < surf->mins[j])
+					surf->mins[j] = f->pts[i][j];
+				if (f->pts[i][j] > surf->maxs[j])
+					surf->maxs[j] = f->pts[i][j];
 			}
-		}
 	}
 }
 
@@ -363,12 +359,11 @@ DividePlane
 */
 void DividePlane (surface_t *in, plane_t *split, surface_t **front, surface_t **back)
 {
-	CFace*						facet, *next;
-	CFace*						frontlist, *backlist;
-	CFace*						frontfrag, *backfrag;
+	face_t		*facet, *next;
+	face_t		*frontlist, *backlist;
+	face_t		*frontfrag, *backfrag;
 	surface_t	*news;
-	plane_t		*inplane;
-	int i;
+	plane_t		*inplane;	
 	
 	inplane = &planes[in->planenum];
 	
@@ -381,12 +376,12 @@ void DividePlane (surface_t *in, plane_t *split, surface_t **front, surface_t **
 			news = AllocSurface ();
 			*news = *in;
 
-			facet = in->faces;
+			facet=in->faces;
 			in->faces = NULL;
 			news->faces = NULL;
 			in->onnode = news->onnode = true;
 			
-			for (i = 0; facet ; facet = next, i++)
+			for ( ; facet ; facet=next)
 			{
 				next = facet->next;
 				if (facet->planeside == 1)
@@ -430,11 +425,10 @@ void DividePlane (surface_t *in, plane_t *split, surface_t **front, surface_t **
 	frontlist = NULL;
 	backlist = NULL;
 	
-	for (i = 0, facet = in->faces; facet; facet = next, i++)
+	for (facet = in->faces ; facet ; facet = next)
 	{
 		next = facet->next;
-		SplitFace(facet, split, &frontfrag, &backfrag);
-
+		SplitFace (facet, split, &frontfrag, &backfrag);
 		if (frontfrag)
 		{
 			frontfrag->next = frontlist;
@@ -510,7 +504,7 @@ original faces that have some fragment inside this leaf
 */
 void LinkConvexFaces (surface_t *planelist, node_t *leafnode)
 {
-	CFace*		f, *next;
+	face_t		*f, *next;
 	surface_t	*surf, *pnext;
 	int			i, count;
 	
@@ -521,7 +515,7 @@ void LinkConvexFaces (surface_t *planelist, node_t *leafnode)
 	count = 0;
 	for ( surf = planelist ; surf ; surf = surf->next)
 	{
-		for (i = 0, f = surf->faces; f; f = f->next, i++)
+		for (f = surf->faces ; f ; f=f->next)
 		{
 			count++;
 			if (!leafnode->contents)
@@ -556,32 +550,23 @@ void LinkConvexFaces (surface_t *planelist, node_t *leafnode)
 // write the list of faces, and free the originals
 //
 	leaffaces += count;
-	//leafnode->markfaces = std::make_unique<CFace>(count+1);
+	leafnode->markfaces = (face_t**)malloc(sizeof(face_t *)*(count+1));
 	i = 0;
 	for ( surf = planelist ; surf ; surf = pnext)
 	{
 		pnext = surf->next;
-		for (i = 0, f = surf->faces; f; f = next, i++)
+		for (f = surf->faces ; f ; f=next)
 		{
 			next = f->next;
-			leafnode->markfaces = f->original;
+			leafnode->markfaces[i] = f->original;
 			i++;
-			//FreeFace (f);
+			FreeFace (f);
 		}
 		FreeSurface (surf);
 	}
-	leafnode->markfaces = NULL;	// sentinal
+	leafnode->markfaces[i] = NULL;	// sentinal
 }
 
-
-typedef struct alias_s
-{
-	struct alias_s* next;
-	struct alias_s* prev;
-	int				pad;
-} alias_t;
-
-constexpr size_t len = sizeof(alias_t);
 
 /*
 ==================
@@ -590,35 +575,35 @@ LinkNodeFaces
 Returns a duplicated list of all faces on surface
 ==================
 */
-CFace* LinkNodeFaces (surface_t *surface)
+face_t *LinkNodeFaces (surface_t *surface)
 {
-	CFace* f, *cnew, ** prevptr;
-	CFace* list;
-
+	face_t	*f, *fnew, **prevptr;
+	face_t	*list;
+	
 	list = NULL;
-
-
-	// subdivide
+	
+	
+// subdivide
 	prevptr = &surface->faces;
 	while (1)
 	{
 		f = *prevptr;
 		if (!f)
 			break;
-		SubdivideFace(f, prevptr);
+		SubdivideFace (f, prevptr);
 		f = *prevptr;
 		prevptr = &f->next;
 	}
 
-	// copy
-	for (f = surface->faces; f; f = f->next)
+// copy
+	for (f=surface->faces ; f ; f=f->next)
 	{
 		nodefaces++;
-		cnew = AllocFace();
-		*cnew = *f;
-		f->original = cnew;
-		cnew->next = list;
-		list = cnew;
+		fnew = AllocFace ();
+		*fnew = *f;
+		f->original = fnew;
+		fnew->next = list;
+		list = fnew;
 	}
 
 	return list;
@@ -666,6 +651,13 @@ void PartitionSurfaces (surface_t *surfaces, node_t *node)
 	{
 		next = p->next;
 		DividePlane (p, splitplane, &frontfrag, &backfrag);
+		if (frontfrag && backfrag)
+		{
+		// the plane was split, which may expose oportunities to merge
+		// adjacent faces into a single face
+//			MergePlaneFaces (frontfrag);
+//			MergePlaneFaces (backfrag);
+		}
 
 		if (frontfrag)
 		{
@@ -694,10 +686,9 @@ DrawSurface
 */
 void DrawSurface (surface_t *surf)
 {
-	CFace*	f;
-	int i;
+	face_t	*f;
 	
-	for (i = 0, f = surf->faces; f; f = f->next, i++)
+	for (f=surf->faces ; f ; f=f->next)
 		Draw_DrawFace (f);
 }
 

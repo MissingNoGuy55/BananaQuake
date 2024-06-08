@@ -1694,10 +1694,7 @@ byte* CCommon::COM_LoadMallocFile_TextMode_OSPath(const char* path, long* len_ou
 	byte* data;
 	long	len, actuallen;
 
-	// ericw -- this is used by Host_Loadgame_f. Translate CRLF to LF on load games,
-	// othewise multiline messages have a garbage character at the end of each line.
-	// TODO: could handle in a way that allows loading CRLF savegames on mac/linux
-	// without the junk characters appearing.
+	// Missi: copied from QuakeSpasm (6/7/2024)
 	f = fopen(path, "rt");
 	if (f == NULL)
 		return NULL;

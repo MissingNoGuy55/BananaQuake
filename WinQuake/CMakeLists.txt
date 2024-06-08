@@ -843,25 +843,6 @@ zone.h
 
 endif (APPLE)
 
-# set(QCC_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../tools/qcc)
-
-# set(QCC_SOURCES ${QCC_DIRECTORY}/builtin.cpp
-# ${QCC_DIRECTORY}/cmdlib.cpp
-# ${QCC_DIRECTORY}/pr_comp.cpp
-# ${QCC_DIRECTORY}/pr_lex.cpp
-# ${QCC_DIRECTORY}/qcc.cpp
-# )
-
-# set(QCC_HEADERS ${QCC_DIRECTORY}/builtin.h
-# ${QCC_DIRECTORY}/cmdlib.h
-# ${QCC_DIRECTORY}/pr_comp.h
-# ${QCC_DIRECTORY}/progdefs.h
-# ${QCC_DIRECTORY}/qcc.h
-# ${WINQUAKE_HEADERS}
-# )
-
-# set (QCC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
 #=================================================================
 
 list(APPEND includepathWinQuake
@@ -928,13 +909,7 @@ endif (APPLE)
 
 if (WIN32)
 # add_executable(bananaquakesoftware WIN32 ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
-if (${CMAKE_SIZEOF_VOID_P} STREQUAL "4")
 add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
-# add_executable(bananaquakeqcc WIN32 ${QCC_SOURCES} ${QCC_HEADERS})
-else()
-add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
-# add_executable(bananaquakeqcc x64 ${QCC_SOURCES} ${QCC_HEADERS})
-endif()
 endif (WIN32)
 
 if (APPLE)
@@ -942,31 +917,12 @@ if (APPLE)
 add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
 endif(APPLE)
 
-# target_include_directories(bananaquakeqcc PUBLIC
-    # "${QCC_INCLUDE_DIR}"
-# )
-
 #=================================================================
 #[[
-if (UNIX)
-target_compile_definitions(bananaquakesoftware PUBLIC LINUX)
-endif (UNIX)
 target_compile_definitions(bananaquakesoftware PUBLIC MGL40_COMPAT)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_VORBIS)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_WAVE)
-
-if (WIN32)
-if (${CMAKE_SIZEOF_VOID_P} STREQUAL "4")
-target_compile_definitions(bananaquakesoftware PUBLIC WIN32)
-else()
-target_compile_definitions(bananaquakesoftware PUBLIC WIN64)
-endif()
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_MP3)
-endif (WIN32)
-
-#target_compile_definitions(bananaquakesoftware PUBLIC DEBUG)
-#target_compile_definitions(bananaquakesoftware PUBLIC _DEBUG)
-
 target_include_directories(bananaquakesoftware PUBLIC
     "${includepathWinQuake}"
 )
@@ -974,21 +930,19 @@ target_include_directories(bananaquakesoftware PUBLIC
 target_compile_definitions(bananaquakeopengl PUBLIC GLQUAKE)
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_VORBIS)
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_WAVE)
-if (WIN32)
-if (${CMAKE_SIZEOF_VOID_P} STREQUAL "4")
-target_compile_definitions(bananaquakeopengl PUBLIC WIN32)
-else()
-target_compile_definitions(bananaquakeopengl PUBLIC WIN64)
-endif()
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_MP3)
-else()
-target_compile_definitions(bananaquakeopengl PUBLIC LINUX)
-endif(WIN32)
 
 target_include_directories(bananaquakeopengl PUBLIC
     "${includepathWinQuake}"
 )
 
+if (WIN32)
+
+if (${CMAKE_SIZEOF_VOID_P} STREQUAL "8")
+target_compile_definitions(bananaquakeopengl PUBLIC WIN64)
+endif()
+
+endif(WIN32)
 #=================================================================
 
 #target_link_directories(bananaquakesoftware PUBLIC ${includepathLibraryWinQuakeSoftware})

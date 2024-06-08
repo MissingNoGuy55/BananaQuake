@@ -17,7 +17,7 @@ If a light has a targetname, generate a unique style in the 32-63 range
 int		numlighttargets;
 char	lighttargets[32][64];
 
-int LightStyleForTargetname (char *targetname, qboolean alloc)
+int LightStyleForTargetname (char *targetname, bool alloc)
 {
 	int		i;
 	
@@ -127,7 +127,7 @@ void LoadEntities (void)
 			if (c == '}')
 				Error ("LoadEntities: closing brace without data");
 			
-			epair = malloc (sizeof(epair_t));
+			epair = (epair_t*)malloc (sizeof(epair_t));
 			memset (epair, 0, sizeof(epair));
 			strcpy (epair->key, key);
 			strcpy (epair->value, com_token);
@@ -189,7 +189,7 @@ void LoadEntities (void)
 	MatchTargets ();
 }
 
-char 	*ValueForKey (entity_t *ent, char *key)
+const char 	*ValueForKey (entity_t *ent, const char *key)
 {
 	epair_t	*ep;
 	
@@ -199,7 +199,7 @@ char 	*ValueForKey (entity_t *ent, char *key)
 	return "";
 }
 
-void 	SetKeyValue (entity_t *ent, char *key, char *value)
+void 	SetKeyValue (entity_t *ent, const char *key, char *value)
 {
 	epair_t	*ep;
 	
@@ -209,7 +209,7 @@ void 	SetKeyValue (entity_t *ent, char *key, char *value)
 			strcpy (ep->value, value);
 			return;
 		}
-	ep = malloc (sizeof(*ep));
+	ep = (epair_t*)malloc (sizeof(*ep));
 	ep->next = ent->epairs;
 	ent->epairs = ep;
 	strcpy (ep->key, key);
@@ -218,7 +218,7 @@ void 	SetKeyValue (entity_t *ent, char *key, char *value)
 
 float	FloatForKey (entity_t *ent, char *key)
 {
-	char	*k;
+	const char	*k;
 	
 	k = ValueForKey (ent, key);
 	return atof(k);
@@ -226,7 +226,7 @@ float	FloatForKey (entity_t *ent, char *key)
 
 void 	GetVectorForKey (entity_t *ent, char *key, vec3_t vec)
 {
-	char	*k;
+	const char	*k;
 	
 	k = ValueForKey (ent, key);
 	sscanf (k, "%lf %lf %lf", &vec[0], &vec[1], &vec[2]);

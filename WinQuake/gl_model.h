@@ -134,7 +134,7 @@ typedef struct msurface_s
 	
 // lighting info
 	int			dlightframe;
-	int			dlightbits;
+	unsigned int			dlightbits[MAX_DLIGHTS];
 
 	int			lightmaptexturenum;
 	byte		styles[MAXLIGHTMAPS];
@@ -404,6 +404,8 @@ typedef struct model_s
 // additional model data
 //
 	cache_user_s	cache;		// only access through Mod_Extradata
+
+	uintptr_t		path_id;
 
 } model_t;
 

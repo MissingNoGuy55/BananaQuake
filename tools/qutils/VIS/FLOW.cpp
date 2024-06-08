@@ -32,7 +32,7 @@ order goes source, pass, target.  If the order goes pass, source, target then
 flipclip should be set.
 ==============
 */
-winding_t	*ClipToSeperators (winding_t *source, winding_t *pass, winding_t *target, qboolean flipclip)
+winding_t	*ClipToSeperators (winding_t *source, winding_t *pass, winding_t *target, bool flipclip)
 {
 	int			i, j, k, l;
 	plane_t		plane;
@@ -40,7 +40,7 @@ winding_t	*ClipToSeperators (winding_t *source, winding_t *pass, winding_t *targ
 	float		d;
 	vec_t		length;
 	int			counts[3];
-	qboolean		fliptest;
+	bool		fliptest;
 
 // check all combinations	
 	for (i=0 ; i<source->numpoints ; i++)
@@ -176,7 +176,7 @@ void RecursiveLeafFlow (int leafnum, threaddata_t *thread, pstack_t *prevstack)
 	leaf_t 		*leaf;
 	int			i, j;
 	long		*test, *might, *vis;
-	qboolean		more;
+	bool		more;
 	
 	c_chains++;
 
@@ -194,7 +194,7 @@ void RecursiveLeafFlow (int leafnum, threaddata_t *thread, pstack_t *prevstack)
 	stack.next = NULL;
 	stack.leaf = leaf;
 	stack.portal = NULL;
-	stack.mightsee = malloc(bitbytes);
+	stack.mightsee = (byte*)malloc(bitbytes);
 	might = (long *)stack.mightsee;
 	vis = (long *)thread->leafvis;
 	
@@ -346,7 +346,7 @@ void PortalFlow (portal_t *p)
 		Error ("PortalFlow: reflowed");
 	p->status = stat_working;
 	
-	p->visbits = malloc (bitbytes);
+	p->visbits = (byte*)malloc (bitbytes);
 	memset (p->visbits, 0, bitbytes);
 
 	memset (&data, 0, sizeof(data));
@@ -413,7 +413,7 @@ void BasePortalVis (void)
 	
 	for (i=0, p = portals ; i<numportals*2 ; i++, p++)
 	{
-		p->mightsee = malloc (bitbytes);
+		p->mightsee = (byte*)malloc (bitbytes);
 		memset (p->mightsee, 0, bitbytes);
 		
 		c_portalsee = 0;

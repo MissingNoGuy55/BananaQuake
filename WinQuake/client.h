@@ -70,7 +70,7 @@ typedef struct
 
 #define	SIGNONS		4			// signon messages to receive before connected
 
-#define	MAX_DLIGHTS		32
+#define	MAX_DLIGHTS		64
 typedef struct dlight_s
 {
 	vec3_t	origin;
@@ -82,6 +82,7 @@ typedef struct dlight_s
 #ifdef QUAKE2
 	bool	dark;			// subtracts light instead of adding
 #endif
+	vec3_t	color;
 } dlight_t;
 
 

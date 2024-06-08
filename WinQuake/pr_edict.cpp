@@ -1062,7 +1062,6 @@ void ED_LoadFromFile (const char *data)
 	Con_DPrintf ("%i entities inhibited\n", inhibit);
 }
 
-
 /*
 ===============
 PR_LoadProgs
@@ -1079,6 +1078,7 @@ void PR_LoadProgs (void)
 	g_CRCManager->CRC_Init (&pr_crc);
 
 	progs = COM_LoadHunkFile<dprograms_t>("progs.dat", NULL);
+	
 	if (!progs)
 		Sys_Error ("PR_LoadProgs: couldn't load progs.dat");
 	Con_DPrintf ("Programs occupy %iK.\n", g_Common->com_filesize/1024);

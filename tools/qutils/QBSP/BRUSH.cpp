@@ -16,7 +16,7 @@ CheckFace
 Note: this will not catch 0 area polygons
 =================
 */
-void CheckFace (CFace* f)
+void CheckFace (face_t *f)
 {
 	int		i, j;
 	vec_t	*p1, *p2;
@@ -349,7 +349,7 @@ int	FindPlane_old (plane_t *dplane, int *side)
 */
 
 vec3_t		brush_mins, brush_maxs;
-CFace*		brush_faces;
+face_t		*brush_faces;
 
 /*
 =================
@@ -361,11 +361,10 @@ void CreateBrushFaces (void)
 {
 	int				i,j, k;
 	vec_t			r;
-	CFace*			f;
+	face_t			*f;
 	winding_t		*w;
 	plane_t			plane;
 	mface_t			*mf;
-	CFace*			ftemp = new CFace;
 	
 	brush_mins[0] = brush_mins[1] = brush_mins[2] = 99999;
 	brush_maxs[0] = brush_maxs[1] = brush_maxs[2] = -99999;
@@ -398,7 +397,7 @@ void CreateBrushFaces (void)
 		if (f->numpoints > MAXEDGES)
 			Error ("f->numpoints > MAXEDGES");
 	
-		for (j = 0; j < w->numpoints; j++)
+		for (j=0 ; j<w->numpoints ; j++)
 		{
 			for (k=0 ; k<3 ; k++)
 			{
@@ -411,20 +410,16 @@ void CreateBrushFaces (void)
 				if (f->pts[j][k] < brush_mins[k])
 					brush_mins[k] = f->pts[j][k];
 				if (f->pts[j][k] > brush_maxs[k])
-					brush_maxs[k] = f->pts[j][k];
+					brush_maxs[k] = f->pts[j][k];				
 			}
 			
 		}
 		FreeWinding (w);
-
 		f->texturenum = mf->texinfo;
 		f->planenum = FindPlane (&mf->plane, &f->planeside);
 		f->next = brush_faces;
 		brush_faces = f;
-
-		auto check = brush_faces;
-
-		CheckFace (check);
+		CheckFace (f);
 	}	
 }
 
@@ -446,8 +441,8 @@ vec3_t	hull_size[3][2] = {
 
 };
 
-#define	MAX_HULL_POINTS	64  // Missi: was 32 (2/3/2023)
-#define	MAX_HULL_EDGES	128 // Missi: was 64 (2/3/2023)
+#define	MAX_HULL_POINTS	32
+#define	MAX_HULL_EDGES	64
 
 int		num_hull_points;
 vec3_t	hull_points[MAX_HULL_POINTS];
@@ -659,14 +654,14 @@ void ExpandBrush (int hullnum)
 {
 	int		i, x, s;
 	vec3_t	corner;
-	CFace*	f;
+	face_t	*f;
 	plane_t	plane, *p;
 
 	num_hull_points = 0;
 	num_hull_edges = 0;
 
 // create all the hull points
-	for (f = brush_faces; f ; f = f->next)
+	for (f=brush_faces ; f ; f=f->next)
 		for (i=0 ; i<f->numpoints ; i++)
 			AddHullPoint (f->pts[i], hullnum);
 
@@ -700,7 +695,7 @@ void ExpandBrush (int hullnum)
 		}
 
 // add all of the edge bevels
-	for (f = brush_faces; f ; f = f->next)
+	for (f=brush_faces ; f ; f=f->next)
 		for (i=0 ; i<f->numpoints ; i++)
 			AddHullEdge (f->pts[i], f->pts[(i+1)%f->numpoints], hullnum);
 }
@@ -752,7 +747,7 @@ brush_t *LoadBrush (mbrush_t *mb, int hullnum)
 //
 // create the faces
 //
-	//brush_faces = NULL;
+	brush_faces = NULL;
 	
 	numbrushfaces = 0;
 	for (f=mb->faces ; f ; f=f->next)
@@ -765,7 +760,7 @@ brush_t *LoadBrush (mbrush_t *mb, int hullnum)
 		
 	CreateBrushFaces ();
 	
-	if (!&brush_faces)
+	if (!brush_faces)
 	{
 		printf ("WARNING: couldn't create brush faces\n");
 		return NULL;
@@ -783,7 +778,7 @@ brush_t *LoadBrush (mbrush_t *mb, int hullnum)
 	b = AllocBrush ();
 	
 	b->contents = contents;
-	b->faces.push_back(brush_faces);
+	b->faces = brush_faces;
 	VectorCopy (brush_mins, b->mins);
 	VectorCopy (brush_maxs, b->maxs);
 
@@ -802,19 +797,11 @@ Brush_DrawAll
 void Brush_DrawAll (brushset_t *bs)
 {
 	brush_t	*b;
-	CFace*	f = NULL;
-	std::vector<CFace*> fv;
-	int i;
+	face_t	*f;
 
-	for (b = bs->brushes; b; b = b->next)
-	{
-		fv.push_back(b->faces.at(0));
-	}
-	for (i = 0; i < fv.size(); i++)
-	{
-		f = fv.at(i);
-		Draw_DrawFace(f);
-	}
+	for (b=bs->brushes ; b ; b=b->next)
+		for (f=b->faces ; f ; f=f->next)
+			Draw_DrawFace (f);	
 }
 
 
