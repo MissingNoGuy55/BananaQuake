@@ -1050,7 +1050,7 @@ R_RecursiveWorldNode
 void CGLRenderer::R_RecursiveWorldNode (mnode_t *node)
 {
 	int			i, c, side, *pindex;
-	vec3_t		acceptpt, rejectpt;
+	vec3_t		rejectpt;
 	mplane_t	*plane;
 	msurface_t	*surf, **mark;
 	mleaf_t		*pleaf;
