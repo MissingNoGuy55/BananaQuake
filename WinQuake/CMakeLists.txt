@@ -910,8 +910,20 @@ endif (APPLE)
 #=================================================================
 
 if (WIN32)
+message(PROJECT_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}")  
+message(PROJECT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")  
 # add_executable(bananaquakesoftware WIN32 ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
 add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
+add_custom_command(TARGET bananaquakeopengl 
+                   POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:bananaquakeopengl> "${CMAKE_CURRENT_SOURCE_DIR}"
+				   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Debug>:Debug/SDL2d.dll>" "${CMAKE_CURRENT_SOURCE_DIR}"
+                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Release>:Release/SDL2.dll>" "${CMAKE_CURRENT_SOURCE_DIR}"
+                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:MinSizeRel>:MinSizeRel/SDL2.dll>" "${CMAKE_CURRENT_SOURCE_DIR}"
+                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Debug>:Debug/SDL2d.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Debug>:Debug>"
+                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Release>:Release/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Release>:Release>"
+                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:MinSizeRel>:MinSizeRel/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:MinSizeRel>:MinSizeRel>"
+)
 endif (WIN32)
 
 if (APPLE)
