@@ -845,8 +845,6 @@ void CSoundDMA::S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 		Con_Printf ("----(%i)----\n", total);
 	}
 
-	S_CheckMDMAMusic(); // Missi (1/20/2023)
-
 // mix some sound
 	S_Update_();
 }
