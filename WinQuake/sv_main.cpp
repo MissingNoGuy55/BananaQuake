@@ -1084,6 +1084,14 @@ void CQuakeServer::SV_SpawnServer (char *server)
 	int			i;
 	static char	dummy[8] = { 0,0,0,0,0,0,0,0 };
 
+	// Missi: exec 'listenserver.cfg' here as we need to set the vars after the host is created (6/9/2024)
+	if (svs.maxclients > 1 && cls.state != ca_dedicated)
+		g_pCmdBuf->Cbuf_InsertText("exec listenserver.cfg\n");
+
+	// Missi: set coop and deathmatch now so we don't get any mismatches with what server hosts have set (6/9/2024)
+	host->coop.value = Cvar_VariableValue("coop");
+	host->deathmatch.value = Cvar_VariableValue("coop");
+
 	// let's not have any servers with no name
 	if (hostname.string[0] == 0)
 		Cvar_Set ("hostname", "UNNAMED");

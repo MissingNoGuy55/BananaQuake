@@ -946,11 +946,6 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
     // can put up a popup if the sound hardware is in use
         g_SoundSystem->S_Init ();
 #endif
-#if (__linux__) && (GLQUAKE)
-        SDL_setenv("SDL_AudioDriver", "pulseaudio", 1);
-		g_SoundSystem = new CSoundDMA;
-		g_SoundSystem->S_Init();	
-#endif
 
 		CDAudio_Init ();
 		g_BGM = new CBackgroundMusic;
@@ -959,14 +954,15 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		Sbar_Init ();
 		CL_Init ();
 	}
+	else
+	{
+		g_pCmdBuf->Cbuf_InsertText("exec server.cfg\n");
+	}
 
 	g_pCmdBuf->Cbuf_InsertText ("exec quake.rc\n");
 
 	g_MemCache->Hunk_AllocName<char>(0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = g_MemCache->Hunk_LowMark();
-
-	if (cls.state == ca_dedicated)
-		g_pCmdBuf->Cbuf_InsertText("exec server.cfg\n");
 
 	host_initialized = true;
 	
