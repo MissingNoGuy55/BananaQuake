@@ -53,7 +53,7 @@ static double		lastcurtime = 0.0;
 static int			lowshift;
 static bool			isDedicated;
 static bool			sc_return_on_enter = false;
-static HANDLE		hinput, houtput;
+HANDLE		hinput, houtput;
 
 static const char	*tracking_tag = "Clams & Mooses";
 
@@ -441,7 +441,7 @@ void Sys_Error (const char *error, ...)
 	const char		*text4 = "***********************************\n";
 	const char		*text5 = "\n";
 	DWORD		dummy;
-	double		starttime;
+	double		start_time;
 	static int	in_sys_error0 = 0;
 	static int	in_sys_error1 = 0;
 	static int	in_sys_error2 = 0;
@@ -454,16 +454,16 @@ void Sys_Error (const char *error, ...)
 	}
 
 	va_start (argptr, error);
-	vsprintf (text, error, argptr);
+	vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
 	if (isDedicated)
 	{
 		va_start (argptr, error);
-		vsprintf (text, error, argptr);
+		vsnprintf (text, sizeof(text), error, argptr);
 		va_end (argptr);
 
-		sprintf (text2, "ERROR: %s\n", text);
+		snprintf (text2, sizeof(text2), "ERROR: %s\n", text);
 		WriteFile (houtput, text5, strlen (text5), &dummy, NULL);
 		WriteFile (houtput, text4, strlen (text4), &dummy, NULL);
 		WriteFile (houtput, text2, strlen (text2), &dummy, NULL);
@@ -471,11 +471,11 @@ void Sys_Error (const char *error, ...)
 		WriteFile (houtput, text4, strlen (text4), &dummy, NULL);
 
 
-		starttime = Sys_DoubleTime ();
+		start_time = Sys_DoubleTime ();
 		sc_return_on_enter = true;	// so Enter will get us out of here
 
 		while (!Sys_ConsoleInput () &&
-				((Sys_DoubleTime () - starttime) < CONSOLE_ERROR_TIMEOUT))
+				((Sys_DoubleTime () - start_time) < CONSOLE_ERROR_TIMEOUT))
 		{
 		}
 	}
@@ -697,8 +697,6 @@ char *Sys_ConsoleInput (void)
 	static char	text[256];
 	static int		len = 0;
 	INPUT_RECORD	recs[1024];
-	int		count = 0;
-	int		i = 0;
 	int		ch = 0; 
 	DWORD	dummy, numread, numevents;
 
