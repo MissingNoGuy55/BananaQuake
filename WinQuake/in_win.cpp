@@ -126,10 +126,10 @@ static HINSTANCE hInstDI;
 
 static bool	dinput;
 
-const GUID GUID_XAxis;
-const GUID GUID_YAxis;
-const GUID GUID_ZAxis;
-const GUID GUID_SysMouse;
+const GUID GUID_XAxis = {};
+const GUID GUID_YAxis = {};
+const GUID GUID_ZAxis = {};
+const GUID GUID_SysMouse = {};
 
 typedef struct MYDATA {
 	LONG  lX;                   // X axis goes here
@@ -953,7 +953,8 @@ IN_Commands
 */
 void IN_Commands (void)
 {
-	int		i, key_index;
+	unsigned	i;
+	int		key_index;
 	DWORD	buttonstate, povstate;
 
 	if (!joy_avail)
