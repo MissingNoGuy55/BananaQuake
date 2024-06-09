@@ -269,7 +269,7 @@ void CQuakeServer::SV_WaterMove (void)
 		VectorScale (wishvel, sv_maxspeed.value/wshspeed, wishvel);
 		wshspeed = sv_maxspeed.value;
 	}
-	wshspeed *= 0.7;
+	wshspeed *= 0.7f;
 
 //
 // water friction
@@ -482,7 +482,7 @@ Returns false if the client should be killed
 bool CQuakeServer::SV_ReadClientMessage (void)
 {
 	int		ret;
-	int		cmd;
+	int		command;
 	const char		*s;
 	
 	do
@@ -510,9 +510,9 @@ nextmsg:
 				return false;
 			}	
 	
-			cmd = MSG_ReadChar ();
+			command = MSG_ReadChar ();
 			
-			switch (cmd)
+			switch (command)
 			{
 			case -1:
 				goto nextmsg;		// end of message
