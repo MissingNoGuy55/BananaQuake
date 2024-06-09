@@ -401,9 +401,6 @@ Missi: some stuff from QuakeSpasm ported to here, mostly just for .lit support (
 */
 void Mod_LoadLighting (lump_t *l)
 {
-	if (cls.state == ca_dedicated)
-		return;
-
 	int i, mark;
 	byte* in, * out, * data;
 	byte d, q64_b0, q64_b1;
@@ -924,12 +921,19 @@ void Mod_LoadLeafs (lump_t *l)
 		for (j=0 ; j<4 ; j++)
 			out->ambient_sound_level[j] = in->ambient_level[j];
 
+		// Missi: ifdef'd out because it shows seams, reveals secrets and is otherwise ugly.
+		// it also tends to not work with modern compilers very well unless you specifically
+		// code one to.
+		// 
+		// if you really need it, remove this ifdef or define OLD_WATER_WARP in CMakeLists.txt
+#ifdef OLD_WATER_WARP
 		// gl underwater warp
 		if (out->contents != CONTENTS_EMPTY)
 		{
 			for (j=0 ; j<out->nummarksurfaces ; j++)
 				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
 		}
+#endif
 	}	
 }
 
@@ -1164,8 +1168,10 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	Mod_LoadEdges (&header->lumps[LUMP_EDGES]);
 	Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
 	if (cls.state != ca_dedicated)
-		Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
-	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);
+	{
+		Mod_LoadTextures(&header->lumps[LUMP_TEXTURES]);
+		Mod_LoadLighting(&header->lumps[LUMP_LIGHTING]);	// Missi: not needed on servers, but it causes some caching issues I think (6/8/2024)
+	}
 	Mod_LoadPlanes (&header->lumps[LUMP_PLANES]);
 	Mod_LoadTexinfo (&header->lumps[LUMP_TEXINFO]);
 	Mod_LoadFaces (&header->lumps[LUMP_FACES]);
