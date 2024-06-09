@@ -1046,14 +1046,14 @@ void CGLRenderer::R_Clear (void)
 		trickframe++;
 		if (trickframe & 1)
 		{
-			gldepthmin = 0;
-			gldepthmax = 0.49999;
+			gldepthmin = 0.0f;
+			gldepthmax = 0.49999f;
 			glDepthFunc (GL_LEQUAL);
 		}
 		else
 		{
-			gldepthmin = 1;
-			gldepthmax = 0.5;
+			gldepthmin = 1.0f;
+			gldepthmax = 0.5f;
 			glDepthFunc (GL_GEQUAL);
 		}
 	}
