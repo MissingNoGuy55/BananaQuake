@@ -15,3 +15,7 @@ Many QoL fixes from QuakeSpasm.
 It is not very clean, and some of it is a total mess (looking at you, sound system)!
 
 There are still many bugs, particularly with lighting in a select few levels like E3M1 on x64 and x86_64. There are also some crashes here and there.
+
+## Special thanks
+
+Huge thanks to QuakeSpasm team for a ton of optimizations and useful code this source port uses that is under GPL.
