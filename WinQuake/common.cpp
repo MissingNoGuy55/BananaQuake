@@ -1505,8 +1505,6 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 
 	if (file && handle)
 		Sys_Error ("COM_FindFile: both handle and file set");
-	/*if (!file && !handle)
-		Sys_Error ("COM_FindFile: neither handle or file set");*/
 	
 	file_from_pak = 0;
 
@@ -1535,13 +1533,27 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 							Sys_FileSeek(pak->handle, pak->files[i].filepos);
 						}
 						else
-						{       // open a new file on the pakfile
-							handle = &pak->handle;
+						{
+							if (handle)
+							{
+								handle = &pak->handle;
 
-							if (*handle)
-								Sys_FileSeek(pak->handle, pak->files[i].filepos);
-							else
-								Sys_Error("Couldn't find file %s\n", pak->files[i].name);
+								if (*handle)
+									Sys_FileSeek(pak->handle, pak->files[i].filepos);
+								else
+									Sys_Error("Couldn't find file %s\n", pak->files[i].name);
+							}
+							else if (file)
+							{ /* open a new file on the pakfile */
+								*file = fopen(pak->filename, "rb");
+								if (*file)
+									fseek(*file, pak->files[i].filepos, SEEK_SET);
+								return com_filesize;
+							}
+							else /* for COM_FileExists() */
+							{
+								return com_filesize;
+							}
 						}
 						com_filesize = pak->files[i].filelen;
 						return com_filesize;
@@ -1664,7 +1676,7 @@ into the file.
 */
 int CCommon::COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id)
 {
-	return COM_FindFile (filename, NULL, file, path_id);
+	return COM_FindFile (filename, nullptr, file, path_id);
 }
 
 /*
@@ -1845,7 +1857,20 @@ void CCommon::COM_AddGameDirectory (const char *dir)
         snprintf (pakfile, sizeof(pakfile), "%s/PAK%i.PAK", dir, i);
 		pak = COM_LoadPackFile (pakfile);
 		if (!pak)
-			break;
+		{
+			snprintf(pakfile, sizeof(pakfile), "%s/pak%i.pak", dir, i);
+			pak = COM_LoadPackFile(pakfile);
+
+			if (!pak)
+			{
+				snprintf(pakfile, sizeof(pakfile), "%s/Pak%i.pak", dir, i);
+				pak = COM_LoadPackFile(pakfile);
+
+				if (!pak)
+					break;
+			}
+		}
+
 		search = g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t));
 		search->path_id = path_id;
 		search->pack = pak;
@@ -1879,16 +1904,6 @@ void CCommon::COM_InitFilesystem (void)
 		Q_strcpy (basedir, com_argv[i+1]);
 	else
 		Q_strcpy (basedir, host->host_parms.basedir);
-
-	Q_FixSlashes(basedir, strlen(basedir));
-
-	j = strlen (basedir);
-
-	if (j > 0)
-	{
-		if ((basedir[j-1] == '\\') || (basedir[j-1] == '/'))
-			basedir[j-1] = 0;
-	}
 
 //
 // -cachedir <path>
@@ -1928,7 +1943,7 @@ void CCommon::COM_InitFilesystem (void)
 		com_modified = true;
 
 		// Missi: if it starts with a forward slash (on Linux/Mac), a quotation mark, or a drive letter (Windows) then it's an absolute path (6/2/2024)
-		const bool absolute = ((com_argv[i+1][0] == '/')) || (com_argv[i+1][0] == '\"') || ((com_argv[i + 1][0] > 64) && (com_argv[i + 1][0] < 91) && (com_argv[i + 1][1] == ':'));
+		const bool absolute = ((com_argv[i + 1][0] > 64) && (com_argv[i + 1][0] < 91) && (com_argv[i + 1][1] == ':'));
 
 		if (!absolute)
 			COM_AddGameDirectory (va("%s/%s", basedir, com_argv[i+1]));

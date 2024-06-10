@@ -297,7 +297,7 @@ extern CFileSystem* g_FileSystem;
 
 
 template<typename T>
-int             loadsize;
+int loadsize;
 
 template<typename T>
 T* loadbuf;
@@ -337,12 +337,12 @@ inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 	int	 h				= 0;
 	T* buf				= nullptr;
 	char base[32]		= {};
-	int	len				= 0;
+	size_t	len				= 0;
 
 	buf = nullptr;     // quiet compiler warning
 
 	// look for it in the filesystem or pack files
-	len = g_Common->COM_OpenFile(path, &h, NULL);
+	len = g_Common->COM_OpenFile(path, &h, path_id);
 	if (h == -1)
 		return NULL;
 
