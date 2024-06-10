@@ -118,6 +118,9 @@ T* W_GetLumpName(const char* name)
 
 	lump = W_GetLumpinfo(name);
 
+	if (!lump)
+		return nullptr;
+
 	return (T*)(wad_base + lump->filepos);
 }
 

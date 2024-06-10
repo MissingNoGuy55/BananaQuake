@@ -73,7 +73,10 @@ void W_LoadWadFile (const char *filename)
 	
     wad_base = COM_LoadHunkFile<byte> (filename, NULL);
 	if (!wad_base)
-		Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
+	{
+		Con_Warning ("W_LoadWadFile: couldn't load %s", filename);
+		return;
+	}
 
 	header = (wadinfo_t *)wad_base;
 
@@ -120,7 +123,7 @@ lumpinfo_t	*W_GetLumpinfo (const char *name)
 			return lump_p;
 	}
 	
-	Sys_Error ("W_GetLumpinfo: %s not found", name);
+	Con_Warning ("W_GetLumpinfo: %s not found", name);
 	return NULL;
 }
 
