@@ -487,14 +487,14 @@ typedef struct
 	char	name[24];
 } hunk_t;
 
-extern byte* hunk_base;
-extern int		hunk_size;
+extern byte*		hunk_base;
+extern size_t		hunk_size;
 
-extern int		hunk_low_used;
-extern int		hunk_high_used;
+extern size_t		hunk_low_used;
+extern size_t		hunk_high_used;
 
-extern bool	hunk_tempactive;
-extern int		hunk_tempmark;
+extern bool			hunk_tempactive;
+extern size_t		hunk_tempmark;
 
 class CMemCache
 {
@@ -506,7 +506,7 @@ public:
 	CMemCache();
 
 	template<typename T>
-	void Memory_Init(T* buf, int size);
+	void Memory_Init(T* buf, size_t size);
 
 	template<typename T>
 	T* Hunk_Alloc(int size);
@@ -515,10 +515,10 @@ public:
 	// returns 0 filled memory
 
 	template<typename T>
-	T* Hunk_AllocName(int size, const char* name);
+	T* Hunk_AllocName(size_t size, const char* name);
 
 	template<typename T>
-	T* Hunk_HighAllocName(int size, const char* name);
+	T* Hunk_HighAllocName(size_t size, const char* name);
 
 	int	Hunk_LowMark(void);
 	void Hunk_FreeToLowMark(int mark);
@@ -527,7 +527,7 @@ public:
 	void Hunk_FreeToHighMark(int mark);
 
 	template<typename T>
-	T* Hunk_TempAlloc(int size);
+	T* Hunk_TempAlloc(size_t size);
 
 	template<typename T>
 	void Cache_Move(CMemCacheSystem* c);
@@ -839,7 +839,7 @@ Memory_Init
 ========================
 */
 template<typename T>
-void CMemCache::Memory_Init(T* buf, int size)
+void CMemCache::Memory_Init(T* buf, size_t size)
 {
 	int p;
 	int zonesize = DYNAMIC_SIZE;
@@ -968,7 +968,7 @@ Hunk_AllocName
 Missi: Allocates a named block of memory on the hunk. Castable to any type. Use only for things like models and textures. If you need small, possibly volatile memory, use CMemZone::Z_TagMalloc instead.
 ===================*/
 template<typename T>
-T* CMemCache::Hunk_AllocName(int size, const char* name)
+T* CMemCache::Hunk_AllocName(size_t size, const char* name)
 {
 	hunk_t* h;
 
@@ -1006,7 +1006,7 @@ Return space from the top of the hunk
 =================
 */
 template<typename T>
-T* CMemCache::Hunk_TempAlloc(int size)
+T* CMemCache::Hunk_TempAlloc(size_t size)
 {
 	T* buf = 0;
 
@@ -1033,7 +1033,7 @@ Hunk_HighAllocName
 ===================
 */
 template<typename T>
-T* CMemCache::Hunk_HighAllocName(int size, const char* name)
+T* CMemCache::Hunk_HighAllocName(size_t size, const char* name)
 {
 	hunk_t* h;
 

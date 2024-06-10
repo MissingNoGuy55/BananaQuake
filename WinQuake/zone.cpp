@@ -56,13 +56,13 @@ CMemCacheSystem		cache_head = *test_head<T>;
 */
 
 byte* hunk_base;
-int		hunk_size;
+size_t		hunk_size;
 
-int		hunk_low_used;
-int		hunk_high_used;
+size_t		hunk_low_used;
+size_t		hunk_high_used;
 
 bool	hunk_tempactive;
-int		hunk_tempmark;
+size_t		hunk_tempmark;
 
 
 CMemZone::~CMemZone()
