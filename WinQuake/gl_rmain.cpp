@@ -48,6 +48,11 @@ int			mirrortexturenum;	// quake texturenum, not gltexturenum
 bool	mirror;
 mplane_t	*mirror_plane;
 
+cvar_t	level_fog_color {"fog", "0.5 0.5 0.5", false};
+cvar_t	level_fog_density {"fog_density", "1.0", false};
+
+float fog_color_vec[4] = {};
+
 //
 // view origin
 //
@@ -481,6 +486,11 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 	float		an;
 	int			anim;
 	int			quantizedangle;
+	
+	//
+	// locate the proper data
+	//
+	paliashdr = Mod_Extradata<aliashdr_t>(currententity->model);
 
 	// if the initial trace is completely black, try again from above
 	// this helps with models whose origin is slightly below ground level
@@ -500,7 +510,6 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 
 	if (R_CullBox (mins, maxs))
 		return;
-
 
 	VectorCopy (currententity->origin, r_entorigin);
 	VectorSubtract (r_origin, r_entorigin, modelorg);
@@ -567,11 +576,6 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 
 	shadedots = r_avertexnormal_dots[quantizedangle];
 	VectorScale(lightcolor, 1.0f / 200.0f, lightcolor);
-	
-	//
-	// locate the proper data
-	//
-	paliashdr = Mod_Extradata<aliashdr_t>(currententity->model);
 
 	c_alias_polys += paliashdr->numtris;
 
@@ -745,8 +749,8 @@ void CGLRenderer::R_DrawViewModel (void)
 			ambientlight += add;
 	}
 
-	ambient[0] = ambient[1] = ambient[2] = ambient[3] = (float)ambientlight / 128;
-	diffuse[0] = diffuse[1] = diffuse[2] = diffuse[3] = (float)shadelight / 128;
+	if (currententity->model->type != mod_alias)
+		return;
 
 	// hack the depth range to prevent view model from poking into walls
 
@@ -1153,7 +1157,7 @@ void CGLRenderer::R_RenderView (void)
 	if (r_norefresh.value)
 		return;
 
-	if (!r_worldentity.model || !cl.worldmodel)
+	if (!cl.worldmodel)
 		Sys_Error ("R_RenderView: NULL worldmodel");
 
 	if (r_speeds.value)
@@ -1180,14 +1184,28 @@ void CGLRenderer::R_RenderView (void)
 	glFogf(GL_FOG_END, 512.0);
 	glEnable(GL_FOG);
 ********************************************/
+	
+	if (sv->level_has_fog)
+	{
+		glFogi(GL_FOG_MODE, GL_LINEAR);
+		glFogfv(GL_FOG_COLOR, fog_color_vec);
+		glFogf(GL_FOG_DENSITY, level_fog_density.value);
+		glFogf(GL_FOG_START, 64.0f);
+		glFogf(GL_FOG_END, 2048.0f);
+		glEnable(GL_FOG);
 
-	R_RenderScene ();
-	R_DrawViewModel ();
-	R_DrawWaterSurfaces ();
+		//  More fog right here :)
+		glDisable(GL_FOG);
+		//  End of all fog code...
+	}
+	else
+	{
+		glDisable(GL_FOG);
+	}
 
-//  More fog right here :)
-//	glDisable(GL_FOG);
-//  End of all fog code...
+	R_RenderScene();
+	R_DrawViewModel();
+	R_DrawWaterSurfaces();
 
 	// render mirror view
 	R_Mirror ();

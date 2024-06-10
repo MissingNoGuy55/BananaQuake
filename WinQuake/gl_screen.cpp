@@ -905,9 +905,13 @@ void SCR_UpdateScreen (void)
 		if (crosshair.value)
 			g_GLRenderer->Draw_Character (scr_vrect.x + scr_vrect.width/2, scr_vrect.y + scr_vrect.height/2, '+');
 		
-		SCR_DrawRam ();
-		SCR_DrawNet ();
-		SCR_DrawTurtle ();
+		if (scr_ram)
+			SCR_DrawRam ();
+		if (scr_net)
+			SCR_DrawNet ();
+		if (scr_turtle)
+			SCR_DrawTurtle ();
+
 		SCR_DrawPause ();
 		SCR_CheckDrawCenterString ();
 		Sbar_Draw ();
@@ -915,7 +919,8 @@ void SCR_UpdateScreen (void)
 		M_Draw ();
 	}
 
-	V_UpdatePalette ();
+	if (host->host_basepal)
+		V_UpdatePalette ();
 
 	g_GLRenderer->GL_EndRendering ();
 }

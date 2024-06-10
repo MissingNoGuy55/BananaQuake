@@ -956,8 +956,8 @@ void CGLRenderer::R_DrawBrushModel (entity_t *e)
 		rotated = true;
 		for (i=0 ; i<3 ; i++)
 		{
-			mins[i] = e->origin[i] - clmodel->radius;
-			maxs[i] = e->origin[i] + clmodel->radius;
+			mins[i] = e->origin[i] - (clmodel->mins[0] - clmodel->mins[1] - clmodel->mins[2]);
+			maxs[i] = e->origin[i] + (clmodel->maxs[0] - clmodel->maxs[1] - clmodel->maxs[2]);
 		}
 	}
 	else
@@ -1475,7 +1475,7 @@ void CGLRenderer::GL_BuildLightmaps (void)
 
 	r_framecount = 1;		// no dlightcache
 
-	//Spike -- wipe out all the lightmap data (johnfitz -- the gltexture objects were already freed by Mod_ClearAll) -- Missi: copied from QuakeSpasm (6/3/2024)
+	//Missi: copied from QuakeSpasm (6/3/2024)
 	if (lightmap_textures)
 	{
         memset(allocated, 0, sizeof(allocated));
