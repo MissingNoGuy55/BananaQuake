@@ -281,8 +281,6 @@ play [demoname]
 void CL_PlayDemo_f (void)
 {
 	char	name[256];
-	int c;
-	bool neg = false;
 
 	if (cmd_source != src_command)
 		return;
@@ -301,11 +299,12 @@ void CL_PlayDemo_f (void)
 //
 // open the demo file
 //
-	Q_strcpy (name, g_pCmds->Cmd_Argv(1));
+	snprintf(name, sizeof(name), "%s", g_pCmds->Cmd_Argv(1));
 	g_Common->COM_DefaultExtension (name, ".dem");
 
 	Con_Printf ("Playing demo from %s.\n", name);
-	g_Common->COM_FOpenFile (name, &cls.demofile, NULL);
+
+	int size = g_Common->COM_FOpenFile (name, &cls.demofile, nullptr);
 	if (!cls.demofile)
 	{
 		Con_Printf ("ERROR: couldn't open.\n");
@@ -313,18 +312,19 @@ void CL_PlayDemo_f (void)
 		return;
 	}
 
+	if (fscanf(cls.demofile, "%i", &cls.forcetrack) != 1 || fgetc(cls.demofile) != '\n')
+	{
+		fclose(cls.demofile);
+		cls.demofile = nullptr;
+		cls.demonum = -1;	// stop demo loop
+		Con_Printf("ERROR: demo \"%s\" is invalid\n", name);
+		return;
+	}
+
 	cls.demoplayback = true;
 	cls.state = ca_connected;
-	cls.forcetrack = 0;
+	key_dest = key_game;
 
-	while ((c = getc(cls.demofile)) != '\n')
-		if (c == '-')
-			neg = true;
-		else
-			cls.forcetrack = cls.forcetrack * 10 + (c - '0');
-
-	if (neg)
-		cls.forcetrack = -cls.forcetrack;
 // ZOID, fscanf is evil
 //	fscanf (cls.demofile, "%i\n", &cls.forcetrack);
 }
@@ -377,4 +377,3 @@ void CL_TimeDemo_f (void)
 	cls.td_startframe = host->host_framecount;
 	cls.td_lastframe = -1;		// get a new message this frame
 }
-
