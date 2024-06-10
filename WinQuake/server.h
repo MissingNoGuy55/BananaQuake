@@ -345,9 +345,11 @@ public:
 
 	// passedict is explicitly excluded from clipping checks (normally NULL)
 
-	bool	active;				// false if only a net client
-	bool	paused;
-	bool	loadgame;			// handle connections specially
+	bool		level_has_fog;
+
+	bool		active;				// false if only a net client
+	bool		paused;
+	bool		loadgame;			// handle connections specially
 
 	double		time;
 
@@ -378,7 +380,7 @@ public:
 	byte		reliable_datagram_buf[MAX_DATAGRAM];
 
 	sizebuf_t	signon;
-	byte		signon_buf[8192];
+	byte		signon_buf[64000];
 
 };
 
