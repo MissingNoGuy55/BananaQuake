@@ -592,3 +592,7 @@ extern bool gl_mtexable;
 
 extern CGLRenderer* g_GLRenderer;	// Missi (2/21/2022)
 
+extern cvar_t level_fog_color;
+extern cvar_t level_fog_density;
+
+extern float fog_color_vec[4];
