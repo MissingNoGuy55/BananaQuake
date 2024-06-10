@@ -665,6 +665,9 @@ void CGLRenderer::GL_Init (void)
 	gl_extensions = (const char*)glGetString (GL_EXTENSIONS);
 	Con_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
 
+	Cvar_RegisterVariable(&level_fog_color);
+	Cvar_RegisterVariable(&level_fog_density);
+
 //	Con_Printf ("%s %s\n", gl_renderer, gl_version);
 
     if (_strnicmp(gl_renderer,"PowerVR",7)==0)
@@ -775,7 +778,8 @@ void	VID_SetPalette (unsigned char *palette)
 	mark = g_MemCache->Hunk_LowMark();
 	pal = (byte*)g_MemCache->Hunk_Alloc<byte>(768);
 	
-	Q_memcpy(pal, host->host_basepal, 768);
+	if (host->host_basepal)
+		Q_memcpy(pal, host->host_basepal, 768);
 
 	//fread(pal, sizeof(byte), 768, f);
 	//fclose(f);
@@ -1982,17 +1986,19 @@ void	VID_Init (unsigned char *palette)
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
-	vid.colormap = host->host_colormap;
-	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
+	if (host->host_colormap)
+	{
+		vid.colormap = host->host_colormap;
+		vid.fullbright = 256 - LittleLong(*((int*)vid.colormap + 2048));
+	}
 
 	DestroyWindow (hwnd_dialog);
 
-	if (!palette)
-		return;
-
-	Check_Gamma(palette);
-	VID_SetPalette (palette);
-
+	if (palette)
+	{
+		Check_Gamma(palette);
+		VID_SetPalette (palette);
+	}
 	VID_SetMode (vid_default, palette);
 
     maindc = GetDC(mainwindow);
