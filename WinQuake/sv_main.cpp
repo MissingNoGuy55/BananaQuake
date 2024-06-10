@@ -32,27 +32,30 @@ CQuakeServer::CQuakeServer()
 {
 	active = false;
 	datagram = {};
-	memset(&datagram_buf, 0, sizeof(datagram_buf));
 	edicts = nullptr;
 	lastcheck = 0;
 	lastchecktime = 0.0;
-	memset(&lightstyles, 0, sizeof(lightstyles));
 	loadgame = false;
 	max_edicts = 0;
+	num_edicts = 0;
+	paused = false;
+	reliable_datagram = {};
+	signon = {};
+	state = {};
+	time = 0.0;
+
+	level_has_fog = false;
+
+	memset(&worldmodel, 0, sizeof(worldmodel));
+	memset(&sound_precache, 0, sizeof(sound_precache));
+	memset(&signon_buf, 0, sizeof(signon_buf));
 	memset(&model_precache, 0, sizeof(model_precache));
 	memset(&modelname, 0, sizeof(modelname));
 	memset(&models, 0, sizeof(models));
 	memset(&name, 0, sizeof(name));
-	num_edicts = 0;
-	paused = false;
-	reliable_datagram = {};
 	memset(&reliable_datagram_buf, 0, sizeof(reliable_datagram_buf));
-	signon = {};
-	memset(&signon_buf, 0, sizeof(signon_buf));
-	memset(&sound_precache, 0, sizeof(sound_precache));
-	state = {};
-	time = 0.0;
-	memset(&worldmodel, 0, sizeof(worldmodel));
+	memset(&lightstyles, 0, sizeof(lightstyles));
+	memset(&datagram_buf, 0, sizeof(datagram_buf));
 }
 
 /*
@@ -1090,7 +1093,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 
 	// Missi: set coop and deathmatch now so we don't get any mismatches with what server hosts have set (6/9/2024)
 	host->coop.value = Cvar_VariableValue("coop");
-	host->deathmatch.value = Cvar_VariableValue("coop");
+	host->deathmatch.value = Cvar_VariableValue("deathmatch");
 
 	// let's not have any servers with no name
 	if (hostname.string[0] == 0)
@@ -1215,6 +1218,40 @@ void CQuakeServer::SV_SpawnServer (char *server)
 	pr_global_struct->serverflags = svs.serverflags;
 	
 	ED_LoadFromFile (sv->worldmodel->entities);
+
+	// Missi: set up fog
+	const char* lump = sv->worldmodel->entities;
+	int pos = 0;
+
+	level_has_fog = false;
+
+	for (const char* parse = g_Common->COM_Parse(lump); (parse) && parse[0]; parse = g_Common->COM_Parse(parse))
+	{
+		if (!Q_strncmp(&parse[2], "fog", 3))
+		{
+			Con_Printf("key: %s", parse);
+			parse = g_Common->COM_Parse(parse);
+			Con_Printf("value: %s", parse);
+
+			fog_color_vec[0] = atof(&parse[2]);
+			fog_color_vec[1] = atof(&parse[2 + sizeof(float)]);
+			fog_color_vec[2] = atof(&parse[2 + sizeof(float) * 2]);
+			fog_color_vec[3] = atof(&parse[2 + sizeof(float) * 3]);
+
+			level_fog_density.value = fog_color_vec[3];
+			level_has_fog = true;
+			continue;
+		}
+		if (!Q_strncmp(&parse[2], "fog_density", 11))
+		{
+			Con_Printf("key: %s", parse);
+			parse = g_Common->COM_Parse(parse);
+			Con_Printf("value: %s", parse);
+
+			level_fog_density.value = atof(&parse[2]);
+			continue;
+		}
+	}
 
 	sv->active = true;
 
