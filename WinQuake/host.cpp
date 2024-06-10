@@ -901,10 +901,10 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	{
 		host_basepal = COM_LoadHunkFile<byte> ("gfx/palette.lmp", NULL);
 		if (!host_basepal)
-			Sys_Error ("Couldn't load gfx/palette.lmp");
+			Con_Warning ("Couldn't load gfx/palette.lmp");
 		host_colormap = COM_LoadHunkFile<byte> ("gfx/colormap.lmp", NULL);
 		if (!host_colormap)
-			Sys_Error ("Couldn't load gfx/colormap.lmp");
+			Con_Warning ("Couldn't load gfx/colormap.lmp");
 
 #ifndef _WIN32 // on non win32, mouse comes before video for security reasons
 		IN_Init ();
