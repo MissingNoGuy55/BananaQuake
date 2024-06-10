@@ -653,6 +653,13 @@ void CGLRenderer::Draw_Init (void)
 	g_pCmds->Cmd_AddCommand ("gl_texturemode", CGLRenderer::Draw_TextureMode_f);
 
 	draw_chars = W_GetLumpName<byte>("conchars");
+
+	if (!draw_chars)
+	{
+		uintptr_t path;
+		draw_chars = COM_LoadHunkFile<byte>("gfx/conchars.lmp", &path);
+	}
+
 	offset = (uintptr_t)draw_chars - (uintptr_t)wad_base;
 
 	// Missi: FIXME: for some reason, this needs to be done as the changes from QuakeSpasm
@@ -924,22 +931,25 @@ refresh window.
 */
 void CGLRenderer::Draw_TileClear (int x, int y, int w, int h)
 {
-	COpenGLPic* gl;
+	if (draw_backtile)
+	{
+		COpenGLPic* gl;
 
-	gl = (COpenGLPic*)draw_backtile->datavec.Base();
+		gl = (COpenGLPic*)draw_backtile->datavec.Base();
 
-	glColor3f (1,1,1);
-	g_GLRenderer->GL_Bind(gl->tex); // *(int*)draw_backtile->data;
-	glBegin (GL_QUADS);
-	glTexCoord2f (x/64.0f, y/64.0f);
-	glVertex2f (x, y);
-	glTexCoord2f ( (x+w)/64.0f, y/64.0f);
-	glVertex2f (x+w, y);
-	glTexCoord2f ( (x+w)/64.0f, (y+h)/64.0f);
-	glVertex2f (x+w, y+h);
-	glTexCoord2f ( x/64.0f, (y+h)/64.0f );
-	glVertex2f (x, y+h);
-	glEnd ();
+		glColor3f(1, 1, 1);
+		g_GLRenderer->GL_Bind(gl->tex); // *(int*)draw_backtile->data;
+		glBegin(GL_QUADS);
+		glTexCoord2f(x / 64.0f, y / 64.0f);
+		glVertex2f(x, y);
+		glTexCoord2f((x + w) / 64.0f, y / 64.0f);
+		glVertex2f(x + w, y);
+		glTexCoord2f((x + w) / 64.0f, (y + h) / 64.0f);
+		glVertex2f(x + w, y + h);
+		glTexCoord2f(x / 64.0f, (y + h) / 64.0f);
+		glVertex2f(x, y + h);
+		glEnd();
+	}
 }
 
 
@@ -1144,9 +1154,9 @@ void CGLRenderer::GL_DeleteTexture(CGLTexture* texture)
 {
 	glDeleteTextures(1, &texture->texnum);
 
-	if (texture == &currenttexture[0]) memset(currenttexture, 0, 1);
-	if (texture == &currenttexture[1]) memset(currenttexture, 0, 1);
-	if (texture == &currenttexture[2]) memset(currenttexture, 0, 1);
+	if (texture == &currenttexture[0]) memset(currenttexture, 0, sizeof(CGLTexture));
+	if (texture == &currenttexture[1]) memset(currenttexture, 0, sizeof(CGLTexture));
+	if (texture == &currenttexture[2]) memset(currenttexture, 0, sizeof(CGLTexture));
 
 	texture->texnum = 0;
 }
