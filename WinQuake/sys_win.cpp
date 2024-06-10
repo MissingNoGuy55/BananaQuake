@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <VersionHelpers.h>
 
 #define MINIMUM_WIN_MEMORY		0x0880000
-#define MAXIMUM_WIN_MEMORY		0x1000000
+#define MAXIMUM_WIN_MEMORY		0x773594000
 
 #define CONSOLE_ERROR_TIMEOUT	60.0	// # of seconds to wait on Sys_Error running
 										//  dedicated before exiting
@@ -872,6 +872,9 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	argv[0] = new char[1];
 	Q_strncpy(argv[0], empty_string, sizeof(*empty_string));
 
+	int pos = 0;
+	bool hitquote = false;
+
 	while (*lpCmdLine && (parms.argc < MAX_NUM_ARGVS))
 	{
 		while (*lpCmdLine && ((*lpCmdLine <= 32) || (*lpCmdLine > 126)))
@@ -883,9 +886,8 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 			// Missi: changed this to account for quoted strings e.g. for the "-game" parameter
 			// In the original code, spaces would terminate an argv regardless of quotes (6/2/2024)
-			if (*lpCmdLine == '\"')
+			if (*lpCmdLine == '\"' && !hitquote)
 			{
-
 				char testStr[MAX_PATH] = {};
 				int pos = 0;
 
@@ -903,6 +905,7 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 				testStr[pos+1] = '\"';
 
 				argv[parms.argc] = testStr;
+				hitquote = true;
 			}
 
 			parms.argc++;
@@ -918,6 +921,9 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 			
 		}
 	}
+
+	for (int pos = 0; pos < parms.argc; pos++)
+		Q_FixQuotes(argv[pos], argv[pos], strlen(argv[pos])+1);
 
 	parms.argv = argv;
 
@@ -989,7 +995,7 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	if (!parms.membase)
 		Sys_Error ("Not enough memory free; check disk space\n");
 
-	Sys_PageIn ((void*)parms.membase, parms.memsize);
+	//Sys_PageIn ((void*)parms.membase, parms.memsize);
 
 	tevent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
