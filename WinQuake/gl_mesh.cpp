@@ -37,7 +37,7 @@ bool	used[8192];
 
 // the command list holds counts and s/t values that are valid for
 // every frame
-int		commands[8192];
+int		commands[MAXALIASTRIS * 7 + 1];
 int		numcommands;
 
 // all frames will have their vertexes rearranged and expanded
@@ -196,15 +196,15 @@ Generate a list of trifans or strips
 for the model, which holds for all frames
 ================
 */
-void BuildTris(void)
+static void BuildTris(void)
 {
-	int		i, j, k;
-	int		startv;
-	float	s, t;
-	int		len, bestlen, besttype;
-	int		bestverts[1024];
-	int		besttris[1024];
-	int		type;
+	int		i = 0, j = 0, k = 0;
+	int		startv = 0;
+	float	s = 0, t = 0;
+	int		len = 0, bestlen = 0, besttype = 0;
+	int		bestverts[MAXALIASTRIS] = {};
+	int		besttris[MAXALIASTRIS] = {};
+	int		type = 0;
 
 	//
 	// build tristrips
@@ -219,6 +219,7 @@ void BuildTris(void)
 			continue;
 
 		bestlen = 0;
+		besttype = 0;
 		for (type = 0; type < 2; type++)
 			//	type = 1;
 		{
@@ -260,11 +261,11 @@ void BuildTris(void)
 			t = stverts[k].t;
 			if (!triangles[besttris[0]].facesfront && stverts[k].onseam)
 				s += pheader->skinwidth / 2;	// on back side
-			s = (s + 0.5) / pheader->skinwidth;
-			t = (t + 0.5) / pheader->skinheight;
+			s = (s + 0.5f) / pheader->skinwidth;
+			t = (t + 0.5f) / pheader->skinheight;
 
-			*(float*)&commands[numcommands++] = s;
-			*(float*)&commands[numcommands++] = t;
+			*(float *)&commands[numcommands++] = s;
+			*(float *)&commands[numcommands++] = t;
 		}
 	}
 
@@ -340,7 +341,6 @@ void GL_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 			Sys_FileClose(h);
 		}
 	}
-
 	// save the data out
 
 	paliashdr->poseverts = numorder;
@@ -350,8 +350,7 @@ void GL_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 
 	memcpy(cmds, commands, numcommands * 4);
 
-	verts = g_MemCache->Hunk_Alloc<trivertx_t>(paliashdr->numposes * paliashdr->poseverts
-		* sizeof(trivertx_t));
+	verts = (trivertx_t*)g_MemCache->Hunk_Alloc<trivertx_t>(paliashdr->numposes * paliashdr->poseverts * sizeof(trivertx_t));
 	paliashdr->posedata = (byte*)verts - (byte*)paliashdr;
 	for (i = 0; i < paliashdr->numposes; i++)
 		for (j = 0; j < numorder; j++)
