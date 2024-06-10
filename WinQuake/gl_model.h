@@ -115,6 +115,8 @@ typedef struct glpoly_s
 typedef struct msurface_s
 {
 	int			visframe;		// should be drawn when node is crossed
+	float		mins[3];
+	float		maxs[3];
 
 	mplane_t	*plane;
 	int			flags;
@@ -183,10 +185,16 @@ typedef struct mleaf_s
 	byte		ambient_sound_level[NUM_AMBIENTS];
 } mleaf_t;
 
+typedef struct mclipnode_s
+{
+	int			planenum;
+	int			children[2]; // negative numbers are contents
+} mclipnode_t;
+
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
 struct hull_t
 {
-	dclipnode_t	*clipnodes;
+	mclipnode_t	*clipnodes;
 	mplane_t	*planes;
 	int			firstclipnode;
 	int			lastclipnode;
@@ -305,9 +313,9 @@ typedef struct {
 	maliasframedesc_t	frames[1];	// variable sized
 } aliashdr_t;
 
-#define	MAXALIASVERTS	1024
-#define	MAXALIASFRAMES	256
-#define	MAXALIASTRIS	2048
+#define	MAXALIASVERTS	4096
+#define	MAXALIASFRAMES	4096
+#define	MAXALIASTRIS	4096
 extern	aliashdr_t	*pheader;
 extern	stvert_t	stverts[MAXALIASVERTS];
 extern	mtriangle_t	triangles[MAXALIASTRIS];
@@ -333,7 +341,7 @@ typedef enum {mod_brush, mod_sprite, mod_alias} modtype_t;
 typedef struct model_s
 {
 	char		name[MAX_QPATH];
-	bool	needload;		// bmodels and sprites don't cache normally
+	bool		needload;		// bmodels and sprites don't cache normally
 
 	modtype_t	type;
 	int			numframes;
@@ -345,7 +353,8 @@ typedef struct model_s
 // volume occupied by the model graphics
 //		
 	vec3_t		mins, maxs;
-	float		radius;
+	vec3_t		ymins, ymaxs;
+	vec3_t		rmins, rmaxs;
 
 //
 // solid volume for clipping 
@@ -383,10 +392,10 @@ typedef struct model_s
 	msurface_t* surfaces;
 
 	int			numsurfedges;
-	int* surfedges;
+	int*		surfedges;
 
 	int			numclipnodes;
-	dclipnode_t* clipnodes;
+	mclipnode_t* clipnodes;
 
 	int			nummarksurfaces;
 	msurface_t** marksurfaces;
@@ -400,12 +409,13 @@ typedef struct model_s
 	byte* lightdata;
 	char* entities;
 
+	uintptr_t		path_id;
+	int				bspversion;
+
 //
 // additional model data
 //
 	cache_user_s	cache;		// only access through Mod_Extradata
-
-	uintptr_t		path_id;
 
 } model_t;
 
@@ -414,7 +424,7 @@ extern char	loadname[32];	// for hunk tags
 
 extern byte	mod_novis[MAX_MAP_LEAFS / 8];
 
-#define	MAX_MOD_KNOWN	512
+#define	MAX_MOD_KNOWN	8192	// Missi: was 512
 extern model_t	mod_known[MAX_MOD_KNOWN];
 extern int		mod_numknown;
 
@@ -451,9 +461,10 @@ Loads a model into the cache
 template<typename T>
 model_t* Mod_LoadModel(model_t* mod, bool crash)
 {
-	T* d = NULL;
-	unsigned* buf;
-	byte	stackbuf[1024];		// avoid dirtying the cache heap
+	T*		d = nullptr;
+	byte*	buf = nullptr;
+	byte	stackbuf[1024] = {};		// avoid dirtying the cache heap
+	int		mod_type = 0;
 
 	if (!mod->needload)
 	{
@@ -474,7 +485,7 @@ model_t* Mod_LoadModel(model_t* mod, bool crash)
 	//
 	// load the file
 	//
-	buf = COM_LoadStackFile<unsigned>(mod->name, stackbuf, sizeof(stackbuf), NULL);
+	buf = COM_LoadStackFile<byte>(mod->name, stackbuf, sizeof(stackbuf), &mod->path_id);
 	if (!buf)
 	{
 		if (crash)
@@ -496,7 +507,8 @@ model_t* Mod_LoadModel(model_t* mod, bool crash)
 	// call the appropriate loader
 	mod->needload = false;
 
-	switch (LittleLong(*(unsigned*)buf))
+	mod_type = (buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24));
+	switch (mod_type)
 	{
 	case IDPOLYHEADER:
 		Mod_LoadAliasModel(mod, buf);
