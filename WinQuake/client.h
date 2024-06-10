@@ -272,8 +272,8 @@ extern	cvar_t	m_forward;
 extern	cvar_t	m_side;
 
 
-#define	MAX_TEMP_ENTITIES	64			// lightning bolts, etc
-#define	MAX_STATIC_ENTITIES	128			// torches, etc
+#define	MAX_TEMP_ENTITIES	256			// lightning bolts, etc (Missi: was 64 (6/10/2024))
+#define	MAX_STATIC_ENTITIES	4096			// torches, etc (Missi: was 128 (6/10/2024))
 
 extern	client_state_t	cl;
 
@@ -306,7 +306,7 @@ void CL_Disconnect (void);
 void CL_Disconnect_f (void);
 void CL_NextDemo (void);
 
-#define			MAX_VISEDICTS	256
+#define			MAX_VISEDICTS	4096	// Missi: was 256 (6/10/2024)
 extern	int				cl_numvisedicts;
 extern	entity_t		*cl_visedicts[MAX_VISEDICTS];
 
