@@ -1,1 +1,0 @@
-7z\7za a BananaQuake_bin_release.7z ./build/MinSizeRel/*.exe ./codecs/x64/*.dll ./build/sdl2/MinSizeRel/*.dll -r
