@@ -164,9 +164,9 @@ void CQuakeHost::Host_FindMaxClients (void)
 	svs.clients = g_MemCache->Hunk_AllocName<struct client_s>(svs.maxclientslimit*sizeof(client_t), "clients");
 
 	if (svs.maxclients > 1)
-		Cvar_SetValue ("deathmatch", 1.0);
+		Cvar_SetValue ("deathmatch", 1.0f);
 	else
-		Cvar_SetValue ("deathmatch", 0.0);
+		Cvar_SetValue ("deathmatch", 0.0f);
 }
 
 
@@ -430,19 +430,19 @@ void CQuakeHost::Host_ShutdownServer(bool crash)
 //
 // clear structures
 //
-	//memset (&sv, 0, sizeof(sv));
+
+	if (pr_vectors && progs->numvectors > 0)
+	{
+		for (int i = 0; i < progs->numvectors; i++)
+		{
+			pr_vectors[i].data->Clear();
+		}
+
+		memset(&pr_vectors, 0, sizeof(pr_vectors));
+	}
+
 	memset (svs.clients, 0, svs.maxclientslimit*sizeof(client_t));
 }
-
-
-/*
-================
-Host_ClearMemory
-
-This clears all the memory used by both the client and server, but does
-not reinitialize anything.
-================
-*/
 
 CQuakeHost::CQuakeHost() :
 	host_initialized(false),
@@ -489,6 +489,14 @@ CQuakeHost::CQuakeHost(quakeparms_t<byte*> parms) :
 #endif
 }
 
+/*
+================
+Host_ClearMemory
+
+This clears all the memory used by both the client and server, but does
+not reinitialize anything.
+================
+*/
 void CQuakeHost::Host_ClearMemory (void)
 {
 	Con_DPrintf ("Clearing memory\n");
@@ -871,8 +879,8 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	if (parms.memsize < minimum_memory)
 		Sys_Error ("Only %4.1f megs of memory available, can't execute game", parms.memsize / (float)0x100000);
 
-	g_Common->com_argc = parms.argc;
-	g_Common->com_argv = parms.argv;
+	memcpy(&g_Common->com_argc, &parms.argc, sizeof(parms.argc));
+	memcpy(&g_Common->com_argv, &parms.argv, sizeof(parms.argv));
 
 	g_MemCache = new CMemCache;
 	g_MemCache->Memory_Init (host_parms.membase, host_parms.memsize);
@@ -904,11 +912,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 			Con_Warning ("Couldn't load gfx/palette.lmp");
 		host_colormap = COM_LoadHunkFile<byte> ("gfx/colormap.lmp", NULL);
 		if (!host_colormap)
-			Con_Warning ("Couldn't load gfx/colormap.lmp");
-
-#ifndef _WIN32 // on non win32, mouse comes before video for security reasons
-		IN_Init ();
-#endif
+            Con_Warning ("Couldn't load gfx/colormap.lmp");
 
 #if (_WIN32) && !(GLQUAKE)
 		SDL_setenv("SDL_AudioDriver", "directsound", 1);
@@ -917,9 +921,9 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
         SDL_setenv("SDL_AudioDriver", "alsa", 1);
         g_SoundSystem = new CSoundDMA;
 #endif
-#ifdef _WIN32 // on non win32, mouse comes before video for security reasons
+
 		IN_Init ();
-#endif
+
 		VID_Init (host_basepal);
 		g_CoreRenderer = new CCoreRenderer;		// needed even for dedicated servers
 #ifndef GLQUAKE
@@ -1006,6 +1010,14 @@ void CQuakeHost::Host_Shutdown(void)
 	if (cls.state != ca_dedicated)
 	{
 		VID_Shutdown();
+	}
+
+	if (pr_vectors && progs->numvectors > 0)
+	{
+		for (int i = 0; i < progs->numvectors; i++)
+		{
+			pr_vectors[i].data->Clear();
+		}
 	}
 }
 
