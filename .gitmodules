@@ -2,3 +2,7 @@
 	path = WinQuake/sdl2
 	url = https://github.com/libsdl-org/SDL
 	branch = release-2.30.x
+[submodule "WinQuake/SDL_image"]
+	path = WinQuake/SDL_image
+	url = https://github.com/libsdl-org/SDL_image
+	branch = SDL2
