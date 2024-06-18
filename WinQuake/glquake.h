@@ -584,7 +584,6 @@ void R_TranslatePlayerSkin (int playernum);
 extern vmode_t* GetVideoModes();
 #elif __linux__
 extern XF86VidModeModeInfo** GetVideoModes();
-extern bool krabsme;
 #endif
 
 // Multitexture

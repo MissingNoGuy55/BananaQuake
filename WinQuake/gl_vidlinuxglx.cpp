@@ -684,11 +684,6 @@ static const char* GL_MakeNiceExtensionsList()
     return real_list;
 }
 
-static void KrabsMe_f()
-{
-    krabsme = true;
-}
-
 /*
 ===============
 GL_Init
@@ -894,8 +889,6 @@ void VID_Init(unsigned char *palette)
 	Cvar_RegisterVariable (&in_dgamouse);
 	Cvar_RegisterVariable (&m_filter);
 	Cvar_RegisterVariable (&gl_ztrick);
-
-    g_pCmds->Cmd_AddCommand("krabsme", &KrabsMe_f);
 	
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
