@@ -194,6 +194,14 @@ def_t	*PR_ParseImmediate (void)
 				return cn;
 			}
 		}
+		else if (pr_immediate_type == &type_cppvector)
+		{
+			if (&G_CPPVECTOR(cn->ofs) == pr_immediate.cxxvector)
+			{
+				PR_Lex();
+				return cn;
+			}
+		}
 		else if (pr_immediate_type == &type_float)
 		{
 			if ( G_FLOAT(cn->ofs) == pr_immediate._float )
@@ -348,6 +356,7 @@ def_t *PR_ParseFunctionCall (def_t *func)
 						
 			if (t->num_parms != -1 && ( e->type != t->parm_types[arg] ) )
 				PR_ParseError ("type mismatch on parm %i", arg);
+
 		// a vector copy will copy everything
 			def_parms[arg].type = t->parm_types[arg];
 			PR_Statement (&pr_opcodes[OP_STORE_V], e, &def_parms[arg]);
@@ -830,6 +839,7 @@ void PR_ParseDefs (void)
 	dfunction_t	*df;
 	int			i;
 	int			locals_start;
+	progvector_t vec;
 
 	type = PR_ParseType ();
 	
@@ -842,6 +852,36 @@ void PR_ParseDefs (void)
 
 		def = PR_GetDef (type, name, pr_scope, true);
 		
+		if (pr_scope && pr_file_p[1] == '[' && pr_file_p[2] != ']')
+		{
+			type = &type_cppvector;
+		}
+
+		/*if (PR_Check("["))
+		{
+			if (PR_Check("]"))
+			{
+				def->initialized = 1;
+				def->type = type;
+				pr_immediate_type = type;
+				pr_immediate.cxxvector = (std::vector<void*><float*>*)vec;
+				memcpy(pr_globals + def->ofs, &pr_immediate, 4 * type_size[pr_immediate_type->type]);
+				continue;
+			}
+			else
+			{
+				while (!PR_Check("]"))
+				{
+					def = PR_ParseImmediate();
+					if (pr_token[0] != ',')
+					{
+						vec->AddToEnd((pr_globals + def->ofs));
+					}
+				}
+			}
+			continue;
+		}*/
+
 // check for an initialization
 		if ( PR_Check ("=") )
 		{
@@ -877,12 +917,41 @@ void PR_ParseDefs (void)
 				
 				continue;
 			}
+			else if (type->type == ev_cppvector)
+			{
+				if (PR_Check("["))
+				{
+					pr_immediate_type = &type_cppvector;
+
+					for (;;)
+					{
+						if (pr_token[0] == ']')		// Missi: empty vector (9/17/2023)
+						{
+							def->initialized = 1;
+							pr_immediate_type = type;
+							break;
+						}
+
+						def->initialized = 1;
+						pr_immediate_type = type;
+						break;
+					}
+				}
+			}
 			else if (pr_immediate_type != type)
 				PR_ParseError ("wrong immediate type for %s", name);
 	
 			def->initialized = 1;
 			memcpy (pr_globals + def->ofs, &pr_immediate, 4*type_size[pr_immediate_type->type]);
 			PR_Lex ();
+		}
+
+		bool withinrange = ((pr_token[0] == '[') && pr_file_p[0] >= '0' && pr_file_p[0] <= '9');
+
+		if (withinrange)	// Missi: it is a vector accessor, copy the contents (9/17/2023)
+		{
+			pr_file_p += 2;
+			PR_Lex();
 		}
 		
 	} while (PR_Check (","));

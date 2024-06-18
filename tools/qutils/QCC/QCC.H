@@ -5,6 +5,8 @@
 
 #include "PR_COMP.H"
 
+#include <vector>
+
 /*
 
 TODO:
@@ -253,6 +255,107 @@ typedef struct def_s
 
 //=============================================================================
 
+constexpr size_t MAX_PROG_VECTOR_ALLOC = 32768U;
+constexpr size_t MAX_PROG_VECTORS = 65535U;
+
+template<typename T>
+class CProgVector
+{
+public:
+	CProgVector();
+	~CProgVector();
+
+	void AddToEnd(T& elem);
+	void AddToEnd(const T& elem);
+
+	void Clear();
+
+	T& operator[](size_t elem);
+	const T& operator[](size_t elem) const;
+
+	int m_iSize;
+	int m_iName;
+	int m_iOffset;
+	int m_iAllocated;
+	T* m_pBase[MAX_PROG_VECTOR_ALLOC];
+};
+
+template<typename T>
+CProgVector<T>::CProgVector()
+{
+	m_iSize = sizeof(T);
+	m_iName = 0;
+	m_iOffset = 0;
+	m_iAllocated = 0;
+	memset(m_pBase, 0, sizeof(m_pBase));
+}
+
+template<typename T>
+CProgVector<T>::~CProgVector()
+{
+	m_iSize = 0;
+	m_iName = 0;
+	m_iOffset = 0;
+	m_iAllocated = 0;
+}
+
+template<typename T>
+void CProgVector<T>::AddToEnd(T& elem)
+{
+	m_pBase[m_iAllocated] = new T(elem);
+	m_iSize += sizeof(T);
+	m_iAllocated++;
+}
+
+template<typename T>
+void CProgVector<T>::AddToEnd(const T& elem)
+{
+	m_pBase[m_iAllocated] = new T(elem);
+	m_iSize += sizeof(T);
+	m_iAllocated++;
+}
+
+template<typename T>
+void CProgVector<T>::Clear()
+{
+	for (int i = 0; i < m_iAllocated; i++)
+	{
+		delete m_pBase[i];
+	}
+	delete this;
+}
+
+template<typename T>
+inline T& CProgVector<T>::operator[](size_t elem)
+{
+	return m_pBase[elem][0];
+}
+
+template<typename T>
+inline const T& CProgVector<T>::operator[](size_t elem) const
+{
+	return m_pBase[elem][0];
+}
+
+struct progvector_t
+{
+	progvector_t() {
+
+		name = 0;
+		ofs = 0;
+		type = 0;
+
+	}
+
+	string_t			name;
+	unsigned short		ofs;
+	unsigned short		type;
+	CProgVector<void*>* data;
+
+};
+
+//=============================================================================
+
 typedef union eval_s
 {
 	string_t			string;
@@ -261,14 +364,15 @@ typedef union eval_s
 	func_t				function;
 	int					_int;
 	union eval_s		*ptr;
+	progvector_t*		cxxvector;
 } eval_t;	
 
-extern	int		type_size[8];
-extern	def_t	*def_for_type[8];
+extern	int		type_size[9];
+extern	def_t	*def_for_type[9];
 
-extern	type_t	type_void, type_string, type_float, type_vector, type_entity, type_field, type_function, type_pointer, type_floatfield;
+extern	type_t	type_void, type_string, type_float, type_vector, type_entity, type_field, type_function, type_pointer, type_floatfield, type_cppvector;
 
-extern	def_t	def_void, def_string, def_float, def_vector, def_entity, def_field, def_function, def_pointer;
+extern	def_t	def_void, def_string, def_float, def_vector, def_entity, def_field, def_function, def_pointer, def_cppvector;
 
 struct function_s
 {
@@ -377,6 +481,7 @@ extern	bool	pr_trace;
 #define	G_INT(o) (*(int *)&pr_globals[o])
 #define	G_VECTOR(o) (&pr_globals[o])
 #define	G_STRING(o) (strings + *(string_t *)&pr_globals[o])
+#define G_CPPVECTOR(o) (*((progvector_t*)vectors + *(int*)&pr_globals[o]))
 #define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
 
 char *PR_ValueString (etype_t type, void *val);
@@ -404,6 +509,8 @@ extern	def_t	def_ret, def_parms[MAX_PARMS];
 #define	MAX_FILES		1024
 #define	MAX_DATA_PATH	64
 
+#define MAX_VECTORS		4096
+
 extern	char	strings[MAX_STRINGS];
 extern	int		strofs;
 
@@ -430,6 +537,9 @@ extern	int			nummodels;
 extern	char		precache_files[MAX_FILES][MAX_DATA_PATH];
 extern	int			precache_files_block[MAX_SOUNDS];
 extern	int			numfiles;
+
+extern	progvector_t vectors[MAX_VECTORS];
+extern	int			numvectors;
 
 int	CopyString (const char *str);
 

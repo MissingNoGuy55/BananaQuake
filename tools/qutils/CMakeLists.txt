@@ -189,3 +189,27 @@ target_include_directories(qcc PUBLIC
 target_include_directories(qfiles PUBLIC
     "${includepathQFILES}"
 )
+
+add_custom_command(TARGET qcc 
+                   POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:qcc> "${CMAKE_CURRENT_SOURCE_DIR}/../../../WinQuake/id1"
+)
+
+add_custom_command(TARGET qbsp 
+                   POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:qbsp> "${CMAKE_CURRENT_SOURCE_DIR}/../../../WinQuake/id1"
+)
+
+add_custom_command(TARGET qvis 
+                   POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:qvis> "${CMAKE_CURRENT_SOURCE_DIR}/../../../WinQuake/id1"
+)
+
+add_custom_command(TARGET qrad 
+                   POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:qrad> "${CMAKE_CURRENT_SOURCE_DIR}/../../../WinQuake/id1"
+)
+add_custom_command(TARGET qfiles 
+                   POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:qfiles> "${CMAKE_CURRENT_SOURCE_DIR}/../../../WinQuake/id1"
+)

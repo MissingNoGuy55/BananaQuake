@@ -29,12 +29,13 @@ type_t	type_vector = {ev_vector, &def_vector};
 type_t	type_entity = {ev_entity, &def_entity};
 type_t	type_field = {ev_field, &def_field};
 type_t	type_function = {ev_function, &def_function,NULL,&type_void};
+type_t	type_cppvector = { ev_cppvector, &def_cppvector };
 // type_function is a void() function used for state defs
 type_t	type_pointer = {ev_pointer, &def_pointer};
 
 type_t	type_floatfield = {ev_field, &def_field, NULL, &type_float};
 
-int		type_size[8] = {1,1,1,3,1,1,1,1};
+int		type_size[9] = {1,1,1,3,1,1,1,1,sizeof(progvector_t) / 4};
 
 def_t	def_void = {&type_void, "temp"};
 def_t	def_string = {&type_string, "temp"};
@@ -44,10 +45,11 @@ def_t	def_entity = {&type_entity, "temp"};
 def_t	def_field = {&type_field, "temp"};
 def_t	def_function = {&type_function, "temp"};
 def_t	def_pointer = {&type_pointer, "temp"};
+def_t	def_cppvector = {&type_cppvector, "temp"};
 
 def_t	def_ret, def_parms[MAX_PARMS];
 
-def_t	*def_for_type[8] = {&def_void, &def_string, &def_float, &def_vector, &def_entity, &def_field, &def_function, &def_pointer};
+def_t	*def_for_type[9] = {&def_void, &def_string, &def_float, &def_vector, &def_entity, &def_field, &def_function, &def_pointer, &def_cppvector};
 
 void PR_LexWhitespace (void);
 
@@ -640,6 +642,8 @@ type_t *PR_ParseType (void)
 		type = &type_string;
 	else if (!strcmp (pr_token, "void") )
 		type = &type_void;
+	else if (!strcmp(pr_token, "cxxvector"))
+		type = &type_cppvector;
 	else
 	{
 		PR_ParseError ("\"%s\" is not a type", pr_token);

@@ -41,6 +41,9 @@ char		precache_files[MAX_FILES][MAX_DATA_PATH];
 int			precache_files_block[MAX_SOUNDS];
 int			numfiles;
 
+progvector_t vectors[MAX_VECTORS];
+int			numvectors;
+
 /*
 ============
 WriteFiles
@@ -175,6 +178,7 @@ void WriteData (int crc)
 	def_t		*def;
 	ddef_t		*dd;
 	dprograms_t	progs;
+	progvector_t* vec;
 	FILE		*h;
 	int			i;
 
@@ -185,6 +189,14 @@ void WriteData (int crc)
 //			df = &functions[numfunctions];
 //			numfunctions++;
 
+		}
+		else if (def->type->type == ev_cppvector)
+		{
+			vec = &vectors[numvectors];
+			numvectors++;
+			vec->name = CopyString(def->name);
+			vec->ofs = G_INT(def->ofs);
+			vec->type = def->type->type;
 		}
 		else if (def->type->type == ev_field)
 		{
@@ -218,6 +230,7 @@ strofs = (strofs+3)&~3;
 	printf ("%6i numglobaldefs\n", numglobaldefs);
 	printf ("%6i numfielddefs\n", numfielddefs);
 	printf ("%6i numpr_globals\n", numpr_globals);
+	printf ("%6i numvectors\n", numvectors);
 	
 	h = SafeOpenWrite (destfile);
 	SafeWrite (h, &progs, sizeof(progs));
@@ -275,6 +288,19 @@ strofs = (strofs+3)&~3;
 	for (i=0 ; i<numpr_globals ; i++)
 		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
 	SafeWrite (h, pr_globals, numpr_globals*4);
+
+	progs.ofs_vectors = ftell(h);
+	progs.numvectors = numvectors;
+	printf ("%6i ofs_vectors\n", progs.ofs_vectors);
+	for (i = 0; i < numvectors; i++)
+	{
+		vectors[i].type = LittleShort(vectors[i].type);
+		vectors[i].ofs = LittleShort(vectors[i].ofs);
+		vectors[i].name = LittleLong(vectors[i].name);
+
+		printf("vec %d: size %d, offset %d\n", i, vectors[i].name, vectors[i].ofs);
+	}
+	SafeWrite(h, vectors, numvectors * sizeof(std::vector<void*>));
 
 	printf ("%6i TOTAL SIZE\n", (int)ftell (h));	
 
