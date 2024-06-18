@@ -1242,18 +1242,16 @@ void CQuakeServer::SV_SpawnServer (char *server)
             break;
         if (!Q_strncmp(parse, "\"fog\"", 5))
 		{
-            float val = 1.0f;
-
-			Con_Printf("key: %s", parse);
             parse = g_Common->COM_ParseStringNewline(parse);
-			Con_Printf("value: %s", parse);
 
             sscanf(parse, "\"%f %f %f %f\"", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2], &fog_color_vec[3]);
 
             char outputVal[256] = {};
             snprintf(outputVal, sizeof(outputVal), "%f %f %f %f", fog_color_vec[0], fog_color_vec[1], fog_color_vec[2], fog_color_vec[3]);
 
-            Cvar_Set("fog", outputVal);
+            Cvar_SetValue("fog_r", fog_color_vec[0]);
+			Cvar_SetValue("fog_g", fog_color_vec[1]);
+			Cvar_SetValue("fog_b", fog_color_vec[2]);
             Cvar_SetValue("fog_density", fog_color_vec[3]);
             level_has_fog = true;
 		}
@@ -1303,8 +1301,6 @@ void CQuakeServer::SV_SpawnServer (char *server)
 
         if (!Q_strncmp(classname, "func_fog_volume", 15))
         {
-            ed->v.solid = SOLID_TRIGGER;
-            ed->v.movetype = MOVETYPE_NONE;
             Con_Printf("Level has Quake 3-styled fog volumes\n");
             break;
         }

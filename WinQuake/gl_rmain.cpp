@@ -101,6 +101,18 @@ cvar_t	gl_doubleeyes = {"gl_doubleeys", "1"};
 
 int skytexturenum;
 
+static bool s_bFogColorLerping = false;
+static bool s_bFogDensityLerping = false;
+static bool s_bFogStartEndLerping = false;
+static float s_fFogColorRed = 0.0f;
+static float s_fFogColorGreen = 0.0f;
+static float s_fFogColorBlue = 0.0f;
+static float s_fFogDensity = 0.0f;
+static float s_fFogLerpTime = 0.0f;
+static float s_fFogLerpTimeStamp = 0.0f;
+static float s_fFogStart = 0.0f;
+static float s_fFogEnd = 0.0f;
+
 unsigned CCoreRenderer::blocklights[BLOCK_WIDTH * BLOCK_HEIGHT * 3];
 
 CCoreRenderer::CCoreRenderer() : solidskytexture(NULL)
@@ -1140,10 +1152,6 @@ void CGLRenderer::R_Mirror (void)
 	glColor4f (1,1,1,1);
 }
 
-static char s_szFogValue[256] = {};
-static char s_szFogDensityValue[256] = {};
-static bool s_bFogChanged = false;
-
 /*
 ================
 R_RenderView
@@ -1186,26 +1194,76 @@ void CGLRenderer::R_RenderView (void)
 	glFogf(GL_FOG_END, 512.0);
 	glEnable(GL_FOG);
 ********************************************/
-	
-    if (Q_strncmp(level_fog_color.string, s_szFogValue, sizeof(s_szFogValue)))
-    {
-        Q_strncpy(s_szFogValue, level_fog_color.string, sizeof(s_szFogValue));
-        Cvar_Set("fog", s_szFogValue);
-        sscanf(level_fog_color.string, "%f%f%f", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2]);
-    }
-    if (Q_strncmp(level_fog_density.string, s_szFogDensityValue, sizeof(s_szFogDensityValue)))
-    {
-        Q_strncpy(s_szFogDensityValue, level_fog_density.string, sizeof(s_szFogDensityValue));
-        Cvar_Set("fog_density", s_szFogDensityValue);
-        sscanf(level_fog_density.string, "%f", &fog_density);
-    }
 
-    if (!sv->level_has_fog || level_fog_density.value == 0.0f)
+    if (!sv->level_has_fog)
     {
         glDisable(GL_FOG);
     }
     else
     {
+		// Missi: fog lerping code (6/18/2024)
+		if ((!s_bFogColorLerping) && (s_fFogColorRed != level_fog_color_r.value || s_fFogColorGreen != level_fog_color_g.value || s_fFogColorBlue != level_fog_color_b.value))
+		{
+			s_bFogColorLerping = true;
+			s_fFogLerpTimeStamp = Sys_DoubleTime();
+			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 100.0f);
+		}
+		if ((!s_bFogDensityLerping) && (s_fFogDensity != level_fog_density.value))
+		{
+			s_bFogDensityLerping = true;
+			s_fFogLerpTimeStamp = Sys_DoubleTime();
+			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 100.0f);
+		}
+		if ((!s_bFogStartEndLerping) && (s_fFogStart != level_fog_start.value || s_fFogEnd != level_fog_end.value))
+		{
+			s_bFogStartEndLerping = true;
+			s_fFogLerpTimeStamp = Sys_DoubleTime();
+			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 100.0f);
+		}
+
+		if (s_bFogColorLerping)
+		{
+			s_fFogColorRed = Lerp(s_fFogColorRed, level_fog_color_r.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
+			s_fFogColorGreen = Lerp(s_fFogColorGreen, level_fog_color_g.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
+			s_fFogColorBlue = Lerp(s_fFogColorBlue, level_fog_color_b.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
+
+			fog_color_vec[0] = s_fFogColorRed;
+			fog_color_vec[1] = s_fFogColorGreen;
+			fog_color_vec[2] = s_fFogColorBlue;
+
+			if (s_fFogColorRed >= level_fog_color_r.value &&
+				s_fFogColorGreen >= level_fog_color_g.value &&
+				s_fFogColorBlue >= level_fog_color_b.value)
+			{
+				Cvar_SetValue("fog_r", s_fFogColorRed);
+				Cvar_SetValue("fog_g", s_fFogColorGreen);
+				Cvar_SetValue("fog_b", s_fFogColorBlue);
+
+				s_bFogColorLerping = false;
+			}
+
+			if (Sys_DoubleTime() >= s_fFogLerpTime)
+				s_bFogColorLerping = false;
+		}
+		if (s_bFogDensityLerping)
+		{
+			s_fFogDensity = Lerp(s_fFogDensity, level_fog_density.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
+			Cvar_SetValue("fog_density", s_fFogDensity);
+
+			if (Sys_DoubleTime() >= s_fFogLerpTime)
+				s_bFogDensityLerping = false;
+		}
+		if (s_bFogStartEndLerping)
+		{
+			s_fFogStart = Lerp(s_fFogStart, level_fog_start.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
+			s_fFogEnd = Lerp(s_fFogEnd, level_fog_end.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
+			Cvar_SetValue("fog_start", s_fFogStart);
+			Cvar_SetValue("fog_end", s_fFogEnd);
+
+			if (Sys_DoubleTime() >= s_fFogLerpTime)
+				s_bFogStartEndLerping = false;
+		}
+
         glFogi(GL_FOG_MODE, GL_LINEAR);
         glFogfv(GL_FOG_COLOR, fog_color_vec);
         glFogf(GL_FOG_DENSITY, level_fog_density.value);
@@ -1234,12 +1292,12 @@ void CGLRenderer::R_RenderView (void)
 ERenderContext R_ResolveRenderer()
 {
 #ifndef GLQUAKE
-		g_SoftwareRenderer = new CSoftwareRenderer;
-		g_SoftwareRenderer->R_InitTextures();
-		return RENDER_SOFTWARE;
+	g_SoftwareRenderer = new CSoftwareRenderer;
+	g_SoftwareRenderer->R_InitTextures();
+	return RENDER_SOFTWARE;
 #else
-		g_GLRenderer = new CGLRenderer;
-		g_GLRenderer->R_InitTextures();
-		return RENDER_OPENGL;
+	g_GLRenderer = new CGLRenderer;
+	g_GLRenderer->R_InitTextures();
+	return RENDER_OPENGL;
 #endif
 }

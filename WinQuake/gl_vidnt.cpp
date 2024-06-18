@@ -664,9 +664,6 @@ void CGLRenderer::GL_Init (void)
 	gl_extensions = (const char*)glGetString (GL_EXTENSIONS);
 	Con_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
 
-	Cvar_RegisterVariable(&level_fog_color);
-	Cvar_RegisterVariable(&level_fog_density);
-
 //	Con_Printf ("%s %s\n", gl_renderer, gl_version);
 
     if (_strnicmp(gl_renderer,"PowerVR",7)==0)

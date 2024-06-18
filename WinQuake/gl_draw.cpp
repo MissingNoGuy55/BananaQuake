@@ -49,11 +49,14 @@ GLint		gl_hardware_maxsize;
 static byte	conback_buffer[sizeof(CQuakePic)];
 CQuakePic	*conback = (CQuakePic*)&conback_buffer;
 
-cvar_t	level_fog_color {"fog", "0.5 0.5 0.5", false};
+cvar_t	level_fog_color_r {"fog_r", "0.5", false};
+cvar_t	level_fog_color_g {"fog_g", "0.5", false};
+cvar_t	level_fog_color_b {"fog_b", "0.5", false};
 cvar_t	level_fog_density {"fog_density", "1.0", false};
 cvar_t  level_fog_start {"fog_start", "64.0", false};
 cvar_t  level_fog_end {"fog_end", "2048.0", false};
-cvar_t  level_fog_force { "fog_force", "0.0", false};
+cvar_t  level_fog_force {"fog_force", "0.0", false};
+cvar_t  level_fog_lerp_time { "fog_lerp_time", "0.0", false};
 
 CGLRenderer::CGLRenderer() : CCoreRenderer()
 {
@@ -626,10 +629,13 @@ void CGLRenderer::Draw_Init (void)
 	Cvar_RegisterVariable (&gl_max_size);
 	Cvar_RegisterVariable (&gl_picmip);
 
+    Cvar_RegisterVariable (&level_fog_color_r);
+    Cvar_RegisterVariable (&level_fog_color_g);
+    Cvar_RegisterVariable (&level_fog_color_b);
     Cvar_RegisterVariable (&level_fog_density);
-    Cvar_RegisterVariable (&level_fog_color);
     Cvar_RegisterVariable (&level_fog_start);
     Cvar_RegisterVariable (&level_fog_end);
+    Cvar_RegisterVariable (&level_fog_lerp_time);
     Cvar_RegisterVariable (&level_fog_force);
 
 	memset(ver, 0, sizeof(ver));
