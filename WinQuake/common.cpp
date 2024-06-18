@@ -1134,6 +1134,21 @@ const char* CCommon::COM_ParseStringNewline(const char* buffer)
 	return buffer + consumed;
 }
 
+const int CCommon::COM_ParseStringLength(const char* buffer, size_t len) const
+{
+    int pos = 0;
+
+    if (buffer[pos] != '\"')
+        return 0;
+
+    pos++;
+
+    while ((buffer[pos]) && (pos < len) && (buffer[pos]) != '\"')
+        pos++;
+
+    return pos;
+}
+
 
 /*
 ================

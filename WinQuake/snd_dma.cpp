@@ -201,7 +201,7 @@ void CSoundDMA::S_Init (void)
 
 	if (fakedma)
 	{
-		shm = g_MemCache->Hunk_AllocName<volatile dma_t>(sizeof(*shm), "shm");
+        shm = g_MemCache->Hunk_AllocName<dma_t>(sizeof(*shm), "shm");
 		shm->splitbuffer = 0;
 		shm->samplebits = 16;
 		shm->speed = 22050;
@@ -884,7 +884,7 @@ void CSoundDMA::GetSoundtime(void)
 // it is possible to miscount buffers if it has wrapped twice between
 // calls to S_Update.  Oh well.
 
-    samplepos = g_SoundSystem->SNDDMA_GetDMAPos();
+    samplepos = SNDDMA_GetDMAPos();
 
 	if (samplepos < oldsamplepos)
 	{
@@ -1119,6 +1119,15 @@ void CSoundDMA::S_LocalSound (const char *sound)
 	g_SoundSystem->S_StartSound (cl.viewentity, -1, sfx, vec3_origin, 1, 1);
 }
 
+void CSoundDMA::S_BlockSound()
+{
+    SDL_PauseAudio(1);
+}
+
+void CSoundDMA::S_UnblockSound()
+{
+    SDL_PauseAudio(0);
+}
 
 void CSoundDMA::S_ClearPrecache (void)
 {

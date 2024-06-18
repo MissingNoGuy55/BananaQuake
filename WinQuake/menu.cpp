@@ -23,8 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #endif
 
+#ifdef GLQUAKE
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
+#endif
 
 int m_state;
 
@@ -32,6 +34,10 @@ extern cvar_t	vid_config_x;
 extern cvar_t	vid_config_y;
 extern int		window_center_x, window_center_y, window_x, window_y, window_width, window_height;
 extern int		DIBWidth, DIBHeight;
+
+#ifdef __linux
+static XF86VidModeModeInfo **vidmodes;
+#endif
 
 #ifdef _WIN32
 extern RECT		WindowRect;
@@ -1102,6 +1108,12 @@ void M_Menu_Options_f (void)
 #endif
 }
 
+#ifndef GLQUAKE
+XF86VidModeModeInfo** GetVideoModes()
+{
+    return vidmodes;
+}
+#endif
 
 void M_AdjustSliders (int dir)
 {

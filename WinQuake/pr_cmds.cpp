@@ -563,7 +563,7 @@ void PF_sound (void)
 	const char		*sample;
 	int			channel;
 	edict_t		*entity;
-	int 		volume;
+	int 		vol;
 	float attenuation;
 	
 #ifdef _DEBUG
@@ -573,11 +573,11 @@ void PF_sound (void)
 	entity = G_EDICT(OFS_PARM0);
 	channel = G_FLOAT(OFS_PARM1);
 	sample = G_STRING(OFS_PARM2);
-	volume = G_FLOAT(OFS_PARM3) * 255;
+	vol = G_FLOAT(OFS_PARM3) * 255;
 	attenuation = G_FLOAT(OFS_PARM4);
 	
-	if (volume < 0 || volume > 255)
-		Sys_Error ("SV_StartSound: volume = %i", volume);
+	if (vol < 0 || vol > 255)
+		Sys_Error ("SV_StartSound: volume = %i", vol);
 
 	if (attenuation < 0 || attenuation > 4)
 		Sys_Error ("SV_StartSound: attenuation = %f", attenuation);
@@ -585,7 +585,7 @@ void PF_sound (void)
 	if (channel < 0 || channel > 7)
 		Sys_Error ("SV_StartSound: channel = %i", channel);
 
-	sv->SV_StartSound (entity, channel, sample, volume, attenuation);
+	sv->SV_StartSound (entity, channel, sample, vol, attenuation);
 }
 
 /*
@@ -935,9 +935,9 @@ void PF_ftos (void)
 	v = G_FLOAT(OFS_PARM0);
 	
 	if (v == (int)v)
-		sprintf (pr_string_temp, "%d",(int)v);
+		snprintf (pr_string_temp, sizeof(pr_string_temp), "%d",(int)v);
 	else
-		sprintf (pr_string_temp, "%5.1f",v);
+		snprintf (pr_string_temp, sizeof(pr_string_temp), "%5.1f",v);
 	G_INT(OFS_RETURN) = PR_SetEngineString(pr_string_temp);
 }
 
@@ -950,7 +950,7 @@ void PF_fabs (void)
 
 void PF_vtos (void)
 {
-	sprintf (pr_string_temp, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
+	snprintf (pr_string_temp, sizeof(pr_string_temp), "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
 	G_INT(OFS_RETURN) = PR_SetEngineString(pr_string_temp);
 }
 
@@ -1846,20 +1846,200 @@ void PF_sqrt (void)
 
 /*
 =================
-PF_CPPVectorAdd
+Missi: PF_cxxvectoradd_flt
 
-the size box is rotated by the current angle
+adds to a C++-like vector in QC
 
-CPPVectorAdd (entity, minvector, maxvector)
+cxxvectoradd_flt (vecname, data) (6/12/2024)
 =================
 */
-void PF_CPPVectorAdd(void)
+void PF_cxxvectoradd_flt(void)
 {
-	cxxvector<void*>* vec = nullptr;
+	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
+	float* val = new float(G_FLOAT(OFS_PARM1));
 
-	vec = G_CPPVECTOR(OFS_PARM0);
+	vec->data->AddToEnd(val);
+}
 
-	vec->push_back((void*)OFS_PARM0);
+/*
+=================
+Missi: PF_cxxvectoradd_int
+
+adds to a C++-like vector in QC
+
+cxxvectoradd_int (vecname, data) (6/12/2024)
+=================
+*/
+void PF_cxxvectoradd_int(void)
+{
+	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
+	int* val = new int((int)G_FLOAT(OFS_PARM1));
+
+	vec->data->AddToEnd(val);
+}
+
+/*
+=================
+Missi: PF_cxxvectoradd_ent
+
+adds to a C++-like vector in QC
+
+cxxvectoradd_ent (vecname, data) (6/12/2024)
+=================
+*/
+void PF_cxxvectoradd_ent(void)
+{
+	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
+	edict_t* val = new edict_t(*G_EDICT(OFS_PARM1));
+
+	vec->data->AddToEnd(val);
+}
+
+/*
+=================
+Missi: PF_cxxvectoradd_str
+
+adds to a C++-like vector in QC
+
+cxxvectoradd_str (vecname, data) (6/12/2024)
+=================
+*/
+void PF_cxxvectoradd_str(void)
+{
+	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
+	string_t* val = new string_t(*G_STRING(OFS_PARM1));
+
+	vec->data->AddToEnd(val);
+}
+
+/*
+=================
+Missi: PF_vec_access_flt
+
+pulls a value from a C++-like vector in QC
+
+PF_vec_access_flt (vecname, element) (6/12/2024)
+=================
+*/
+void PF_vec_access_flt(void)
+{
+	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
+	int pos = (int)G_FLOAT(OFS_PARM1);
+
+	if (!vec || vec->data->GetBase()[0] == nullptr || vec->data->GetNumAllocated() == 0)
+		return Con_Warning("WARNING: attempted to access empty vector!\n");
+
+	if (pos > vec->data->GetNumAllocated())
+		return Con_Warning("WARNING: vector \"%s\" attempted to access an element beyond its allocated size!\n", PR_GetString(vec->name));
+
+	if (vec->data->GetBase()[pos] == nullptr)
+		return Con_Warning("WARNING: vector \"%s\" attempted to access a null element!\n", PR_GetString(vec->name));
+
+	float* test2 = (float*)vec->data->GetBase()[pos];
+
+	G_FLOAT(OFS_RETURN) = *test2;
+}
+
+/*
+=================
+Missi: PF_vec_access_int
+
+pulls a value from a C++-like vector in QC
+
+PF_vec_access_int (vecname, element) (6/12/2024)
+=================
+*/
+void PF_vec_access_int(void)
+{
+	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
+	int pos = (int)G_FLOAT(OFS_PARM1);
+
+	if (!vec || vec->data->GetBase()[0] == nullptr || vec->data->GetNumAllocated() == 0)
+		return Con_Warning("WARNING: attempted to access empty vector!\n");
+
+	if (pos > vec->data->GetNumAllocated())
+		return Con_Warning("WARNING: vector \"%s\" attempted to access an element beyond its allocated size!\n", PR_GetString(vec->name));
+
+	if (vec->data->GetBase()[pos] == nullptr)
+		return Con_Warning("WARNING: vector \"%s\" attempted to access a null element!\n", PR_GetString(vec->name));
+
+	int* test2 = (int*)vec->data->GetBase()[pos];
+
+	G_INT(OFS_RETURN) = *test2;
+}
+
+/*
+=================
+Missi: PF_vec_access_ent
+
+pulls a value from a C++-like vector in QC
+
+PF_vec_access_ent (vecname, element) (6/12/2024)
+=================
+*/
+void PF_vec_access_ent(void)
+{
+	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
+	int pos = (int)G_FLOAT(OFS_PARM1);
+
+	if (!vec || vec->data->GetBase()[0] == nullptr || vec->data->GetNumAllocated() == 0)
+		return Con_Warning("WARNING: attempted to access empty vector!\n");
+
+	if (pos > vec->data->GetNumAllocated())
+		return Con_Warning("WARNING: vector \"%s\" attempted to access an element beyond its allocated size!\n", PR_GetString(vec->name));
+
+	if (vec->data->GetBase()[pos] == nullptr)
+		return Con_Warning("WARNING: vector \"%s\" attempted to access a null element!\n", PR_GetString(vec->name));
+
+	edict_t* test2 = (edict_t*)vec->data->GetBase()[pos];
+
+	*G_EDICT(OFS_RETURN) = *test2;
+}
+
+/*
+=================
+Missi: PF_vec_access_str
+
+pulls a value from a C++-like vector in QC
+
+PF_vec_access_str (vecname, element) (6/12/2024)
+=================
+*/
+void PF_vec_access_str(void)
+{
+	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
+	int pos = (int)G_FLOAT(OFS_PARM1);
+
+	if (!vec || vec->data->GetBase()[0] == nullptr || vec->data->GetNumAllocated() == 0)
+		return Con_Warning("WARNING: attempted to access empty vector!\n");
+
+	if (pos > vec->data->GetNumAllocated())
+		return Con_Warning("WARNING: vector \"%s\" attempted to access an element beyond its allocated size!\n", PR_GetString(vec->name));
+
+	if (vec->data->GetBase()[pos] == nullptr)
+		return Con_Warning("WARNING: vector \"%s\" attempted to access a null element!\n", PR_GetString(vec->name));
+
+	string_t* test2 = (string_t*)vec->data->GetBase()[pos];
+
+	G_STRING_MOD(OFS_RETURN) = *test2;
+}
+
+/*
+=================
+Missi: PF_vec_size
+
+obtains the size of a C++-like vector in QC
+
+PF_vec_size (vecname) (6/12/2024)
+=================
+*/
+void PF_vec_size(void)
+{
+	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
+	int size = vec->data->GetNumAllocated();
+	float flsize = (float)size;
+
+	G_FLOAT(OFS_RETURN) = flsize;
 }
 
 void PF_Fixme (void)
@@ -1949,7 +2129,7 @@ PF_Fixme,
 PF_Fixme,
 #endif
 
-PF_MoveToGoal,	// Missi: this is UGLY (6/7/2022)
+PF_MoveToGoal,
 PF_precache_file,
 PF_makestatic,
 
@@ -1965,7 +2145,21 @@ PF_precache_model,
 PF_precache_sound,		// precache_sound2 is different only for qcc
 PF_precache_file,
 
-PF_setspawnparms
+PF_setspawnparms,
+
+//===================
+// Missi: BananaQuake .qc stuff
+//===================
+
+PF_cxxvectoradd_flt,	// void(string vecname, float elem) CPPVectorAdd
+PF_cxxvectoradd_int,	// void(string vecname, float elem) CPPVectorAdd
+PF_cxxvectoradd_ent,	// void(string vecname, float elem) CPPVectorAdd
+PF_cxxvectoradd_str,	// void(string vecname, float elem) CPPVectorAdd
+PF_vec_access_flt,	// float(string vecname, float elem) vec_access_flt
+PF_vec_access_int,	// float(string vecname, float elem) vec_access_int
+PF_vec_access_ent,	// entity(string vecname, float elem) vec_access_ent
+PF_vec_access_str,	// string(string vecname, float elem) vec_access_str
+PF_vec_size			// float(vecname) vec_size
 };
 
 builtin_t *pr_builtins = pr_builtin;

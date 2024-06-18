@@ -68,10 +68,12 @@ Draw_CachePic
 */
 CQuakePic* CSoftwareRenderer::Draw_CachePic (const char *path)
 {
-	cachepic_t		*pic = NULL;
+    cachepic_t		*pic = nullptr;
 	int				i = 0;
-	qpicbuf_t		*buf = NULL;
+    qpicbuf_t		*buf = nullptr;
 	static CQuakePic	*dat = (CQuakePic*)calloc(1, sizeof(CQuakePic));
+    SDL_Texture*    tex = nullptr;
+    SDL_Surface*    surf = nullptr;
 
 	for (pic=menu_cachepics, i=0 ; i<menu_numcachepics ; pic++, i++)
 		if (!strcmp (path, pic->name))
@@ -87,14 +89,14 @@ CQuakePic* CSoftwareRenderer::Draw_CachePic (const char *path)
 
 	buf = g_MemCache->Cache_Check<qpicbuf_t>(&pic->cache);
 
-        if (buf)
+    if (buf)
 	{
-            dat->width = buf->width;
-            dat->height = buf->height;
-            dat->datavec.RemoveAll();
-            dat->datavec.AddMultipleToTail(buf->width*buf->height*4, (byte*)buf->data);
-            return dat;
-        }
+        dat->width = buf->width;
+        dat->height = buf->height;
+        dat->datavec.RemoveAll();
+        dat->datavec.AddMultipleToTail(buf->width*buf->height*4, (byte*)buf->data);
+        return dat;
+     }
 
 //
 // load the pic from disk
@@ -156,8 +158,8 @@ smoothly scrolled off.
 */
 void CSoftwareRenderer::Draw_Character (int x, int y, int num)
 {
-	byte			*dest;
-	byte			*source;
+    byte			*dest;
+    byte			*source;
 	unsigned short	*pusdest;
 	int				drawline;	
 	int				row, col;
@@ -176,7 +178,7 @@ void CSoftwareRenderer::Draw_Character (int x, int y, int num)
 
 	row = num>>4;
 	col = num&15;
-	source = draw_chars + (row<<10) + (col<<3);
+    source = draw_chars + (row<<10) + (col<<3);
 
 	if (y < 0)
 	{	// clipped
@@ -310,7 +312,7 @@ Draw_Pic
 */
 void CSoftwareRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 {
-	byte			*dest, *source;
+    byte			*dest, *source;
 	unsigned short	*pusdest;
 	int				v, u;
 
@@ -322,7 +324,7 @@ void CSoftwareRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 		Sys_Error ("Draw_Pic: bad coordinates");
 	}
 
-	source = pic->datavec.Base();
+    source = pic->datavec.Base();
 
 	if (r_pixbytes == 1)
 	{
@@ -361,7 +363,7 @@ Draw_TransPic
 */
 void CSoftwareRenderer::Draw_TransPic (int x, int y, CQuakePic *pic)
 {
-	byte	*dest, *source, tbyte;
+    byte	*dest, *source, tbyte;
 	unsigned short	*pusdest;
 	int				v, u;
 
@@ -371,7 +373,7 @@ void CSoftwareRenderer::Draw_TransPic (int x, int y, CQuakePic *pic)
 		Sys_Error ("Draw_TransPic: bad coordinates");
 	}
 		
-	source = pic->datavec.Base();
+    source = pic->datavec.Base();
 
 	if (r_pixbytes == 1)
 	{
@@ -448,7 +450,7 @@ Draw_TransPicTranslate
 */
 void CSoftwareRenderer::Draw_TransPicTranslate (int x, int y, CQuakePic *pic, byte *translation)
 {
-	byte	*dest, *source, tbyte;
+    byte	*dest, *source, tbyte;
 	unsigned short	*pusdest;
 	int				v, u;
 
@@ -458,7 +460,7 @@ void CSoftwareRenderer::Draw_TransPicTranslate (int x, int y, CQuakePic *pic, by
 		Sys_Error ("Draw_TransPic: bad coordinates");
 	}
 		
-	source = pic->datavec.Base();
+    source = pic->datavec.Base();
 
 	if (r_pixbytes == 1)
 	{
@@ -561,10 +563,10 @@ Draw_ConsoleBackground
 void CSoftwareRenderer::Draw_ConsoleBackground (int lines)
 {
 	int				x, y, v;
-	byte			*src, *dest;
+    byte			*src, *dest;
 	unsigned short	*pusdest;
 	int				f, fstep;
-        CQuakePic			*conback = NULL;
+    CQuakePic			*conback = NULL;
 	char			ver[100];
 
         memset(ver, 0, sizeof(ver));
@@ -587,17 +589,17 @@ void CSoftwareRenderer::Draw_ConsoleBackground (int lines)
 #endif
 
 	for (x=0 ; x<strlen(ver) ; x++)
-		Draw_CharToConback (ver[x], dest+(x<<3));
+        Draw_CharToConback (ver[x], (byte*)dest+(x<<3));
 	
 // draw the pic
 	if (r_pixbytes == 1)
 	{
-		dest = vid.conbuffer;
+        dest = vid.conbuffer;
 
 		for (y=0 ; y<lines ; y++, dest += vid.conrowbytes)
 		{
 			v = (vid.conheight - lines + y)*200/vid.conheight;
-			src = conback->datavec.Base() + v * 320;
+            src = conback->datavec.Base() + v * 320;
 			if (vid.conwidth == 320)
 				memcpy (dest, src, vid.conwidth);
 			else
@@ -627,7 +629,7 @@ void CSoftwareRenderer::Draw_ConsoleBackground (int lines)
 		// FIXME: pre-expand to native format?
 		// FIXME: does the endian switching go away in production?
 			v = (vid.conheight - lines + y)*200/vid.conheight;
-			src = conback->datavec.Base() + v*320;
+            src = conback->datavec.Base() + v*320;
 			f = 0;
 			fstep = 320*0x10000/vid.conwidth;
 			for (x=0 ; x<vid.conwidth ; x+=4)
@@ -656,7 +658,7 @@ void CSoftwareRenderer::R_DrawRect8 (vrect_t *prect, int rowbytes, byte *psrc,
 {
 	byte	t;
 	int		i, j, srcdelta, destdelta;
-	byte	*pdest;
+    byte	*pdest;
 
 	pdest = vid.buffer + (prect->y * vid.rowbytes) + prect->x;
 
@@ -835,7 +837,7 @@ Fills a box of pixels with a single color
 */
 void CSoftwareRenderer::Draw_Fill (int x, int y, int w, int h, int c)
 {
-	byte			*dest;
+    byte			*dest;
 	unsigned short	*pusdest;
 	unsigned		uc;
 	int				u, v;

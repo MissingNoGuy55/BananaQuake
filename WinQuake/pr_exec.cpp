@@ -114,11 +114,6 @@ static const char *pr_opnames[] =
   
 "IF",
 "IFNOT",
-"SWITCH",
-"CASE",
-"DEFAULT",
-"ARRAY_OPEN",
-"ARRAY_CLOSE",
   
 "CALL0",
 "CALL1",
@@ -138,7 +133,13 @@ static const char *pr_opnames[] =
 "OR", 
 
 "BITAND",
-"BITOR"
+"BITOR",
+
+"SWITCH",
+"CASE",
+"DEFAULT",
+"ARRAY_OPEN",
+"ARRAY_CLOSE"
 };
 
 const char *PR_GlobalString (int ofs);
@@ -370,6 +371,7 @@ The interpretation main loop
 	opb: resulting var (declarations only) or value to be compared against
 	opc: the value set from comparison or arithmetic (9/12/2023)
 */
+
 #define opa ((eval_t*)&pr_globals[(unsigned short)st->a])
 #define opb ((eval_t*)&pr_globals[(unsigned short)st->b])
 #define opc ((eval_t*)&pr_globals[(unsigned short)st->c])
@@ -381,15 +383,15 @@ PR_ExecuteProgram
 */
 void PR_ExecuteProgram(func_t fnum)
 {
-	eval_t* ptr = NULL;
-	dstatement_t* st = NULL;
-	dfunction_t* f = NULL, * newf = NULL;
+    eval_t* ptr = nullptr;
+    dstatement_t* st = nullptr;
+    dfunction_t* f = nullptr, * newf = nullptr;
 	int			profile = 0, startprofile = 0;
-	edict_t*	ed = NULL;
+    edict_t*	ed = nullptr;
 	int			exitdepth = 0;
-	float		switch_float = NULL;
-	string_t	switch_string = NULL;
-	edict_t*	switch_edict = NULL;
+    float		switch_float = 0.0f;
+    string_t	switch_string = 0;
+    edict_t*	switch_edict = nullptr;
 	vec_t*		switch_vector = vec3_origin;
 
 	bool		switch_case = false;
@@ -551,7 +553,7 @@ void PR_ExecuteProgram(func_t fnum)
 			case OP_STORE_F:
 			case OP_STORE_ENT:
 			case OP_STORE_FLD:	// integers
-			case OP_STORE_S:
+            case OP_STORE_S:
 			case OP_STORE_FNC:	// pointers
 				opb->_int = opa->_int;
 				break;

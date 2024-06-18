@@ -114,7 +114,7 @@ Only called by R_DisplayTime
 void R_LineGraph (int x, int y, int h)
 {
 	int		i;
-	byte	*dest;
+    byte	*dest;
 	int		s;
 
 // FIXME: should be disabled on no-buffer adapters, or should be in the driver

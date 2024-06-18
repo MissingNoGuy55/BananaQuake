@@ -339,13 +339,13 @@ void CDAudio_Update(void)
 	{
 		if (cdvolume)
 		{
-			Cvar_SetValue ("bgmvolume", 0.0);
+            Cvar_SetValue ("bgmvolume", 0.0f);
 			cdvolume = bgmvolume.value;
 			CDAudio_Pause ();
 		}
 		else
 		{
-			Cvar_SetValue ("bgmvolume", 1.0);
+            Cvar_SetValue ("bgmvolume", 1.0f);
 			cdvolume = bgmvolume.value;
 			CDAudio_Resume ();
 		}

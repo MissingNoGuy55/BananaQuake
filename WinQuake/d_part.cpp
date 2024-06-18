@@ -56,7 +56,7 @@ void D_DrawParticle (particle_t *pparticle)
 {
 	vec3_t	local, transformed;
 	float	zi;
-	byte	*pdest;
+    byte	*pdest;
 	short	*pz;
 	int		i, izi, pix, count, u, v;
 

@@ -33,9 +33,9 @@ int audio_fd;
 int snd_inited;
 
 
-volatile dma_t* CSoundDMA::shm;
+dma_t* CSoundDMA::shm;
 CSoundDMA* g_SoundSystem;
-static int	buffersize;
+static size_t	buffersize;
 
 static int tryrates[] = { 11025, 22051, 44100, 8000 };
 
@@ -43,11 +43,11 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 {
 
     SDL_AudioSpec desired = {};
+    SDL_AudioSpec obtained = {};
     int		tmp = 0, val = 0;
     char	drivername[128] = {};
-    size_t  buffersize = 0;
     
-    shm = g_MemCache->Hunk_AllocName<volatile dma_t>(sizeof(*shm), "shm");
+    shm = g_MemCache->Hunk_AllocName<dma_t>(sizeof(*shm), "shm");
 
 	snd_inited = 0;
 
@@ -76,14 +76,12 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 	desired.callback = paint_audio;
 	desired.userdata = NULL;
 
-    g_SoundDeviceID = SDL_OpenAudioDevice(NULL, 0, &desired, NULL, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
-
-	/* Open the audio device */
-    if (g_SoundDeviceID == -1)
-	{
-		Con_Printf("Couldn't open SDL audio: %s\n", SDL_GetError());
-		SDL_QuitSubSystem(SDL_INIT_AUDIO);
-		return false;
+    /* Open the audio device */
+    if ((g_SoundDeviceID = SDL_OpenAudioDevice(NULL, SDL_FALSE, &desired, &obtained, SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == -1)
+    {
+        Con_Printf("Couldn't open SDL audio: %s\n", SDL_GetError());
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        return false;
     }
 
 	memset ((void *) dma, 0, sizeof(dma_t));
@@ -114,8 +112,10 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 			desired.freq, desired.samples, desired.channels);
     
 
+    int audioNum = SDL_GetNumAudioDevices(SDL_FALSE);
     const char *driver = SDL_GetCurrentAudioDriver();
     const char *device = SDL_GetAudioDeviceName(0, SDL_FALSE);
+
     snprintf(drivername, sizeof(drivername), "%s - %s",
         driver != NULL ? driver : "(UNKNOWN)",
         device != NULL ? device : "(UNKNOWN)");
@@ -133,7 +133,9 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 		return false;
 	}
 
-	SDL_PauseAudio(0);
+    SDL_PauseAudioDevice(g_SoundDeviceID, 0);
+
+    SDL_AudioStatus status = SDL_GetAudioDeviceStatus(g_SoundDeviceID);
 
 	return true;
 
@@ -141,25 +143,7 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 
 int CSoundDMA::SNDDMA_GetDMAPos(void)
 {
-
-	struct count_info count;
-
-	if (!snd_inited) return 0;
-
-	if (ioctl(audio_fd, SNDCTL_DSP_GETOPTR, &count)==-1)
-	{
-		perror("/dev/dsp");
-		Con_Printf("Uh, sound dead.\n");
-		close(audio_fd);
-		snd_inited = 0;
-		return 0;
-	}
-//	shm->samplepos = (count.bytes / (shm->samplebits / 8)) & (shm->samples-1);
-//	fprintf(stderr, "%d    \r", count.ptr);
-	shm->samplepos = count.ptr / (shm->samplebits / 8);
-
 	return shm->samplepos;
-
 }
 
 void CSoundDMA::SNDDMA_Shutdown(void)
@@ -171,7 +155,7 @@ void CSoundDMA::SNDDMA_Shutdown(void)
 	}
 }
 
-void paint_audio(void* userdata, Uint8* stream, int len)
+static SDLCALL void paint_audio(void* userdata, Uint8* stream, int len)
 {
 	int	pos, tobufend;
 	int	len1, len2;
@@ -183,7 +167,7 @@ void paint_audio(void* userdata, Uint8* stream, int len)
 	}
 
 	pos = (g_SoundSystem->shm->samplepos * (g_SoundSystem->shm->samplebits / 8));
-	if (pos >= buffersize)
+    if (pos >= buffersize)
 		g_SoundSystem->shm->samplepos = pos = 0;
 
 	tobufend = buffersize - pos;  /* bytes to buffer's end. */

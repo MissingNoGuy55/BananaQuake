@@ -255,6 +255,7 @@ public:
 	virtual void Draw_DebugChar(char num);
 	virtual void Draw_AlphaPic(int x, int y, CQuakePic* pic, float alpha);
 	virtual void Draw_Pic(int x, int y, CQuakePic* pic);
+    virtual void Draw_TGAPic(int x, int y, CGLTexture *glt);
 	virtual void Draw_TransPic(int x, int y, CQuakePic* pic);
 	virtual void Draw_TransPicTranslate(int x, int y, CQuakePic* pic, byte* translation);
 	virtual void Draw_ConsoleBackground(int lines);
@@ -325,7 +326,14 @@ public:
 	void R_InitParticleTexture(void);
 	void R_InitTextures(void);
 	void R_DrawBrushModel(entity_t* e);
-	void R_DrawSkyChain(msurface_t* s);
+	void R_DrawSkyChain_Q1(msurface_t* s);
+	void R_DrawSkyChain_Q2(msurface_t* s);
+	void R_ClearSkyBox(void);
+	void MakeSkyVec(float s, float t, int axis);
+	void R_DrawSkyBox(void);
+	void R_LoadSkys();
+	void DrawSkyPolygon(int nump, vec3_t vecs);
+	void ClipSkyPolygon(int nump, vec3_t vecs, int stage);
 	void R_DrawWorld(void);
 	void R_DrawViewModel(void);
 	void R_RecursiveWorldNode(mnode_t* node);
@@ -392,6 +400,7 @@ public:
 	int SignbitsForPlane(mplane_t* out);
 	void R_SetFrustum(void);
 
+    void R_UpdateWarpTextures();
 
 	void MYgluPerspective(GLdouble fovy, GLdouble aspect,
 		GLdouble zNear, GLdouble zFar);
@@ -400,6 +409,8 @@ public:
 	void R_Clear(void);
 
 	virtual CGLRenderer* GetRenderer() { return dynamic_cast<CGLRenderer*>(g_CoreRenderer); }
+    virtual const bool UsesQuake2Skybox() const { return usesQ2Sky; }
+    virtual void SetUsesQuake2Skybox(bool bUsing) { usesQ2Sky = bUsing; }
 
 	CQuakePic* GetLoadingDisc() const { return draw_disc; }
 	CQuakePic* GetBackTile() const { return draw_backtile; }
@@ -453,14 +464,15 @@ private:
 	int		gl_lightmap_format;
 	int		gl_solid_format;
 	int		gl_alpha_format;
-
+	char	q2SkyName[64];
+	bool	usesQ2Sky;
 };
 
 class COpenGLPic
 {
 public:
-	CGLTexture* tex;
-	float	sl, tl, sh, th;
+    CGLTexture* tex;
+    float	sl, tl, sh, th;
 };
 
 extern	bool	gl_texture_NPOT;
@@ -572,6 +584,7 @@ void R_TranslatePlayerSkin (int playernum);
 extern vmode_t* GetVideoModes();
 #elif __linux__
 extern XF86VidModeModeInfo** GetVideoModes();
+extern bool krabsme;
 #endif
 
 // Multitexture
@@ -594,5 +607,11 @@ extern CGLRenderer* g_GLRenderer;	// Missi (2/21/2022)
 
 extern cvar_t level_fog_color;
 extern cvar_t level_fog_density;
+extern cvar_t level_fog_start;
+extern cvar_t level_fog_end;
+extern cvar_t level_fog_force;
 
 extern float fog_color_vec[4];
+
+extern COpenGLPic* SysErrorTex;                // Missi: WALLET (6/14/2024)
+extern byte* SysErrorTexBuf;

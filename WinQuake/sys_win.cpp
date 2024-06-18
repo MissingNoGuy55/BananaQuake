@@ -65,7 +65,6 @@ static HANDLE	heventChild;
 static unsigned int ceil_cw, single_cw, full_cw, cw, pushed_cw;
 static unsigned int fpenv[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-
 //void MaskExceptions (void);
 void Sys_InitFloatTime (void);
 //void Sys_PushFPCW_SetHigh (void);
@@ -662,7 +661,11 @@ double Sys_FloatTime (void)
 
 double Sys_DoubleTime()
 {
+#if (__x86_64__) || (WIN64)
+	return SDL_GetTicks64() / 1000.0f;
+#else
 	return SDL_GetTicks() / 1000.0f;
+#endif
 }
 
 
@@ -995,6 +998,7 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	if (!parms.membase)
 		Sys_Error ("Not enough memory free; check disk space\n");
 
+	// Missi: old Win9x code. not really necessary any more (6/12/2024)
 	//Sys_PageIn ((void*)parms.membase, parms.memsize);
 
 	tevent = CreateEvent(NULL, FALSE, FALSE, NULL);

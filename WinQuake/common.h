@@ -216,6 +216,7 @@ public:
 	const char* COM_ParseIntNewline(const char* buffer, int* value);
 	const char* COM_ParseFloatNewline(const char* buffer, float* value);
 	const char* COM_ParseStringNewline(const char* buffer);
+    const int COM_ParseStringLength(const char* buffer, size_t len) const;
 
 	int COM_CheckParm (const char *parm);
 	void COM_Init (const char *path);

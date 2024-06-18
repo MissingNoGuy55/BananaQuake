@@ -44,11 +44,11 @@ void D_WarpScreen (void)
 {
 	int		w, h;
 	int		u,v;
-	byte	*dest;
+    byte	*dest;
 	int		*turb;
 	int		*col;
-	byte	**row;
-	byte	*rowptr[MAXHEIGHT+(AMP2*2)];
+    byte	**row;
+    byte	*rowptr[MAXHEIGHT+(AMP2*2)];
 	int		column[MAXWIDTH+(AMP2*2)];
 	float	wratio, hratio;
 
@@ -60,8 +60,8 @@ void D_WarpScreen (void)
 
 	for (v=0 ; v<scr_vrect.height+AMP2*2 ; v++)
 	{
-		rowptr[v] = d_viewbuffer + (r_refdef.vrect.y * screenwidth) +
-				 (screenwidth * (int)((float)v * hratio * h / (h + AMP2 * 2)));
+        //rowptr[v] = d_viewbuffer + (r_refdef.vrect.y * screenwidth) +
+        //		 (screenwidth * (int)((float)v * hratio * h / (h + AMP2 * 2)));
 	}
 
 	for (u=0 ; u<scr_vrect.width+AMP2*2 ; u++)

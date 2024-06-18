@@ -163,9 +163,8 @@ void Sys_Error (const char *error, ...)
     vsprintf (string,error,argptr);
     va_end (argptr);
 	fprintf(stderr, "Error: %s\n", string);
-
 	host->Host_Shutdown ();
-	exit (1);
+    exit (1);
 
 } 
 
@@ -390,10 +389,14 @@ int main (int c, char **v)
     g_FileSystem = new CFileSystem;
     host = new CQuakeHost;
 
+#if 0
 #ifdef GLQUAKE
 	parms.memsize = 16*1024*1024;
 #else
 	parms.memsize = 8*1024*1024;
+#endif
+#else
+    parms.memsize = 32e9;
 #endif
 
 	j = g_Common->COM_CheckParm("-mem");

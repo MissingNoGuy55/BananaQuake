@@ -194,6 +194,9 @@ typedef struct
 	int		numglobals;
 	
 	int		entityfields;
+
+	int		ofs_vectors;
+	int		numvectors;
 } dprograms_t;
 
 #endif

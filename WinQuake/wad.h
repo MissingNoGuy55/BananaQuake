@@ -63,12 +63,21 @@ public:
 								// While C variable-length arrays are supported in C++17 and beyond, they're extremely 
 								// susceptible to corruption and overruns from other memory.
 								// See the comment in CGLRenderer::Draw_PicFromWad (12/8/2022)
-	CQVector<byte>	datavec;
+    CQVector<byte>	datavec;
 
 private:
 
 	CQuakePic(const CQuakePic& src);
 
+};
+
+class CQuakeTGAPic
+{
+public:
+    int     width;
+    int     height;
+
+    CQVector<void*> datavec;
 };
 
 typedef struct qpicbuf_s

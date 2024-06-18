@@ -907,7 +907,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 
 	if (cls.state != ca_dedicated)
 	{
-		host_basepal = COM_LoadHunkFile<byte> ("gfx/palette.lmp", NULL);
+        host_basepal = COM_LoadHunkFile<byte> ("gfx/palette.lmp", NULL);
 		if (!host_basepal)
 			Con_Warning ("Couldn't load gfx/palette.lmp");
 		host_colormap = COM_LoadHunkFile<byte> ("gfx/colormap.lmp", NULL);
@@ -933,7 +933,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 #else
 		g_GLRenderer = new CGLRenderer;
 		g_GLRenderer->Draw_Init();
-		g_GLRenderer->R_Init();
+        g_GLRenderer->R_Init();
 #endif
 		SCR_Init();
 #if (_WIN32) &&	(GLQUAKE)
@@ -941,7 +941,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		g_SoundSystem = new CSoundDMA;
 		g_SoundSystem->S_Init();
 #elif (__linux__) && (GLQUAKE)
-		SDL_setenv("SDL_AudioDriver", "pulseaudio", 1);
+        SDL_setenv("SDL_AudioDriver", "pulseaudio", 1);
 		g_SoundSystem = new CSoundDMA;
 		g_SoundSystem->S_Init();
 #endif

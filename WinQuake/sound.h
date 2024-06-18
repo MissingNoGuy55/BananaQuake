@@ -214,7 +214,7 @@ public:
 	static void			ResampleSfx(sfx_t* sfx, int inrate, int inwidth, byte* data);
 
 	// pointer should go away
-	static volatile dma_t*	shm;
+    static dma_t*           shm;
 	dma_t					sn;
 	static vec_t			sound_nominal_clip_dist;
 
@@ -293,7 +293,7 @@ public:
 
 };
 
-void paint_audio(void* userdata, byte* stream, int len);
+static void paint_audio(void* userdata, Uint8* stream, int len);
 
 /*
 #if defined(_WIN32) || defined(__CYGWIN__)

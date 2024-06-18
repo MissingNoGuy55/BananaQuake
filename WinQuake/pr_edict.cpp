@@ -32,14 +32,19 @@ dstatement_t	*pr_statements;
 globalvars_t	*pr_global_struct;
 float*			pr_globals;			// same as pr_global_struct
 int				pr_edict_size;	// in bytes
+progvector_t*	pr_vectors;
 
 int		pr_maxknownstrings;
 int		pr_numknownstrings;
+int		pr_numknownvectors;
 CQVector<const char*> pr_knownstrings;
+
+CProgVector<void*>* pr_knownvectors;
+int	pr_vecsize;
 
 unsigned short		pr_crc;
 
-int		type_size[9] = { 1,sizeof(string_t) / 4,1,3,1,1,sizeof(func_t) / 4,sizeof(void*) / 4, sizeof(std::vector<void*>) };
+int		type_size[9] = { 1,sizeof(string_t) / 4,1,3,1,1,sizeof(func_t) / 4,sizeof(void*) / 4, sizeof(CProgVector<void*>) / 4};
 
 ddef_t *ED_FieldAtOfs (int ofs);
 bool	ED_ParseEpair (void *base, ddef_t *key, char *s);
@@ -121,6 +126,11 @@ const char* PR_GetString(int num)
 	}
 
 	return NULL;
+}
+
+progvector_t* PR_GetCPPVector(int num)
+{
+	return &pr_vectors[num];
 }
 
 int PR_SetEngineString(const char* s)
@@ -323,7 +333,7 @@ Done:
 ED_FindGlobal
 ============
 */
-ddef_t *ED_FindGlobal (char *name)
+ddef_t *ED_FindGlobal (const char *name)
 {
 	ddef_t		*def;
 	int			i;
@@ -355,6 +365,26 @@ dfunction_t *ED_FindFunction (const char *name)
 			return func;
 	}
 	return NULL;
+}
+
+/*
+============
+ED_FindCPPVector
+============
+*/
+progvector_t* ED_FindCPPVector(const char* name)
+{
+	int				i;
+	progvector_t* vec;
+
+	for (i = 0; i < progs->numvectors; i++)
+	{
+		vec = &pr_vectors[i];
+
+		if (!strcmp(PR_GetString(vec->name), name))
+			return vec;
+	}
+	return nullptr;
 }
 
 
@@ -486,8 +516,8 @@ const char *PR_GlobalString (int ofs)
 
 	i = strlen(line);
 	for (; i < 20; i++)
-		strncat(line, " ", 1);
-	strncat(line, " ", 1);
+        strcat(line, " ");
+    strcat(line, " ");
 
 	return line;
 }
@@ -506,8 +536,8 @@ const char *PR_GlobalStringNoContents (int ofs)
 	
 	i = strlen(line);
 	for ( ; i<20 ; i++)
-		Q_strcat (line," ");
-	Q_strcat (line," ");
+        strcat (line," ");
+    strcat (line," ");
 		
 	return line;
 }
@@ -821,6 +851,7 @@ bool	ED_ParseEpair (void *base, ddef_t *key, char *s)
 	char	*v, *w;
 	void	*d;
 	dfunction_t	*func;
+	progvector_t*	vec;
 	
 	d = (void *)((int *)base + key->ofs);
 	
@@ -870,6 +901,15 @@ bool	ED_ParseEpair (void *base, ddef_t *key, char *s)
 			return false;
 		}
 		*(func_t *)d = func - pr_functions;
+		break;
+
+	case ev_cppvector:
+		vec = ED_FindCPPVector(s);
+		if (!vec)
+		{
+			Con_Printf("Can't find CXX Vector %s\n", s);
+			return false;
+		}
 		break;
 		
 	default:
@@ -1070,6 +1110,7 @@ PR_LoadProgs
 void PR_LoadProgs (void)
 {
 	int		i;
+	uintptr_t	path_id;
 
 // flush the non-C variable lookup cache
 	for (i=0 ; i<GEFV_CACHESIZE ; i++)
@@ -1077,7 +1118,7 @@ void PR_LoadProgs (void)
 
 	g_CRCManager->CRC_Init (&pr_crc);
 
-	progs = COM_LoadHunkFile<dprograms_t>("progs.dat", NULL);
+	progs = COM_LoadHunkFile<dprograms_t>("progs.dat", &path_id);
 	
 	if (!progs)
 		Sys_Error ("PR_LoadProgs: couldn't load progs.dat");
@@ -1115,7 +1156,23 @@ void PR_LoadProgs (void)
 
 	pr_global_struct = (globalvars_t *)((byte *)progs + progs->ofs_globals);
 	pr_globals = (float *)pr_global_struct;
-	
+
+	// Missi: To maintain compatibility with the old progs.dat, we check if
+	// progs->numvectors or progs->ofs_vectors returns with an oddly-high number, 
+	// usually past MAX_PROG_VECTORS.
+	//
+	// This is not the most clean or reliable solution, and may be platform-dependent.
+	// But it works for now. (6/12/2024)
+	if (progs->numvectors < MAX_PROG_VECTORS || progs->ofs_vectors >= (MAX_PROG_VECTORS * MAX_PROG_VECTOR_ALLOC))
+	{
+		pr_vectors = (progvector_t*)((byte*)progs + progs->ofs_vectors);
+	}
+	else
+	{
+		progs->ofs_vectors = 0;
+		progs->numvectors = 0;
+	}
+
 	//pr_edict_size = progs->entityfields * 4 + sizeof (edict_t) - sizeof(entvars_t);
 
 // byte swap the lumps
@@ -1151,6 +1208,18 @@ void PR_LoadProgs (void)
 			Sys_Error ("PR_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
 		pr_fielddefs[i].ofs = LittleShort (pr_fielddefs[i].ofs);
 		pr_fielddefs[i].s_name = LittleLong (pr_fielddefs[i].s_name);
+	}
+	if (progs->ofs_vectors > 0)
+	{
+		for (i = 0; i < progs->numvectors; i++)
+		{
+			pr_vectors[i].type = LittleShort(pr_vectors[i].type);
+			if (pr_vectors[i].type & DEF_SAVEGLOBAL)
+				Sys_Error("PR_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
+			pr_vectors[i].ofs = (LittleShort(pr_vectors[i].ofs));
+			pr_vectors[i].name = (LittleLong(pr_vectors[i].name));
+			pr_vectors[i].data = new CProgVector<void*>;
+		}
 	}
 
 	pr_edict_size = progs->entityfields * 4 + sizeof(edict_t) - sizeof(entvars_t);

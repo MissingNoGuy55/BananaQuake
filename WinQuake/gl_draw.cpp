@@ -46,37 +46,16 @@ cvar_t		gl_max_size = {"gl_max_size", "1024"};
 cvar_t		gl_fullbrights = {"gl_fullbrights", "0"};
 GLint		gl_hardware_maxsize;
 
-//byte				*draw_chars;				// 8*8 graphic characters
-//CQuakePic			*draw_disc;
-//CQuakePic			*draw_backtile;
-
-//CGLTexture*		translate_texture;
-//CGLTexture*		char_texture;
-
 static byte	conback_buffer[sizeof(CQuakePic)];
 CQuakePic	*conback = (CQuakePic*)&conback_buffer;
 
-/*
-CGLTexture	CGLRenderer::gltextures[MAX_GLTEXTURES];
-CGLTexture* CGLRenderer::free_gltextures;
-CGLTexture* CGLRenderer::active_gltextures;
-CGLTexture* CGLRenderer::lightmap_textures;
-byte		CGLRenderer::lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];// [MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
+cvar_t	level_fog_color {"fog", "0.5 0.5 0.5", false};
+cvar_t	level_fog_density {"fog_density", "1.0", false};
+cvar_t  level_fog_start {"fog_start", "64.0", false};
+cvar_t  level_fog_end {"fog_end", "2048.0", false};
+cvar_t  level_fog_force { "fog_force", "0.0", false};
 
-CGLTexture* CGLRenderer::char_texture;
-CGLTexture* CGLRenderer::translate_texture;
-
-int			CGLRenderer::allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
-int			CGLRenderer::lightmap_count;
-glpoly_t*	CGLRenderer::lightmap_polys[MAX_LIGHTMAPS];
-bool		CGLRenderer::lightmap_modified[MAX_LIGHTMAPS];
-glRect_t	CGLRenderer::lightmap_rectchange[MAX_LIGHTMAPS];
-
-int			CGLRenderer::gl_filter_min;
-int			CGLRenderer::gl_filter_max;
-*/
-
-CGLRenderer::CGLRenderer()
+CGLRenderer::CGLRenderer() : CCoreRenderer()
 {
 	active_lightmaps = 0;
 
@@ -94,6 +73,7 @@ CGLRenderer::CGLRenderer()
 	memset(lightmap_modified, 0, sizeof(lightmap_modified));
 	memset(lightmap_polys, 0, sizeof(lightmap_polys));
 	memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
+	memset(q2SkyName, 0, sizeof(q2SkyName));
 
 	skytexturenum = 0;
 	lightmap_bytes = 0;
@@ -129,6 +109,8 @@ CGLRenderer::CGLRenderer()
 	gl_lightmap_format = 4;
 	gl_solid_format = 3;
 	gl_alpha_format = 4;
+
+	usesQ2Sky = false;
 }
 
 CGLRenderer::~CGLRenderer()
@@ -351,9 +333,7 @@ void CGLRenderer::Scrap_Upload (void)
 	{
 		snprintf(name, sizeof(name), "scrap%i", i);
 		scrap_textures[i] = GL_LoadTexture(NULL, name, BLOCK_WIDTH, BLOCK_HEIGHT, SRC_INDEXED, scrap_texels[i],
-			(src_offset_t)scrap_texels[i], TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
-		/*g_GLRenderer->GL_Bind(scrap_textures[i]);
-		GL_Upload8 (scrap_texels[i], BLOCK_WIDTH, BLOCK_HEIGHT, false, true);*/
+            (src_offset_t)scrap_texels[i], TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
 	}
 	scrap_dirty = false;
 }
@@ -368,7 +348,7 @@ typedef struct cachepic_s
 	byte		padding[32];	// for appended glpic
 } cachepic_t;
 
-#define	MAX_CACHED_PICS		128
+static constexpr size_t	MAX_CACHED_PICS = 128;
 static cachepic_t	menu_cachepics[MAX_CACHED_PICS];
 static int			menu_numcachepics;
 
@@ -469,8 +449,6 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 		gl.th = (float)p->height / (float)GL_PadConditional(p->height); //Missi -- copied from QuakeSpasm (5/28/2022)
 	}
 
-	//memset(&p->datavec, 0, sizeof(p->datavec));
-
 	p->datavec.AddMultipleToTail(sizeof(COpenGLPic), (byte*)&gl);
     
 	return p;
@@ -510,8 +488,8 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	}
 
 	SwapPic (qpicbuf);
-	pic->pic.width = qpicbuf->width;
-	pic->pic.height = qpicbuf->height;
+    pic->pic.width = qpicbuf->width;
+    pic->pic.height = qpicbuf->height;
 
 	// HACK HACK HACK --- we need to keep the bytes for
 	// the translatable player picture just for the menu
@@ -519,14 +497,14 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	if (!strcmp (path, "gfx/menuplyr.lmp"))
 		memcpy (menuplyr_pixels, pic->pic.datavec.Base(), qpicbuf->width * qpicbuf->height);
 
-	gl.tex = GL_LoadTexture(NULL, path, qpicbuf->width, qpicbuf->height, SRC_INDEXED, qpicbuf->data, sizeof(int) * 2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); // (COpenGLPic*)pic->pic->data;
+    // Missi: this had TEXPREF_PAD in the flags, but for some reason that screws up texture dimensions on Linux (why???) (6/18/2024)
+    gl.tex = GL_LoadTexture(NULL, path, qpicbuf->width, qpicbuf->height, SRC_INDEXED, qpicbuf->data, sizeof(int) * 2, TEXPREF_ALPHA | TEXPREF_NOPICMIP); // | TEXPREF_PAD);
 	gl.sl = 0;
 	gl.sh = 1;
 	gl.tl = 0;
 	gl.th = 1;
 
 	pic->pic.datavec.AddMultipleToTail(sizeof(COpenGLPic), (byte*)&gl);
-	//memcpy(pic->pic.data, &gl, sizeof(COpenGLPic));
 
  	return &pic->pic;
 }
@@ -609,7 +587,7 @@ void CGLRenderer::Draw_TextureMode_f (void)
 				for (glt = g_GLRenderer->active_gltextures; glt; glt = glt->next)
 					g_GLRenderer->GL_SetFilterModes(glt);
 				Sbar_Changed(); //sbar graphics need to be redrawn with new filter mode
-				//FIXME: warpimages need to be redrawn, too.
+                g_GLRenderer->R_UpdateWarpTextures();
 			}
 			return;
 		}
@@ -647,6 +625,12 @@ void CGLRenderer::Draw_Init (void)
 	Cvar_RegisterVariable (&gl_nobind);
 	Cvar_RegisterVariable (&gl_max_size);
 	Cvar_RegisterVariable (&gl_picmip);
+
+    Cvar_RegisterVariable (&level_fog_density);
+    Cvar_RegisterVariable (&level_fog_color);
+    Cvar_RegisterVariable (&level_fog_start);
+    Cvar_RegisterVariable (&level_fog_end);
+    Cvar_RegisterVariable (&level_fog_force);
 
 	memset(ver, 0, sizeof(ver));
 
@@ -819,6 +803,7 @@ void CGLRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 
 	if (scrap_dirty)
 		Scrap_Upload();
+
 	gl = (COpenGLPic*)pic->datavec.Base();
 	GL_Bind(gl->tex);
 	glBegin(GL_QUADS);
@@ -834,6 +819,26 @@ void CGLRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 
 }
 
+void CGLRenderer::Draw_TGAPic(int x, int y, CGLTexture *glt)
+{
+    int internalformat = (glt->flags & TEXPREF_ALPHA) ? gl_alpha_format : gl_solid_format;
+
+    glTexImage2D(GL_TEXTURE_2D, 0, internalformat, glt->width, glt->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, glt->pic.datavec.Base());
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0);
+    glVertex2f(x, y);
+    glTexCoord2f(1, 0);
+    glVertex2f(x + vid.width, y);
+    glTexCoord2f(1, 1);
+    glVertex2f(x + vid.width, y + vid.height);
+    glTexCoord2f(0, 1);
+    glVertex2f(x, y + vid.height);
+    glEnd();
+}
 
 /*
 =============
@@ -885,10 +890,10 @@ void CGLRenderer::Draw_TransPicTranslate (int x, int y, CQuakePic *pic, byte *tr
 		}
 	}
 
-	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
+    glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	glColor3f (1,1,1);
 	glBegin (GL_QUADS);
@@ -1843,8 +1848,8 @@ Loads an OpenGL texture via string ID or byte data. Can take an empty string if 
 */
 CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, int width, int height, enum srcformat_t format, byte* data, uintptr_t offset, int flags)
 {
-	CGLTexture*		glt = NULL;
-	int				CRCBlock;
+    CGLTexture*		glt = nullptr;
+    int				CRCBlock = 0;
 	int				mark = 0;
 
 // Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
@@ -1902,6 +1907,8 @@ CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, 
 	case SRC_RGBA:
 		GL_LoadImage32(glt, (unsigned*)data);
 		break;
+    default:
+        return nullptr;
 	}
 
 	texture_extension_number++;
@@ -1909,7 +1916,6 @@ CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, 
 	g_MemCache->Hunk_FreeToLowMark(mark);
 
 	return glt;
-
 }
 
 /*

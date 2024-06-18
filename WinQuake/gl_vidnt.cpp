@@ -190,6 +190,12 @@ void D_EndDirectRect (int x, int y, int width, int height)
 {
 }
 
+static void KrabsMe_f()
+{
+	extern bool krabsme;
+
+	!krabsme ? krabsme = true : krabsme = false;
+}
 
 void CenterWindow(HWND hWndCenter, int width, int height, BOOL lefttopjustify)
 {
@@ -781,6 +787,7 @@ void	VID_SetPalette (unsigned char *palette)
 	if (host->host_basepal)
 		Q_memcpy(pal, host->host_basepal, 768);
 
+	// Missi: see above comment (6/14/2024)
 	//fread(pal, sizeof(byte), 768, f);
 	//fclose(f);
 
@@ -1692,6 +1699,8 @@ void	VID_Init (unsigned char *palette)
 	g_pCmds->Cmd_AddCommand ("vid_describecurrentmode", VID_DescribeCurrentMode_f);
 	g_pCmds->Cmd_AddCommand ("vid_describemode", VID_DescribeMode_f);
 	g_pCmds->Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
+	
+	g_pCmds->Cmd_AddCommand("krabsme", &KrabsMe_f);
 
 	hIcon = LoadIcon (global_hInstance, MAKEINTRESOURCE (IDI_ICON2));
 
@@ -1988,7 +1997,7 @@ void	VID_Init (unsigned char *palette)
 	vid.maxwarpheight = WARP_HEIGHT;
 	if (host->host_colormap)
 	{
-		vid.colormap = host->host_colormap;
+		memcpy(&vid.colormap, &host->host_colormap, sizeof(host->host_colormap));
 		vid.fullbright = 256 - LittleLong(*((int*)vid.colormap + 2048));
 	}
 

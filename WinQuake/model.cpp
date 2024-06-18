@@ -765,12 +765,12 @@ Mod_LoadFaces
 */
 void Mod_LoadFaces (lump_t *l)
 {
-	dface_t		*in;
+    dsface_t		*in;
 	msurface_t 	*out;
 	int			i, count, surfnum;
 	int			planenum, side;
 
-	in = reinterpret_cast<dface_t*>((mod_base + l->fileofs));
+    in = reinterpret_cast<dsface_t*>((mod_base + l->fileofs));
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
@@ -940,51 +940,82 @@ void Mod_LoadLeafs (lump_t *l)
 Mod_LoadClipnodes
 =================
 */
-void Mod_LoadClipnodes (lump_t *l)
+void Mod_LoadClipnodes (lump_t *l, int bsp2)
 {
-	dclipnode_t *in, *out;
-	int			i, count;
-	hull_t		*hull;
+    dclipnode_t* ins =  nullptr;
+    dlclipnode_t* inl = nullptr;
+    mclipnode_t* out;
+    int			i, count;
+    hull_t		*hull;
 
-	in = reinterpret_cast<dclipnode_t*>((mod_base + l->fileofs));
-	if (l->filelen % sizeof(*in))
-		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
-	count = l->filelen / sizeof(*in);
-	out = g_MemCache->Hunk_AllocName<dclipnode_t>( count*sizeof(*out), loadname);
+    if (bsp2)
+    {
+        ins = NULL;
+        inl = (dlclipnode_t*)(mod_base + l->fileofs);
+        if (l->filelen % sizeof(*inl))
+            Sys_Error("Mod_LoadClipnodes: funny lump size in %s", loadmodel->name);
 
-	loadmodel->clipnodes = out;
-	loadmodel->numclipnodes = count;
+        count = l->filelen / sizeof(*inl);
+    }
+    else
+    {
+        ins = reinterpret_cast<dclipnode_t*>((mod_base + l->fileofs));
+        if (l->filelen % sizeof(*ins))
+            Sys_Error("MOD_LoadBmodel: funny lump size in %s", loadmodel->name);
+        count = l->filelen / sizeof(*ins);
+    }
+    out = (mclipnode_t*)g_MemCache->Hunk_AllocName<mclipnode_t>(count * sizeof(*out), loadname);
 
-	hull = &loadmodel->hulls[1];
-	hull->clipnodes = out;
-	hull->firstclipnode = 0;
-	hull->lastclipnode = count-1;
-	hull->planes = loadmodel->planes;
-	hull->clip_mins[0] = -16;
-	hull->clip_mins[1] = -16;
-	hull->clip_mins[2] = -24;
-	hull->clip_maxs[0] = 16;
-	hull->clip_maxs[1] = 16;
-	hull->clip_maxs[2] = 32;
+    loadmodel->clipnodes = out;
+    loadmodel->numclipnodes = count;
 
-	hull = &loadmodel->hulls[2];
-	hull->clipnodes = out;
-	hull->firstclipnode = 0;
-	hull->lastclipnode = count-1;
-	hull->planes = loadmodel->planes;
-	hull->clip_mins[0] = -32;
-	hull->clip_mins[1] = -32;
-	hull->clip_mins[2] = -24;
-	hull->clip_maxs[0] = 32;
-	hull->clip_maxs[1] = 32;
-	hull->clip_maxs[2] = 64;
+    hull = &loadmodel->hulls[1];
+    hull->clipnodes = out;
+    hull->firstclipnode = 0;
+    hull->lastclipnode = count-1;
+    hull->planes = loadmodel->planes;
+    hull->clip_mins[0] = -16;
+    hull->clip_mins[1] = -16;
+    hull->clip_mins[2] = -24;
+    hull->clip_maxs[0] = 16;
+    hull->clip_maxs[1] = 16;
+    hull->clip_maxs[2] = 32;
 
-	for (i=0 ; i<count ; i++, out++, in++)
-	{
-		out->planenum = LittleLong(in->planenum);
-		out->children[0] = LittleShort(in->children[0]);
-		out->children[1] = LittleShort(in->children[1]);
-	}
+    hull = &loadmodel->hulls[2];
+    hull->clipnodes = out;
+    hull->firstclipnode = 0;
+    hull->lastclipnode = count-1;
+    hull->planes = loadmodel->planes;
+    hull->clip_mins[0] = -32;
+    hull->clip_mins[1] = -32;
+    hull->clip_mins[2] = -24;
+    hull->clip_maxs[0] = 32;
+    hull->clip_maxs[1] = 32;
+    hull->clip_maxs[2] = 64;
+
+    if (bsp2)
+    {
+        for (i = 0; i < count; i++, out++, inl++)
+        {
+            out->planenum = LittleLong(inl->planenum);
+
+            if (out->planenum < 0 || out->planenum >= loadmodel->numplanes)
+                host->Host_Error("Mod_LoadClipnodes: planenum out of bounds");
+
+            out->children[0] = LittleLong(inl->children[0]);
+            out->children[1] = LittleLong(inl->children[1]);
+            //Spike: FIXME: bounds check
+        }
+    }
+    else
+    {
+        for (i = 0; i < count; i++, out++, ins++)
+        {
+            out->planenum = LittleLong(ins->planenum);
+            out->children[0] = LittleShort(ins->children[0]);
+            out->children[1] = LittleShort(ins->children[1]);
+        }
+    }
 }
 
 /*
@@ -997,7 +1028,7 @@ Deplicate the drawing hull structure as a clipping hull
 void Mod_MakeHull0 (void)
 {
 	mnode_t		*in, *child;
-	dclipnode_t *out;
+    mclipnode_t *out;
 	int			i, j, count;
 	hull_t		*hull;
 	
@@ -1005,7 +1036,7 @@ void Mod_MakeHull0 (void)
 	
 	in = loadmodel->nodes;
 	count = loadmodel->numnodes;
-	out = g_MemCache->Hunk_AllocName<dclipnode_t>(count*sizeof(*out), loadname);
+    out = g_MemCache->Hunk_AllocName<mclipnode_t>(count*sizeof(*out), loadname);
 
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -1144,14 +1175,32 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	int			i, j;
 	dheader_t	*header;
 	dmodel_t 	*bm;
+    int         bsp2 = 0;
 	
 	loadmodel->type = mod_brush;
 	
 	header = (dheader_t *)buffer;
 
 	i = LittleLong (header->version);
-	if (i != BSPVERSION)
-		Sys_Error ("Mod_LoadBrushModel: %s has wrong version number (%i should be %i)", mod->name, i, BSPVERSION);
+
+    switch (header->version)
+    {
+    case BSPVERSION:
+        bsp2 = false;
+        break;
+    case BSP2VERSION_2PSB:
+        bsp2 = 1;	//first iteration
+        break;
+    case BSP2VERSION_BSP2:
+        bsp2 = 2;	//sanitised revision
+        break;
+    case BSPVERSION_QUAKE64:
+        bsp2 = false;
+        break;
+    default:
+        Sys_Error("Mod_LoadBrushModel: %s has unsupported version number (%i)", mod->name, header->version);
+        break;
+    }
 
 // swap all the lumps
 	mod_base = (byte *)header;
@@ -1171,9 +1220,9 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	Mod_LoadFaces (&header->lumps[LUMP_FACES]);
 	Mod_LoadMarksurfaces (&header->lumps[LUMP_MARKSURFACES]);
 	Mod_LoadVisibility (&header->lumps[LUMP_VISIBILITY]);
-	Mod_LoadLeafs (&header->lumps[LUMP_LEAFS]);
-	Mod_LoadNodes (&header->lumps[LUMP_NODES]);
-	Mod_LoadClipnodes (&header->lumps[LUMP_CLIPNODES]);
+    Mod_LoadLeafs (&header->lumps[LUMP_LEAFS]);
+    Mod_LoadNodes (&header->lumps[LUMP_NODES]);
+    Mod_LoadClipnodes (&header->lumps[LUMP_CLIPNODES], bsp2);
 	Mod_LoadEntities (&header->lumps[LUMP_ENTITIES]);
 	Mod_LoadSubmodels (&header->lumps[LUMP_MODELS]);
 

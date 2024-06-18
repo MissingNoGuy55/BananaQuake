@@ -48,10 +48,8 @@ int			mirrortexturenum;	// quake texturenum, not gltexturenum
 bool	mirror;
 mplane_t	*mirror_plane;
 
-cvar_t	level_fog_color {"fog", "0.5 0.5 0.5", false};
-cvar_t	level_fog_density {"fog_density", "1.0", false};
-
 float fog_color_vec[4] = {};
+float fog_density = 0.0f;
 
 //
 // view origin
@@ -1142,6 +1140,10 @@ void CGLRenderer::R_Mirror (void)
 	glColor4f (1,1,1,1);
 }
 
+static char s_szFogValue[256] = {};
+static char s_szFogDensityValue[256] = {};
+static bool s_bFogChanged = false;
+
 /*
 ================
 R_RenderView
@@ -1185,23 +1187,32 @@ void CGLRenderer::R_RenderView (void)
 	glEnable(GL_FOG);
 ********************************************/
 	
-	if (sv->level_has_fog)
-	{
-		glFogi(GL_FOG_MODE, GL_LINEAR);
-		glFogfv(GL_FOG_COLOR, fog_color_vec);
-		glFogf(GL_FOG_DENSITY, level_fog_density.value);
-		glFogf(GL_FOG_START, 64.0f);
-		glFogf(GL_FOG_END, 2048.0f);
-		glEnable(GL_FOG);
+    if (Q_strncmp(level_fog_color.string, s_szFogValue, sizeof(s_szFogValue)))
+    {
+        Q_strncpy(s_szFogValue, level_fog_color.string, sizeof(s_szFogValue));
+        Cvar_Set("fog", s_szFogValue);
+        sscanf(level_fog_color.string, "%f%f%f", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2]);
+    }
+    if (Q_strncmp(level_fog_density.string, s_szFogDensityValue, sizeof(s_szFogDensityValue)))
+    {
+        Q_strncpy(s_szFogDensityValue, level_fog_density.string, sizeof(s_szFogDensityValue));
+        Cvar_Set("fog_density", s_szFogDensityValue);
+        sscanf(level_fog_density.string, "%f", &fog_density);
+    }
 
-		//  More fog right here :)
-		glDisable(GL_FOG);
-		//  End of all fog code...
-	}
-	else
-	{
-		glDisable(GL_FOG);
-	}
+    if (!sv->level_has_fog || level_fog_density.value == 0.0f)
+    {
+        glDisable(GL_FOG);
+    }
+    else
+    {
+        glFogi(GL_FOG_MODE, GL_LINEAR);
+        glFogfv(GL_FOG_COLOR, fog_color_vec);
+        glFogf(GL_FOG_DENSITY, level_fog_density.value);
+        glFogf(GL_FOG_START, level_fog_start.value);
+        glFogf(GL_FOG_END, level_fog_end.value);
+        glEnable(GL_FOG);
+    }
 
 	R_RenderScene();
 	R_DrawViewModel();

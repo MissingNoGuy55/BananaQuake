@@ -256,7 +256,7 @@ command from the console.  Active clients are kicked off.
 void Host_Map_f (void)
 {
 	int		i;
-	char	name[MAX_QPATH];
+	char	name[MAX_QPATH] = {};
 
 	if (cmd_source != src_command)
 		return;
@@ -278,7 +278,7 @@ void Host_Map_f (void)
 	Q_strcat (cls.mapstring, "\n");
 
 	svs.serverflags = 0;			// haven't completed an episode yet
-	Q_strcpy (name, g_pCmds->Cmd_Argv(1));
+	Q_strncpy (name, g_pCmds->Cmd_Argv(1), sizeof(name));
 #ifdef QUAKE2
 	SV_SpawnServer (name, NULL);
 #else
@@ -338,7 +338,7 @@ void Host_Changelevel_f (void)
 	SV_SaveSpawnparms ();
 	SV_SpawnServer (level, startspot);
 #else
-	char	level[MAX_QPATH];
+	char	level[MAX_QPATH] = {};
 
 	if (g_pCmds->Cmd_Argc() != 2)
 	{
@@ -351,7 +351,7 @@ void Host_Changelevel_f (void)
 		return;
 	}
 	sv->SV_SaveSpawnparms ();
-	Q_strcpy (level, g_pCmds->Cmd_Argv(1));
+	Q_strncpy (level, g_pCmds->Cmd_Argv(1), sizeof(level));
 	sv->SV_SpawnServer (level);
 #endif
 }
@@ -365,9 +365,9 @@ Restarts the current server for a dead player
 */
 void Host_Restart_f (void)
 {
-	char	mapname[MAX_QPATH];
+	char	mapname[MAX_QPATH] = {};
 #ifdef QUAKE2
-	char	startspot[MAX_QPATH];
+	char	startspot[MAX_QPATH] = {};
 #endif
 
 	if (cls.demoplayback || !sv->active)
@@ -375,7 +375,7 @@ void Host_Restart_f (void)
 
 	if (cmd_source != src_command)
 		return;
-	Q_strcpy (mapname, sv->name);	// must copy out, because it gets cleared
+	Q_strncpy (mapname, sv->name, sizeof(mapname));	// must copy out, because it gets cleared
 								// in sv_spawnserver
 #ifdef QUAKE2
 	Q_strcpy(startspot, sv->startspot);
@@ -408,7 +408,7 @@ User command to connect to server
 */
 void Host_Connect_f (void)
 {
-	char	name[MAX_QPATH];
+	char	name[MAX_QPATH] = {};
 	
 	cls.demonum = -1;		// stop demo loop in case this fails
 	if (cls.demoplayback)
@@ -416,7 +416,7 @@ void Host_Connect_f (void)
 		CL_StopPlayback ();
 		CL_Disconnect ();
 	}
-	Q_strcpy (name, g_pCmds->Cmd_Argv(1));
+	Q_strncpy (name, g_pCmds->Cmd_Argv(1), sizeof(name));
 	CL_EstablishConnection (name);
 	Host_Reconnect_f ();
 }
@@ -447,7 +447,7 @@ void Host_SavegameComment (char *text)
 	for (i=0 ; i<SAVEGAME_COMMENT_LENGTH ; i++)
 		text[i] = ' ';
 	memcpy (text, cl.levelname, strlen(cl.levelname));
-	sprintf (kills,"kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+	snprintf (kills,sizeof(kills), "kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	memcpy (text+22, kills, strlen(kills));
 // convert space to _ to make stdio happy
 	for (i=0 ; i<SAVEGAME_COMMENT_LENGTH ; i++)
@@ -552,6 +552,7 @@ void Host_Savegame_f (void)
 	Con_Printf ("done.\n");
 }
 
+static char	savegame_string[32768] = {};
 
 /*
 ===============
@@ -560,19 +561,18 @@ Host_Loadgame_f
 */
 void Host_Loadgame_f (void)
 {
-	static char	name[MAX_OSPATH];
+	char	name[MAX_OSPATH];
 	FILE	*f;
-	static char	mapname[MAX_QPATH];
+	char	mapname[MAX_QPATH];
 	float	time, tfloat;
-	static char	str[32768] = {};
 	const char *start;
 	int		i, r;
 	edict_t	*ent;
 	int		entnum;
 	int		version;
-	static float			spawn_parms[NUM_SPAWN_PARMS];
+	float			spawn_parms[NUM_SPAWN_PARMS];
 
-	memset(str, 0, sizeof(str));
+	memset(savegame_string, 0, sizeof(savegame_string));
 
 	if (cmd_source != src_command)
 		return;
@@ -607,7 +607,7 @@ void Host_Loadgame_f (void)
 		Con_Printf ("Savegame is version %i, not %i\n", version, SAVEGAME_VERSION);
 		return;
 	}
-	fscanf (f, "%s\n", str);
+	fscanf (f, "%s\n", savegame_string);
 	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
 		fscanf (f, "%f\n", &spawn_parms[i]);
 // this silliness is so we can load 1.06 save files, which have float skill values
@@ -643,31 +643,31 @@ void Host_Loadgame_f (void)
 
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
-		fscanf (f, "%s\n", str);
-		sv->lightstyles[i] = (const char*)strdup(str);
+		fscanf (f, "%s\n", savegame_string);
+		sv->lightstyles[i] = (const char*)strdup(savegame_string);
 	}
 
 // load the edicts out of the savegame file
 	entnum = -1;		// -1 is the globals
 	while (!feof(f))
 	{
-		for (i=0 ; i<sizeof(str)-1 ; i++)
+		for (i=0 ; i<sizeof(savegame_string)-1 ; i++)
 		{
 			r = fgetc (f);
 			if (r == EOF || !r)
 				break;
-			str[i] = r;
+			savegame_string[i] = r;
 			if (r == '}')
 			{
 				i++;
 				break;
 			}
 		}
-		if (i == sizeof(str)-1)
+		if (i == sizeof(savegame_string)-1)
 			Sys_Error ("Loadgame buffer overflow");
-		str[i] = 0;
-		start = str;
-		start = g_Common->COM_Parse(str);
+		savegame_string[i] = 0;
+		start = savegame_string;
+		start = g_Common->COM_Parse(savegame_string);
 		if (!g_Common->com_token[0])
 			break;		// end of file
 		if (strcmp(g_Common->com_token,"{"))

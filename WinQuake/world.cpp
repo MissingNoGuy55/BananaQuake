@@ -464,6 +464,8 @@ void CQuakeServer::SV_LinkEdict (edict_t *ent, bool touch_triggers)
 	
 // link it in	
 
+    const char* string = PR_GetString(ent->v.classname);
+
 	if (ent->v.solid == SOLID_TRIGGER)
 		InsertLinkBefore (&ent->area, &node->trigger_edicts);
 	else
@@ -495,7 +497,7 @@ SV_HullPointContents
 int CQuakeServer::SV_HullPointContents (hull_t *hull, int num, vec3_t p)
 {
 	float		d;
-	mclipnode_t	*node;
+    mclipnode_t	*node;
 	mplane_t	*plane;
 
 	while (num >= 0)

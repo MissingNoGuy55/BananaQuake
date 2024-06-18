@@ -413,7 +413,7 @@ struct cmd_function_t
 
 int			cmd_argc;
 char		*cmd_argv[MAX_ARGS];
-const char		*cmd_null_string = "";
+const char		cmd_null_string[] = "";
 const char		*cmd_args = NULL;
 
 cmd_source_t	cmd_source;

@@ -29,14 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-#include <GL/glx.h>
-
-#include <X11/keysym.h>
-#include <X11/cursorfont.h>
-
-#include <X11/extensions/Xxf86dga.h>    // Missi (4/30/2023)
-#include <X11/extensions/xf86vmode.h>
-
 extern XF86VidModeModeInfo** GetVideoModes();
 
 #define WARP_WIDTH              320
@@ -46,11 +38,14 @@ static Display *dpy = NULL;
 static int scrnum;
 static Window win;
 static GLXContext ctx = NULL;
+static bool fullscreen = true;
+
+static bool mouse_override = false;
 
 #define KEY_MASK (KeyPressMask | KeyReleaseMask)
 #define MOUSE_MASK (ButtonPressMask | ButtonReleaseMask | \
 		    PointerMotionMask | ButtonMotionMask )
-#define X_MASK (KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask )
+#define X_MASK (KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask | LeaveWindowMask | EnterWindowMask )
 
 
 unsigned short	d_8to16table[256];
@@ -59,7 +54,7 @@ unsigned char	d_15to8table[65536];
 
 cvar_t	vid_mode = {"vid_mode","0",false};
  
-static bool        mouse_avail = false;
+static bool        mouse_avail = true;
 static bool        mouse_active;
 static int   mx, my;
 static int	old_mouse_x, old_mouse_y;
@@ -307,10 +302,13 @@ static void install_grabs(void)
 					 vid.width / 2, vid.height / 2);
 	}
 
-    /*XGrabKeyboard(dpy, win,
-				  False,
-				  GrabModeAsync, GrabModeAsync,
-                  CurrentTime);*/
+    if (fullscreen)
+    {
+        XGrabKeyboard(dpy, win,
+                      False,
+                      GrabModeAsync, GrabModeAsync,
+                      CurrentTime);
+    }
 
 	mouse_active = true;
 
@@ -328,13 +326,18 @@ static void uninstall_grabs(void)
 	}
 
 	XUngrabPointer(dpy, CurrentTime);
-	XUngrabKeyboard(dpy, CurrentTime);
+
+    if (!mouse_override)
+        XUngrabKeyboard(dpy, CurrentTime);
 
 // inviso cursor
 	XUndefineCursor(dpy, win);
 
 	mouse_active = false;
 }
+
+extern void KeyDown (kbutton_t *b);
+extern void KeyUp (kbutton_t *b);
 
 static void HandleEvents(void)
 {
@@ -376,8 +379,6 @@ static void HandleEvents(void)
 			}
 			break;
 
-			break;
-
 		case ButtonPress:
 			b=-1;
 			if (event.xbutton.button == 1)
@@ -407,6 +408,20 @@ static void HandleEvents(void)
 			win_y = event.xcreatewindow.y;
 			break;
 
+        case EnterNotify:
+            mouse_avail = true;
+            mouse_active = true;
+            install_grabs();
+            KeyDown(&in_mlook);
+            break;
+
+        case LeaveNotify:
+            mouse_avail = false;
+            mouse_active = false;
+            uninstall_grabs();
+            KeyUp(&in_mlook);
+            break;
+
 		case ConfigureNotify :
 			win_x = event.xconfigure.x;
 			win_y = event.xconfigure.y;
@@ -421,27 +436,28 @@ static void HandleEvents(void)
 
 }
 
-static void IN_DeactivateMouse( void ) 
+static void IN_DeactivateMouse( void )
 {
-	if (!mouse_avail || !dpy || !win)
-		return;
+    if (!mouse_avail || !dpy || !win)
+        return;
 
-	if (mouse_active) {
-		uninstall_grabs();
-		mouse_active = false;
-	}
+    if (mouse_active) {
+        uninstall_grabs();
+        mouse_active = false;
+        mouse_avail = false;
+    }
 }
 
-static void IN_ActivateMouse( void ) 
+static void IN_ActivateMouse( void )
 {
-	if (!mouse_avail || !dpy || !win)
-		return;
+    if (!mouse_avail || !dpy || !win)
+        return;
 
-	if (!mouse_active) {
-		mx = my = 0; // don't spazz
-		install_grabs();
-		mouse_active = true;
-	}
+    if (!mouse_active) {
+        mx = my = 0; // don't spazz
+        install_grabs();
+        mouse_active = true;
+    }
 }
 
 
@@ -449,6 +465,9 @@ void VID_Shutdown(void)
 {
 	if (!ctx || !dpy)
 		return;
+
+    mouse_override = false;
+
 	IN_DeactivateMouse();
 	if (dpy) {
 		if (ctx)
@@ -503,7 +522,7 @@ void	VID_SetPalette (unsigned char *palette)
 	FILE *f;
 	char s[255];
 	int dist, bestdist;
-
+#if 0
 //
 // 8 8 8 encoding
 //
@@ -544,6 +563,79 @@ void	VID_SetPalette (unsigned char *palette)
 		}
 		d_15to8table[i]=k;
 	}
+#else
+
+    byte* dst = nullptr;
+    byte* src = nullptr;
+    size_t mark = 0;
+
+    mark = g_MemCache->Hunk_LowMark();
+    pal = (byte*)g_MemCache->Hunk_Alloc<byte>(768);
+
+    if (host->host_basepal)
+        Q_memcpy(pal, host->host_basepal, 768);
+
+	//standard palette, 255 is transparent
+	dst = (byte*)d_8to24table;
+	src = pal;
+	for (i = 0; i < 256; i++)
+	{
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = 255;
+	}
+	((byte*)&d_8to24table[255])[3] = 0;
+
+	//fullbright palette, 0-223 are black (for additive blending)
+	src = pal + 224 * 3;
+	dst = (byte*)&d_8to24table_fbright[224];
+	for (i = 224; i < 256; i++)
+	{
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = 255;
+	}
+	for (i = 0; i < 224; i++)
+	{
+		dst = (byte*)&d_8to24table_fbright[i];
+		dst[3] = 255;
+		dst[2] = dst[1] = dst[0] = 0;
+	}
+
+	//nobright palette, 224-255 are black (for additive blending)
+	dst = (byte*)d_8to24table_nobright;
+	src = pal;
+	for (i = 0; i < 256; i++)
+	{
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = 255;
+	}
+	for (i = 224; i < 256; i++)
+	{
+		dst = (byte*)&d_8to24table_nobright[i];
+		dst[3] = 255;
+		dst[2] = dst[1] = dst[0] = 0;
+	}
+
+	//fullbright palette, for fence textures
+	memcpy(d_8to24table_fbright_fence, d_8to24table_fbright, 256 * 4);
+	d_8to24table_fbright_fence[255] = 0; // Alpha of zero.
+
+	//nobright palette, for fence textures
+	memcpy(d_8to24table_nobright_fence, d_8to24table_nobright, 256 * 4);
+	d_8to24table_nobright_fence[255] = 0; // Alpha of zero.
+
+	//conchars palette, 0 and 255 are transparent
+	// Missi: FIXME: does not even work and makes all the characters blank (9/13/2023)
+	memcpy(d_8to24table_conchars, d_8to24table, 256 * 4);
+	((byte*)&d_8to24table_conchars[0])[3] = 0;
+
+	g_MemCache->Hunk_FreeToLowMark(mark);
+#endif
 }
 
 void CheckMultiTextureExtensions(void) 
@@ -592,12 +684,17 @@ static const char* GL_MakeNiceExtensionsList()
     return real_list;
 }
 
+static void KrabsMe_f()
+{
+    krabsme = true;
+}
+
 /*
 ===============
 GL_Init
 ===============
 */
-void GL_Init (void)
+void CGLRenderer::GL_Init (void)
 {
 	gl_vendor = (const char*)glGetString (GL_VENDOR);
 	Con_Printf ("GL_VENDOR: %s\n", gl_vendor);
@@ -789,7 +886,6 @@ void VID_Init(unsigned char *palette)
 	unsigned long mask;
 	Window root;
 	XVisualInfo *visinfo;
-	bool fullscreen = true;
 	int MajorVersion, MinorVersion;
 	int actualWidth, actualHeight;
 
@@ -798,6 +894,8 @@ void VID_Init(unsigned char *palette)
 	Cvar_RegisterVariable (&in_dgamouse);
 	Cvar_RegisterVariable (&m_filter);
 	Cvar_RegisterVariable (&gl_ztrick);
+
+    g_pCmds->Cmd_AddCommand("krabsme", &KrabsMe_f);
 	
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
@@ -807,7 +905,13 @@ void VID_Init(unsigned char *palette)
 // interpret command-line params
 
 // set vid parameters
-// Missi: Source engine styled "-sw", "-w" and "-h" command support (5/1/2023)
+
+    if (!(dpy = XOpenDisplay(NULL))) {
+        fprintf(stderr, "Error couldn't open the X display\n");
+        exit(1);
+    }
+
+    // Missi: Source engine styled "-sw", "-w" and "-h" command support (5/1/2023)
 	if ((i = g_Common->COM_CheckParm("-window")) != 0)
 		fullscreen = false;
 	if ((i = g_Common->COM_CheckParm("-sw")) != 0)
@@ -817,11 +921,47 @@ void VID_Init(unsigned char *palette)
 		width = atoi(g_Common->com_argv[i+1]);
 	else if (g_Common->COM_CheckParm("-w"))
         width = atoi(g_Common->com_argv[g_Common->COM_CheckParm("-w") + 1]);
+    else
+    {
+        // Missi: grab the current monitor's display resolution to use in cases
+        // like fullscreen, because the default 640x480 will thrash the display
+        // settings in modern Linux distros (6/14/2024)
+        int screenCount = ScreenCount(dpy);
+        Screen* test = nullptr;
+
+        for (int i = 0; i < screenCount; i++)
+        {
+            test = ScreenOfDisplay(dpy, i);
+
+            if (!test)
+                break;
+
+            width = WidthOfScreen(test);
+        }
+    }
 
 	if ((i = g_Common->COM_CheckParm("-height")) != 0)
 		height = atoi(g_Common->com_argv[i+1]);
 	else if (g_Common->COM_CheckParm("-h"))
 		height = Q_atoi(g_Common->com_argv[g_Common->COM_CheckParm("-h") + 1]);
+    else
+    {
+        // Missi: grab the current monitor's display resolution to use in cases
+        // like fullscreen, because the default 640x480 will thrash the display
+        // settings in modern Linux distros (6/14/2024)
+        int screenCount = ScreenCount(dpy);
+        Screen* test = nullptr;
+
+        for (int i = 0; i < screenCount; i++)
+        {
+            test = ScreenOfDisplay(dpy, i);
+
+            if (!test)
+                break;
+
+            height = HeightOfScreen(test);
+        }
+    }
 
 	if ((i = g_Common->COM_CheckParm("-conwidth")) != 0)
 		vid.conwidth = Q_atoi(g_Common->com_argv[i+1]);
@@ -850,11 +990,6 @@ void VID_Init(unsigned char *palette)
 		vid.conheight = Q_atoi(g_Common->com_argv[i+1]);
 	if (vid.conheight < 200)
 		vid.conheight = 200;
-
-	if (!(dpy = XOpenDisplay(NULL))) {
-		fprintf(stderr, "Error couldn't open the X display\n");
-		exit(1);
-	}
 
 	scrnum = DefaultScreen(dpy);
 	root = RootWindow(dpy, scrnum);
@@ -932,7 +1067,7 @@ void VID_Init(unsigned char *palette)
 						visinfo->visual, mask, &attr);
 	XMapWindow(dpy, win);
 
-	if (vidmode_active) {
+    if (vidmode_active) {
 		XMoveWindow(dpy, win, 0, 0);
 		XRaiseWindow(dpy, win);
 		XWarpPointer(dpy, None, win, 0, 0, 0, 0, 0, 0);
@@ -962,7 +1097,7 @@ void VID_Init(unsigned char *palette)
 
 	InitSig(); // trap evil signals
 
-	GL_Init();
+    g_GLRenderer->GL_Init();
 
 	sprintf (gldir, "%s/glquake", g_Common->com_gamedir);
 	Sys_mkdir (gldir);
@@ -974,7 +1109,7 @@ void VID_Init(unsigned char *palette)
 
 	Con_SafePrintf ("Video mode %dx%d initialized.\n", width, height);
 
-	vid.recalc_refdef = 1;				// force a surface cache flush
+    vid.recalc_refdef = 1;				// force a surface cache flush
 }
 
 void Sys_SendKeyEvents(void)
@@ -989,6 +1124,7 @@ void Force_CenterView_f (void)
 
 void IN_Init(void)
 {
+    IN_ActivateMouse();
 }
 
 void IN_Shutdown(void)
@@ -1005,7 +1141,7 @@ void IN_Commands (void)
 	if (!dpy || !win)
 		return;
 
-	if (vidmode_active || key_dest == key_game)
+    if (vidmode_active || key_dest == key_game)
 		IN_ActivateMouse();
 	else
 		IN_DeactivateMouse ();

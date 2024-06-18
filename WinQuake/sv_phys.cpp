@@ -51,8 +51,6 @@ static	vec3_t	vec_origin = {0.0, 0.0, 0.0};
 
 #define	MOVE_EPSILON	0.01
 
-void SV_Physics_Toss (edict_t *ent);
-
 /*
 ================
 SV_CheckAllEnts
@@ -368,7 +366,7 @@ SV_AddGravity
 
 ============
 */
-void SV_AddGravity (edict_t *ent)
+void CQuakeServer::SV_AddGravity (edict_t *ent)
 {
 	float	ent_gravity;
 
@@ -947,6 +945,21 @@ int CQuakeServer::SV_TryUnstick (edict_t *ent, vec3_t oldvel)
 	return 7;		// still not moving
 }
 
+void CQuakeServer::SV_CheckFogVolumes(edict_t *ent)
+{
+    trace_t trace = {};
+    vec_t* end = nullptr;
+
+    if (ent->v.solid == SOLID_FOG_VOLUME)
+    {
+        const char* classname = PR_GetString(ent->v.classname);
+        if (!Q_strncmp(classname, "func_fog_volume", 15))
+        {
+            trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_NORMAL, ent);
+        }
+    }
+}
+
 /*
 =====================
 SV_WalkMove
@@ -974,6 +987,9 @@ void CQuakeServer::SV_WalkMove (edict_t *ent)
 	VectorCopy (ent->v.velocity, oldvel);
 	
 	clip = SV_FlyMove (ent, host->host_frametime, &steptrace);
+
+    // Missi: check fog volumes (6/18/2024)
+    SV_CheckFogVolumes(ent);
 
 	if ( !(clip & 2) )
 		return;		// move didn't block on a step

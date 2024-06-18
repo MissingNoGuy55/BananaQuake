@@ -288,9 +288,6 @@ texture_t * CGLRenderer::R_TextureAnimation (texture_t *base)
 =============================================================
 */
 
-
-extern	CGLTexture* solidskytexture;
-extern	CGLTexture* alphaskytexture;
 extern	float	speedscale;		// for top sky and bottom sky
 
 lpMTexFUNC qglMTexCoord2fSGIS = NULL;
@@ -349,12 +346,12 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 
 			t = R_TextureAnimation (s->texinfo->texture);
 			// Binds world to texture env 0
-			g_GLRenderer->GL_SelectTexture(TEXTURE0_SGIS);
-			g_GLRenderer->GL_Bind (t->gltexture);
+			GL_SelectTexture(TEXTURE0_SGIS);
+			GL_Bind (t->gltexture);
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 			// Binds lightmap to texenv 1
 			GL_EnableMultitexture(); // Same as SelectTexture (TEXTURE1)
-			g_GLRenderer->GL_Bind (lightmap_textures + s->lightmaptexturenum);
+			GL_Bind (lightmap_textures + s->lightmaptexturenum);
 			i = s->lightmaptexturenum;
 			if (lightmap_modified[i])
 			{
@@ -456,7 +453,7 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 		GL_Bind (t->gltexture);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		GL_EnableMultitexture();
-		g_GLRenderer->GL_Bind (lightmap_textures + s->lightmaptexturenum);
+		GL_Bind (lightmap_textures + s->lightmaptexturenum);
 		i = s->lightmaptexturenum;
 		if (lightmap_modified[i])
 		{
@@ -490,10 +487,10 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 		p = s->polys;
 
 		t = R_TextureAnimation (s->texinfo->texture);
-		g_GLRenderer->GL_Bind (t->gltexture);
+		GL_Bind (t->gltexture);
 		DrawGLWaterPoly (p);
 
-		g_GLRenderer->GL_Bind (lightmap_textures + s->lightmaptexturenum);
+		GL_Bind (lightmap_textures + s->lightmaptexturenum);
 		glEnable (GL_BLEND);
 		DrawGLWaterPolyLightmap (p);
 		glDisable (GL_BLEND);
@@ -895,8 +892,13 @@ void CGLRenderer::DrawTextureChains (void)
 	if (!gl_texsort.value) {
 		GL_DisableMultitexture();
 
+		if (usesQ2Sky)
+		{
+			R_DrawSkyChain_Q2(skychain);
+			skychain = NULL;
+		}
 		if (skychain) {
-			R_DrawSkyChain(skychain);
+			R_DrawSkyChain_Q1(skychain);
 			skychain = NULL;
 		}
 
@@ -912,7 +914,12 @@ void CGLRenderer::DrawTextureChains (void)
 		if (!s)
 			continue;
 		if (i == skytexturenum)
-			R_DrawSkyChain (s);
+		{
+			if (usesQ2Sky)
+				R_DrawSkyChain_Q2 (s);
+			else
+				R_DrawSkyChain_Q1 (s);
+		}
 		else if (i == mirrortexturenum && r_mirroralpha.value != 1.0)
 		{
 			R_MirrorChain (s);
@@ -1201,9 +1208,7 @@ void CGLRenderer::R_DrawWorld (void)
 
 	R_BlendLightmaps ();
 
-#ifdef QUAKE2
 	R_DrawSkyBox ();
-#endif
 }
 
 

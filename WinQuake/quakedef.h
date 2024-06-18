@@ -39,6 +39,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef unsigned char byte;
 
+#ifdef __linux__
+#include <GL/glx.h>
+
+#include <X11/keysym.h>
+#include <X11/cursorfont.h>
+
+#include <X11/extensions/Xxf86dga.h>    // Missi (4/30/2023)
+#include <X11/extensions/xf86vmode.h>
+#endif
+
 #if (_WIN64) || (__x86_64__)
 #define VOID_P long long
 #else
@@ -75,6 +85,7 @@ using cxxvector = std::vector<T>;
 
 #ifdef GLQUAKE
 #include <SDL_opengl.h>
+#include <SDL_image.h>
 #endif
 
 
@@ -141,7 +152,7 @@ void	VID_UnlockBuffer (void);
 //
 // per-level limits
 //
-#define	MAX_EDICTS		32000			// FIXME: ouch! ouch! ouch!
+#define	MAX_EDICTS		32000			// Missi: was 600 (6/12/2024)
 #define	MAX_LIGHTSTYLES	64
 #define	MAX_MODELS		2048			// these are sent over the net as bytes
 #define	MAX_SOUNDS		2048			// so they cannot be blindly increased
@@ -290,6 +301,7 @@ typedef struct
 
 #ifdef GLQUAKE
 #include "gl_model.h"
+#include "gl_images.h"
 #else
 #include "model.h"
 #include "d_iface.h"

@@ -102,6 +102,7 @@ typedef struct client_s
 #define	SOLID_BBOX				2		// touch on edge, block
 #define	SOLID_SLIDEBOX			3		// touch on edge, but not an onground
 #define	SOLID_BSP				4		// bsp clip, touch on edge, block
+#define SOLID_FOG_VOLUME        5       //
 
 // edict->deadflag values
 #define	DEAD_NO					0
@@ -302,6 +303,7 @@ public:
 	// flags ent->v.modified
 
 	void SV_InitBoxHull(void);
+    void SV_CheckFogVolumes(edict_t *ent);
 
 	hull_t* SV_HullForBox(vec3_t mins, vec3_t maxs);
 
@@ -333,7 +335,10 @@ public:
 	void SV_MoveBounds(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, vec3_t boxmins, vec3_t boxmaxs);
 
 	trace_t SV_Move(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, edict_t* passedict);
-	// mins and maxs are reletive
+
+    void SV_AddGravity (edict_t *ent);
+
+    // mins and maxs are reletive
 
 	// if the entire move stays in a solid volume, trace.allsolid will be set
 

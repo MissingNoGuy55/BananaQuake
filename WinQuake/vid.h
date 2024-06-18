@@ -25,6 +25,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // a pixel can be one, two, or four bytes
 typedef byte pixel_t;
 
+struct SDL_Renderer;
+struct SDL_Window;
+struct SDL_Rect;
+struct SDL_Surface;
+struct SDL_Texture;
+
+extern SDL_Renderer* main_renderer;
+extern SDL_Window* main_window;
+extern SDL_Rect main_rect;
+extern SDL_Surface* main_surface;
+extern SDL_Texture* main_texture;
+
 typedef struct vrect_s
 {
 	int				x,y,width,height;
@@ -33,7 +45,7 @@ typedef struct vrect_s
 
 typedef struct
 {
-	pixel_t			*buffer;		// invisible buffer
+    byte			*buffer;		// invisible buffer
 	pixel_t			*colormap;		// 256 * VID_GRADES size
 	unsigned short	*colormap16;	// 256 * VID_GRADES size
 	int				fullbright;		// index of first fullbright color
@@ -43,7 +55,7 @@ typedef struct
 	float			aspect;		// width / height -- < 0 is taller than wide
 	int				numpages;
 	int				recalc_refdef;	// if true, recalc vid-based stuff
-	pixel_t			*conbuffer;
+    byte			*conbuffer;
 	int				conrowbytes;
 	unsigned		conwidth;
 	unsigned		conheight;

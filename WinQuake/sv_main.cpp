@@ -1124,6 +1124,14 @@ void CQuakeServer::SV_SpawnServer (char *server)
 
 	Cvar_SetValue ("skill", (float)host->current_skill);
 	
+	if (pr_vectors && progs->numvectors > 0)
+	{
+		for (i = 0; i < progs->numvectors; i++)
+		{
+			pr_vectors[i].data->Clear();
+		}
+	}
+
 //
 // set up the new server
 //
@@ -1224,35 +1232,52 @@ void CQuakeServer::SV_SpawnServer (char *server)
 	int pos = 0;
 
 	level_has_fog = false;
+#ifdef GLQUAKE
 
-	for (const char* parse = g_Common->COM_Parse(lump); (parse) && parse[0]; parse = g_Common->COM_Parse(parse))
+    const char* parse = lump;
+
+    for (parse = g_Common->COM_Parse(lump); (parse) && parse[0]; parse = g_Common->COM_ParseStringNewline(parse))
 	{
-		if (!Q_strncmp(&parse[2], "fog", 3))
+        if (parse[0] == '}')
+            break;
+        if (!Q_strncmp(parse, "\"fog\"", 5))
 		{
+            float val = 1.0f;
+
 			Con_Printf("key: %s", parse);
-			parse = g_Common->COM_Parse(parse);
+            parse = g_Common->COM_ParseStringNewline(parse);
 			Con_Printf("value: %s", parse);
 
-			fog_color_vec[0] = atof(&parse[2]);
-			fog_color_vec[1] = atof(&parse[2 + sizeof(float)]);
-			fog_color_vec[2] = atof(&parse[2 + sizeof(float) * 2]);
-			fog_color_vec[3] = atof(&parse[2 + sizeof(float) * 3]);
+            sscanf(parse, "\"%f %f %f %f\"", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2], &fog_color_vec[3]);
 
-			level_fog_density.value = fog_color_vec[3];
-			level_has_fog = true;
-			continue;
+            char outputVal[256] = {};
+            snprintf(outputVal, sizeof(outputVal), "%f %f %f %f", fog_color_vec[0], fog_color_vec[1], fog_color_vec[2], fog_color_vec[3]);
+
+            Cvar_Set("fog", outputVal);
+            Cvar_SetValue("fog_density", fog_color_vec[3]);
+            level_has_fog = true;
 		}
-		if (!Q_strncmp(&parse[2], "fog_density", 11))
-		{
-			Con_Printf("key: %s", parse);
-			parse = g_Common->COM_Parse(parse);
-			Con_Printf("value: %s", parse);
+        if (!Q_strncmp(parse, "\"fog_start\"", 11))
+        {
+            parse = g_Common->COM_ParseStringNewline(parse);
 
-			level_fog_density.value = atof(&parse[2]);
-			continue;
-		}
-	}
+            float outputVal = 1.0f;
+            sscanf(parse, "\"%f\"", &outputVal);
 
+            Cvar_SetValue("fog_start", outputVal);
+
+        }
+        if (!Q_strncmp(parse, "\"fog_end\"", 9))
+        {
+            parse = g_Common->COM_ParseStringNewline(parse);
+
+            float outputVal = 1.0f;
+            sscanf(parse, "\"%f\"", &outputVal);
+
+            Cvar_SetValue("fog_end", outputVal);
+        }
+    }
+#endif
 	sv->active = true;
 
 // all setup is completed, any further precache statements are errors
@@ -1270,7 +1295,21 @@ void CQuakeServer::SV_SpawnServer (char *server)
 	for (i=0,host_client = svs.clients ; i<svs.maxclients ; i++, host_client++)
 		if (host_client->active)
 			SV_SendServerinfo (host_client);
-	
+
+    for (int j = 0; j < sv->num_edicts; j++)
+    {
+        edict_t* ed = EDICT_NUM(j);
+        const char* classname = PR_GetString(ed->v.classname);
+
+        if (!Q_strncmp(classname, "func_fog_volume", 15))
+        {
+            ed->v.solid = SOLID_TRIGGER;
+            ed->v.movetype = MOVETYPE_NONE;
+            Con_Printf("Level has Quake 3-styled fog volumes\n");
+            break;
+        }
+    }
+
 	Con_DPrintf ("Server spawned.\n");
 }
 

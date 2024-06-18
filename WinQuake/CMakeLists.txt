@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 
+cmake_policy(SET CMP0076 NEW) # target_sources converting relative paths to absolute
+
 # add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/sdl2 ${CMAKE_CURRENT_SOURCE_DIR}/sdl2/lib)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/sdl2/build ${CMAKE_CURRENT_SOURCE_DIR}/build)
@@ -21,6 +23,7 @@ else()
                 find_package(Xext REQUIRED CONFIG REQUIRED COMPONENTS X11)
 
                 find_package(vorbis REQUIRED CONFIG REQUIRED COMPONENTS vorbis)
+                find_package(SDL_image REQUIRED CONFIG REQUIRED COMPONENTS SDL_image)
 
         endif (UNIX)
 
@@ -240,6 +243,7 @@ console.cpp
 crc.cpp
 cvar.cpp
 gl_draw.cpp
+gl_images.cpp
 gl_mesh.cpp
 gl_model.cpp
 gl_refrag.cpp
@@ -312,6 +316,7 @@ d_local.h
 dosisms.h
 draw.h
 glquake.h
+gl_images.h
 host.h
 in_win.h
 input.h
@@ -363,11 +368,11 @@ endif (WIN32)
 
 if (UNIX)
 
-# add_executable(bananaquakesoftware ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
+#add_executable(bananaquakesoftware)
 add_executable(bananaquakeopengl)
 
-set(WINQUAKE_SOURCES d_copy.s
-d_draw.s
+#[[
+target_sources(bananaquakesoftware PRIVATE d_draw.s
 d_draw16.s
 d_parta.s
 d_polysa.s
@@ -384,7 +389,6 @@ surf8.s
 worlda.s
 r_aclipa.s
 snd_mixa.s
-sys_dosa.s
 
 qe3.ico
 quake.ico
@@ -452,6 +456,8 @@ snd_codec.cpp
 snd_dma.cpp
 snd_mem.cpp
 snd_mix.cpp
+snd_mp3.cpp
+snd_mp3tag.cpp
 snd_vorbis.cpp
 snd_wave.cpp
 snd_linux.cpp
@@ -464,13 +470,13 @@ sv_user.cpp
 sys_linux.cpp
 utils.cpp
 view.cpp
-vid_sunx.cpp
+vid_sdl_software.cpp
 wad.cpp
 world.cpp
 zone.cpp
 )
 
-set(WINQUAKE_HEADERS anorm_dots.h
+target_sources(bananaquakesoftware PUBLIC anorm_dots.h
 anorms.h
 asm_draw.h
 asm_i386.h
@@ -531,7 +537,7 @@ wad.h
 world.h
 zone.h
 )
-
+]]
 target_sources(bananaquakeopengl PRIVATE math.s
 worlda.s
 snd_mixa.s
@@ -554,6 +560,7 @@ console.cpp
 crc.cpp
 cvar.cpp
 gl_draw.cpp
+gl_images.cpp
 gl_mesh.cpp
 gl_model.cpp
 gl_refrag.cpp
@@ -624,6 +631,7 @@ d_local.h
 dosisms.h
 draw.h
 glquake.h
+gl_images.h
 host.h
 in_win.h
 input.h
@@ -849,6 +857,7 @@ endif (APPLE)
 
 list(APPEND includepathWinQuake
     "${CMAKE_CURRENT_SOURCE_DIR}/sdl2/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/SDL_image/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/codecs/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/scitech/INCLUDE"
 )
@@ -882,6 +891,7 @@ list(APPEND includepathLibraryWinQuakeSoftware
 
 list(APPEND includepathLibraryWinQuakeOpenGLx64
     "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x64"
+    "${CMAKE_CURRENT_SOURCE_DIR}/SDL_image/include"
         $<$<CONFIG:Debug>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Debug>
         $<$<CONFIG:RelWithDebInfo>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/RelWithDebInfo>
         $<$<CONFIG:Release>:${CMAKE_CURRENT_BUILD_DIR}/sdl2/Release>
@@ -896,6 +906,7 @@ if (UNIX)
 list(APPEND includepathLibraryWinQuake
     "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x64"
     "${CMAKE_CURRENT_SOURCE_DIR}/sdl2/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/SDL_image/include"
     "/usr/local/lib"
 )
 endif (UNIX)
@@ -904,6 +915,7 @@ if (APPLE)
 list(APPEND includepathLibraryWinQuake
     "${CMAKE_CURRENT_SOURCE_DIR}/codecs/x64"
     "${CMAKE_CURRENT_SOURCE_DIR}/sdl2/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/SDL_image/include"
 )
 endif (APPLE)
 
@@ -912,20 +924,27 @@ endif (APPLE)
 if (WIN32)
 message(PROJECT_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}")  
 message(PROJECT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")  
-# add_executable(bananaquakesoftware WIN32 ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
+#add_executable(bananaquakesoftware WIN32 ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
 add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
 add_custom_command(TARGET bananaquakeopengl 
-                   POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:bananaquakeopengl> "${CMAKE_CURRENT_SOURCE_DIR}"
-				   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Debug>:Debug/SDL2d.dll>" "${CMAKE_CURRENT_SOURCE_DIR}"
-                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Release>:Release/SDL2.dll>" "${CMAKE_CURRENT_SOURCE_DIR}"
-                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:MinSizeRel>:MinSizeRel/SDL2.dll>" "${CMAKE_CURRENT_SOURCE_DIR}"
-                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Debug>:Debug/SDL2d.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Debug>:Debug>"
-                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Release>:Release/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Release>:Release>"
-                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:MinSizeRel>:MinSizeRel/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:MinSizeRel>:MinSizeRel>"
-				   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo>"
+                    POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:bananaquakeopengl> "${CMAKE_CURRENT_SOURCE_DIR}"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Debug>:Debug/SDL2d.dll>" "${CMAKE_CURRENT_SOURCE_DIR}"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Release>:Release/SDL2.dll>" "${CMAKE_CURRENT_SOURCE_DIR}"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:MinSizeRel>:MinSizeRel/SDL2.dll>" "${CMAKE_CURRENT_SOURCE_DIR}"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Debug>:Debug/SDL2d.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Debug>:Debug>"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Release>:Release/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Release>:Release>"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:MinSizeRel>:MinSizeRel/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:MinSizeRel>:MinSizeRel>"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo>"
 )
 endif (WIN32)
+
+if (UNIX)
+add_custom_command(TARGET bananaquakeopengl
+                    POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:bananaquakeopengl> "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+endif (UNIX)
 
 if (APPLE)
 # add_executable(bananaquakesoftware ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
@@ -934,7 +953,6 @@ endif(APPLE)
 
 #=================================================================
 #[[
-target_compile_definitions(bananaquakesoftware PUBLIC MGL40_COMPAT)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_VORBIS)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_WAVE)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_MP3)
@@ -995,6 +1013,7 @@ odbccp32.lib)
 endif (MSVC)
 
 target_link_libraries(bananaquakeopengl SDL2::SDL2)
+#target_link_libraries(bananaquakesoftware SDL2::SDL2)
 
 if (MSVC)
 target_compile_options(bananaquakeopengl PRIVATE "/MP")
@@ -1017,10 +1036,30 @@ target_link_libraries(bananaquakeopengl vorbisfile)
 target_link_libraries(bananaquakeopengl GL)
 target_link_libraries(bananaquakeopengl GLU)
 
+target_link_libraries(bananaquakeopengl SDL2)
+target_link_libraries(bananaquakeopengl SDL2main)
+target_link_libraries(bananaquakeopengl SDL2_image)
+#[[
+target_link_libraries(bananaquakesoftware X11)
+target_link_libraries(bananaquakesoftware Xext)
+target_link_libraries(bananaquakesoftware Xxf86dga)
+target_link_libraries(bananaquakesoftware Xxf86vm)
+
+target_link_libraries(bananaquakesoftware m)
+target_link_libraries(bananaquakesoftware mad)
+target_link_libraries(bananaquakesoftware dl)
+target_link_libraries(bananaquakesoftware vorbis)
+target_link_libraries(bananaquakesoftware vorbisfile)
+
+target_link_libraries(bananaquakesoftware SDL2)
+target_link_libraries(bananaquakesoftware SDL2main)
+target_link_libraries(bananaquakesoftware SDL2_image)
+]]
 # Missi: prevents "missing .note.GNU-stack section implies executable stack" warning in recent binutils on Linux
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -z noexecstack")
 
 target_compile_options(bananaquakeopengl PUBLIC "-Dstricmp=strcasecmp -g")
+#target_compile_options(bananaquakesoftware PUBLIC "-Dstricmp=strcasecmp -g")
 
 endif (UNIX)
 

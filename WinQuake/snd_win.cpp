@@ -47,7 +47,7 @@ CSoundDMA* g_SoundSystem;
 // SDL_AudioDeviceID g_SoundDeviceID;
 
 //dma_t CSoundInternal::sn = { NULL };
-volatile dma_t* CSoundDMA::shm;
+dma_t* CSoundDMA::shm;
 
 static int	buffersize;
 
@@ -56,17 +56,17 @@ static int	buffersize;
 S_BlockSound
 ==================
 */
-void CSoundDMA::S_BlockSound (void)
-{
-
-	if (sound_started && snd_blocked == 0)	/* ++snd_blocked == 1 */
-	{
-		snd_blocked = 1;
-		S_ClearBuffer();
-		if (shm)
-			SDL_LockAudioDevice(g_SoundDeviceID);
-	}
-}
+//void CSoundDMA::S_BlockSound (void)
+//{
+//
+//	if (sound_started && snd_blocked == 0)	/* ++snd_blocked == 1 */
+//	{
+//		snd_blocked = 1;
+//		S_ClearBuffer();
+//		if (shm)
+//			SDL_LockAudioDevice(g_SoundDeviceID);
+//	}
+//}
 
 
 /*
@@ -74,17 +74,17 @@ void CSoundDMA::S_BlockSound (void)
 S_UnblockSound
 ==================
 */
-void CSoundDMA::S_UnblockSound (void)
-{
-	if (!sound_started || !snd_blocked)
-		return;
-	if (snd_blocked == 1)			/* --snd_blocked == 0 */
-	{
-		snd_blocked = 0;
-		SDL_UnlockAudioDevice(g_SoundDeviceID);
-		S_ClearBuffer();
-	}
-}
+//void CSoundDMA::S_UnblockSound (void)
+//{
+//	if (!sound_started || !snd_blocked)
+//		return;
+//	if (snd_blocked == 1)			/* --snd_blocked == 0 */
+//	{
+//		snd_blocked = 0;
+//		SDL_UnlockAudioDevice(g_SoundDeviceID);
+//		S_ClearBuffer();
+//	}
+//}
 
 /*
 ==================

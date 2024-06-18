@@ -284,7 +284,8 @@ void Mod_LoadTextures (lump_t *l)
 			tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
 		// the pixels immediately follow the structures
 		memcpy ( tx+1, mt+1, pixels);
-		
+
+        g_GLRenderer->SetUsesQuake2Skybox(false);
 
 		if (!Q_strncmp(mt->name,"sky",3))	
 			g_GLRenderer->R_InitSky (tx);
@@ -844,9 +845,9 @@ void Mod_LoadFaces (lump_t *l, int bsp2)
 			if (!Q_strncmp(out->texinfo->texture->name, "sky", 3))	// sky
 			{
 				out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
-#ifndef QUAKE2
-				g_GLRenderer->GL_SubdivideSurface(out);	// cut up polygon for warps
-#endif
+
+                if (!g_GLRenderer->UsesQuake2Skybox())
+                    g_GLRenderer->GL_SubdivideSurface(out);	// cut up polygon for warps
 				continue;
 			}
 
@@ -858,7 +859,7 @@ void Mod_LoadFaces (lump_t *l, int bsp2)
 					out->extents[i] = 16384;
 					out->texturemins[i] = -8192;
 				}
-				g_GLRenderer->GL_SubdivideSurface(out);	// cut up polygon for warps
+                g_GLRenderer->GL_SubdivideSurface(out);	// cut up polygon for warps
 				continue;
 			}
 		}

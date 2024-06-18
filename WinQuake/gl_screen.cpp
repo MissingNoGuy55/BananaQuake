@@ -23,6 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_draw.h"
 
+bool krabsme = false;
+COpenGLPic* SysErrorTex;
+byte* SysErrorTexBuf;
+
 /*
 
 background clear
@@ -807,6 +811,40 @@ void SCR_TileClear (void)
 	}
 }
 
+static byte* imgbuf = {};
+static char krabsPath[512] = {};
+static byte* krabs = nullptr;
+static FILE* krabsFile = nullptr;
+static bool showingKrabs = false;
+
+void DrawKrabs()
+{
+    if (!krabsPath[0])
+    {
+        snprintf(krabsPath, sizeof(krabsPath), "%s/%s", g_Common->com_gamedir, "krabs.tga");
+        krabsFile = fopen(krabsPath, "rb");
+        krabs = LoadTGA(krabsFile);
+
+        SysErrorTex = new COpenGLPic;
+
+        SysErrorTex->tex = g_GLRenderer->GL_LoadTexture(nullptr, "krabs", 1440, 1080, SRC_RGBA, krabs, 0, TEXPREF_NONE);
+
+		g_BGM->BGM_Play("eminemragtime.mp3");
+    }
+    else
+    {
+		if (krabsme)
+		{
+			static double krabsTime = Sys_DoubleTime() + 10.0;
+
+			g_GLRenderer->Draw_TGAPic(0, 0, SysErrorTex->tex);
+
+			if (Sys_DoubleTime() >= krabsTime)
+				Sys_Error("WALLET!\n");
+		}
+    }
+}
+
 /*
 ==================
 SCR_UpdateScreen
@@ -870,7 +908,7 @@ void SCR_UpdateScreen (void)
 //
 	SCR_SetUpToDrawConsole ();
 	
-	V_RenderView ();
+    V_RenderView ();
 
 	g_GLRenderer->GL_Set2D ();
 
@@ -905,6 +943,9 @@ void SCR_UpdateScreen (void)
 		if (crosshair.value)
 			g_GLRenderer->Draw_Character (scr_vrect.x + scr_vrect.width/2, scr_vrect.y + scr_vrect.height/2, '+');
 		
+        if (krabsme)
+            DrawKrabs();
+
 		if (scr_ram)
 			SCR_DrawRam ();
 		if (scr_net)

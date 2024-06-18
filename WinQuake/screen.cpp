@@ -325,9 +325,9 @@ void SCR_Init (void)
 //
 // register our commands
 //
-	Cmd_AddCommand ("screenshot",SCR_ScreenShot_f);
-	Cmd_AddCommand ("sizeup",SCR_SizeUp_f);
-	Cmd_AddCommand ("sizedown",SCR_SizeDown_f);
+    g_pCmds->Cmd_AddCommand ("screenshot",SCR_ScreenShot_f);
+    g_pCmds->Cmd_AddCommand ("sizeup",SCR_SizeUp_f);
+    g_pCmds->Cmd_AddCommand ("sizedown",SCR_SizeDown_f);
 
 	scr_ram = ResolveRenderer()->Draw_PicFromWad ("ram");
 	scr_net = ResolveRenderer()->Draw_PicFromWad ("net");
@@ -641,8 +641,8 @@ void SCR_ScreenShot_f (void)
 	D_EnableBackBufferAccess ();	// enable direct drawing of console to back
 									//  buffer
 
-	WritePCXfile (pcxname, vid.buffer, vid.width, vid.height, vid.rowbytes,
-				  host->host_basepal);
+    //WritePCXfile (pcxname, vid.buffer, vid.width, vid.height, vid.rowbytes,
+    //			  host->host_basepal);
 
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
 									//  for linear writes all the time
@@ -931,6 +931,7 @@ void SCR_UpdateScreen (void)
 		Sbar_Draw ();
 		SCR_DrawConsole ();
 		M_Draw ();
+        //SDL_RenderPresent(main_renderer);
 	}
 
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in

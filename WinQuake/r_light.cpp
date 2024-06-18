@@ -96,10 +96,10 @@ void CCoreRenderer::R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 	{
 		if (surf->dlightframe != r_dlightframecount)
 		{
-			surf->dlightbits = 0;
-			surf->dlightframe = r_dlightframecount;
+            surf->dlightbits[bit >> 5] = 1U << (bit & 31);
+            surf->dlightframe = r_dlightframecount;
 		}
-		surf->dlightbits |= bit;
+        surf->dlightbits[bit >> 5] |= 1U << (bit & 31);
 	}
 
 	R_MarkLights (light, bit, node->children[0]);
