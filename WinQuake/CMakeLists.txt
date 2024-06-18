@@ -6,29 +6,30 @@ cmake_policy(SET CMP0076 NEW) # target_sources converting relative paths to abso
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/sdl2/build ${CMAKE_CURRENT_SOURCE_DIR}/build)
 set(CMAKE_CURRENT_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build")
+set(CMAKE_ASM_NASM_COMPILER "${CMAKE_CURRENT_SOURCE_DIR}/nasm.exe")
 
 # Create an option to switch between a system sdl library and a vendored sdl library
 option(MYGAME_VENDORED "Use vendored libraries" ON)
 
 if(MYGAME_VENDORED)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/sdl2 EXCLUDE_FROM_ALL)
+    #add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/sdl_image EXCLUDE_FROM_ALL)
 else()
     # 1. Look for a SDL2 package, 2. look for the SDL2 component and 3. fail if none can be found
     find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
 
-        if (UNIX)
-
+		if (UNIX)
                 # X11
                 find_package(X11 REQUIRED CONFIG REQUIRED COMPONENTS X11)
                 find_package(Xext REQUIRED CONFIG REQUIRED COMPONENTS X11)
-
-                find_package(vorbis REQUIRED CONFIG REQUIRED COMPONENTS vorbis)
-                find_package(SDL_image REQUIRED CONFIG REQUIRED COMPONENTS SDL_image)
-
         endif (UNIX)
+                find_package(vorbis REQUIRED CONFIG REQUIRED COMPONENTS vorbis)
 
     # 1. Look for a SDL2 package, 2. Look for the SDL2maincomponent and 3. DO NOT fail when SDL2main is not available
     find_package(SDL2Main REQUIRED CONFIG COMPONENTS SDL2)
+
+	# Missi: SDL_image is not required to build, however it is here for usefulness. Uncomment this and the related lines pertaining to this to use it
+	#find_package(SDL_image REQUIRED CONFIG REQUIRED COMPONENTS SDL_image SDL2)
 endif()
 
 enable_language(CXX ASM)
@@ -936,6 +937,10 @@ add_custom_command(TARGET bananaquakeopengl
                     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Release>:Release/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Release>:Release>"
                     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:MinSizeRel>:MinSizeRel/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:MinSizeRel>:MinSizeRel>"
                     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo>"
+					COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:Debug>:Debug/SDL2_imaged.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Debug>:Debug>"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:Release>:Release/SDL2_image.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Release>:Release>"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:MinSizeRel>:MinSizeRel/SDL2_image.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:MinSizeRel>:MinSizeRel>"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo/SDL2_image.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo>"
 )
 endif (WIN32)
 
@@ -990,10 +995,20 @@ endif(WIN32)
 
 if (MSVC)
 
-target_link_libraries(bananaquakeopengl $<$<CONFIG:Debug>:SDL2d.lib>
+#[[
+
+$<$<CONFIG:Debug>:SDL2d.lib>
 $<$<CONFIG:RelWithDebInfo>:SDL2.lib>
 $<$<CONFIG:Release>:SDL2.lib>
 $<$<CONFIG:MinSizeRel>:SDL2.lib>
+$<$<CONFIG:Debug>:SDL2_imaged.lib>
+$<$<CONFIG:RelWithDebInfo>:SDL2_imaged.lib>
+$<$<CONFIG:Release>:SDL2_imaged.lib>
+$<$<CONFIG:MinSizeRel>:SDL2_imaged.lib>
+
+]]
+
+target_link_libraries(bananaquakeopengl SDL2::SDL2
 libvorbisfile.lib
 libvorbis.lib
 libopusfile.lib
@@ -1012,7 +1027,6 @@ odbccp32.lib)
 
 endif (MSVC)
 
-target_link_libraries(bananaquakeopengl SDL2::SDL2)
 #target_link_libraries(bananaquakesoftware SDL2::SDL2)
 
 if (MSVC)
