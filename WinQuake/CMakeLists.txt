@@ -937,10 +937,10 @@ add_custom_command(TARGET bananaquakeopengl
                     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:Release>:Release/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Release>:Release>"
                     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:MinSizeRel>:MinSizeRel/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:MinSizeRel>:MinSizeRel>"
                     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl2/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo/SDL2.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo>"
-					COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:Debug>:Debug/SDL2_imaged.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Debug>:Debug>"
-                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:Release>:Release/SDL2_image.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Release>:Release>"
-                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:MinSizeRel>:MinSizeRel/SDL2_image.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:MinSizeRel>:MinSizeRel>"
-                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo/SDL2_image.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo>"
+					#COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:Debug>:Debug/SDL2_imaged.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Debug>:Debug>"
+                    #COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:Release>:Release/SDL2_image.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:Release>:Release>"
+                    #COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:MinSizeRel>:MinSizeRel/SDL2_image.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:MinSizeRel>:MinSizeRel>"
+                    #COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BUILD_DIR}/sdl_image/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo/SDL2_image.dll>" "${CMAKE_CURRENT_BUILD_DIR}/$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo>"
 )
 endif (WIN32)
 
