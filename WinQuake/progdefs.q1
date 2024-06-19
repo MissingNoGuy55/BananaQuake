@@ -138,13 +138,6 @@ typedef struct
 	string_t	noise1;
 	string_t	noise2;
 	string_t	noise3;
-	string_t	fog_start;
-	string_t	fog_end;
-	string_t	fog_color_r;
-	string_t	fog_color_g;
-	string_t	fog_color_b;
-	string_t	fog_density;
-	string_t	fog_transition_time;
 } entvars_t;
 
-#define PROGHEADER_CRC 51373
+#define PROGHEADER_CRC 5927
