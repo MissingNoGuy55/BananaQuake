@@ -858,7 +858,7 @@ void CSoundDMA::S_CheckMDMAMusic()
 
 		cl.cdtrack = 12;
 		cl.looptrack = true;
-		g_BGM->BGM_PlayCDtrack((byte)cl.cdtrack, cl.looptrack);
+		g_pBGM->BGM_PlayCDtrack((byte)cl.cdtrack, cl.looptrack);
 		oldsongplaying = false;
 		songplaying = true;
 	}
@@ -866,7 +866,7 @@ void CSoundDMA::S_CheckMDMAMusic()
 	{
 		cl.cdtrack = oldtrack;
 		cl.looptrack = oldlooptrack;
-		g_BGM->BGM_PlayCDtrack((byte)cl.cdtrack, cl.looptrack);
+		g_pBGM->BGM_PlayCDtrack((byte)cl.cdtrack, cl.looptrack);
 		oldsongplaying = true;
 		songplaying = false;
 	}
@@ -980,7 +980,9 @@ CSoundDMA::CSoundDMA() : snd_blocked(0),
 	curtrack(0),
 	curlooptrack(0),
 	oldtrack(0),
-	oldlooptrack(0)
+	oldlooptrack(0),
+	s_rawend(0),
+	unused(0)
 {
 	for (int i = 0; i < NUM_AMBIENTS; i++)
 		ambient_sfx[i] = NULL;
@@ -1025,6 +1027,8 @@ CSoundDMA::~CSoundDMA()
 	curlooptrack = 0;
 	oldtrack = 0;
 	oldlooptrack = 0;
+	s_rawend = 0;
+	unused = 0;
 }
 
 void CSoundDMA::S_Play(void)

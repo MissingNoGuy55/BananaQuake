@@ -1,5 +1,34 @@
 #pragma once
 
+#include "snd_codec.h"
+
+#define ANY_CODECTYPE	0xFFFFFFFF
+#define CDRIP_TYPES	(CODECTYPE_VORBIS | CODECTYPE_MP3 | CODECTYPE_FLAC | CODECTYPE_WAV | CODECTYPE_OPUS)
+#define CDRIPTYPE(x)	(((x) & CDRIP_TYPES) != 0)
+
+typedef enum _bgm_player
+{
+	BGM_NONE = -1,
+	BGM_MIDIDRV = 1,
+	BGM_STREAMER
+} bgm_player_t;
+
+typedef struct music_handler_s
+{
+	unsigned int	type;	/* 1U << n (see snd_codec.h)	*/
+	bgm_player_t	player;	/* Enumerated bgm player type	*/
+	int	is_available;	/* -1 means not present		*/
+	const char* ext;	/* Expected file extension	*/
+	const char* dir;	/* Where to look for music file */
+	struct music_handler_s* next;
+} music_handler_t;
+
+typedef struct artistinfo_s
+{
+	const char* band;
+	const char* song;
+} artistinfo_t;
+
 class CBackgroundMusic
 {
 public:
@@ -37,13 +66,16 @@ public:
 	static void BGM_Jump_f(void);
 
 	static bool		bgmloop;
-	static cvar_t	bgm_extmusic;
 
 	static bool	no_extmusic;
 	static float	old_volume;
 
+	static music_handler_t* music_handlers;
+
+	static snd_stream_t* bgmstream;
+
 };
 
-extern CBackgroundMusic* g_BGM;
+extern CBackgroundMusic* g_pBGM;
 
 extern cvar_t		bgm_extmusic;

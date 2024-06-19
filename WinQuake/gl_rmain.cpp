@@ -1206,19 +1206,19 @@ void CGLRenderer::R_RenderView (void)
 		{
 			s_bFogColorLerping = true;
 			s_fFogLerpTimeStamp = Sys_DoubleTime();
-			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 100.0f);
+			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 1000.0f);
 		}
 		if ((!s_bFogDensityLerping) && (s_fFogDensity != level_fog_density.value))
 		{
 			s_bFogDensityLerping = true;
 			s_fFogLerpTimeStamp = Sys_DoubleTime();
-			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 100.0f);
+			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 1000.0f);
 		}
 		if ((!s_bFogStartEndLerping) && (s_fFogStart != level_fog_start.value || s_fFogEnd != level_fog_end.value))
 		{
 			s_bFogStartEndLerping = true;
 			s_fFogLerpTimeStamp = Sys_DoubleTime();
-			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 100.0f);
+			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 1000.0f);
 		}
 
 		if (s_bFogColorLerping)

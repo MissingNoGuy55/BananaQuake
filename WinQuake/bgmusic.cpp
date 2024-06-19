@@ -1,40 +1,20 @@
 #include "quakedef.h"
-#include "snd_codec.h"
 
 #define MUSIC_DIRNAME	"music"
 
-CBackgroundMusic* g_BGM;
+CBackgroundMusic* g_pBGM;
 
 bool	CBackgroundMusic::no_extmusic = false;
 float	CBackgroundMusic::old_volume = -1.0f;
 
 bool CBackgroundMusic::bgmloop = false;
-cvar_t CBackgroundMusic::bgm_extmusic = { "bgm_extmusic", "1", true };
+cvar_t bgm_extmusic = { "bgm_extmusic", "1", true };
 
 cvar_t cl_showsonginfo = { "cl_showsonginfo", "0", true };
 
-typedef enum _bgm_player
-{
-	BGM_NONE = -1,
-	BGM_MIDIDRV = 1,
-	BGM_STREAMER
-} bgm_player_t;
+music_handler_t* CBackgroundMusic::music_handlers = {};
 
-typedef struct music_handler_s
-{
-	unsigned int	type;	/* 1U << n (see snd_codec.h)	*/
-	bgm_player_t	player;	/* Enumerated bgm player type	*/
-	int	is_available;	/* -1 means not present		*/
-	const char* ext;	/* Expected file extension	*/
-	const char* dir;	/* Where to look for music file */
-	struct music_handler_s* next;
-} music_handler_t;
-
-typedef struct artistinfo_s
-{
-	const char* band;
-	const char* song;
-} artistinfo_t;
+snd_stream_t* CBackgroundMusic::bgmstream = {};
 
 static music_handler_t wanted_handlers[] =
 {
@@ -141,14 +121,6 @@ static void GetSongArtistAndName(const char* filename, uintptr_t* path_id, const
 	fclose(f);
 }
 
-static music_handler_t* music_handlers = NULL;
-
-#define ANY_CODECTYPE	0xFFFFFFFF
-#define CDRIP_TYPES	(CODECTYPE_VORBIS | CODECTYPE_MP3 | CODECTYPE_FLAC | CODECTYPE_WAV | CODECTYPE_OPUS)
-#define CDRIPTYPE(x)	(((x) & CDRIP_TYPES) != 0)
-
-static snd_stream_t* bgmstream = NULL;
-
 void CBackgroundMusic::BGM_Play_f(void)
 {
 	if (g_pCmds->Cmd_Argc() == 2) {
@@ -208,6 +180,8 @@ void CBackgroundMusic::BGM_Jump_f(void)
 CBackgroundMusic::CBackgroundMusic()
 {
 	Cvar_RegisterVariable(&cl_showsonginfo);
+
+	BGM_Init();
 }
 
 CBackgroundMusic::~CBackgroundMusic()
@@ -387,15 +361,12 @@ void CBackgroundMusic::BGM_PlayCDtrack(byte track, bool looping)
 	if (CDAudio_Play(track, looping) == 0)
 		return;			/* success */
 
-	if (music_handlers == NULL)
+	if (music_handlers == nullptr)
 		return;
 
 	if (no_extmusic || !bgm_extmusic.value)
 		return;
 
-	prev_id = 0;
-	type = 0;
-	ext = NULL;
 	handler = music_handlers;
 	while (handler)
 	{
@@ -423,6 +394,7 @@ void CBackgroundMusic::BGM_PlayCDtrack(byte track, bool looping)
 		snprintf(tmp, sizeof(tmp), "%s/track%02d.%s",
 			MUSIC_DIRNAME, (int)track, ext);
 		bgmstream = S_CodecOpenStreamType(tmp, type, bgmloop);
+
 		if (!bgmstream)
 			Con_Printf("Couldn't handle music file %s\n", tmp);
 		else
@@ -471,6 +443,8 @@ void CBackgroundMusic::BGM_Resume(void)
 	}
 }
 
+byte	raw[16384] = {};
+
 void CBackgroundMusic::BGM_UpdateStream(void)
 {
 	bool did_rewind = false;
@@ -478,7 +452,6 @@ void CBackgroundMusic::BGM_UpdateStream(void)
 	int	bufferSamples = 0;
 	int	fileSamples = 0;
 	int	fileBytes = 0;
-	byte	raw[16384] = {};
 
 	if (bgmstream->status != STREAM_PLAY)
 		return;

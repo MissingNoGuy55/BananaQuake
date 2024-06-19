@@ -728,7 +728,7 @@ void CQuakeHost::_Host_Frame (float time)
 // update audio
 	if (cls.state != ca_dedicated)
 	{
-		g_BGM->BGM_Update();
+		g_pBGM->BGM_Update();
 
 		if (cls.signon == SIGNONS)
 		{
@@ -952,8 +952,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 #endif
 
 		CDAudio_Init ();
-		g_BGM = new CBackgroundMusic;
-		g_BGM->BGM_Init();
+		g_pBGM = new CBackgroundMusic;
 
 		Sbar_Init ();
 		CL_Init ();

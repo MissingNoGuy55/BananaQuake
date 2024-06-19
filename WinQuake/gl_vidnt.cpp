@@ -764,6 +764,7 @@ void	VID_SetPalette (unsigned char *palette)
 	FILE *f = nullptr;
 
 	// Missi: don't load the palette twice. this also prevents the gross "darkening" effect seen in GLQuake (5/31/2024)
+	// TODO: still need to find where this occurs on Linux (6/18/2024)
 	/*g_Common->COM_FOpenFile("gfx/palette.lmp", &f, NULL);
 	if (!f)
 	{

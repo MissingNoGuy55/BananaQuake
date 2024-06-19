@@ -148,7 +148,8 @@ snd_stream_t* S_CodecOpenStreamType(const char* filename, unsigned int type, boo
 	if (stream) {
 		if (codec->codec_open(stream))
 			stream->status = STREAM_PLAY;
-		else	S_CodecUtilClose(&stream);
+		else
+			S_CodecUtilClose(&stream);
 	}
 	return stream;
 }

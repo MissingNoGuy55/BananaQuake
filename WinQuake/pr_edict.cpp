@@ -951,19 +951,19 @@ const char *ED_ParseEdict (const char *data, edict_t *ent)
 		if (!data)
 			Sys_Error ("ED_ParseEntity: EOF without closing brace");
 		
-// anglehack is to allow QuakeEd to write single scalar angles
-// and allow them to be turned into vectors. (FIXME...)
-if (!strcmp(g_Common->com_token, "angle"))
-{
-	Q_strcpy (g_Common->com_token, "angles");
-	anglehack = true;
-}
-else
-	anglehack = false;
+		// anglehack is to allow QuakeEd to write single scalar angles
+		// and allow them to be turned into vectors. (FIXME...)
+		if (!strcmp(g_Common->com_token, "angle"))
+		{
+			Q_strcpy (g_Common->com_token, "angles");
+			anglehack = true;
+		}
+		else
+			anglehack = false;
 
-// FIXME: change light to _light to get rid of this hack
-if (!strcmp(g_Common->com_token, "light"))
-	Q_strcpy (g_Common->com_token, "light_lev");	// hack for single light def
+		// FIXME: change light to _light to get rid of this hack
+		if (!strcmp(g_Common->com_token, "light"))
+			Q_strcpy (g_Common->com_token, "light_lev");	// hack for single light def
 
 		Q_strcpy (keyname, g_Common->com_token);
 
@@ -985,8 +985,8 @@ if (!strcmp(g_Common->com_token, "light"))
 
 		init = true;	
 
-// keynames with a leading underscore are used for utility comments,
-// and are immediately discarded by quake
+		// keynames with a leading underscore are used for utility comments,
+		// and are immediately discarded by quake
 		if (keyname[0] == '_')
 			continue;
 		
