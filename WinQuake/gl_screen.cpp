@@ -157,6 +157,7 @@ void SCR_CenterPrint (const char *str)
 	}
 }
 
+#define MAX_CENTER_STRING_LENGTH 256
 
 void SCR_DrawCenterString (void)
 {
@@ -183,7 +184,7 @@ void SCR_DrawCenterString (void)
 	do	
 	{
 	// scan the width of the line
-		for (l=0 ; l<40 ; l++)
+		for (l=0 ; l< MAX_CENTER_STRING_LENGTH; l++)	// Missi: was 40 (6/21/2024)
 			if (start[l] == '\n' || !start[l])
 				break;
 		x = (vid.width - l*8)/2;
