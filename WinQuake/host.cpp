@@ -997,6 +997,10 @@ void CQuakeHost::Host_Shutdown(void)
 
 	Host_WriteConfiguration (); 
 	CDAudio_Shutdown ();
+
+	g_pBGM->BGM_Shutdown();
+	delete g_pBGM;
+
 	NET_Shutdown ();
 
 	if (g_SoundSystem)
