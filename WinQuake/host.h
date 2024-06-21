@@ -39,7 +39,7 @@ public:
 
     bool		msg_suppress_1;		// suppresses resolution and cache size console output
                                     //  an fullscreen DIB focus gain/loss
-    int			current_skill;		// skill level for currently loaded level (in case
+    static int	current_skill;		// skill level for currently loaded level (in case
                                     //  the user changes the cvar while the level is
                                     //  running, this reflects the level actually in use)
 
@@ -51,6 +51,7 @@ public:
 	bool Host_FilterTime(float time);
 	void Host_GetConsoleCommands(void);
 	void Host_ServerFrame(void);
+
 	void Host_InitCommands(void);
 	//void Host_InitVCR(quakeparms_t<byte*> parms);
 	void Host_Init(quakeparms_t<byte*> parms);
@@ -58,8 +59,6 @@ public:
 	void Host_Error(const char* error, ...);
 	void Host_EndGame(const char* message, ...);
 	void Host_Frame(float time);
-	static void Host_Quit_f(void);
-	static void Host_Status_f(void);
 	void Host_ClientCommands(const char* fmt, ...);
 	void Host_ShutdownServer(bool crash);
 
@@ -111,6 +110,44 @@ public:
 	cvar_t	temp1 = { "temp1","0" };
 
 	void Host_FindMaxClients(void);
+
+	// Missi: console commands (6/21/2024)
+	static void Host_SavegameComment(char* text);
+	static void Host_Color_f(void);
+	static void Host_Kill_f(void);
+	static void Host_Pause_f(void);
+	static void Host_PreSpawn_f(void);
+	static void Host_Spawn_f(void);
+	static void Host_Begin_f(void);
+	static void Host_Kick_f(void);
+	static void Host_Give_f(void);
+	static void Host_Viewmodel_f(void);
+	static void Host_Viewframe_f(void);
+	static void Host_Viewnext_f(void);
+	static void Host_Viewprev_f(void);
+	static void Host_Demos_f(void);
+	static void Host_Startdemos_f(void);
+	static void Host_Stopdemo_f(void);
+	static void Host_Fly_f(void);
+	static void Host_Ping_f(void);
+	static void Host_Map_f(void);
+	static void Host_Changelevel_f(void);
+	static void Host_Restart_f(void);
+	static void Host_Reconnect_f(void);
+	static void Host_Connect_f(void);
+	static void Host_Savegame_f(void);
+	static void Host_Loadgame_f(void);
+	static void Host_Name_f(void);
+	static void Host_Version_f(void);
+	static void Host_Say(bool teamonly);
+	static void Host_Say_f(void);
+	static void Host_Say_Team_f(void);
+	static void Host_Tell_f(void);
+	static void Host_Quit_f(void);
+	static void Host_Status_f(void);
+	static void Host_God_f(void);
+	static void Host_Notarget_f(void);
+	static void Host_Noclip_f(void);
 
 private:
 
