@@ -1020,5 +1020,7 @@ void CQuakeHost::Host_Shutdown(void)
 			pr_vectors[i].data->Clear();
 		}
 	}
+
+	delete this;
 }
 
