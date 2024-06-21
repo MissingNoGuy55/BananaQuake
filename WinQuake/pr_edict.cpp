@@ -79,7 +79,7 @@ static void PR_AllocStringSlots(void)
 
 	pr_maxknownstrings += PR_STRING_ALLOCSLOTS;
 	Con_Printf("PR_AllocStringSlots: realloc'ing for %d slots\n", pr_maxknownstrings);
-	pr_knownstrings.Expand(pr_maxknownstrings + sizeof(char)); // (const char**)realloc((void*)pr_knownstrings, pr_maxknownstrings * sizeof(char*));
+	pr_knownstrings.Expand(pr_maxknownstrings); // (const char**)realloc((void*)pr_knownstrings, pr_maxknownstrings * sizeof(char*));
 }
 
 int PR_AllocString(int size, char** ptr)
