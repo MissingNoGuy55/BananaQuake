@@ -120,7 +120,10 @@ bool VCR_CanSendMessage (qsocket_t *sock)
 	if (host_time != next.time || next.op != VCR_OP_CANSENDMESSAGE || next.session != *(long *)(&sock->driverdata))
 		Sys_Error ("VCR missmatch");
 
-	Sys_FileRead(vcrFile, &ret, sizeof(int));
+    // Missi: what the fuck? (6/19/2024)
+    //Sys_FileRead(vcrFile, &ret, sizeof(int));
+
+    Sys_FileRead(vcrFile, &ret, sizeof(bool));
 
 	VCR_ReadNext ();
 
