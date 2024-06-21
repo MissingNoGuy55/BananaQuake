@@ -169,6 +169,7 @@ class CQuakeServer
 public:
 
 	CQuakeServer();
+	~CQuakeServer();
 
 	void SV_Init(void);
 

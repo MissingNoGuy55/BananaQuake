@@ -58,6 +58,39 @@ CQuakeServer::CQuakeServer()
 	memset(&datagram_buf, 0, sizeof(datagram_buf));
 }
 
+CQuakeServer::~CQuakeServer()
+{
+	active = false;
+	datagram = {};
+	edicts = nullptr;
+	lastcheck = 0;
+	lastchecktime = 0.0;
+	loadgame = false;
+	max_edicts = 0;
+	num_edicts = 0;
+	paused = false;
+	reliable_datagram = {};
+	signon = {};
+	state = {};
+	time = 0.0;
+
+	level_has_fog = false;
+
+	memset(&worldmodel, 0, sizeof(worldmodel));
+	memset(&sound_precache, 0, sizeof(sound_precache));
+	memset(&signon_buf, 0, sizeof(signon_buf));
+	memset(&model_precache, 0, sizeof(model_precache));
+	memset(&modelname, 0, sizeof(modelname));
+	memset(&models, 0, sizeof(models));
+	memset(&name, 0, sizeof(name));
+	memset(&reliable_datagram_buf, 0, sizeof(reliable_datagram_buf));
+	memset(&lightstyles, 0, sizeof(lightstyles));
+	memset(&datagram_buf, 0, sizeof(datagram_buf));
+
+	free(edicts);
+	edicts = nullptr;
+}
+
 /*
 ===============
 SV_Init
