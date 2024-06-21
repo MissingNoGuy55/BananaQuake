@@ -1149,7 +1149,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 // allocate server memory
 	sv->max_edicts = MAX_EDICTS;
 	
-	sv->edicts = g_MemCache->Hunk_AllocName<edict_t>(sv->max_edicts * pr_edict_size, "edicts");
+	sv->edicts = (edict_t*)malloc(sv->max_edicts * pr_edict_size);
 
 	sv->datagram.maxsize = sizeof(sv->datagram_buf);
 	sv->datagram.cursize = 0;
