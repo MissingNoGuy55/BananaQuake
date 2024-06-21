@@ -113,9 +113,6 @@ static void GetSongArtistAndName(const char* filename, uintptr_t* path_id, const
 			artist[Q_strlen(artist)] = '\0';
 			artistinfo.band = artist;
 		}
-
-		fclose(f);
-		return;
 	}
 
 	fclose(f);
