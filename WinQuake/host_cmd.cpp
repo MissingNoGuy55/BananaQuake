@@ -464,10 +464,10 @@ Host_Savegame_f
 */
 void Host_Savegame_f (void)
 {
-	char	name[256];
-	FILE	*f;
-	int		i;
-	char	comment[SAVEGAME_COMMENT_LENGTH+1];
+	char	name[256] = {};
+	FILE	*f = nullptr;
+	int		i = 0;
+	char	comment[SAVEGAME_COMMENT_LENGTH + 1] = {};
 
 	if (cmd_source != src_command)
 		return;
@@ -561,16 +561,16 @@ Host_Loadgame_f
 */
 void Host_Loadgame_f (void)
 {
-	char	name[MAX_OSPATH];
-	FILE	*f;
-	char	mapname[MAX_QPATH];
-	float	time, tfloat;
-	const char *start;
-	int		i, r;
-	edict_t	*ent;
-	int		entnum;
-	int		version;
-	float			spawn_parms[NUM_SPAWN_PARMS];
+	char	name[MAX_OSPATH] = {};
+	FILE	*f = nullptr;
+	char	mapname[MAX_QPATH] = {};
+	float	time = 0.0f, tfloat = 0.0f;
+	const char *start = nullptr;
+	int		i = 0, r = 0;
+	edict_t	*ent = nullptr;
+	int		entnum = 0;
+	int		version = 0;
+	float	spawn_parms[NUM_SPAWN_PARMS] = {};
 
 	memset(savegame_string, 0, sizeof(savegame_string));
 
