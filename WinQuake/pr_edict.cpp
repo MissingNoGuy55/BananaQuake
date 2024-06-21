@@ -79,7 +79,7 @@ static void PR_AllocStringSlots(void)
 
 	pr_maxknownstrings += PR_STRING_ALLOCSLOTS;
 	Con_Printf("PR_AllocStringSlots: realloc'ing for %d slots\n", pr_maxknownstrings);
-	pr_knownstrings.GrowVector(pr_maxknownstrings + sizeof(char)); // (const char**)realloc((void*)pr_knownstrings, pr_maxknownstrings * sizeof(char*));
+	pr_knownstrings.Expand(pr_maxknownstrings + sizeof(char)); // (const char**)realloc((void*)pr_knownstrings, pr_maxknownstrings * sizeof(char*));
 }
 
 int PR_AllocString(int size, char** ptr)
@@ -1146,8 +1146,8 @@ void PR_LoadProgs (void)
 	pr_numknownstrings = 0;
 	pr_maxknownstrings = 0;
 	pr_stringssize = progs->numstrings;
-	if (pr_knownstrings.Count() > 0)
-		pr_knownstrings.RemoveAll();
+	if (pr_knownstrings.GetNumAllocated() > 0)
+		pr_knownstrings.RemoveEverything();
 	PR_SetEngineString("");
 
 	pr_globaldefs = (ddef_t *)((byte *)progs + progs->ofs_globaldefs);

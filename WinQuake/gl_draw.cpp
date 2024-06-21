@@ -458,7 +458,7 @@ CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
 		gl.th = (float)p->height / (float)GL_PadConditional(p->height); //Missi -- copied from QuakeSpasm (5/28/2022)
 	}
 
-	p->datavec.AddMultipleToTail(sizeof(COpenGLPic), (byte*)&gl);
+	p->datavec.AddMultipleToEnd(sizeof(COpenGLPic), (byte*)&gl);
     
 	return p;
 }
@@ -504,7 +504,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	// the translatable player picture just for the menu
 	// configuration dialog
 	if (!strcmp (path, "gfx/menuplyr.lmp"))
-		memcpy (menuplyr_pixels, pic->pic.datavec.Base(), qpicbuf->width * qpicbuf->height);
+		memcpy (menuplyr_pixels, pic->pic.datavec.GetBase(), qpicbuf->width * qpicbuf->height);
 
     // Missi: this had TEXPREF_PAD in the flags, but for some reason that screws up texture dimensions on Linux (why???) (6/18/2024)
     gl.tex = GL_LoadTexture(NULL, path, qpicbuf->width, qpicbuf->height, SRC_INDEXED, qpicbuf->data, sizeof(int) * 2, TEXPREF_ALPHA | TEXPREF_NOPICMIP); // | TEXPREF_PAD);
@@ -513,7 +513,7 @@ CQuakePic* CGLRenderer::Draw_CachePic (const char *path)
 	gl.tl = 0;
 	gl.th = 1;
 
-	pic->pic.datavec.AddMultipleToTail(sizeof(COpenGLPic), (byte*)&gl);
+	pic->pic.datavec.AddMultipleToEnd(sizeof(COpenGLPic), (byte*)&gl);
 
  	return &pic->pic;
 }
@@ -787,7 +787,7 @@ void CGLRenderer::Draw_AlphaPic (int x, int y, CQuakePic *pic, float alpha)
 
 	if (scrap_dirty)
 		Scrap_Upload ();
-	gl = (COpenGLPic*)pic->datavec.Base();
+	gl = (COpenGLPic*)pic->datavec.GetBase();
 	glDisable(GL_ALPHA_TEST);
 	glEnable (GL_BLEND);
 //	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -822,7 +822,7 @@ void CGLRenderer::Draw_Pic (int x, int y, CQuakePic *pic)
 	if (scrap_dirty)
 		Scrap_Upload();
 
-	gl = (COpenGLPic*)pic->datavec.Base();
+	gl = (COpenGLPic*)pic->datavec.GetBase();
 	GL_Bind(gl->tex);
 	glBegin(GL_QUADS);
 	glTexCoord2f(gl->sl, gl->tl);
@@ -841,7 +841,7 @@ void CGLRenderer::Draw_TGAPic(int x, int y, CGLTexture *glt)
 {
     int internalformat = (glt->flags & TEXPREF_ALPHA) ? gl_alpha_format : gl_solid_format;
 
-    glTexImage2D(GL_TEXTURE_2D, 0, internalformat, glt->width, glt->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, glt->pic.datavec.Base());
+    glTexImage2D(GL_TEXTURE_2D, 0, internalformat, glt->width, glt->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, glt->pic.datavec.GetBase());
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -958,7 +958,7 @@ void CGLRenderer::Draw_TileClear (int x, int y, int w, int h)
 	{
 		COpenGLPic* gl;
 
-		gl = (COpenGLPic*)draw_backtile->datavec.Base();
+		gl = (COpenGLPic*)draw_backtile->datavec.GetBase();
 
 		glColor3f(1, 1, 1);
 		g_GLRenderer->GL_Bind(gl->tex); // *(int*)draw_backtile->data;
@@ -1462,7 +1462,7 @@ void CGLRenderer::GL_Upload8(byte* data, int width, int height, bool alpha)
 		}
 	}
 
-	tex.pic.datavec.AddMultipleToTail(s, (byte*)trans);
+	tex.pic.datavec.AddMultipleToEnd(s, (byte*)trans);
 
 	GL_Upload32(&tex, trans);
 }
@@ -1714,7 +1714,7 @@ void CGLRenderer::GL_LoadImage32(CGLTexture* glt, unsigned* data)
 	// upload
 	GL_Bind(glt);
 	internalformat = (glt->flags & TEXPREF_ALPHA) ? gl_alpha_format : gl_solid_format;
-	glt->pic.datavec.AddMultipleToTail(glt->source_width * glt->source_height, (byte*)data);
+	glt->pic.datavec.AddMultipleToEnd(glt->source_width * glt->source_height, (byte*)data);
 	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, glt->width, glt->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	// upload mipmaps
@@ -1945,9 +1945,9 @@ CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic)
 {
 	uintptr_t offset;
 
-	offset = (uintptr_t)pic->datavec.Base() - (uintptr_t)wad_base;
+	offset = (uintptr_t)pic->datavec.GetBase() - (uintptr_t)wad_base;
 
-	return GL_LoadTexture(NULL, "", pic->width, pic->height, SRC_INDEXED, pic->datavec.Base(), TEXPREF_ALPHA);
+	return GL_LoadTexture(NULL, "", pic->width, pic->height, SRC_INDEXED, pic->datavec.GetBase(), TEXPREF_ALPHA);
 }
 
 /****************************************/
