@@ -65,6 +65,8 @@ public:
 	static void BGM_Stop_f(void);
 	static void BGM_Jump_f(void);
 
+	void GetSongArtistAndName(const char* filename, uintptr_t* path_id, const char* ext, artistinfo_t& artistinfo);
+
 	static bool		bgmloop;
 
 	static bool	no_extmusic;
