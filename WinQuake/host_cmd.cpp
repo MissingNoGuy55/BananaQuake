@@ -958,7 +958,7 @@ void Host_Name_f (void)
 	
 void Host_Version_f (void)
 {
-	Con_Printf ("Version %4.2f\n", VERSION);
+	Con_Printf ("Version %4.2f\n", BANANAQUAKE_VERSION);
 	Con_Printf ("Exe: %s %s\n", __TIME__, __DATE__);
 }
 

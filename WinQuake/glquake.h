@@ -182,7 +182,16 @@ extern unsigned int		d_8to24table_nobright_fence[256];
 extern unsigned int		d_8to24table_conchars[256];
 extern unsigned int		d_8to24table_shirt[256];
 extern unsigned int		d_8to24table_pants[256];
-extern unsigned char d_15to8table[65536];
+extern unsigned char    d_15to8table[65536];
+
+extern double s_dWorldFogColor[3];			// Missi: used to keep track of the world fog settings for when the player is not in a fog volume (6/21/2024)
+extern double s_dCurFogDensity;				// Missi: current fog density, is the result of the lerp in R_RenderView and fed to glFogf (6/21/2024)
+extern double s_dCurFogStart;				// Missi: current fog starting distance, is the result of the lerp in R_RenderView and fed to glFogf (6/21/2024)
+extern double s_dCurFogEnd;					// Missi: current fog ending distance, is the result of the lerp in R_RenderView and fed to glFogf (6/21/2024)
+extern double s_dFogLerpTime;				// Missi: current fog lerp time, is used as the alpha for the lerp in R_RenderView (6/21/2024)
+extern double s_dFogLerpDensityTime;		// Missi: current fog density, is the result of the lerp in R_RenderView and fed to glFogf (6/21/2024)
+extern double s_dFogLerpStartTime;			// Missi: current fog density, is the result of the lerp in R_RenderView and fed to glFogf (6/21/2024)
+extern double s_dFogLerpEndTime;			// Missi: current fog density, is the result of the lerp in R_RenderView and fed to glFogf (6/21/2024)
 
 // Missi: BananaQuake stuff (2/17/22)
 
@@ -607,9 +616,15 @@ extern CGLRenderer* g_GLRenderer;	// Missi (2/21/2022)
 extern cvar_t level_fog_color_r;
 extern cvar_t level_fog_color_g;
 extern cvar_t level_fog_color_b;
+extern cvar_t level_fog_color_goal_r;
+extern cvar_t level_fog_color_goal_g;
+extern cvar_t level_fog_color_goal_b;
 extern cvar_t level_fog_density;
+extern cvar_t level_fog_density_goal;
 extern cvar_t level_fog_start;
+extern cvar_t level_fog_start_goal;
 extern cvar_t level_fog_end;
+extern cvar_t level_fog_end_goal;
 extern cvar_t level_fog_force;
 extern cvar_t level_fog_lerp_time;
 

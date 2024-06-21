@@ -29,19 +29,19 @@ public:
 	cvar_t		sys_nostdout;
 	//cvar_t		developer;
 
-	bool	host_initialized;		// true if into command execution
+    bool        host_initialized;		// true if into command execution
 	double		host_frametime;
-	byte* host_basepal;
-	byte* host_colormap;
+    byte*       host_basepal;
+    byte*       host_colormap;
 	int			host_framecount;	// incremented every frame, never reset
 	double		realtime;			// not bounded in any way, changed at
-											// start of every frame, never reset
+                                    // start of every frame, never reset
 
     bool		msg_suppress_1;		// suppresses resolution and cache size console output
-											//  an fullscreen DIB focus gain/loss
+                                    //  an fullscreen DIB focus gain/loss
     int			current_skill;		// skill level for currently loaded level (in case
-											//  the user changes the cvar while the level is
-											//  running, this reflects the level actually in use)
+                                    //  the user changes the cvar while the level is
+                                    //  running, this reflects the level actually in use)
 
     bool		isDedicated;
 

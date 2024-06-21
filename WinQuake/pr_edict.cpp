@@ -530,7 +530,7 @@ const char *PR_GlobalStringNoContents (int ofs)
 	
 	def = ED_GlobalAtOfs(ofs);
 	if (!def)
-		snprintf (line, sizeof(line), "%i(???)", ofs);
+        snprintf (line, sizeof(line), "%i(?)", ofs);    // Missi: -Wtrigraphs fix (6/19/2024)
 	else
 		snprintf (line, sizeof(line), "%i(%s)", ofs, PR_GetString(def->s_name));
 	

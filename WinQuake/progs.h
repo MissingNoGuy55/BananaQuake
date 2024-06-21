@@ -73,6 +73,11 @@ public:
 	void		AddToStart(T& elem);
 	void		AddToStart(const T& elem);
 
+	void		AddMultipleToStart(int num, T& element);
+	void		AddMultipleToStart(int num, const T& element);
+	void		AddMultipleToEnd(int num, T& element);
+	void		AddMultipleToEnd(int num, const T& element);
+
 	//============================
 	// Missi: Removing elements (6/13/2024)
 	//============================
@@ -85,6 +90,7 @@ public:
 
 	void		Clear();
 	void		ShiftAllRight();
+	void		ShiftMultipleRight(int num);
 	string_t	GetName() const			{ return m_iName; }
 	const int	GetNumAllocated() const { return m_iAllocated; }
 	T*			GetBase() const			{ return m_pBase; }
@@ -209,6 +215,106 @@ void CProgVector<T>::AddToStart(const T& elem)
 }
 
 template<typename T>
+void CProgVector<T>::AddMultipleToStart(int num, T& element)
+{
+	if (!m_pBase)
+		m_pBase = (T*)malloc(sizeof(T));
+	else
+	{
+		T* test = (T*)realloc(m_pBase, (sizeof(T) * m_iSize) + (sizeof(T) * num));
+		m_pBase = static_cast<T*>(test);
+		ShiftMultipleRight(num);
+	}
+
+	if (m_pBase)
+	{
+		for (int i = 0; i < num; i++)
+		{
+			m_pBase[0] = new T;
+			memcpy(m_pBase[0], element, sizeof(T));
+			m_iSize += sizeof(T);
+			m_iAllocated++;
+		}
+	}
+}
+
+template<typename T>
+void CProgVector<T>::AddMultipleToStart(int num, const T& element)
+{
+	if (!m_pBase)
+		m_pBase = (T*)malloc(sizeof(T));
+	else
+	{
+		T* test = (T*)realloc(m_pBase, (sizeof(T) * m_iSize) + (sizeof(T) * num));
+		m_pBase = static_cast<T*>(test);
+		ShiftMultipleRight(num);
+	}
+
+	if (m_pBase)
+	{
+		for (int i = 0; i < num; i++)
+		{
+			m_pBase[0] = new T;
+			memcpy(m_pBase[0], element, sizeof(T));
+			m_iSize += sizeof(T);
+			m_iAllocated++;
+		}
+	}
+}
+
+template<typename T>
+void CProgVector<T>::AddMultipleToEnd(int num, T& element)
+{
+	if (GetNumAllocated() >= MAX_PROG_VECTOR_ALLOC)
+		return Con_Warning("WARNING: vector \"%s\" attempted to add an element that overflows MAX_PROG_VECTOR_ALLOC!\n", PR_GetString(GetName()));
+
+	if (!m_pBase)
+		m_pBase = (T*)malloc(sizeof(T));
+	else
+	{
+		T* newMem = (T*)realloc(m_pBase, (sizeof(T) * m_iSize) * num);
+		m_pBase = static_cast<T*>(newMem);
+	}
+
+	if (m_pBase)
+	{
+		for (int i = 0; i < num; i++)
+		{
+			m_pBase[m_iAllocated + i] = new T;
+			memcpy(m_pBase[m_iAllocated + i], element, sizeof(T));
+			m_iSize += sizeof(T);
+			m_iAllocated++;
+		}
+	}
+}
+
+template<typename T>
+void CProgVector<T>::AddMultipleToEnd(int num, const T& element)
+{
+	if (GetNumAllocated() >= MAX_PROG_VECTOR_ALLOC)
+		return Con_Warning("WARNING: vector \"%s\" attempted to add an element that overflows MAX_PROG_VECTOR_ALLOC!\n", PR_GetString(GetName()));
+
+	if (!m_pBase)
+		m_pBase = (T*)malloc(sizeof(T));
+	else
+	{
+		T* newMem = (T*)realloc(m_pBase, (sizeof(T) * m_iSize) * num);
+		m_pBase = static_cast<T*>(newMem);
+	}
+
+	if (m_pBase)
+	{
+		for (int i = 0; i < num; i++)
+		{
+			m_pBase[m_iAllocated+i] = new T;
+			memcpy(m_pBase[m_iAllocated+i], element, sizeof(T));
+			m_iSize += sizeof(T);
+			m_iAllocated++;
+		}
+	}
+}
+
+template<typename T>
 void CProgVector<T>::RemoveElement(int elem)
 {
 	if (!m_pBase)
@@ -230,6 +336,13 @@ void CProgVector<T>::ShiftAllRight()
 {
 	if ((m_iAllocated > 0))
 		memmove(&m_pBase[m_iAllocated], &m_pBase[0], m_iAllocated * sizeof(T));
+}
+
+template<typename T>
+void CProgVector<T>::ShiftMultipleRight(int num)
+{
+	if ((m_iAllocated > 0))
+		memmove(&m_pBase[m_iAllocated + num], &m_pBase[0], (m_iAllocated * sizeof(T)) * num);
 }
 
 struct progvector_t
@@ -383,3 +496,4 @@ void ED_PrintNum (int ent);
 extern progvector_t* ED_FindCPPVector(const char* name);
 
 eval_t* GetEdictFieldValue(edict_t* ed, const char* field);
+const char *PR_UglyValueString (int type, eval_t *val);

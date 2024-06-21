@@ -1235,46 +1235,97 @@ void CQuakeServer::SV_SpawnServer (char *server)
 #ifdef GLQUAKE
 
     const char* parse = lump;
+    ddef_t* def = nullptr;
 
-    for (parse = g_Common->COM_Parse(lump); (parse) && parse[0]; parse = g_Common->COM_ParseStringNewline(parse))
-	{
-        if (parse[0] == '}')
-            break;
-        if (!Q_strncmp(parse, "\"fog\"", 5))
-		{
-            parse = g_Common->COM_ParseStringNewline(parse);
+    eval_t* fog_eval = GetEdictFieldValue(ent, "fog");
+    eval_t* fog_density_eval = GetEdictFieldValue(ent, "fog_density");
+    eval_t* fog_lerp_time_eval = GetEdictFieldValue(ent, "fog_lerp_time");
+    eval_t* fog_start_eval = GetEdictFieldValue(ent, "fog_start");
+    eval_t* fog_end_eval = GetEdictFieldValue(ent, "fog_end");
 
-            sscanf(parse, "\"%f %f %f %f\"", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2], &fog_color_vec[3]);
+    if (fog_eval)
+    {
+        const char* fog_value = PR_UglyValueString(ev_string, fog_eval);
+        if (fog_value[0])
+        {
+            Con_DPrintf("Found fog value: %s\n", fog_value);
 
-            char outputVal[256] = {};
-            snprintf(outputVal, sizeof(outputVal), "%f %f %f %f", fog_color_vec[0], fog_color_vec[1], fog_color_vec[2], fog_color_vec[3]);
+            sscanf(fog_value, "%f %f %f %f", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2], &fog_color_vec[3]);
 
             Cvar_SetValue("fog_r", fog_color_vec[0]);
-			Cvar_SetValue("fog_g", fog_color_vec[1]);
-			Cvar_SetValue("fog_b", fog_color_vec[2]);
+            Cvar_SetValue("fog_g", fog_color_vec[1]);
+            Cvar_SetValue("fog_b", fog_color_vec[2]);
             Cvar_SetValue("fog_density", fog_color_vec[3]);
+
+            s_dWorldFogColor[0] = fog_color_vec[0];
+            s_dWorldFogColor[1] = fog_color_vec[1];
+            s_dWorldFogColor[2] = fog_color_vec[2];
+
             level_has_fog = true;
-		}
-        if (!Q_strncmp(parse, "\"fog_start\"", 11))
-        {
-            parse = g_Common->COM_ParseStringNewline(parse);
-
-            float outputVal = 1.0f;
-            sscanf(parse, "\"%f\"", &outputVal);
-
-            Cvar_SetValue("fog_start", outputVal);
-
-        }
-        if (!Q_strncmp(parse, "\"fog_end\"", 9))
-        {
-            parse = g_Common->COM_ParseStringNewline(parse);
-
-            float outputVal = 1.0f;
-            sscanf(parse, "\"%f\"", &outputVal);
-
-            Cvar_SetValue("fog_end", outputVal);
         }
     }
+    if (fog_density_eval)
+    {
+        const char* fog_density_value = PR_UglyValueString(ev_string, fog_density_eval);
+        if (fog_density_value[0])
+        {
+            Con_DPrintf("Found fog_density value: %s\n", fog_density_value);
+
+            float fog_density = 0.0f;
+
+            sscanf(fog_density_value, "%f", &fog_density);
+
+            Cvar_SetValue("fog_density", fog_density);
+            fog_color_vec[3] = fog_density;
+        }
+    }
+    if (fog_lerp_time_eval)
+    {
+        const char* fog_lerp_time_value = PR_UglyValueString(ev_string, fog_lerp_time_eval);
+        if (fog_lerp_time_value[0])
+        {
+            Con_DPrintf("Found fog_lerp_time value: %s\n", fog_lerp_time_value);
+
+            float fog_lerp_time = 0.0f;
+
+            sscanf(fog_lerp_time_value, "%f", &fog_lerp_time);
+
+            Cvar_SetValue("fog_lerp_time", fog_lerp_time);
+            s_dFogLerpTime = Sys_DoubleTime() + fog_lerp_time;
+        }
+    }
+    if (fog_start_eval)
+    {
+        const char* fog_start_value = PR_UglyValueString(ev_string, fog_start_eval);
+
+        if (fog_start_value[0])
+        {
+            Con_DPrintf("Found fog_start value: %s\n", fog_start_value);
+
+            float fog_start = 0.0f;
+
+            sscanf(fog_start_value, "%f", &fog_start);
+
+            Cvar_SetValue("fog_start", fog_start);
+            s_dCurFogStart = fog_start;
+        }
+    }
+    if (fog_end_eval)
+    {
+        const char* fog_end_value = PR_UglyValueString(ev_string, fog_end_eval);
+        if (fog_end_value[0])
+        {
+            Con_DPrintf("Found fog_end value: %s\n", fog_end_value);
+
+            float fog_end = 0.0f;
+
+            sscanf(fog_end_value, "%f", &fog_end);
+
+            Cvar_SetValue("fog_end", fog_end);
+            s_dCurFogEnd = fog_end;
+        }
+    }
+
 #endif
 	sv->active = true;
 

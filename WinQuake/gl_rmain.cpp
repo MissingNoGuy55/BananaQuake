@@ -104,14 +104,17 @@ int skytexturenum;
 static bool s_bFogColorLerping = false;
 static bool s_bFogDensityLerping = false;
 static bool s_bFogStartEndLerping = false;
-static float s_fFogColorRed = 0.0f;
-static float s_fFogColorGreen = 0.0f;
-static float s_fFogColorBlue = 0.0f;
-static float s_fFogDensity = 0.0f;
-static float s_fFogLerpTime = 0.0f;
-static float s_fFogLerpTimeStamp = 0.0f;
-static float s_fFogStart = 0.0f;
-static float s_fFogEnd = 0.0f;
+
+double s_dWorldFogColor[3] = { 0.0, 0.0, 0.0 };
+double s_dCurFogDensity = 0.0;
+double s_dCurFogStart = 0.0;
+double s_dCurFogEnd = 0.0;
+double s_dFogLerpTime = 0.0;
+double s_dFogLerpDensityTime = 0.0;
+double s_dFogLerpStartTime = 0.0;
+double s_dFogLerpEndTime = 0.0;
+
+static double s_dFogLerpTimeStamp = 0.0f;
 
 unsigned CCoreRenderer::blocklights[BLOCK_WIDTH * BLOCK_HEIGHT * 3];
 
@@ -1152,6 +1155,11 @@ void CGLRenderer::R_Mirror (void)
 	glColor4f (1,1,1,1);
 }
 
+static double lastLerpColorTick = 0.0;
+static double lastLerpDensityTick = 0.0;
+static double lastLerpStartTick = 0.0;
+static double lastLerpEndTick = 0.0;
+
 /*
 ================
 R_RenderView
@@ -1202,73 +1210,102 @@ void CGLRenderer::R_RenderView (void)
     else
     {
 		// Missi: fog lerping code (6/18/2024)
-		if ((!s_bFogColorLerping) && (s_fFogColorRed != level_fog_color_r.value || s_fFogColorGreen != level_fog_color_g.value || s_fFogColorBlue != level_fog_color_b.value))
+        if ((!s_bFogColorLerping) && (level_fog_color_r.value != level_fog_color_goal_r.value || level_fog_color_g.value != level_fog_color_goal_g.value || level_fog_color_b.value != level_fog_color_goal_b.value))
 		{
+			s_dFogLerpTime = Cvar_VariableValue("fog_lerp_time");
+
+			lastLerpColorTick = 0.0;
 			s_bFogColorLerping = true;
-			s_fFogLerpTimeStamp = Sys_DoubleTime();
-			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 1000.0f);
 		}
-		if ((!s_bFogDensityLerping) && (s_fFogDensity != level_fog_density.value))
+        if ((!s_bFogDensityLerping) && (level_fog_density_goal.value != level_fog_density.value))
 		{
+			s_dFogLerpDensityTime = Cvar_VariableValue("fog_lerp_time");
+
+			lastLerpDensityTick = 0.0;
 			s_bFogDensityLerping = true;
-			s_fFogLerpTimeStamp = Sys_DoubleTime();
-			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 1000.0f);
 		}
-		if ((!s_bFogStartEndLerping) && (s_fFogStart != level_fog_start.value || s_fFogEnd != level_fog_end.value))
+        if ((!s_bFogStartEndLerping) && (level_fog_start_goal.value != level_fog_start.value || level_fog_end_goal.value != level_fog_end.value))
 		{
+			s_dFogLerpStartTime = Cvar_VariableValue("fog_lerp_time");
+			s_dFogLerpEndTime = Cvar_VariableValue("fog_lerp_time");
+
+			lastLerpStartTick = 0.0;
+			lastLerpEndTick = 0.0;
 			s_bFogStartEndLerping = true;
-			s_fFogLerpTimeStamp = Sys_DoubleTime();
-			s_fFogLerpTime = Sys_DoubleTime() + (level_fog_lerp_time.value * 1000.0f);
-		}
+        }
 
 		if (s_bFogColorLerping)
 		{
-			s_fFogColorRed = Lerp(s_fFogColorRed, level_fog_color_r.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
-			s_fFogColorGreen = Lerp(s_fFogColorGreen, level_fog_color_g.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
-			s_fFogColorBlue = Lerp(s_fFogColorBlue, level_fog_color_b.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
+			lastLerpColorTick += host->host_frametime;
 
-			fog_color_vec[0] = s_fFogColorRed;
-			fog_color_vec[1] = s_fFogColorGreen;
-			fog_color_vec[2] = s_fFogColorBlue;
+            double red = Lerp<double>(level_fog_color_r.value, level_fog_color_goal_r.value, (lastLerpColorTick / s_dFogLerpTime));
+			double green = Lerp<double>(level_fog_color_g.value, level_fog_color_goal_g.value, (lastLerpColorTick / s_dFogLerpTime));
+			double blue = Lerp<double>(level_fog_color_b.value, level_fog_color_goal_b.value, (lastLerpColorTick / s_dFogLerpTime));
 
-			if (s_fFogColorRed >= level_fog_color_r.value &&
-				s_fFogColorGreen >= level_fog_color_g.value &&
-				s_fFogColorBlue >= level_fog_color_b.value)
+            fog_color_vec[0] = red;
+            fog_color_vec[1] = green;
+            fog_color_vec[2] = blue;
+
+            //Con_DPrintf("fog color lerp: %f %f %f\n", fog_color_vec[0], fog_color_vec[1], fog_color_vec[2]);
+
+			if (lastLerpColorTick > s_dFogLerpTime)
 			{
-				Cvar_SetValue("fog_r", s_fFogColorRed);
-				Cvar_SetValue("fog_g", s_fFogColorGreen);
-				Cvar_SetValue("fog_b", s_fFogColorBlue);
-
 				s_bFogColorLerping = false;
+				fog_color_vec[0] = level_fog_color_goal_r.value;
+				fog_color_vec[1] = level_fog_color_goal_g.value;
+				fog_color_vec[2] = level_fog_color_goal_b.value;
+
+				Cvar_SetValue("fog_r", fog_color_vec[0]);
+				Cvar_SetValue("fog_g", fog_color_vec[1]);
+				Cvar_SetValue("fog_b", fog_color_vec[2]);
 			}
-
-			if (Sys_DoubleTime() >= s_fFogLerpTime)
-				s_bFogColorLerping = false;
 		}
 		if (s_bFogDensityLerping)
 		{
-			s_fFogDensity = Lerp(s_fFogDensity, level_fog_density.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
-			Cvar_SetValue("fog_density", s_fFogDensity);
+			lastLerpDensityTick += host->host_frametime;
 
-			if (Sys_DoubleTime() >= s_fFogLerpTime)
+            double val = Lerp<double>(level_fog_density.value, level_fog_density_goal.value, (lastLerpDensityTick / s_dFogLerpDensityTime));
+            Cvar_SetValue("fog_density", val);
+
+            if (lastLerpColorTick > s_dFogLerpDensityTime)
 				s_bFogDensityLerping = false;
+
+			if (!s_bFogDensityLerping)
+			{
+				s_dCurFogDensity = level_fog_density_goal.value;
+				Cvar_SetValue("fog_density", s_dCurFogDensity);
+			}
 		}
 		if (s_bFogStartEndLerping)
 		{
-			s_fFogStart = Lerp(s_fFogStart, level_fog_start.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
-			s_fFogEnd = Lerp(s_fFogEnd, level_fog_end.value, s_fFogLerpTimeStamp / s_fFogLerpTime);
-			Cvar_SetValue("fog_start", s_fFogStart);
-			Cvar_SetValue("fog_end", s_fFogEnd);
+			lastLerpStartTick += host->host_frametime;
+			lastLerpEndTick += host->host_frametime;
 
-			if (Sys_DoubleTime() >= s_fFogLerpTime)
+			double start = Lerp<double>(level_fog_start.value, level_fog_start_goal.value, lastLerpStartTick / s_dFogLerpStartTime);
+			double end = Lerp<double>(level_fog_end.value, level_fog_end_goal.value, lastLerpEndTick / s_dFogLerpEndTime);
+			
+			s_dCurFogStart = start;
+			s_dCurFogEnd = end;
+
+			Con_DPrintf("fog start: %4.2f\nfog end: %4.2f\n", start, end);
+
+			if (lastLerpColorTick > s_dFogLerpStartTime && lastLerpEndTick >= s_dFogLerpEndTime)
+			{
+				s_dCurFogStart = level_fog_start_goal.value;
+				s_dCurFogEnd = level_fog_end_goal.value;
+
+				Cvar_SetValue("fog_start", s_dCurFogStart);
+				Cvar_SetValue("fog_end", s_dCurFogEnd);
+
 				s_bFogStartEndLerping = false;
+			}
 		}
 
         glFogi(GL_FOG_MODE, GL_LINEAR);
         glFogfv(GL_FOG_COLOR, fog_color_vec);
-        glFogf(GL_FOG_DENSITY, level_fog_density.value);
-        glFogf(GL_FOG_START, level_fog_start.value);
-        glFogf(GL_FOG_END, level_fog_end.value);
+        glFogf(GL_FOG_DENSITY, s_dCurFogDensity);
+        glFogf(GL_FOG_START, s_dCurFogStart);
+        glFogf(GL_FOG_END, s_dCurFogEnd);
         glEnable(GL_FOG);
     }
 

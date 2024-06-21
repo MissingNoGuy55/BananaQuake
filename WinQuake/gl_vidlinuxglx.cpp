@@ -42,6 +42,8 @@ static bool fullscreen = true;
 
 static bool mouse_override = false;
 
+static cvar_t x11_grab_mouse { "x11_grab_mouse", "1" };
+
 #define KEY_MASK (KeyPressMask | KeyReleaseMask)
 #define MOUSE_MASK (ButtonPressMask | ButtonReleaseMask | \
 		    PointerMotionMask | ButtonMotionMask )
@@ -353,6 +355,9 @@ static void HandleEvents(void)
 
 	while (XPending(dpy)) {
 		XNextEvent(dpy, &event);
+
+        if (x11_grab_mouse.value == 0)
+            uninstall_grabs();
 
 		switch (event.type) {
 		case KeyPress:
@@ -1117,6 +1122,8 @@ void Force_CenterView_f (void)
 
 void IN_Init(void)
 {
+    Cvar_RegisterVariable(&x11_grab_mouse);
+
     IN_ActivateMouse();
 }
 

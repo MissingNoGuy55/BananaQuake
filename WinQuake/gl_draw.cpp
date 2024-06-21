@@ -52,9 +52,15 @@ CQuakePic	*conback = (CQuakePic*)&conback_buffer;
 cvar_t	level_fog_color_r {"fog_r", "0.5", false};
 cvar_t	level_fog_color_g {"fog_g", "0.5", false};
 cvar_t	level_fog_color_b {"fog_b", "0.5", false};
+cvar_t	level_fog_color_goal_r {"fog_goal_r", "0.5", false};
+cvar_t	level_fog_color_goal_g {"fog_goal_g", "0.5", false};
+cvar_t	level_fog_color_goal_b {"fog_goal_b", "0.5", false};
 cvar_t	level_fog_density {"fog_density", "1.0", false};
+cvar_t	level_fog_density_goal {"fog_density_goal", "1.0", false};
 cvar_t  level_fog_start {"fog_start", "64.0", false};
+cvar_t  level_fog_start_goal {"fog_start_goal", "64.0", false};
 cvar_t  level_fog_end {"fog_end", "2048.0", false};
+cvar_t  level_fog_end_goal {"fog_end_goal", "2048.0", false};
 cvar_t  level_fog_force {"fog_force", "0.0", false};
 cvar_t  level_fog_lerp_time { "fog_lerp_time", "0.0", false};
 
@@ -632,9 +638,15 @@ void CGLRenderer::Draw_Init (void)
     Cvar_RegisterVariable (&level_fog_color_r);
     Cvar_RegisterVariable (&level_fog_color_g);
     Cvar_RegisterVariable (&level_fog_color_b);
+    Cvar_RegisterVariable (&level_fog_color_goal_r);
+    Cvar_RegisterVariable (&level_fog_color_goal_g);
+    Cvar_RegisterVariable (&level_fog_color_goal_b);
     Cvar_RegisterVariable (&level_fog_density);
+    Cvar_RegisterVariable (&level_fog_density_goal);
     Cvar_RegisterVariable (&level_fog_start);
+    Cvar_RegisterVariable (&level_fog_start_goal);
     Cvar_RegisterVariable (&level_fog_end);
+    Cvar_RegisterVariable (&level_fog_end_goal);
     Cvar_RegisterVariable (&level_fog_lerp_time);
     Cvar_RegisterVariable (&level_fog_force);
 

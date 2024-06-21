@@ -63,7 +63,7 @@ void _VectorCopy (vec3_t in, vec3_t out);
 int VectorCompare (vec3_t v1, vec3_t v2);
 
 template<typename T>
-T Lerp(T x, T y, double alpha);
+T Lerp(T x, T y, T alpha);
 
 vec_t Length (vec3_t v);
 void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross);
@@ -104,7 +104,7 @@ vec_t VectorLength(vec3_t v);
 		BoxOnPlaneSide( (emins), (emaxs), (p)))
 
 template<typename T>
-T Lerp(T x, T y, double alpha)
+T Lerp(T x, T y, T alpha)
 {
-	return std::lerp<T>(x, y, alpha);
+    return x * (1.0 - alpha) + (y * alpha);
 }

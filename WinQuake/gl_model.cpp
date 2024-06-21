@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_mesh.h"
-#include "gl_warp.h"
 
 model_t* loadmodel = {};
 char loadname[32] = {};
@@ -647,9 +646,12 @@ void Mod_LoadTexinfo (lump_t *l)
 	loadmodel->numtexinfo = count;
 
 	for ( i=0 ; i<count ; i++, in++, out++)
-	{
-		for (j=0 ; j<8 ; j++)
+    {
+        for (j=0 ; j<4 ; j++)       // Missi: -Waggressive-loop-optimizations fix (6/19/2024)
+        {
 			out->vecs[0][j] = LittleFloat (in->vecs[0][j]);
+            out->vecs[1][j] = LittleFloat (in->vecs[1][j]);
+        }
 		len1 = Length (out->vecs[0]);
 		len2 = Length (out->vecs[1]);
 		len1 = (len1 + len2)/2;
@@ -661,12 +663,6 @@ void Mod_LoadTexinfo (lump_t *l)
 			out->mipadjust = 2;
 		else
 			out->mipadjust = 1;
-#if 0
-		if (len1 + len2 < 0.001)
-			out->mipadjust = 1;		// don't crash
-		else
-			out->mipadjust = 1 / floor( (len1+len2)/2 + 0.1 );
-#endif
 
 		miptex = LittleLong (in->miptex);
 		out->flags = LittleLong (in->flags);
