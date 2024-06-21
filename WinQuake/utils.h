@@ -13,6 +13,9 @@ public:
 	// Missi: Adding elements (6/13/2024)
 	//============================
 
+	void		AddToStart();
+	void		AddToEnd();
+
 	void		AddToEnd(const T& element);
 	void		AddToEnd(T& element);
 	void		AddToStart(const T& element);
@@ -92,7 +95,8 @@ const T& CQVector<T>::operator[](int i) const
 template<typename T>
 void CQVector<T>::Expand(size_t size)
 {
-	m_pBase = (T*)realloc(m_pBase, size);
+	m_pBase = (T*)realloc(m_pBase, size * sizeof(T));
+	m_iSize = (size * sizeof(T));
 }
 
 template<typename T>
@@ -108,8 +112,36 @@ void CQVector<T>::AddToEnd(T& element)
 
 	if (m_pBase)
 	{
-		element = new T;
 		memcpy(&m_pBase[m_iAllocated], element, sizeof(T));
+		m_iSize += sizeof(T);
+		m_iAllocated++;
+	}
+}
+
+template<typename T>
+void CQVector<T>::AddToStart()
+{
+	const T newElement = {};
+	AddToStart(newElement);
+	m_iSize += sizeof(T);
+	m_iAllocated++;
+}
+
+template<typename T>
+void CQVector<T>::AddToEnd()
+{
+	if (!m_pBase)
+		m_pBase = (T*)malloc(sizeof(T));
+	else
+	{
+		T* newMem = (T*)realloc(m_pBase, sizeof(T) * m_iSize);
+		m_pBase = static_cast<T*>(newMem);
+	}
+
+	if (m_pBase)
+	{
+		T newElem = (T)calloc(1, sizeof(T));
+		memcpy(&m_pBase[m_iAllocated], &newElem, sizeof(T));
 		m_iSize += sizeof(T);
 		m_iAllocated++;
 	}
@@ -128,7 +160,6 @@ void CQVector<T>::AddToEnd(const T& element)
 
 	if (m_pBase)
 	{
-		element = new T;
 		memcpy(&m_pBase[m_iAllocated], element, sizeof(T));
 		m_iSize += sizeof(T);
 		m_iAllocated++;
@@ -149,7 +180,6 @@ void CQVector<T>::AddToStart(T& element)
 
 	if (m_pBase)
 	{
-		element = new T;
 		memcpy(&m_pBase[m_iAllocated], element, sizeof(T));
 		m_iSize += sizeof(T);
 		m_iAllocated++;
