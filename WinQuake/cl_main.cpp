@@ -135,9 +135,6 @@ void CL_Disconnect_f (void)
 		host->Host_ShutdownServer (false);
 }
 
-
-
-
 /*
 =====================
 CL_EstablishConnection
