@@ -32,7 +32,7 @@ static music_handler_t wanted_handlers[] =
 };
 
 // Missi: position of song name in the OGG file. No band name position as the song name is of variable length (6/5/2024)
-#define OGG_SONG_NAME_FILEPOS 332;
+#define OGG_SONG_NAME_FILEPOS 332
 
 //======================================================================
 // Missi: GetSongArtistAndName
