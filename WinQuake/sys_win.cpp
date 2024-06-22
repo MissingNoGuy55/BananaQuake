@@ -965,6 +965,7 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 // but at least 8 Mb and no more than 16 Mb, unless they explicitly
 // request otherwise
 
+/*
 #ifndef WIN64
 	parms.memsize = lpBuffer.dwAvailPhys;
 #else
@@ -983,7 +984,9 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 #endif
 
 	if (parms.memsize > MAXIMUM_WIN_MEMORY)
-		parms.memsize = MAXIMUM_WIN_MEMORY;
+		parms.memsize = MAXIMUM_WIN_MEMORY;*/
+
+	parms.memsize = DEFAULT_MEMORY;
 
 	if (g_Common->COM_CheckParm ("-heapsize"))
 	{

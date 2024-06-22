@@ -101,7 +101,8 @@ Zone block
 void Con_Printf(const char* fmt, ...);
 void Sys_Error(const char* err, ...);
 
-#define	DYNAMIC_SIZE	0xc000
+#define DYNAMIC_SIZE (4 * 1024 * 1024)
+#define DEFAULT_MEMORY (256 * 1024 * 1024)
 
 #define	ZONEID	0x1d4a11
 #define MINFRAGMENT	64
