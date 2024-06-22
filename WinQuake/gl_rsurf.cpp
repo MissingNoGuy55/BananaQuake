@@ -351,7 +351,7 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 			// Binds lightmap to texenv 1
 			GL_EnableMultitexture(); // Same as SelectTexture (TEXTURE1)
-			GL_Bind (lightmap_textures + s->lightmaptexturenum);
+			GL_Bind (lightmap_textures[s->lightmaptexturenum]);
 			i = s->lightmaptexturenum;
 			if (lightmap_modified[i])
 			{
@@ -390,7 +390,7 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 			}
 			glEnd ();
 
-			GL_Bind (lightmap_textures + s->lightmaptexturenum);
+			GL_Bind (lightmap_textures[s->lightmaptexturenum]);
 			glEnable (GL_BLEND);
 			glBegin (GL_POLYGON);
 			v = p->verts[0];
@@ -453,7 +453,7 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 		GL_Bind (t->gltexture);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		GL_EnableMultitexture();
-		GL_Bind (lightmap_textures + s->lightmaptexturenum);
+		GL_Bind(lightmap_textures[s->lightmaptexturenum]);
 		i = s->lightmaptexturenum;
 		if (lightmap_modified[i])
 		{
@@ -490,7 +490,7 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 		GL_Bind (t->gltexture);
 		DrawGLWaterPoly (p);
 
-		GL_Bind (lightmap_textures + s->lightmaptexturenum);
+		GL_Bind (lightmap_textures[s->lightmaptexturenum]);
 		glEnable (GL_BLEND);
 		DrawGLWaterPolyLightmap (p);
 		glDisable (GL_BLEND);
@@ -615,7 +615,7 @@ void CGLRenderer::R_BlendLightmaps (void)
 		p = lightmap_polys[i];
 		if (!p)
 			continue;
-		g_GLRenderer->GL_Bind(lightmap_textures+i);
+		g_GLRenderer->GL_Bind(lightmap_textures[i]);
 		if (lightmap_modified[i])
 		{
 			lightmap_modified[i] = false;
@@ -1498,13 +1498,16 @@ void CGLRenderer::GL_BuildLightmaps (void)
     active_lightmaps = 0;
     lightmap_count = 0;
     lightmap_bytes = 0;
-    lightmap_textures = nullptr;
+	memset(lightmap_textures, 0, sizeof(lightmap_textures));
 
 	if (!lightmap_textures)
 	{
-		lightmap_textures = g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture), "lightmap");
-		lightmap_textures->texnum = texture_extension_number;
-		texture_extension_number += MAX_LIGHTMAPS;
+		for (int i = 0; i < MAX_LIGHTMAPS; i++)
+		{
+			lightmap_textures[i] = g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture), "lightmap");
+			lightmap_textures[i]->texnum = texture_extension_number;
+			texture_extension_number += MAX_LIGHTMAPS;
+		}
 	}
 
 	gl_lightmap_format = GL_RGBA;
@@ -1568,8 +1571,8 @@ void CGLRenderer::GL_BuildLightmaps (void)
 	//
 	for (i=0 ; i<MAX_LIGHTMAPS ; i++, lightmap_count++)
 	{
-
 		char name[64];
+		snprintf(name, sizeof(name), "lightmap%07i", i);
 
 		if (!allocated[i][0])
 			break;		// no more used
@@ -1579,12 +1582,7 @@ void CGLRenderer::GL_BuildLightmaps (void)
 		lightmap_rectchange[i].w = 0;
 		lightmap_rectchange[i].h = 0;
 		
-		GL_Bind(lightmap_textures + i);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D (GL_TEXTURE_2D, 0, lightmap_bytes
-		, BLOCK_WIDTH, BLOCK_HEIGHT, 0, 
-		gl_lightmap_format, GL_UNSIGNED_BYTE, lightmaps+i*BLOCK_WIDTH*BLOCK_HEIGHT*lightmap_bytes);
+		lightmap_textures[i] = GL_LoadTexture(cl.worldmodel, name, BLOCK_WIDTH, BLOCK_HEIGHT, SRC_LIGHTMAP, lightmaps + (i * BLOCK_WIDTH * BLOCK_HEIGHT) * lightmap_bytes, (src_offset_t)lightmaps + (i * BLOCK_WIDTH * BLOCK_HEIGHT) * lightmap_bytes, TEXPREF_LINEAR | TEXPREF_NOPICMIP);
 	}
 
  	if (!gl_texsort.value)

@@ -99,7 +99,7 @@ CGLRenderer::CGLRenderer() : CCoreRenderer()
 	skychain = nullptr;
 	waterchain = nullptr;
 
-	lightmap_textures = nullptr;
+	memset(lightmap_textures, 0, sizeof(lightmap_textures));
 
 	gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
 	gl_filter_max = GL_LINEAR;
@@ -142,7 +142,7 @@ CGLRenderer::~CGLRenderer()
 	draw_disc = nullptr;
 	draw_backtile = nullptr;
 
-	lightmap_textures = nullptr;
+	memset(lightmap_textures, 0, sizeof(lightmap_textures));
 	translate_texture = nullptr;
 	char_texture = nullptr;
 

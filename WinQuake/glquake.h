@@ -446,7 +446,7 @@ private:
 
 	int			lightmap_bytes;		// 1, 2, or 4
 
-	CGLTexture* lightmap_textures;
+	CGLTexture* lightmap_textures[MAX_LIGHTMAPS];
 
 	unsigned	blocklights[BLOCK_WIDTH*BLOCK_HEIGHT*3];
 	int			active_lightmaps;
