@@ -2,6 +2,23 @@
 
 #include "quakedef.h"
 
+/*
+=============================================================================
+* Missi: C++ vector wrapper
+*
+* This is basically a C++-like vector that can store anything.
+*
+* Do note that m_pBase is always a pointer, so if you make the vector store 
+* pointers, it is, in reality, a double pointer.
+* 
+* With that being said, all elements are malloc'd and STAY IN MEMORY until
+* you run RemoveEverything(), which will reset the vector back to zero-size
+* and free all memory pertaining to elements. You will need to run this 
+* function every time you want to clear the vector, or else memory will
+* persist. DO NOT run memset on a vector as it will not clear the malloc'd
+* elements! (6/22/2024)
+=============================================================================
+*/
 template<typename T>
 class CQVector
 {
