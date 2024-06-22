@@ -53,6 +53,7 @@ public:
 
 	CQuakePic();
 	CQuakePic(byte& mem);
+	~CQuakePic() { datavec.RemoveEverything(); }
 
 	/*CQuakePic& operator=(void* src);
 	CQuakePic& operator=(const void* src);*/
@@ -74,6 +75,9 @@ private:
 class CQuakeTGAPic
 {
 public:
+
+	~CQuakeTGAPic() { datavec.RemoveEverything(); }
+
     int     width;
     int     height;
 

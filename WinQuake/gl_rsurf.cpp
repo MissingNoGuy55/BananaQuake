@@ -1481,34 +1481,21 @@ void CGLRenderer::GL_BuildLightmaps (void)
 	r_framecount = 1;		// no dlightcache
 
 	//Missi: copied from QuakeSpasm (6/3/2024)
-	if (lightmap_textures)
-	{
-        memset(allocated, 0, sizeof(allocated));
-        memset(blocklights, 0, sizeof(blocklights));
-        memset(lightmaps, 0, sizeof(lightmaps));
-        memset(lightmap_modified, 0, sizeof(lightmap_modified));
-        memset(lightmap_polys, 0, sizeof(lightmap_polys));
-        memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
+    memset(allocated, 0, sizeof(allocated));
+    memset(blocklights, 0, sizeof(blocklights));
+    memset(lightmaps, 0, sizeof(lightmaps));
+    memset(lightmap_modified, 0, sizeof(lightmap_modified));
+    memset(lightmap_polys, 0, sizeof(lightmap_polys));
+    memset(lightmap_rectchange, 0, sizeof(lightmap_rectchange));
 
-		memset(cl_dlights, 0, sizeof(cl_dlights));
-        memset(cl_lightstyle, 0, sizeof(*lightmap_rectchange));
-	}
+	memset(cl_dlights, 0, sizeof(cl_dlights));
+    memset(cl_lightstyle, 0, sizeof(*lightmap_rectchange));
 
     last_lightmap_allocated = 0;
     active_lightmaps = 0;
     lightmap_count = 0;
     lightmap_bytes = 0;
 	memset(lightmap_textures, 0, sizeof(lightmap_textures));
-
-	if (!lightmap_textures)
-	{
-		for (int i = 0; i < MAX_LIGHTMAPS; i++)
-		{
-			lightmap_textures[i] = g_MemCache->Hunk_AllocName<CGLTexture>(sizeof(CGLTexture), "lightmap");
-			lightmap_textures[i]->texnum = texture_extension_number;
-			texture_extension_number += MAX_LIGHTMAPS;
-		}
-	}
 
 	gl_lightmap_format = GL_RGBA;
 	// default differently on the Permedia
@@ -1589,4 +1576,3 @@ void CGLRenderer::GL_BuildLightmaps (void)
 		g_GLRenderer->GL_SelectTexture(TEXTURE0_SGIS);
 
 }
-

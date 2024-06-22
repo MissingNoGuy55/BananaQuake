@@ -1182,6 +1182,8 @@ void CGLRenderer::GL_DeleteTexture(CGLTexture* texture)
 	if (texture == &currenttexture[2]) memset(currenttexture, 0, sizeof(CGLTexture));
 
 	texture->texnum = 0;
+
+	texture->pic.datavec.RemoveEverything();
 }
 
 /*
@@ -2016,4 +2018,5 @@ CGLTexture::CGLTexture(const CGLTexture& obj) : next(NULL),
 
 CGLTexture::~CGLTexture()
 {
+	pic.datavec.RemoveEverything();
 }

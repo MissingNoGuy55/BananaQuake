@@ -62,7 +62,6 @@ CQuakeServer::~CQuakeServer()
 {
 	active = false;
 	datagram = {};
-	edicts = nullptr;
 	lastcheck = 0;
 	lastchecktime = 0.0;
 	loadgame = false;

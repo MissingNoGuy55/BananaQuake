@@ -504,6 +504,9 @@ void CQuakeHost::Host_ClearMemory (void)
 		g_MemCache->Hunk_FreeToLowMark(host_hunklevel);
 
 	cls.signon = 0;
+
+	free(sv->edicts);
+
 	memset(sv, 0, sizeof(*sv));
 	memset(&cl, 0, sizeof(cl));
 }

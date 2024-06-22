@@ -27,6 +27,8 @@ public:
 	void		AddMultipleToEnd(int num, const T* element);
 
 	void		Expand(size_t size);
+	void		Destroy(T* mem);
+	void		Shrink();
 
 	//============================
 	// Missi: Removing elements (6/13/2024)
@@ -37,6 +39,9 @@ public:
 	//============================
 	// Missi: Element management (6/13/2024)
 	//============================
+
+	T&			Element(int num);
+	const T&	Element(int num) const;
 
 	void		Clear();
 	void		ShiftAllRight();
@@ -76,8 +81,12 @@ CQVector<T>::~CQVector()
 template<typename T>
 void CQVector<T>::RemoveEverything()
 {
-	for (int i = 0; i < GetNumAllocated(); i++)
+	int num = GetNumAllocated();
+
+	for (int i = 0; i < num; i++)
 		RemoveElement(i);
+
+	Shrink();
 }
 
 template<typename T>
@@ -95,8 +104,32 @@ const T& CQVector<T>::operator[](int i) const
 template<typename T>
 void CQVector<T>::Expand(size_t size)
 {
-	m_pBase = (T*)realloc(m_pBase, size * sizeof(T));
+	T* test = (T*)realloc(m_pBase, sizeof(T) * size);
+	m_pBase = static_cast<T*>(test);
 	m_iSize = (size * sizeof(T));
+	m_iAllocated = size;
+}
+
+template<typename T>
+void CQVector<T>::Destroy(T* mem)
+{
+	mem->~T();
+
+	memset(reinterpret_cast<void*>(mem), 0, sizeof(T));
+
+	if (m_iSize > 0)
+		m_iSize -= sizeof(T);
+
+	m_iAllocated--;
+}
+
+template<typename T>
+void CQVector<T>::Shrink()
+{
+	if (m_iSize != (m_iAllocated * sizeof(T)))
+		m_iSize = (m_iAllocated * sizeof(T));
+
+	m_pBase = (T*)realloc(m_pBase, m_iSize);
 }
 
 template<typename T>
@@ -306,14 +339,26 @@ void CQVector<T>::AddMultipleToEnd(int num, const T* element)
 template<typename T>
 void CQVector<T>::RemoveElement(int elem)
 {
-	delete &m_pBase[elem];
+	Destroy(&Element(elem));
+}
+
+template<typename T>
+T& CQVector<T>::Element(int num)
+{
+	return m_pBase[num];
+}
+
+template<typename T>
+const T& CQVector<T>::Element(int num) const
+{
+	return m_pBase[num];
 }
 
 template<typename T>
 void CQVector<T>::Clear()
 {
-	delete[] m_pBase;
-	delete this;
+	for (int i = 0; i < m_iAllocated; i++)
+		RemoveElement(i);
 }
 
 template<typename T>
