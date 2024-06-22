@@ -1183,6 +1183,7 @@ void CGLRenderer::GL_DeleteTexture(CGLTexture* texture)
 
 	texture->texnum = 0;
 
+	// Missi: prevents textures from leaking (6/22/2024)
 	texture->pic.datavec.RemoveEverything();
 }
 
