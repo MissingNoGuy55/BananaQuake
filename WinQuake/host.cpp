@@ -895,8 +895,11 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	g_Common->COM_Init (parms.basedir);
 	Host_InitLocal ();
 	W_LoadWadFile ("gfx.wad");
-	Key_Init ();
-	Con_Init ();	
+	if (cls.state != ca_dedicated)
+	{
+		Key_Init ();
+		Con_Init ();	
+	}
 	M_Init ();	
 	PR_Init ();
 	Mod_Init ();
