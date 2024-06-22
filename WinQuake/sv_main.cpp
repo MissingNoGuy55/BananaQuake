@@ -1268,12 +1268,36 @@ void CQuakeServer::SV_SpawnServer (char *server)
 
     const char* parse = lump;
     ddef_t* def = nullptr;
+	edict_t* parse2 = nullptr;
 
     eval_t* fog_eval = GetEdictFieldValue(ent, "fog");
+    eval_t* fog_c_eval = GetEdictFieldValue(ent, "fog_colour");
     eval_t* fog_density_eval = GetEdictFieldValue(ent, "fog_density");
     eval_t* fog_lerp_time_eval = GetEdictFieldValue(ent, "fog_lerp_time");
     eval_t* fog_start_eval = GetEdictFieldValue(ent, "fog_start");
     eval_t* fog_end_eval = GetEdictFieldValue(ent, "fog_end");
+
+	if (!fog_eval)
+	{
+		for (const char* parsed = g_Common->COM_ParseStringNewline(parse); parsed[0] != '}'; parsed = g_Common->COM_ParseStringNewline(parsed))
+		{
+			if (!Q_strncmp(parsed, "\"fog\"", 5))
+			{
+				parsed = g_Common->COM_ParseStringNewline(parsed);
+				sscanf(parsed, "\"%f %f %f %f\"", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2], &fog_color_vec[3]);
+			}
+			if (!Q_strncmp(parsed, "\"fog_start\"", 11))
+			{
+				parsed = g_Common->COM_ParseStringNewline(parsed);
+				sscanf(parsed, "\"%f\"", &s_dCurFogStart);
+			}
+			if (!Q_strncmp(parsed, "\"fog_end\"", 10))
+			{
+				parsed = g_Common->COM_ParseStringNewline(parsed);
+				sscanf(parsed, "\"%f\"", &s_dCurFogEnd);
+			}
+		}
+	}
 
     if (fog_eval)
     {
@@ -1296,7 +1320,27 @@ void CQuakeServer::SV_SpawnServer (char *server)
             level_has_fog = true;
         }
     }
-    if (fog_density_eval)
+	if (fog_c_eval && fog_density_eval->string < -pr_numknownstrings)
+	{
+		const char* fog_value = PR_UglyValueString(ev_string, fog_c_eval);
+		if (fog_value[0])
+		{
+			Con_DPrintf("Found fog value: %s\n", fog_value);
+
+			sscanf(fog_value, "%f %f %f", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2]);
+
+			Cvar_SetValue("fog_r", fog_color_vec[0]);
+			Cvar_SetValue("fog_g", fog_color_vec[1]);
+			Cvar_SetValue("fog_b", fog_color_vec[2]);
+
+			s_dWorldFogColor[0] = fog_color_vec[0];
+			s_dWorldFogColor[1] = fog_color_vec[1];
+			s_dWorldFogColor[2] = fog_color_vec[2];
+
+			level_has_fog = true;
+		}
+	}
+    if (fog_density_eval && fog_density_eval->string < -pr_numknownstrings)
     {
         const char* fog_density_value = PR_UglyValueString(ev_string, fog_density_eval);
         if (fog_density_value[0])
@@ -1311,7 +1355,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
             fog_color_vec[3] = fog_density;
         }
     }
-    if (fog_lerp_time_eval)
+    if (fog_lerp_time_eval && fog_lerp_time_eval->string < -pr_numknownstrings)
     {
         const char* fog_lerp_time_value = PR_UglyValueString(ev_string, fog_lerp_time_eval);
         if (fog_lerp_time_value[0])
@@ -1326,7 +1370,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
             s_dFogLerpTime = Sys_DoubleTime() + fog_lerp_time;
         }
     }
-    if (fog_start_eval)
+    if (fog_start_eval && fog_start_eval->string < -pr_numknownstrings)
     {
         const char* fog_start_value = PR_UglyValueString(ev_string, fog_start_eval);
 
@@ -1342,7 +1386,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
             s_dCurFogStart = fog_start;
         }
     }
-    if (fog_end_eval)
+    if (fog_end_eval && fog_end_eval->string < -pr_numknownstrings)
     {
         const char* fog_end_value = PR_UglyValueString(ev_string, fog_end_eval);
         if (fog_end_value[0])
