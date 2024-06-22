@@ -77,7 +77,7 @@ public:
 private:
 	size_t		m_iSize;			// Missi: the amount of bytes allocated (6/13/2024)
 	int			m_iAllocated;		// Missi: the amount of elements stored (6/13/2024)
-	T*			m_pBase;			// Missi: the data itself. note that this is, in reality, a double pointer (6/13/2024)
+	T*			m_pBase;			// Missi: the data itself. note that this is a double pointer if you store pointers with a vector (6/13/2024)
 };
 
 template<typename T>
