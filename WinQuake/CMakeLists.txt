@@ -1072,7 +1072,7 @@ target_link_libraries(bananaquakesoftware SDL2_image)
 # Missi: prevents "missing .note.GNU-stack section implies executable stack" warning in recent binutils on Linux
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -z noexecstack")
 
-target_compile_options(bananaquakeopengl PRIVATE "-Dstricmp=strcasecmp -g -Wpedantic")
+target_compile_options(bananaquakeopengl PRIVATE "-Dstricmp=strcasecmp -g")
 
 #target_compile_options(bananaquakesoftware PUBLIC "-Dstricmp=strcasecmp -g")
 
