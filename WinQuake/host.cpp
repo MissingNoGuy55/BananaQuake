@@ -966,14 +966,19 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		g_pCmdBuf->Cbuf_InsertText("exec server.cfg\n");
 	}
 
-	g_pCmdBuf->Cbuf_InsertText ("exec quake.rc\n");
-
 	g_MemCache->Hunk_AllocName<char>(0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = g_MemCache->Hunk_LowMark();
 
+	if (cls.state != ca_dedicated)
+		g_pCmdBuf->Cbuf_InsertText("exec quake.rc\n");
+	else
+	{
+		g_pCmdBuf->Cbuf_AddText("exec autoexec.cfg\n");
+		g_pCmdBuf->Cbuf_AddText("stuffcmds");
+		g_pCmdBuf->Cbuf_Execute();
+	}
+
 	host_initialized = true;
-	
-	Sys_Printf ("========Quake Initialized=========\n");	
 }
 
 
