@@ -436,7 +436,8 @@ void CGLRenderer::R_NewMap (void)
  		cl.worldmodel->textures[i]->texturechain = NULL;
 	}
 
-	R_LoadSkys ();
+    if (usesQ2Sky)
+        R_LoadSkys ();
 }
 
 
