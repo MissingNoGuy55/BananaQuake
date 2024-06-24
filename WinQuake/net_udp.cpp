@@ -92,7 +92,7 @@ int UDP_Init (void)
 	if (colon)
 		*colon = 0;
 
-	Con_Printf("UDP Initialized\n");
+    Con_PrintColor(TEXT_COLOR_GREEN, "UDP Initialized\n");
 	tcpipAvailable = true;
 
 	return net_controlsocket;
