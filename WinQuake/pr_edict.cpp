@@ -78,7 +78,7 @@ static void PR_AllocStringSlots(void)
 {
 
 	pr_maxknownstrings += PR_STRING_ALLOCSLOTS;
-	Con_Printf("PR_AllocStringSlots: realloc'ing for %d slots\n", pr_maxknownstrings);
+    Con_PrintColor(TEXT_COLOR_CYAN, "PR_AllocStringSlots: realloc'ing for %d slots\n", pr_maxknownstrings);
 	pr_knownstrings.Expand(pr_maxknownstrings); // (const char**)realloc((void*)pr_knownstrings, pr_maxknownstrings * sizeof(char*));
 }
 
