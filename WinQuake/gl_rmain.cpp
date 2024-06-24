@@ -114,6 +114,9 @@ double s_dFogLerpDensityTime = 0.0;
 double s_dFogLerpStartTime = 0.0;
 double s_dFogLerpEndTime = 0.0;
 
+static double s_dFogStartTimeStamp = 0.0;
+static double s_dFogEndTimeStamp = 0.0;
+
 static double s_dFogLerpTimeStamp = 0.0f;
 
 unsigned CCoreRenderer::blocklights[BLOCK_WIDTH * BLOCK_HEIGHT * 3];
@@ -1210,7 +1213,9 @@ void CGLRenderer::R_RenderView (void)
     else
     {
 		// Missi: fog lerping code (6/18/2024)
-        if ((!s_bFogColorLerping) && (level_fog_color_r.value != level_fog_color_goal_r.value || level_fog_color_g.value != level_fog_color_goal_g.value || level_fog_color_b.value != level_fog_color_goal_b.value))
+        if ((!s_bFogColorLerping) && (level_fog_color_r.value != level_fog_color_goal_r.value ||
+                                      level_fog_color_g.value != level_fog_color_goal_g.value ||
+                                      level_fog_color_b.value != level_fog_color_goal_b.value))
 		{
 			s_dFogLerpTime = Cvar_VariableValue("fog_lerp_time");
 
@@ -1221,13 +1226,17 @@ void CGLRenderer::R_RenderView (void)
 		{
 			s_dFogLerpDensityTime = Cvar_VariableValue("fog_lerp_time");
 
-			lastLerpDensityTick = 0.0;
+            lastLerpDensityTick = 0.0;
 			s_bFogDensityLerping = true;
-		}
-        if ((!s_bFogStartEndLerping) && (level_fog_start_goal.value != level_fog_start.value || level_fog_end_goal.value != level_fog_end.value))
+        }
+        if ((!s_bFogStartEndLerping) && (level_fog_start_goal.value != level_fog_start.value ||
+                                         level_fog_end_goal.value != level_fog_end.value))
 		{
 			s_dFogLerpStartTime = Cvar_VariableValue("fog_lerp_time");
-			s_dFogLerpEndTime = Cvar_VariableValue("fog_lerp_time");
+            s_dFogLerpEndTime = Cvar_VariableValue("fog_lerp_time");
+
+            s_dFogStartTimeStamp = level_fog_start.value;
+            s_dFogEndTimeStamp = level_fog_end.value;
 
 			lastLerpStartTick = 0.0;
 			lastLerpEndTick = 0.0;
@@ -1236,7 +1245,7 @@ void CGLRenderer::R_RenderView (void)
 
 		if (s_bFogColorLerping)
 		{
-			lastLerpColorTick += host->host_frametime;
+            lastLerpColorTick += host->host_frametime;
 
             double red = Lerp<double>(level_fog_color_r.value, level_fog_color_goal_r.value, (lastLerpColorTick / s_dFogLerpTime));
 			double green = Lerp<double>(level_fog_color_g.value, level_fog_color_goal_g.value, (lastLerpColorTick / s_dFogLerpTime));
@@ -1265,13 +1274,11 @@ void CGLRenderer::R_RenderView (void)
 			lastLerpDensityTick += host->host_frametime;
 
             double val = Lerp<double>(level_fog_density.value, level_fog_density_goal.value, (lastLerpDensityTick / s_dFogLerpDensityTime));
-            Cvar_SetValue("fog_density", val);
 
             if (lastLerpColorTick > s_dFogLerpDensityTime)
-				s_bFogDensityLerping = false;
+            {
+                s_bFogDensityLerping = false;
 
-			if (!s_bFogDensityLerping)
-			{
 				s_dCurFogDensity = level_fog_density_goal.value;
 				Cvar_SetValue("fog_density", s_dCurFogDensity);
 			}
@@ -1281,21 +1288,31 @@ void CGLRenderer::R_RenderView (void)
 			lastLerpStartTick += host->host_frametime;
 			lastLerpEndTick += host->host_frametime;
 
-			double start = Lerp<double>(level_fog_start.value, level_fog_start_goal.value, lastLerpStartTick / s_dFogLerpStartTime);
-			double end = Lerp<double>(level_fog_end.value, level_fog_end_goal.value, lastLerpEndTick / s_dFogLerpEndTime);
-			
-			s_dCurFogStart = start;
-			s_dCurFogEnd = end;
+            static double start = 0.0;
+            static double end = 0.0;
 
-			Con_DPrintf("fog start: %4.2f\nfog end: %4.2f\n", start, end);
+            if (level_fog_start_goal.value >= level_fog_start.value)
+                start = Lerp<double>(level_fog_start.value, level_fog_start_goal.value, lastLerpStartTick / s_dFogLerpStartTime);
+            else
+                start = Lerp<double>(level_fog_start_goal.value, level_fog_start.value, lastLerpStartTick / s_dFogLerpStartTime);
 
-			if (lastLerpColorTick > s_dFogLerpStartTime && lastLerpEndTick >= s_dFogLerpEndTime)
+            if (level_fog_end_goal.value >= level_fog_end.value)
+                end = Lerp<double>(level_fog_end.value, level_fog_end_goal.value, lastLerpEndTick / s_dFogLerpEndTime);
+            else
+                end = Lerp<double>(level_fog_end_goal.value, level_fog_end.value, lastLerpEndTick / s_dFogLerpEndTime);
+
+            s_dCurFogStart = start;
+            s_dCurFogEnd = end;
+
+            Con_DPrintf("fog start: %4.2f\nfog end: %4.2f\n", s_dCurFogStart, s_dCurFogEnd);
+
+            if (lastLerpColorTick > s_dFogLerpStartTime && lastLerpEndTick >= s_dFogLerpEndTime)
 			{
 				s_dCurFogStart = level_fog_start_goal.value;
-				s_dCurFogEnd = level_fog_end_goal.value;
+                s_dCurFogEnd = level_fog_end_goal.value;
 
-				Cvar_SetValue("fog_start", s_dCurFogStart);
-				Cvar_SetValue("fog_end", s_dCurFogEnd);
+                Cvar_SetValue("fog_start", s_dCurFogStart);
+                Cvar_SetValue("fog_end", s_dCurFogEnd);
 
 				s_bFogStartEndLerping = false;
 			}
