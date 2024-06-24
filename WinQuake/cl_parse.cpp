@@ -897,6 +897,8 @@ void CL_ParseServerMessage (void)
 				if (cl.paused)
 				{
 					CDAudio_Pause ();
+
+                    IN_DeactivateMouse();
 #if defined(_WIN32) || defined(__CYGWIN__)
 					VID_HandlePause (true);
 #endif
@@ -904,6 +906,7 @@ void CL_ParseServerMessage (void)
 				else
 				{
 					CDAudio_Resume ();
+                    IN_ActivateMouse();
 #if defined(_WIN32) || defined(__CYGWIN__)
 					VID_HandlePause (false);
 #endif
