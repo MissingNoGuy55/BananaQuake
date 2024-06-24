@@ -74,10 +74,10 @@ void CBackgroundMusic::GetSongArtistAndName(const char* filename, uintptr_t* pat
 			
 			char songtitlebuf[256] = {};
 
-			sscanf(substr, "%[A-z]", &songtitlebuf);
+            sscanf(substr, "%[A-z]", songtitlebuf);
 
-			strncat(songname, songtitlebuf, strlen(songtitlebuf));
-			strncat(songname, " ", 1);
+            strncat(songname, songtitlebuf, strlen(songname));
+            strncat(songname, " ", sizeof(char));
 
 			lastpos += Q_strlen(substr) + 1;
 		}
