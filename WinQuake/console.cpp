@@ -489,6 +489,36 @@ void Con_Warning(const char *fmt, ...)
 	}
 }
 
+void Con_PrintColor(const char* color, const char* fmt, ...)
+{
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+	static bool	inupdate;
+
+	va_start(argptr, fmt);
+	vsnprintf(msg, sizeof(msg), fmt, argptr);
+	va_end(argptr);
+
+#ifdef _WIN32
+	// also echo to debugging console
+	HANDLE stdhandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+	WORD saved_attributes;
+
+	/* Save current attributes */
+	GetConsoleScreenBufferInfo(stdhandle, &consoleInfo);
+	saved_attributes = consoleInfo.wAttributes;
+
+	SetConsoleTextAttribute(stdhandle, Q_atoi(color));
+	Sys_Printf("%s", msg);	// also echo to debugging console
+
+	/* Restore original attributes */
+	SetConsoleTextAttribute(stdhandle, saved_attributes);
+#elif defined(__linux__) || defined(__CYGWIN__)
+    printf("%s%s%s", color, msg, TEXT_COLOR_DEFAULT);	// also echo to debugging console
+#endif
+}
+
 /*
 ================
 Con_DPrintf

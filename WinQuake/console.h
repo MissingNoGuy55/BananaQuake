@@ -18,6 +18,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#if defined(__linux__) || defined(__CYGWIN__)
+#define TEXT_COLOR_DEFAULT "\x1B[0m"
+#define TEXT_COLOR_RED "\x1B[31m"
+#define TEXT_COLOR_GREEN "\x1B[32m"
+#define TEXT_COLOR_YELLOW "\x1B[33m"
+#define TEXT_COLOR_ORANGE "\x1B[38;5;208m"
+#define TEXT_COLOR_CYAN "\x1B[38;5;51m"
+#elif _WIN32
+#define TEXT_COLOR_RED		"1"
+#define TEXT_COLOR_GREEN	"2"
+#define TEXT_COLOR_YELLOW	"3"
+#define TEXT_COLOR_CYAN     "14"
+#endif
+
 //
 // console
 //
@@ -36,6 +50,9 @@ void Con_DrawConsole (int lines, bool drawinput);
 void Con_Print (const char *txt);
 void Con_Printf (const char *fmt, ...);
 void Con_Warning(const char *fmt, ...);
+
+void Con_PrintColor(const char* color, const char* fmt, ...);
+
 void Con_DPrintf (const char *fmt, ...);
 void Con_SafePrintf (const char *fmt, ...);
 void Con_Clear_f (void);
