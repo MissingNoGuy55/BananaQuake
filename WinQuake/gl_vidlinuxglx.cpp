@@ -341,6 +341,30 @@ static void uninstall_grabs(void)
 extern void KeyDown (kbutton_t *b);
 extern void KeyUp (kbutton_t *b);
 
+void IN_DeactivateMouse( void )
+{
+    if (!mouse_avail || !dpy || !win || x11_grab_mouse.value < 1)
+        return;
+
+    if (mouse_active) {
+        uninstall_grabs();
+        mouse_active = false;
+    }
+}
+
+void IN_ActivateMouse( void )
+{
+    if (!mouse_avail || !dpy || !win || x11_grab_mouse.value < 1)
+        return;
+
+    if (!mouse_active) {
+        mx = my = 0; // don't spazz
+        install_grabs();
+        mouse_active = true;
+    }
+}
+
+
 static void HandleEvents(void)
 {
 	XEvent event;
@@ -414,17 +438,11 @@ static void HandleEvents(void)
 			break;
 
         case EnterNotify:
-            mouse_avail = true;
-            mouse_active = true;
-            install_grabs();
-            KeyDown(&in_mlook);
+            vidmode_active = true;
             break;
 
         case LeaveNotify:
-            mouse_avail = false;
-            mouse_active = false;
-            uninstall_grabs();
-            KeyUp(&in_mlook);
+            vidmode_active = false;
             break;
 
 		case ConfigureNotify :
@@ -440,31 +458,6 @@ static void HandleEvents(void)
 	}
 
 }
-
-static void IN_DeactivateMouse( void )
-{
-    if (!mouse_avail || !dpy || !win)
-        return;
-
-    if (mouse_active) {
-        uninstall_grabs();
-        mouse_active = false;
-        mouse_avail = false;
-    }
-}
-
-static void IN_ActivateMouse( void )
-{
-    if (!mouse_avail || !dpy || !win)
-        return;
-
-    if (!mouse_active) {
-        mx = my = 0; // don't spazz
-        install_grabs();
-        mouse_active = true;
-    }
-}
-
 
 void VID_Shutdown(void)
 {
@@ -517,17 +510,18 @@ void VID_ShiftPalette(unsigned char *p)
 
 void	VID_SetPalette (unsigned char *palette)
 {
-	byte	*pal;
-	unsigned r,g,b;
-	unsigned v;
-	int     r1,g1,b1;
-	int		j,k,l,m;
-	unsigned short i;
-	unsigned	*table;
-	FILE *f;
-	char s[255];
-	int dist, bestdist;
 #if 0
+    byte	*pal;
+    unsigned r,g,b;
+    unsigned v;
+    int     r1,g1,b1;
+    int		j,k,l,m;
+    unsigned short i;
+    unsigned	*table;
+    FILE *f;
+    char s[255];
+    int dist, bestdist;
+
 //
 // 8 8 8 encoding
 //
@@ -569,7 +563,8 @@ void	VID_SetPalette (unsigned char *palette)
 		d_15to8table[i]=k;
 	}
 #else
-
+    int i = 0;
+    byte* pal = nullptr;
     byte* dst = nullptr;
     byte* src = nullptr;
     size_t mark = 0;
@@ -582,7 +577,7 @@ void	VID_SetPalette (unsigned char *palette)
 
 	//standard palette, 255 is transparent
 	dst = (byte*)d_8to24table;
-	src = pal;
+    src = host->host_basepal;
 	for (i = 0; i < 256; i++)
 	{
 		*dst++ = *src++;
@@ -1141,7 +1136,7 @@ void IN_Commands (void)
 	if (!dpy || !win)
 		return;
 
-    if (vidmode_active || key_dest == key_game)
+    if (vidmode_active && key_dest == key_game) // Missi: used to be an || statement, but we need this to have full control if we want to use the mouse (6/23/2024)
 		IN_ActivateMouse();
 	else
 		IN_DeactivateMouse ();
