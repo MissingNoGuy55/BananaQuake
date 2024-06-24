@@ -1538,7 +1538,7 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 				for (i = 0; i < pak->numfiles; i++)
 					if (!strcmp(pak->files[i].name, filename))
 					{       // found it!
-						Sys_Printf("PackFile: %s : %s\n", pak->filename, filename);
+                        Con_PrintColor(TEXT_COLOR_GREEN, "PackFile: %s : %s\n", pak->filename, filename);
 						file_from_pak = 1;
 						if (path_id)
 							*path_id = search->path_id;
@@ -1823,7 +1823,7 @@ pack_t* CCommon::COM_LoadPackFile (char *packfile)
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;
 	
-	Con_Printf ("Added packfile %s (%i files)\n", packfile, numpackfiles);
+    Con_PrintColor (TEXT_COLOR_GREEN, "Added packfile %s (%i files)\n", packfile, numpackfiles);
 	return pack;
 }
 
