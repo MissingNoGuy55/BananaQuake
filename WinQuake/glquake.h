@@ -195,6 +195,9 @@ extern double s_dFogLerpEndTime;			// Missi: current fog density, is the result 
 
 // Missi: BananaQuake stuff (2/17/22)
 
+void IN_ActivateMouse (void);
+void IN_DeactivateMouse (void);
+
 class CGLTexture
 {
 public:
