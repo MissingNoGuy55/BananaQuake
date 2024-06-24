@@ -108,7 +108,7 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 	shm->samplepos = 0;
 	shm->submission_chunk = 1;
 
-	Con_Printf ("SDL audio spec  : %d Hz, %d samples, %d channels\n",
+    Con_PrintColor (TEXT_COLOR_CYAN, "SDL audio spec  : %d Hz, %d samples, %d channels\n",
 			desired.freq, desired.samples, desired.channels);
     
 
