@@ -22,10 +22,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef SERVER_H
 #define SERVER_H
 
-#ifndef GLQUAKE
+#if !(GLQUAKE) && !(DXQUAKE)
 #include "model.h"
-#else
+#elif GLQUAKE
 #include "gl_model.h"
+#elif DXQUAKE
+#include "directx_model.h"
 #endif
 #include "world.h"
 typedef struct server_static_s

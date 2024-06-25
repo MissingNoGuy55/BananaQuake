@@ -91,7 +91,6 @@ using cxxvector = std::vector<T>;
 #include <SDL_image.h>
 #endif
 
-
 #ifndef APIENTRY
 #define	APIENTRY
 #endif
@@ -300,12 +299,14 @@ typedef struct
 #include "server.h"
 #include "strl_fn.h"	// Missi (1/10/2023)
 #include "cfgfile.h"	// Missi (1/10/2023)
-#include "draw.h"		// Missi: moved from below draw.h due to CSoftwareRenderer being defined there (4/24/2023)
 
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_images.h"
+#elif DXQUAKE
+#include "directx_model.h"
 #else
+#include "draw.h"		// Missi: moved from below draw.h due to CSoftwareRenderer being defined there (4/24/2023)
 #include "model.h"
 #include "d_iface.h"
 #endif
@@ -323,6 +324,50 @@ typedef struct
 
 #ifdef GLQUAKE
 #include "glquake.h"
+#endif
+
+#ifdef DXQUAKE
+#include <d3d11.h>
+#include <d3d11_1.h>
+#include <d3d11_2.h>
+#include <d3d11_3.h>
+#include <d3d11_4.h>
+#include <d3d11sdklayers.h>
+#include <d3d11shader.h>
+#include <d3d11shadertracing.h>
+#include <d3dcommon.h>
+#include <d3dcsx.h>
+#include <d3dcompiler.h>
+
+#include <d3d9.h>
+#include <DirectXMath.h>
+#include <d2d1.h>
+#include <d2d1_1.h>
+#include <d2d1_2.h>
+#include <d2d1_3.h>
+#include <dxgi.h>
+#include <dxgi1_2.h>
+#include <dxgi1_3.h>
+#include <dxgi1_4.h>
+#include <dxgi1_5.h>
+#include <dxgi1_6.h>
+#include <dwrite.h>
+#include <wincodec.h>
+#include <d2d1helper.h>
+
+typedef UINT(CALLBACK* LPFNDLLFUNC1)(const _GUID, LPVOID);
+
+#ifdef _DEBUG
+#include <dxgidebug.h>
+#endif
+
+using namespace DirectX;
+
+#include "dxhelper.h"
+#include "directx_images.h"
+#include "directx_mesh.h"
+#include "directx_model.h"
+#include "vid_directx.h"
 #endif
 
 //=============================================================================
@@ -353,6 +398,8 @@ void Chase_Update (void);
 
 #ifdef GLQUAKE
 template<typename T = CGLRenderer>
+#elif DXQUAKE
+template<typename T = CDXRenderer>
 #else
 template<typename T = CSoftwareRenderer>
 #endif
@@ -363,6 +410,8 @@ T* ResolveRenderer()
 {
 #ifdef GLQUAKE
 	return g_GLRenderer;
+#elif DXQUAKE
+	return g_pDXRenderer;
 #else
 	return g_SoftwareRenderer;
 #endif

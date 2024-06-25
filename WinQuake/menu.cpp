@@ -1108,7 +1108,7 @@ void M_Menu_Options_f (void)
 #endif
 }
 
-#ifndef GLQUAKE
+#if !(GLQUAKE) && !(DXQUAKE)
 XF86VidModeModeInfo** GetVideoModes()
 {
     return vidmodes;
@@ -1191,7 +1191,7 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("lookstrafe", !lookstrafe.value);
 		break;
 	
-#ifdef _WIN32
+#if (_WIN32) && !(DXQUAKE)
 	case 12:	// lookstrafe
 		if (!&GetVideoModes()[vid_mode_selection + 1])
 			break;
@@ -1314,7 +1314,7 @@ void M_Options_Draw (void)
 	if (vid_menudrawfn)
 	{
 		char vidMode[256] = {};
-#ifdef _WIN32
+#if (_WIN32) && !(DXQUAKE)
 		snprintf(vidMode, sizeof(vidMode), "%dx%d", GetVideoModes()[vid_mode_selection].width, GetVideoModes()[vid_mode_selection].height);
 #elif __linux__
 		snprintf(vidMode, sizeof(vidMode), "%dx%d", GetVideoModes()[vid_mode_selection]->vtotal, GetVideoModes()[vid_mode_selection]->htotal);		

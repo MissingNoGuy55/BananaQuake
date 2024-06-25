@@ -727,6 +727,7 @@ void CCoreRenderer::R_DrawParticles (void)
 		glVertex3f (p->org[0] + up[0]*scale, p->org[1] + up[1]*scale, p->org[2] + up[2]*scale);
 		glTexCoord2f (0,1);
 		glVertex3f (p->org[0] + right[0]*scale, p->org[1] + right[1]*scale, p->org[2] + right[2]*scale);
+#elif DXQUAKE
 #else
 		D_DrawParticle (p);
 #endif
@@ -796,7 +797,7 @@ void CCoreRenderer::R_DrawParticles (void)
 	glEnd ();
 	glDisable (GL_BLEND);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-#else
+#elif !(GLQUAKE) && !(DXQUAKE)
 	D_EndParticles ();
 #endif
 }

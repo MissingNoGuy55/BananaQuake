@@ -201,6 +201,9 @@ public:
 #ifdef GLQUAKE
 	CGLTexture* solidskytexture;
 	CGLTexture* alphaskytexture;
+#elif DXQUAKE
+	class CDXTexture* solidskytexture;
+	class CDXTexture* alphaskytexture;
 #else
 	CTexture* solidskytexture;
 	CTexture* alphaskytexture;
@@ -209,7 +212,7 @@ public:
 
 	void R_StoreEfrags(efrag_t** ppefrag);
 
-#ifndef GLQUAKE
+#if !(GLQUAKE) && !(DXQUAKE)
 	static void R_TimeRefresh_f(void);
 	void R_TimeGraph(void);
 	void R_PrintAliasStats(void);

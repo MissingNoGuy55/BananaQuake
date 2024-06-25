@@ -1019,11 +1019,9 @@ void V_RenderView (void)
 		if (!cl.paused /* && (sv.maxclients > 1 || key_dest == key_game) */ )
 			V_CalcRefdef ();
 	}
-#ifndef GLQUAKE
-	g_CoreRenderer->R_PushDlights ();
-#else
-	g_GLRenderer->R_PushDlights();
-#endif
+
+	ResolveRenderer()->R_PushDlights();
+
 	if (lcd_x.value)
 	{
 		//
@@ -1038,29 +1036,17 @@ void V_RenderView (void)
 		for (i=0 ; i<3 ; i++)
 			r_refdef.vieworg[i] -= right[i]*lcd_x.value;
 
-#ifndef GLQUAKE
-		g_CoreRenderer->R_RenderView();
-#else
-		g_GLRenderer->R_RenderView();
-#endif
+		ResolveRenderer()->R_RenderView();
 
 		vid.buffer += vid.rowbytes>>1;
 
-#ifndef GLQUAKE
-		g_CoreRenderer->R_PushDlights();
-#else
-		g_GLRenderer->R_PushDlights();
-#endif
+		ResolveRenderer()->R_PushDlights();
 
 		r_refdef.viewangles[YAW] += lcd_yaw.value*2;
 		for (i=0 ; i<3 ; i++)
 			r_refdef.vieworg[i] += 2*right[i]*lcd_x.value;
 
-#ifndef GLQUAKE
-		g_CoreRenderer->R_RenderView();
-#else
-		g_GLRenderer->R_RenderView();
-#endif
+		ResolveRenderer()->R_RenderView();
 
 		vid.buffer -= vid.rowbytes>>1;
 
@@ -1071,14 +1057,10 @@ void V_RenderView (void)
 	}
 	else
 	{
-#ifndef GLQUAKE
-		g_CoreRenderer->R_RenderView();
-#else
-		g_GLRenderer->R_RenderView();
-#endif
+		ResolveRenderer()->R_RenderView();
 	}
 
-#ifndef GLQUAKE
+#if !(GLQUAKE) && !(DXQUAKE)
 	if (crosshair.value)
 		g_SoftwareRenderer->Draw_Character (scr_vrect.x + scr_vrect.width/2 + cl_crossx.value, 
 			scr_vrect.y + scr_vrect.height/2 + cl_crossy.value, '+');

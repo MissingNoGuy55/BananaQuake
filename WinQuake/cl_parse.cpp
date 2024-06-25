@@ -309,7 +309,7 @@ void CL_ParseServerInfo (void)
 // local state
 	cl_entities[0].model = cl.worldmodel = cl.model_precache[1];
 	
-#ifndef GLQUAKE
+#if !(GLQUAKE) && !(DXQUAKE)
 	g_CoreRenderer->R_NewMap();
 #else
 	ResolveRenderer()->R_NewMap();
@@ -691,10 +691,12 @@ void CL_ParseStatic (void)
 
 	VectorCopy (ent->baseline.origin, ent->origin);
 	VectorCopy (ent->baseline.angles, ent->angles);	
-#ifndef GLQUAKE
+#if !(GLQUAKE) && !(DXQUAKE)
 	g_CoreRenderer->R_AddEfrags (ent);
-#else
+#elif (GLQUAKE)
 	g_GLRenderer->R_AddEfrags(ent);
+#elif (DXQUAKE)
+	g_pDXRenderer->R_AddEfrags(ent);
 #endif
 }
 
@@ -897,17 +899,18 @@ void CL_ParseServerMessage (void)
 				if (cl.paused)
 				{
 					CDAudio_Pause ();
-
+#ifdef __linux__
                     IN_DeactivateMouse();
-#if defined(_WIN32) || defined(__CYGWIN__)
+#elif defined(_WIN32) || defined(__CYGWIN__)
 					VID_HandlePause (true);
 #endif
 				}
 				else
 				{
 					CDAudio_Resume ();
+#ifdef __linux__
                     IN_ActivateMouse();
-#if defined(_WIN32) || defined(__CYGWIN__)
+#elif defined(_WIN32) || defined(__CYGWIN__)
 					VID_HandlePause (false);
 #endif
 				}

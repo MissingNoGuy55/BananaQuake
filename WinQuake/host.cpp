@@ -37,8 +37,10 @@ CCoreRenderer* g_CoreRenderer;
 client_t* host_client;
 double		host_time;
 
-#ifdef GLQUAKE
+#if (GLQUAKE)
 CGLRenderer* g_GLRenderer;
+#elif (DXQUAKE)
+CDXRenderer* g_pDXRenderer;
 #else
 CSoftwareRenderer* g_SoftwareRenderer;
 #endif
@@ -918,9 +920,9 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		if (!host_colormap)
             Con_Warning ("Couldn't load gfx/colormap.lmp");
 
-#if (_WIN32) && !(GLQUAKE)
+#if (_WIN32) && !(GLQUAKE) && !(DXQUAKE)
 		SDL_setenv("SDL_AudioDriver", "directsound", 1);
-		g_SoundSystem = new CSoundSystemWin;
+		g_SoundSystem = new CSoundDMA;
 #elif (__linux__) && !(GLQUAKE)
         SDL_setenv("SDL_AudioDriver", "alsa", 1);
         g_SoundSystem = new CSoundDMA;
@@ -930,17 +932,21 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 
 		VID_Init (host_basepal);
 		g_CoreRenderer = new CCoreRenderer;		// needed even for dedicated servers
-#ifndef GLQUAKE
+#if !(GLQUAKE) && !(DXQUAKE)
 		g_CoreRenderer->R_Init();
 		g_SoftwareRenderer = new CSoftwareRenderer;
 		g_SoftwareRenderer->Draw_Init ();
-#else
+#elif GLQUAKE
 		g_GLRenderer = new CGLRenderer;
 		g_GLRenderer->Draw_Init();
         g_GLRenderer->R_Init();
+#elif DXQUAKE
+		g_pDXRenderer = new CDXRenderer;
+		g_pDXRenderer->Draw_Init();
+		g_pDXRenderer->R_Init();
 #endif
 		SCR_Init();
-#if (_WIN32) &&	(GLQUAKE)
+#if (_WIN32) &&	((GLQUAKE) || (DXQUAKE))
 		SDL_setenv("SDL_AudioDriver", "directsound", 1);
 		g_SoundSystem = new CSoundDMA;
 		g_SoundSystem->S_Init();

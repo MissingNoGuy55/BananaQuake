@@ -1749,11 +1749,9 @@ void PrintFrameName (model_t *m, int frame)
 {
 	aliashdr_t 			*hdr;
 	maliasframedesc_t	*pframedesc;
-#ifndef GLQUAKE
-	hdr = (aliashdr_t *)Mod_Extradata(m);
-#else
+
 	hdr = Mod_Extradata<aliashdr_t>(m);
-#endif
+
 	if (!hdr)
 		return;
 	pframedesc = &hdr->frames[frame];

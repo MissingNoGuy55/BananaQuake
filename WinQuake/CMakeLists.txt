@@ -45,6 +45,11 @@ SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 #=================================================================
 
 if (WIN32)
+
+#add_executable(bananaquakesoftware)
+add_executable(bananaquakeopengl)
+add_executable(bananaquakedirectx)
+
 set(WINQUAKE_SOURCES d_copy.s
 d_draw.s
 d_draw16.s
@@ -220,8 +225,7 @@ world.h
 zone.h
 )
 
-set(GLQUAKE_SOURCES
-math.s
+target_sources(bananaquakeopengl PRIVATE math.s
 worlda.s
 snd_mixa.s
 
@@ -298,7 +302,7 @@ world.cpp
 zone.cpp
 )
 
-set(GLQUAKE_HEADERS anorm_dots.h
+target_sources(bananaquakeopengl PUBLIC anorm_dots.h
 anorms.h
 asm_draw.h
 asm_i386.h
@@ -315,7 +319,6 @@ cvar.h
 d_iface.h
 d_local.h
 dosisms.h
-draw.h
 glquake.h
 gl_images.h
 host.h
@@ -324,7 +327,6 @@ input.h
 keys.h
 mathlib.h
 menu.h
-model.h
 modelgen.h
 net.h
 net_dgrm.h
@@ -365,6 +367,151 @@ winquake.h
 world.h
 zone.h
 )
+
+target_sources(bananaquakedirectx PRIVATE math.s
+worlda.s
+snd_mixa.s
+
+qe3.ico
+quake.ico
+winquake.rc
+
+bgmusic.cpp
+cd_win.cpp
+chase.cpp
+cl_demo.cpp
+cl_input.cpp
+cl_main.cpp
+cl_parse.cpp
+cl_tent.cpp
+cmd.cpp
+common.cpp
+conproc.cpp
+console.cpp
+crc.cpp
+cvar.cpp
+directx_draw.cpp
+directx_images.cpp
+directx_mesh.cpp
+directx_model.cpp
+directx_refrag.cpp
+directx_rlight.cpp
+directx_rmain.cpp
+directx_rsurf.cpp
+directx_warp.cpp
+host.cpp
+host_cmd.cpp
+in_win.cpp
+keys.cpp
+mathlib.cpp
+menu.cpp
+net_dgrm.cpp
+net_loop.cpp
+net_main.cpp
+net_vcr.cpp
+net_win.cpp
+net_wins.cpp
+net_wipx.cpp
+pr_cmds.cpp
+pr_edict.cpp
+pr_exec.cpp
+r_part.cpp
+sbar.cpp
+server.cpp
+snd_codec.cpp
+snd_dma.cpp
+snd_mem.cpp
+snd_mp3.cpp
+snd_mp3tag.cpp
+snd_mix.cpp
+snd_vorbis.cpp
+snd_wave.cpp
+snd_win.cpp
+strlcat.cpp
+strlcpy.cpp
+sv_main.cpp
+sv_move.cpp
+sv_phys.cpp
+sv_user.cpp
+sys_win.cpp
+utils.cpp
+view.cpp
+vid_directx.cpp
+wad.cpp
+world.cpp
+zone.cpp
+)
+
+target_sources(bananaquakedirectx PUBLIC anorm_dots.h
+anorms.h
+asm_draw.h
+asm_i386.h
+bgmusic.h
+bspfile.h
+cdaudio.h
+client.h
+cmd.h
+common.h
+conproc.h
+console.h
+crc.h
+cvar.h
+d_iface.h
+d_local.h
+directx_images.h
+directx_mesh.h
+directx_model.h
+directx_refrag.h
+dxhelper.h
+dosisms.h
+host.h
+in_win.h
+input.h
+keys.h
+mathlib.h
+menu.h
+modelgen.h
+net.h
+net_dgrm.h
+net_loop.h
+net_ser.h
+net_vcr.h
+net_wins.h
+pr_cmds.h
+pr_comp.h
+progdefs.h
+progs.h
+protocol.h
+q_ctype.h
+quakeasm.h
+quakedef.h
+r_local.h
+r_part.h
+r_shared.h
+render.h
+screen.h
+server.h
+snd_codec.h
+snd_codeci.h
+snd_mp3.h
+snd_vorbis.h
+snd_wave.h
+sound.h
+spritegn.h
+strl_fn.h
+sys.h
+sys_win.h
+utils.h
+vid.h
+vid_win.h
+vid_directx.h
+view.h
+wad.h
+winquake.h
+world.h
+zone.h
+)
+
 endif (WIN32)
 
 if (UNIX)
@@ -630,7 +777,6 @@ cvar.h
 d_iface.h
 d_local.h
 dosisms.h
-draw.h
 glquake.h
 gl_images.h
 host.h
@@ -926,7 +1072,7 @@ if (WIN32)
 message(PROJECT_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}")  
 message(PROJECT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")  
 #add_executable(bananaquakesoftware WIN32 ${WINQUAKE_SOURCES} ${WINQUAKE_HEADERS})
-add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
+#add_executable(bananaquakeopengl ${GLQUAKE_SOURCES} ${GLQUAKE_HEADERS})
 add_custom_command(TARGET bananaquakeopengl 
                     POST_BUILD
                     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:bananaquakeopengl> "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -974,10 +1120,22 @@ target_include_directories(bananaquakeopengl PUBLIC
     "${includepathWinQuake}"
 )
 
+target_compile_definitions(bananaquakedirectx PUBLIC DXQUAKE)
+target_compile_definitions(bananaquakedirectx PUBLIC USE_CODEC_VORBIS)
+target_compile_definitions(bananaquakedirectx PUBLIC USE_CODEC_WAVE)
+target_compile_definitions(bananaquakedirectx PUBLIC USE_CODEC_MP3)
+target_compile_definitions(bananaquakedirectx PUBLIC $<$<CONFIG:Debug>:DEBUG>)
+target_compile_definitions(bananaquakedirectx PUBLIC $<$<CONFIG:Debug>:_DEBUG>)
+
+target_include_directories(bananaquakedirectx PUBLIC
+    "${includepathWinQuake}"
+)
+
 if (WIN32)
 
 if (${CMAKE_SIZEOF_VOID_P} STREQUAL "8")
 target_compile_definitions(bananaquakeopengl PUBLIC WIN64)
+target_compile_definitions(bananaquakedirectx PUBLIC WIN64)
 endif()
 
 endif(WIN32)
@@ -987,8 +1145,10 @@ endif(WIN32)
 if(WIN32)
 if (${CMAKE_SIZEOF_VOID_P} STREQUAL "4")
 target_link_directories(bananaquakeopengl PUBLIC ${includepathLibraryWinQuakeOpenGLx86})
+target_link_directories(bananaquakedirectx PUBLIC ${includepathLibraryWinQuakeOpenGLx86})
 else()
 target_link_directories(bananaquakeopengl PUBLIC ${includepathLibraryWinQuakeOpenGLx64})
+target_link_directories(bananaquakedirectx PUBLIC ${includepathLibraryWinQuakeOpenGLx64})
 endif()
 endif(WIN32)
 #=================================================================
@@ -1025,6 +1185,28 @@ glu32.lib
 odbc32.lib
 odbccp32.lib)
 
+target_link_libraries(bananaquakedirectx SDL2::SDL2
+libvorbisfile.lib
+libvorbis.lib
+libopusfile.lib
+libopus.lib
+libFLAC.lib
+libogg.lib
+libmad.lib
+libxmp.lib
+comctl32.lib
+winmm.lib
+wsock32.lib
+opengl32.lib
+glu32.lib
+odbc32.lib
+odbccp32.lib
+d2d1.lib
+dxgi.lib
+d3d11.lib
+dwrite.lib
+d3dcompiler.lib)
+
 endif (MSVC)
 
 #target_link_libraries(bananaquakesoftware SDL2::SDL2)
@@ -1033,6 +1215,10 @@ if (MSVC)
 target_compile_options(bananaquakeopengl PRIVATE "/MP")
 target_compile_options(bananaquakeopengl PRIVATE "/W4")
 target_link_options(bananaquakeopengl PRIVATE "/SUBSYSTEM:WINDOWS")
+
+target_compile_options(bananaquakedirectx PRIVATE "/MP")
+target_compile_options(bananaquakedirectx PRIVATE "/W4")
+target_link_options(bananaquakedirectx PRIVATE "/SUBSYSTEM:WINDOWS")
 endif (MSVC)
 
 if (UNIX)
