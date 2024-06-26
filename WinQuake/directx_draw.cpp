@@ -641,6 +641,28 @@ void CDXRenderer::DX_LoadImage32(CDXTexture* glt, unsigned* data)
 	DX_Bind(glt);
 	internalformat = (glt->flags & TEXPREF_ALPHA) ? dx_alpha_format : dx_solid_format;
 	glt->pic.datavec.AddMultipleToEnd(glt->source_width * glt->source_height, (byte*)data);
+
+	D2D1_SIZE_U             size;
+
+	size.width = glt->width;
+	size.height = glt->height;
+
+	D2D1_BITMAP_PROPERTIES bmpProperties = {};
+	bmpProperties.dpiX = 96;
+	bmpProperties.dpiY = 96;
+	bmpProperties.pixelFormat.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	bmpProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE::D2D1_ALPHA_MODE_PREMULTIPLIED;
+
+	ID2D1Bitmap* D2DBitmap = {};
+
+	UINT32 pitch = 32;
+
+	HRESULT res = GetD2DDeviceContext()->CreateBitmap(size, data, NULL, &bmpProperties, &D2DBitmap);
+
+	THROW_IF_FAIL(res);
+
+	m_dxBitmaps.AddToEnd(D2DBitmap);
+
 	//glTexImage2D(DX_TEXTURE_2D, 0, internalformat, glt->width, glt->height, 0, DX_RGBA, DX_UNSIGNED_BYTE, data);
 
 	// upload mipmaps
@@ -948,7 +970,14 @@ CGLRenderer::DX_LoadLightmap -- handles lightmap data
 */
 void CDXRenderer::DX_LoadLightmap(CDXTexture* glt, byte* data)
 {
+	// upload it
+	DX_Bind(glt);
+	
+	
+	//glTexImage2D(GL_TEXTURE_2D, 0, lightmap_bytes, glt->width, glt->height, 0, gl_lightmap_format, GL_UNSIGNED_BYTE, data);
 
+	//// set filter modes
+	//DX_SetFilterModes(glt);
 }
 
 void CDXRenderer::Scrap_Upload(void)

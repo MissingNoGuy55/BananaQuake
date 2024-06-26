@@ -338,6 +338,7 @@ typedef struct
 #include <d3dcommon.h>
 #include <d3dcsx.h>
 #include <d3dcompiler.h>
+#include <DirectXColors.h>
 
 #include <d3d9.h>
 #include <DirectXMath.h>
@@ -361,13 +362,13 @@ typedef UINT(CALLBACK* LPFNDLLFUNC1)(const _GUID, LPVOID);
 #include <dxgidebug.h>
 #endif
 
-using namespace DirectX;
-
 #include "dxhelper.h"
 #include "directx_images.h"
 #include "directx_mesh.h"
 #include "directx_model.h"
 #include "vid_directx.h"
+
+using namespace DirectX;
 #endif
 
 //=============================================================================

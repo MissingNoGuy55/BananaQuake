@@ -45,7 +45,7 @@ CGLTexture*			particletexture;	// little dot for particles
 CGLTexture*			playertextures[MAX_SCOREBOARD];		// up to 16 color translated skins
 
 int			mirrortexturenum;	// quake texturenum, not gltexturenum
-bool	mirror;
+bool		mirror;
 mplane_t	*mirror_plane;
 
 float fog_color_vec[4] = {};

@@ -62,6 +62,23 @@ resolution_types_t s_ValidResolutions[] = {
 
 };
 
+//--------------------------------------------------------------------------------------
+// Structures
+//--------------------------------------------------------------------------------------
+struct SimpleVertex
+{
+	XMFLOAT3 Pos;
+	XMFLOAT4 Color;
+};
+
+
+struct ConstantBuffer
+{
+	XMMATRIX mWorld;
+	XMMATRIX mView;
+	XMMATRIX mProjection;
+};
+
 static resolution_types_t default_resolution = s_ValidResolutions[2];
 static resolution_types_t current_resolution = {};
 
@@ -241,142 +258,52 @@ ID2D1Bitmap* CDXRenderer::LoadBitmapTexture(const wchar_t* texName, UINT32 sizeX
 
 HRESULT CALLBACK CDXRenderer::RenderLoop()
 {
-	const wchar_t* command = nullptr;
-	MSG msg = {};
-	HRESULT result = {};
-	bool bInit = false;
-	BOOL bRet = FALSE;
-	bWantsToRender = true;
-
-	IDWriteTextFormat* format = {};
-
-	GetDWriteFactory()->CreateTextFormat(
-		L"Verdana",
-		NULL,
-		DWRITE_FONT_WEIGHT_REGULAR,
-		DWRITE_FONT_STYLE_NORMAL,
-		DWRITE_FONT_STRETCH_NORMAL,
-		64.0f,
-		L"",
-		&format
-	);
-
-	format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-
-	format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-
-	while (bWantsToRender && (bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
+	// Update our time
+	static float t = 0.0f;
+	if (m_driverType == D3D_DRIVER_TYPE_REFERENCE)
 	{
-		if (bRet == -1)
-		{
-			exit(0);
-		}
-		else
-		{
-			if (mainwindow)
-			{
-				static ID2D1Bitmap* bitmap = GetD2DTargetBitmap();
-				static ID3D11Device* device3D = GetD3DDevice();
-				static ID3D11DeviceContext* context = GetD3DDeviceContext();
-				static ID2D1DeviceContext* context2d = GetD2DDeviceContext();
-				static ID2D1Factory* factory = GetD2DFactory();
-				static IDXGISwapChain* swapchain = GetSwapChain();
-				static ID2D1HwndRenderTarget* renderTarget = GetD2DRenderTarget();
-				static IWICImagingFactory* wicImaging = GetWicImagingFactory();
-				static ID3D11Texture2D* texture = nullptr;
-				static IDXGISurface* surface = nullptr;
-				static ID2D1Layer* layer = nullptr;
-
-				D2D1_SIZE_F renderTargetSize = renderTarget->GetSize();
-
-				D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-					D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE));
-
-				D2D1_BITMAP_PROPERTIES bitmapProperties2 = D2D1::BitmapProperties(D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE));
-
-				if (!bitmap)
-				{
-					bitmap = LoadBitmapTexture(L"pic\\front\\pidgeotto.bmp", 48, 48, bitmapProperties2,
-						wicImaging, bitmap, renderTarget);
-
-					if (bitmap)
-					{
-						D2D1_SIZE_F bitmapSize = bitmap->GetSize();
-						bitmapSize.width = pow(bitmapSize.width, 2) / 16;
-						bitmapSize.height = pow(bitmapSize.height, 2) / 16;
-
-						ID2D1SolidColorBrush* pCornflowerBlueBrush = nullptr;
-						ID2D1SolidColorBrush* pWhiteBrush = nullptr;
-
-						result = renderTarget->CreateSolidColorBrush(
-							D2D1::ColorF(D2D1::ColorF::CornflowerBlue),
-							&pCornflowerBlueBrush
-						);
-
-						THROW_IF_FAIL(result);
-
-						result = renderTarget->CreateSolidColorBrush(
-							D2D1::ColorF(D2D1::ColorF::White),
-							&pWhiteBrush
-						);
-
-						THROW_IF_FAIL(result);
-
-						RECT rc = {};
-						GetWindowRect(mainwindow, &rc);
-
-						static const wchar_t sc_helloWorld[] = L"Test!";
-
-						// Missi: load texture here (1/16/2023)
-
-						D2D1_BITMAP_BRUSH_PROPERTIES bmpBrushProperties = {};
-						bmpBrushProperties.interpolationMode = D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
-
-						renderTarget->BeginDraw();
-
-						renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-
-						renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::CornflowerBlue));
-
-						if (!format)
-						{
-							Sys_Error(__FUNCTION__, __LINE__, __FILE__, TEXT("Failed to create DX format"));
-							return 1;
-						}
-
-						renderTarget->DrawText(
-							sc_helloWorld,
-							ARRAYSIZE(sc_helloWorld) - 1,
-							format,
-							D2D1::RectF(0, 0, renderTargetSize.width, renderTargetSize.height),
-							pWhiteBrush
-						);
-
-						D2D1_RECT_F rect = D2D1::RectF(0, 0, bitmapSize.width, bitmapSize.height);
-
-						FLOAT dpiX = 0.0f, dpiY = 0.0f;
-
-						auto pixelFormat = bitmap->GetPixelFormat();
-						auto pixelSize = bitmap->GetPixelSize();
-						bitmap->GetDpi(&dpiX, &dpiY);
-
-						renderTarget->DrawBitmap(bitmap, rect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, NULL);
-
-						result = renderTarget->EndDraw();
-
-						THROW_IF_FAIL(result);
-					}
-				}
-				else
-				{
-
-				}
-			}
-
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+		t += (float)XM_PI * 0.0125f;
 	}
+	else
+	{
+		static ULONGLONG timeStart = 0;
+		ULONGLONG timeCur = GetTickCount64();
+		if (timeStart == 0)
+			timeStart = timeCur;
+		t = (timeCur - timeStart) / 1000.0f;
+	}
+
+	//
+	// Animate the cube
+	//
+	m_World = XMMatrixRotationY(t);
+
+	//
+	// Clear the back buffer
+	//
+	GetD3DDeviceContext()->ClearRenderTargetView(GetBackBufferRenderTargetView(), Colors::MidnightBlue);
+
+	//
+	// Update variables
+	//
+	ConstantBuffer cb;
+	cb.mWorld = XMMatrixTranspose(m_World);
+	cb.mView = XMMatrixTranspose(m_View);
+	cb.mProjection = XMMatrixTranspose(m_Projection);
+	GetD3DDeviceContext()->UpdateSubresource(m_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
+	//
+	// Renders a triangle
+	//
+	GetD3DDeviceContext()->VSSetShader(m_pVertexShader, nullptr, 0);
+	GetD3DDeviceContext()->VSSetConstantBuffers(0, 1, &m_pConstantBuffer);
+	GetD3DDeviceContext()->PSSetShader(m_pPixelShader, nullptr, 0);
+	GetD3DDeviceContext()->DrawIndexed(36, 0, 0);        // 36 vertices needed for 12 triangles in a triangle list
+
+	//
+	// Present our back buffer to our front buffer
+	//
+	GetSwapChain()->Present(0, 0);
 
 	return 0;
 }
@@ -757,6 +684,94 @@ HRESULT CDXRenderer::CreateDeviceResources()
 	if (FAILED(hr))
 		return hr;
 
+	// Create vertex buffer
+	SimpleVertex vertices[] =
+	{
+		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) },
+	};
+
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(SimpleVertex) * 8;
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+	D3D11_SUBRESOURCE_DATA InitData;
+	ZeroMemory(&InitData, sizeof(InitData));
+	InitData.pSysMem = vertices;
+	hr = GetD3DDevice()->CreateBuffer(&bd, &InitData, &m_vertexBuffer);
+	if (FAILED(hr))
+		return hr;
+
+	// Set vertex buffer
+	UINT stride = sizeof(SimpleVertex);
+	UINT offset = 0;
+	GetD3DDeviceContext()->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+
+	// Create index buffer
+	WORD indices[] =
+	{
+		3,1,0,
+		2,1,3,
+
+		0,5,4,
+		1,5,0,
+
+		3,4,7,
+		0,4,3,
+
+		1,6,5,
+		2,6,1,
+
+		2,7,6,
+		3,7,2,
+
+		6,4,5,
+		7,4,6,
+	};
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(WORD) * 36;        // 36 vertices needed for 12 triangles in a triangle list
+	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+	InitData.pSysMem = indices;
+	hr = GetD3DDevice()->CreateBuffer(&bd, &InitData, &m_indexBuffer);
+	if (FAILED(hr))
+		return hr;
+
+	// Set index buffer
+	GetD3DDeviceContext()->IASetIndexBuffer(m_indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+
+	// Set primitive topology
+	GetD3DDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Create the constant buffer
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(ConstantBuffer);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = 0;
+	hr = GetD3DDevice()->CreateBuffer(&bd, nullptr, &m_constantBuffer);
+	if (FAILED(hr))
+		return hr;
+
+	// Initialize the world matrix
+	m_World = XMMatrixIdentity();
+
+	// Initialize the view matrix
+	XMVECTOR Eye = XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
+	XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	m_View = XMMatrixLookAtLH(Eye, At, Up);
+
+	// Initialize the projection matrix
+	m_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV2, size.width / (FLOAT)size.height, 0.01f, 100.0f);
+
 	ShowWindow(mainwindow, 0);
 }
 
@@ -1110,6 +1125,7 @@ LRESULT WINAPI Loop(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(mainwindow, &ps);
+			g_pDXRenderer->RenderLoop();
 			EndPaint(mainwindow, &ps);
 		}
 	}

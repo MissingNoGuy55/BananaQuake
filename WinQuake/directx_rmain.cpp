@@ -45,11 +45,13 @@ CGLTexture*			particletexture;	// little dot for particles
 CGLTexture*			playertextures[MAX_SCOREBOARD];		// up to 16 color translated skins
 
 int			mirrortexturenum;	// quake texturenum, not gltexturenum
-bool	mirror;
+bool		mirror;
 mplane_t	*mirror_plane;
 
 float fog_color_vec[4] = {};
 float fog_density = 0.0f;
+
+cvar_t	dx_ztrick = { "dx_ztrick","1" };
 
 //
 // view origin
@@ -85,19 +87,19 @@ cvar_t	r_wateralpha = {"r_wateralpha","1"};
 cvar_t	r_dynamic = {"r_dynamic","1"};
 cvar_t	r_novis = {"r_novis","0"};
 
-cvar_t	gl_finish = {"gl_finish","0"};
-cvar_t	gl_clear = {"gl_clear","0"};
-cvar_t	gl_cull = {"gl_cull","1"};
-cvar_t	gl_texsort = {"gl_texsort","1"};
-cvar_t	gl_smoothmodels = {"gl_smoothmodels","1"};
-cvar_t	gl_affinemodels = {"gl_affinemodels","0"};
-cvar_t	gl_polyblend = {"gl_polyblend","1"};
-cvar_t	gl_flashblend = {"gl_flashblend","1"};
-cvar_t	gl_playermip = {"gl_playermip","0"};
-cvar_t	gl_nocolors = {"gl_nocolors","0"};
-cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","0"};
-cvar_t	gl_reporttjunctions = {"gl_reporttjunctions","0"};
-cvar_t	gl_doubleeyes = {"gl_doubleeys", "1"};
+cvar_t	dx_finish = {"dx_finish","0"};
+cvar_t	dx_clear = {"dx_clear","0"};
+cvar_t	dx_cull = {"dx_cull","1"};
+cvar_t	dx_texsort = {"dx_texsort","1"};
+cvar_t	dx_smoothmodels = {"dx_smoothmodels","1"};
+cvar_t	dx_affinemodels = {"dx_affinemodels","0"};
+cvar_t	dx_polyblend = {"dx_polyblend","1"};
+cvar_t	dx_flashblend = {"dx_flashblend","1"};
+cvar_t	dx_playermip = {"dx_playermip","0"};
+cvar_t	dx_nocolors = {"dx_nocolors","0"};
+cvar_t	dx_keeptjunctions = {"dx_keeptjunctions","0"};
+cvar_t	dx_reporttjunctions = {"dx_reporttjunctions","0"};
+cvar_t	dx_doubleeyes = {"dx_doubleeys", "1"};
 
 int skytexturenum;
 
@@ -260,6 +262,8 @@ void CDXRenderer::R_DrawSpriteModel (entity_t *e)
 	glEnable (GL_ALPHA_TEST);
 	glBegin (GL_QUADS);
 
+	GetD3DDeviceContext()->Draw(0, 0);
+
 	glTexCoord2f (0, 1);
 	VectorMA (e->origin, frame->down, up, point);
 	VectorMA (point, frame->left, right, point);
@@ -390,7 +394,7 @@ GL_DrawAliasShadow
 */
 extern	vec3_t			lightspot;
 
-void CDXRenderer::GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
+void CDXRenderer::R_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 {
 	trivertx_t	*verts;
 	int		*order;
@@ -610,14 +614,14 @@ void CDXRenderer::R_DrawAliasModel (entity_t *e)
 	}
 
 	anim = (int)(cl.time*10) & 3;
-    g_GLRenderer->GL_Bind(paliashdr->gltextures[currententity->skinnum][anim]);
+    g_pDXRenderer->DX_Bind(paliashdr->dxtextures[currententity->skinnum][anim]);
 
 	// we can't dynamically colormap textures, so they are cached
 	// seperately for the players.  Heads are just uncolored.
-	if (currententity->colormap != vid.colormap && !gl_nocolors.value)
+	if (currententity->colormap != vid.colormap && !dx_nocolors.value)
 	{
 		if ((uintptr_t)e >= (uintptr_t)&cl_entities[1] && (uintptr_t)e <= (uintptr_t)&cl_entities[cl.maxclients] /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
-		    g_GLRenderer->GL_Bind(playertextures[e - cl_entities - 1]);
+		    g_pDXRenderer->DX_Bind(playertextures[e - cl_entities - 1]);
 	}
 
 	if (gl_smoothmodels.value)
@@ -902,11 +906,10 @@ void CDXRenderer::R_SetupFrame (void)
 
 }
 
-
-void CDXRenderer::MYgluPerspective( GLdouble fovy, GLdouble aspect,
-		     GLdouble zNear, GLdouble zFar )
+void CDXRenderer::MYDXPerspective(double fovy, double aspect,
+	double zNear, double zFar )
 {
-   GLdouble xmin, xmax, ymin, ymax;
+	double xmin, xmax, ymin, ymax;
 
    ymax = zNear * tan( fovy * M_PI / 360.0 );
    ymin = -ymax;
@@ -1022,7 +1025,7 @@ void CDXRenderer::R_RenderScene (void)
 
 	R_DrawEntitiesOnList ();
 
-	GL_DisableMultitexture();
+	// GL_DisableMultitexture();
 
 	R_RenderDlights ();
 
@@ -1044,7 +1047,7 @@ void CDXRenderer::R_Clear (void)
 {
 	if (r_mirroralpha.value != 1.0)
 	{
-		if (gl_clear.value)
+		if (dx_clear.value)
 			glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		else
 			glClear (GL_DEPTH_BUFFER_BIT);
@@ -1056,7 +1059,7 @@ void CDXRenderer::R_Clear (void)
 	{
 		static int trickframe;
 
-		if (gl_clear.value)
+		if (dx_clear.value)
 			glClear (GL_COLOR_BUFFER_BIT);
 
 		trickframe++;
@@ -1075,7 +1078,7 @@ void CDXRenderer::R_Clear (void)
 	}
 	else
 	{
-		if (gl_clear.value)
+		if (dx_clear.value)
 			glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		else
 			glClear (GL_DEPTH_BUFFER_BIT);
@@ -1120,11 +1123,6 @@ void CDXRenderer::R_Mirror (void)
 		cl_numvisedicts++;
 	}
 
-	gldepthmin = 0.5;
-	gldepthmax = 1;
-	glDepthRange (gldepthmin, gldepthmax);
-	glDepthFunc (GL_LEQUAL);
-
 	R_RenderScene ();
 	R_DrawWaterSurfaces ();
 
@@ -1134,14 +1132,14 @@ void CDXRenderer::R_Mirror (void)
 	glDepthFunc (GL_LEQUAL);
 
 	// blend on top
-	glEnable (GL_BLEND);
+	/*glEnable (GL_BLEND);
 	glMatrixMode(GL_PROJECTION);
 	if (mirror_plane->normal[2])
 		glScalef (1,-1,1);
 	else
 		glScalef (-1,1,1);
 	glCullFace(GL_FRONT);
-	glMatrixMode(GL_MODELVIEW);
+	glMatrixMode(GL_MODELVIEW);*/
 
 	glLoadMatrixf (r_base_world_matrix);
 
@@ -1169,7 +1167,6 @@ r_refdef must be set before the first call
 void CDXRenderer::R_RenderView (void)
 {
 	double	time1, time2;
-	GLfloat colors[4] = {(GLfloat) 0.0, (GLfloat) 0.0, (GLfloat) 1, (GLfloat) 0.20};
 
 	if (r_norefresh.value)
 		return;
@@ -1179,16 +1176,13 @@ void CDXRenderer::R_RenderView (void)
 
 	if (r_speeds.value)
 	{
-		glFinish ();
+		
 		time1 = Sys_DoubleTime ();
 		c_brush_polys = 0;
 		c_alias_polys = 0;
 	}
 
-	mirror = false;
-
-	if (gl_finish.value)
-		glFinish ();
+	mirror = false;		
 
 	R_Clear ();
 
@@ -1202,126 +1196,6 @@ void CDXRenderer::R_RenderView (void)
 	glEnable(GL_FOG);
 ********************************************/
 
-    if (!sv->level_has_fog)
-    {
-        glDisable(GL_FOG);
-    }
-    else
-    {
-		// Missi: fog lerping code (6/18/2024)
-        if ((!s_bFogColorLerping) && (level_fog_color_r.value != level_fog_color_goal_r.value ||
-                                      level_fog_color_g.value != level_fog_color_goal_g.value ||
-                                      level_fog_color_b.value != level_fog_color_goal_b.value))
-		{
-			s_dFogLerpTime = Cvar_VariableValue("fog_lerp_time");
-
-			lastLerpColorTick = 0.0;
-			s_bFogColorLerping = true;
-		}
-        if ((!s_bFogDensityLerping) && (level_fog_density_goal.value != level_fog_density.value))
-		{
-			s_dFogLerpDensityTime = Cvar_VariableValue("fog_lerp_time");
-
-            lastLerpDensityTick = 0.0;
-			s_bFogDensityLerping = true;
-        }
-        if ((!s_bFogStartEndLerping) && (level_fog_start_goal.value != level_fog_start.value ||
-                                         level_fog_end_goal.value != level_fog_end.value))
-		{
-			s_dFogLerpStartTime = Cvar_VariableValue("fog_lerp_time");
-            s_dFogLerpEndTime = Cvar_VariableValue("fog_lerp_time");
-
-            s_dFogStartTimeStamp = level_fog_start.value;
-            s_dFogEndTimeStamp = level_fog_end.value;
-
-			lastLerpStartTick = 0.0;
-			lastLerpEndTick = 0.0;
-			s_bFogStartEndLerping = true;
-        }
-
-		if (s_bFogColorLerping)
-		{
-            lastLerpColorTick += host->host_frametime;
-
-            double red = Lerp<double>(level_fog_color_r.value, level_fog_color_goal_r.value, (lastLerpColorTick / s_dFogLerpTime));
-			double green = Lerp<double>(level_fog_color_g.value, level_fog_color_goal_g.value, (lastLerpColorTick / s_dFogLerpTime));
-			double blue = Lerp<double>(level_fog_color_b.value, level_fog_color_goal_b.value, (lastLerpColorTick / s_dFogLerpTime));
-
-            fog_color_vec[0] = red;
-            fog_color_vec[1] = green;
-            fog_color_vec[2] = blue;
-
-            //Con_DPrintf("fog color lerp: %f %f %f\n", fog_color_vec[0], fog_color_vec[1], fog_color_vec[2]);
-
-			if (lastLerpColorTick > s_dFogLerpTime)
-			{
-				s_bFogColorLerping = false;
-				fog_color_vec[0] = level_fog_color_goal_r.value;
-				fog_color_vec[1] = level_fog_color_goal_g.value;
-				fog_color_vec[2] = level_fog_color_goal_b.value;
-
-				Cvar_SetValue("fog_r", fog_color_vec[0]);
-				Cvar_SetValue("fog_g", fog_color_vec[1]);
-				Cvar_SetValue("fog_b", fog_color_vec[2]);
-			}
-		}
-		if (s_bFogDensityLerping)
-		{
-			lastLerpDensityTick += host->host_frametime;
-
-            double val = Lerp<double>(level_fog_density.value, level_fog_density_goal.value, (lastLerpDensityTick / s_dFogLerpDensityTime));
-
-            if (lastLerpColorTick > s_dFogLerpDensityTime)
-            {
-                s_bFogDensityLerping = false;
-
-				s_dCurFogDensity = level_fog_density_goal.value;
-				Cvar_SetValue("fog_density", s_dCurFogDensity);
-			}
-		}
-		if (s_bFogStartEndLerping)
-		{
-			lastLerpStartTick += host->host_frametime;
-			lastLerpEndTick += host->host_frametime;
-
-            static double start = 0.0;
-            static double end = 0.0;
-
-            if (level_fog_start_goal.value >= level_fog_start.value)
-                start = Lerp<double>(level_fog_start.value, level_fog_start_goal.value, lastLerpStartTick / s_dFogLerpStartTime);
-            else
-                start = Lerp<double>(level_fog_start_goal.value, level_fog_start.value, lastLerpStartTick / s_dFogLerpStartTime);
-
-            if (level_fog_end_goal.value >= level_fog_end.value)
-                end = Lerp<double>(level_fog_end.value, level_fog_end_goal.value, lastLerpEndTick / s_dFogLerpEndTime);
-            else
-                end = Lerp<double>(level_fog_end_goal.value, level_fog_end.value, lastLerpEndTick / s_dFogLerpEndTime);
-
-            s_dCurFogStart = start;
-            s_dCurFogEnd = end;
-
-            Con_DPrintf("fog start: %4.2f\nfog end: %4.2f\n", s_dCurFogStart, s_dCurFogEnd);
-
-            if (lastLerpColorTick > s_dFogLerpStartTime && lastLerpEndTick >= s_dFogLerpEndTime)
-			{
-				s_dCurFogStart = level_fog_start_goal.value;
-                s_dCurFogEnd = level_fog_end_goal.value;
-
-                Cvar_SetValue("fog_start", s_dCurFogStart);
-                Cvar_SetValue("fog_end", s_dCurFogEnd);
-
-				s_bFogStartEndLerping = false;
-			}
-		}
-
-        glFogi(GL_FOG_MODE, GL_LINEAR);
-        glFogfv(GL_FOG_COLOR, fog_color_vec);
-        glFogf(GL_FOG_DENSITY, s_dCurFogDensity);
-        glFogf(GL_FOG_START, s_dCurFogStart);
-        glFogf(GL_FOG_END, s_dCurFogEnd);
-        glEnable(GL_FOG);
-    }
-
 	R_RenderScene();
 	R_DrawViewModel();
 	R_DrawWaterSurfaces();
@@ -1333,7 +1207,7 @@ void CDXRenderer::R_RenderView (void)
 
 	if (r_speeds.value)
 	{
-//		glFinish ();
+//		
 		time2 = Sys_DoubleTime ();
 		Con_Printf ("%3i ms  %4i wpoly %4i epoly\n", (int)((time2-time1)*1000), c_brush_polys, c_alias_polys); 
 	}
@@ -1341,13 +1215,17 @@ void CDXRenderer::R_RenderView (void)
 
 ERenderContext R_ResolveRenderer()
 {
-#ifndef GLQUAKE
+#if (DXQUAKE)
+	g_pDXRenderer = new CDXRenderer;
+	g_pDXRenderer->R_InitTextures();
+	return RENDER_SOFTWARE;
+#elif (GLQUAKE)
+	g_GLRenderer = new CGLRenderer;
+	g_GLRenderer->R_InitTextures();
+	return RENDER_OPENGL;
+#else
 	g_SoftwareRenderer = new CSoftwareRenderer;
 	g_SoftwareRenderer->R_InitTextures();
 	return RENDER_SOFTWARE;
-#else
-	g_GLRenderer = new CDXRenderer;
-	g_GLRenderer->R_InitTextures();
-	return RENDER_OPENGL;
 #endif
 }
