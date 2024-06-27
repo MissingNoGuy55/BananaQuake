@@ -44,7 +44,7 @@ static music_handler_t wanted_handlers[] =
 // Only support for OGG at the moment. There is no support for WAV due 
 // to its poor and numerous specifications (6/5/2024)
 //======================================================================
-void CBackgroundMusic::GetSongArtistAndName(const char* filename, uintptr_t* path_id, const char* ext, artistinfo_t& artistinfo)
+void CBackgroundMusic::GetSongArtistAndName(const char* filename, uintptr_t* path_id, const char* ext, artistinfo_t artistinfo)
 {
 	FILE* f = nullptr;
 	int size = g_Common->COM_FOpenFile(filename, &f, path_id);
@@ -121,7 +121,7 @@ void CBackgroundMusic::GetSongArtistAndName(const char* filename, uintptr_t* pat
 		}
 	}
 
-	fclose(f);
+    fclose(f);
 }
 
 void CBackgroundMusic::BGM_Play_f(void)
@@ -405,7 +405,7 @@ void CBackgroundMusic::BGM_PlayCDtrack(byte track, bool looping)
 			if (cl_showsonginfo.value > 0.0f)
 			{
 				artistinfo_t artist = {};
-				GetSongArtistAndName(tmp, nullptr, ext, artist);
+                GetSongArtistAndName(tmp, nullptr, ext, artist);
 
 				char songTitle[512] = {};
 
