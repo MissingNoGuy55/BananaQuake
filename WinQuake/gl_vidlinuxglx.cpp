@@ -439,10 +439,15 @@ static void HandleEvents(void)
 
         case EnterNotify:
             vidmode_active = true;
+            install_grabs();
+            in_mlook.state |= 1;
             break;
 
         case LeaveNotify:
             vidmode_active = false;
+            uninstall_grabs();
+            in_mlook.state &= ~1;
+            in_strafe.state &= ~1;  // Missi: prevents a bug on Linux where mlook is lost on alt+tabbing (6/27/2024)
             break;
 
 		case ConfigureNotify :
@@ -1164,7 +1169,7 @@ void IN_MouseMove (usercmd_t *cmd)
 	my *= sensitivity.value;
 
 // add mouse X/Y movement to cmd
-	if ( (in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1) ))
+    if ( (in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1) ))
 		cmd->sidemove += m_side.value * mx;
 	else
 		cl.viewangles[YAW] -= m_yaw.value * mx;
