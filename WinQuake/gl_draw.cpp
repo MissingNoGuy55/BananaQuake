@@ -38,31 +38,31 @@ unsigned int d_8to24table_pants[256];
 
 bool gl_texture_NPOT = false;
 
-static cvar_t		gl_nobind = {"gl_nobind", "0"};
-static cvar_t		gl_picmip = {"gl_picmip", "0"};
+static cvar_t		gl_nobind =		{ "gl_nobind", "0" };
+static cvar_t		gl_picmip =		{ "gl_picmip", "0" };
 static cvar_t		gl_texturemode = {"gl_texturemode", ""};
 
-cvar_t		gl_max_size = {"gl_max_size", "1024"};
-cvar_t		gl_fullbrights = {"gl_fullbrights", "0"};
+cvar_t		gl_max_size =			{ "gl_max_size", "1024" };
+cvar_t		gl_fullbrights =		{ "gl_fullbrights", "0" };
 GLint		gl_hardware_maxsize;
 
 static byte	conback_buffer[sizeof(CQuakePic)];
 CQuakePic	*conback = (CQuakePic*)&conback_buffer;
 
-cvar_t	level_fog_color_r           {"fog_r", "0.5", false};
-cvar_t	level_fog_color_g           {"fog_g", "0.5", false};
-cvar_t	level_fog_color_b           {"fog_b", "0.5", false};
-cvar_t	level_fog_color_goal_r      {"fog_goal_r", "0.5", false};
-cvar_t	level_fog_color_goal_g      {"fog_goal_g", "0.5", false};
-cvar_t	level_fog_color_goal_b      {"fog_goal_b", "0.5", false};
-cvar_t	level_fog_density           {"fog_density", "1.0", false};
-cvar_t	level_fog_density_goal      {"fog_density_goal", "1.0", false};
-cvar_t  level_fog_start             {"fog_start", "64.0", false};
-cvar_t  level_fog_start_goal        {"fog_start_goal", "64.0", false};
-cvar_t  level_fog_end               {"fog_end", "2048.0", false};
-cvar_t  level_fog_end_goal          {"fog_end_goal", "2048.0", false};
-cvar_t  level_fog_force             {"fog_force", "0.0", false};
-cvar_t  level_fog_lerp_time         { "fog_lerp_time", "0.0", false};
+cvar_t	level_fog_color_r           { "fog_r", "0.5", false };
+cvar_t	level_fog_color_g           { "fog_g", "0.5", false };
+cvar_t	level_fog_color_b           { "fog_b", "0.5", false };
+cvar_t	level_fog_color_goal_r      { "fog_goal_r", "0.5", false };
+cvar_t	level_fog_color_goal_g      { "fog_goal_g", "0.5", false };
+cvar_t	level_fog_color_goal_b      { "fog_goal_b", "0.5", false };
+cvar_t	level_fog_density           { "fog_density", "1.0", false };
+cvar_t	level_fog_density_goal      { "fog_density_goal", "1.0", false };
+cvar_t  level_fog_start             { "fog_start", "64.0", false };
+cvar_t  level_fog_start_goal        { "fog_start_goal", "64.0", false };
+cvar_t  level_fog_end               { "fog_end", "2048.0", false };
+cvar_t  level_fog_end_goal          { "fog_end_goal", "2048.0", false };
+cvar_t  level_fog_force             { "fog_force", "0.0", false };
+cvar_t  level_fog_lerp_time         { "fog_lerp_time", "0.0", false };
 
 CGLRenderer::CGLRenderer() : CCoreRenderer()
 {
