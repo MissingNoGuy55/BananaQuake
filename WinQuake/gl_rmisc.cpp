@@ -211,6 +211,8 @@ void CGLRenderer::R_Init (void)
 
 	Cvar_RegisterVariable (&gl_doubleeyes);
 
+	R_InitTextures();
+
 	g_CoreRenderer->R_InitParticles ();
 	R_InitParticleTexture ();
 
