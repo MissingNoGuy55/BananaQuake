@@ -27,7 +27,7 @@ CCommon* g_Common;
 CFileSystem* g_FileSystem;
 cache_user_s* loadcache;
 
-#define NUM_SAFE_ARGVS  7
+constexpr int NUM_SAFE_ARGVS = 7;
 
 static char*			largv[MAX_NUM_ARGVS + NUM_SAFE_ARGVS + 1];
 static const char*		argvdummy;
@@ -39,17 +39,17 @@ static const char*     safeargvs[NUM_SAFE_ARGVS] =
 cvar_t  registered = {"registered","1"};	// Missi: (6/15/2022)
 cvar_t  cmdline = {"cmdline","0", false, true};
 
-bool        com_modified;   // set true if using non-id files
+bool	com_modified;   // set true if using non-id files
 
-bool		proghack;
+bool	proghack;
 
-int             static_registered = 1;  // only for startup check, then set
+int		static_registered = 1;  // only for startup check, then set
 
-bool		msg_suppress_1 = 0;
+bool	msg_suppress_1 = 0;
 
 // if a packfile directory differs from this, it is assumed to be hacked
-#define PAK0_COUNT              339
-#define PAK0_CRC                32981
+constexpr int PAK0_COUNT	= 339;
+constexpr int PAK0_CRC		= 32981;
 
 char	CCommon::com_token[1024] = {};
 int		CCommon::com_argc = 0;
@@ -60,7 +60,7 @@ char    CCommon::com_cachedir[MAX_OSPATH] = {};
 char    CCommon::com_gamedir[MAX_OSPATH] = {};
 int		CCommon::file_from_pak = 0;
 
-#define CMDLINE_LENGTH	256
+constexpr int CMDLINE_LENGTH = 256;
 char	com_cmdline[CMDLINE_LENGTH];
 
 bool		standard_quake = true, rogue, hipnotic;

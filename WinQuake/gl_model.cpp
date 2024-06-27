@@ -829,10 +829,10 @@ void Mod_LoadFaces (lump_t *l, int bsp2)
 		CalcSurfaceExtents (out);
 				
 	// lighting info
-		if (i == -1)
+		if (lofs == -1)
 			out->samples = NULL;
 		else
-			out->samples = loadmodel->lightdata + (lofs * 3);
+			out->samples = loadmodel->lightdata + (lofs * 3); //johnfitz -- lit support via lordhavoc (was "+ i")
 		
 	// set the drawing flags flag
 	
