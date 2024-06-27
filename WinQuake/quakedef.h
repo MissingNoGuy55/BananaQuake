@@ -185,33 +185,33 @@ constexpr int	STAT_MONSTERS = 14;		// bumped by svc_killedmonster
 
 // stock defines
 
-constexpr unsigned long	IT_SHOTGUN = 1;
-constexpr unsigned long	IT_SUPER_SHOTGUN = 2;
-constexpr unsigned long	IT_NAILGUN = 4;
-constexpr unsigned long	IT_SUPER_NAILGUN = 8;
-constexpr unsigned long	IT_GRENADE_LAUNCHER = 16;
-constexpr unsigned long	IT_ROCKET_LAUNCHER = 32;
-constexpr unsigned long	IT_LIGHTNING = 64;
-constexpr unsigned long IT_SUPER_LIGHTNING = 128;
-constexpr unsigned long IT_SHELLS = 256;
-constexpr unsigned long IT_NAILS = 512;
-constexpr unsigned long IT_ROCKETS = 1024;
-constexpr unsigned long IT_CELLS = 2048;
-constexpr unsigned long IT_AXE = 4096;
-constexpr unsigned long IT_ARMOR1 = 8192;
-constexpr unsigned long IT_ARMOR2 = 16384;
-constexpr unsigned long IT_ARMOR3 = 32768;
-constexpr unsigned long IT_SUPERHEALTH = 65536;
-constexpr unsigned long IT_KEY1 = 131072;
-constexpr unsigned long IT_KEY2 = 262144;
-constexpr unsigned long	IT_INVISIBILITY = 524288;
-constexpr unsigned long	IT_INVULNERABILITY = 1048576;
-constexpr unsigned long	IT_SUIT = 2097152;
-constexpr unsigned long	IT_QUAD = 4194304;
-constexpr unsigned long IT_SIGIL1 = (1<<28);
-constexpr unsigned long IT_SIGIL2 = (1<<29);
-constexpr unsigned long IT_SIGIL3 = (1<<30);
-constexpr unsigned long IT_SIGIL4 = (1<<31);
+constexpr long  IT_SHOTGUN = 1;
+constexpr long	IT_SUPER_SHOTGUN = 2;
+constexpr long	IT_NAILGUN = 4;
+constexpr long	IT_SUPER_NAILGUN = 8;
+constexpr long	IT_GRENADE_LAUNCHER = 16;
+constexpr long	IT_ROCKET_LAUNCHER = 32;
+constexpr long	IT_LIGHTNING = 64;
+constexpr long  IT_SUPER_LIGHTNING = 128;
+constexpr long  IT_SHELLS = 256;
+constexpr long  IT_NAILS = 512;
+constexpr long  IT_ROCKETS = 1024;
+constexpr long  IT_CELLS = 2048;
+constexpr long  IT_AXE = 4096;
+constexpr long  IT_ARMOR1 = 8192;
+constexpr long  IT_ARMOR2 = 16384;
+constexpr long  IT_ARMOR3 = 32768;
+constexpr long  IT_SUPERHEALTH = 65536;
+constexpr long  IT_KEY1 = 131072;
+constexpr long  IT_KEY2 = 262144;
+constexpr long	IT_INVISIBILITY = 524288;
+constexpr long	IT_INVULNERABILITY = 1048576;
+constexpr long	IT_SUIT = 2097152;
+constexpr long	IT_QUAD = 4194304;
+constexpr long  IT_SIGIL1 = (1<<28);
+constexpr long  IT_SIGIL2 = (1<<29);
+constexpr long  IT_SIGIL3 = (1<<30);
+constexpr long  IT_SIGIL4 = (1<<31);
 
 //===========================================
 //rogue changed and added defines
