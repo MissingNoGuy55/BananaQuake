@@ -440,7 +440,7 @@ const char *ED_ParseEdict (const char *data, edict_t *ent);
 ddef_t *ED_FindGlobal (const char *name);
 
 void ED_WriteGlobals (FILE *f);
-void ED_ParseGlobals (const char *data);
+const char* ED_ParseGlobals (const char *data);
 
 void ED_LoadFromFile (const char *data);
 

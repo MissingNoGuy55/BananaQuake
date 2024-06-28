@@ -561,11 +561,12 @@ Host_Loadgame_f
 */
 void CQuakeHost::Host_Loadgame_f (void)
 {
+    static  char* start = nullptr;
+    const char* data = nullptr;
+
 	char	name[MAX_OSPATH] = {};
-	FILE	*f = nullptr;
 	char	mapname[MAX_QPATH] = {};
 	float	time = 0.0f, tfloat = 0.0f;
-	const char *start = nullptr;
 	int		i = 0, r = 0;
 	edict_t	*ent = nullptr;
 	int		entnum = 0;
@@ -585,7 +586,7 @@ void CQuakeHost::Host_Loadgame_f (void)
 
 	cls.demonum = -1;		// stop demo loop in case this fails
 
-	sprintf (name, "%s/%s", g_Common->com_gamedir, g_pCmds->Cmd_Argv(1));
+    snprintf (name, sizeof(name), "%s/%s", g_Common->com_gamedir, g_pCmds->Cmd_Argv(1));
 	g_Common->COM_DefaultExtension (name, ".sav");
 	
 // we can't call SCR_BeginLoadingPlaque, because too much stack space has
@@ -593,25 +594,28 @@ void CQuakeHost::Host_Loadgame_f (void)
 //	SCR_BeginLoadingPlaque ();
 
 	Con_Printf ("Loading game from %s...\n", name);
-	f = fopen (name, "rt");
-	if (!f)
+    start = (char *) g_Common->COM_LoadMallocFile_TextMode_OSPath(name, NULL);
+    if (!start)
 	{
 		Con_Printf ("ERROR: couldn't open.\n");
+        free(start);
 		return;
 	}
 
-	fscanf (f, "%i\n", &version);
+    data = start;
+    data = g_Common->COM_ParseIntNewline(data, &version);
+
 	if (version != SAVEGAME_VERSION)
 	{
-		fclose (f);
+        free(start);
 		Con_Printf ("Savegame is version %i, not %i\n", version, SAVEGAME_VERSION);
 		return;
 	}
-	fscanf (f, "%s\n", savegame_string);
+    data = g_Common->COM_ParseStringNewline (data);
 	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
-		fscanf (f, "%f\n", &spawn_parms[i]);
+        data = g_Common->COM_ParseFloatNewline(data, &spawn_parms[i]);
 // this silliness is so we can load 1.06 save files, which have float skill values
-	fscanf (f, "%f\n", &tfloat);
+    data = g_Common->COM_ParseFloatNewline(data, &tfloat);
 	current_skill = (int)(tfloat + 0.1);
 	Cvar_SetValue ("skill", (float)current_skill);
 
@@ -621,8 +625,9 @@ void CQuakeHost::Host_Loadgame_f (void)
 	Cvar_SetValue ("teamplay", 0);
 #endif
 
-	fscanf (f, "%s\n",mapname);
-	fscanf (f, "%f\n",&time);
+    data = g_Common->COM_ParseStringNewline (data);
+    Q_strlcpy (mapname, g_Common->com_token, sizeof(mapname));
+    data = g_Common->COM_ParseFloatNewline (data, &time);
 
 	CL_Disconnect_f ();
 	
@@ -633,6 +638,7 @@ void CQuakeHost::Host_Loadgame_f (void)
 #endif
 	if (!sv->active)
 	{
+        free(start);
 		Con_Printf ("Couldn't load map\n");
 		return;
 	}
@@ -643,60 +649,54 @@ void CQuakeHost::Host_Loadgame_f (void)
 
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
-		fscanf (f, "%s\n", savegame_string);
-		sv->lightstyles[i] = (const char*)strdup(savegame_string);
+        data = g_Common->COM_ParseStringNewline(data);
+        sv->lightstyles[i] = (const char*)g_MemCache->Hunk_Strdup(savegame_string, "lightstyles");
 	}
 
 // load the edicts out of the savegame file
 	entnum = -1;		// -1 is the globals
-	while (!feof(f))
+    while (*data)
 	{
-		for (i=0 ; i<sizeof(savegame_string)-1 ; i++)
-		{
-			r = fgetc (f);
-			if (r == EOF || !r)
-				break;
-			savegame_string[i] = r;
-			if (r == '}')
-			{
-				i++;
-				break;
-			}
-		}
-		if (i == sizeof(savegame_string)-1)
-			Sys_Error ("Loadgame buffer overflow");
-		savegame_string[i] = 0;
-		start = savegame_string;
-		start = g_Common->COM_Parse(savegame_string);
-		if (!g_Common->com_token[0])
-			break;		// end of file
-		if (strcmp(g_Common->com_token,"{"))
-			Sys_Error ("First token isn't a brace");
+        data = g_Common->COM_Parse (data);
+        if (!g_Common->com_token[0])
+            break;		// end of file
+        if (strcmp(g_Common->com_token,"{"))
+        {
+            host->Host_Error ("First token isn't a brace");
+        }
 			
 		if (entnum == -1)
 		{	// parse the global vars
-			ED_ParseGlobals (start);
+            data = ED_ParseGlobals (data);
 		}
-		else
-		{	// parse an edict
+        else
+        {	// parse an edict
+            ent = EDICT_NUM(entnum);
+            if (entnum < sv->num_edicts) {
+                ent->free = false;
+                memset (&ent->v, 0, progs->entityfields * 4);
+            }
+            else {
+                memset (ent, 0, pr_edict_size);
+            }
+            data = ED_ParseEdict (data, ent);
 
-			ent = EDICT_NUM(entnum);
-			memset (&ent->v, 0, progs->entityfields * 4);
-			ent->free = false;
-			ED_ParseEdict (start, ent);
-	
-		// link it into the bsp tree
-			if (!ent->free)
-				sv->SV_LinkEdict (ent, false);
-		}
+        // link it into the bsp tree
+            if (!ent->free)
+                sv->SV_LinkEdict (ent, false);
+        }
 
 		entnum++;
 	}
+
+    for (i = entnum; i < sv->num_edicts; i++)
+        ED_Free(EDICT_NUM(i));
 	
 	sv->num_edicts = entnum;
 	sv->time = time;
 
-	fclose (f);
+    free(start);
+    start = nullptr;
 
 	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
 		svs.clients->spawn_parms[i] = spawn_parms[i];
