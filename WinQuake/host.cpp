@@ -973,7 +973,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		g_pCmdBuf->Cbuf_InsertText("exec quake.rc\n");
 	else
 	{
-		g_pCmdBuf->Cbuf_AddText("exec autoexec.cfg\n");
+		g_pCmdBuf->Cbuf_InsertText("exec autoexec.cfg\n");
 		g_pCmdBuf->Cbuf_AddText("stuffcmds");
 		g_pCmdBuf->Cbuf_Execute();
 	}
