@@ -1,1 +1,0 @@
-Get-ChildItem -recurse *.c | Rename-Item -NewName { $_.name -Replace '\.c$','.cpp' }
