@@ -1825,8 +1825,8 @@ void	VID_Init (unsigned char *palette)
 
 							vid.width = width;
 							vid.height = height;
-							vid.conwidth = width;
-							vid.conheight = height;
+							/*vid.conwidth = width;
+							vid.conheight = height;*/
 
 							Cvar_SetValue("vid_config_x", width);
 							Cvar_SetValue("vid_config_y", height);
@@ -1976,12 +1976,12 @@ void	VID_Init (unsigned char *palette)
 	if (vid.conheight < 200)
 		vid.conheight = 200;
 
-	if (vid_config_x.value > 0 && vid_config_y.value > 0 &&
+	/*if (vid_config_x.value > 0 && vid_config_y.value > 0 &&
 		!g_Common->COM_CheckParm("-conheight") && !g_Common->COM_CheckParm("-conwidth"))
 	{
 		vid.conwidth = vid_config_x.value;
 		vid.conheight = vid_config_y.value;
-	}
+	}*/
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
