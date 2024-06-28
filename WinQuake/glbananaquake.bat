@@ -1,2 +1,1 @@
-cd .\debug_gl
-glbananaquake.exe -game ..\id1 -sw -width 1600 -height 900
+bananaquakeopengl.exe -game id1 -sw -w 1600 -h 900
