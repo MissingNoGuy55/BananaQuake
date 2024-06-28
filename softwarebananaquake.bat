@@ -1,1 +1,0 @@
-softwarebananaquake.exe -sw -noborder -w 1920 -h 1080

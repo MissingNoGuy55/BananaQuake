@@ -1,3 +1,2 @@
-cd .\debug_gl
-glbananaquake.exe -dedicated -game ..\id1 -maxplayers 16 +map dm2
+bananaquakeopengl.exe -dedicated -game id1 -maxplayers 4 +map e1m1
 pause
