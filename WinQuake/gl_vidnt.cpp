@@ -1957,10 +1957,11 @@ void	VID_Init (unsigned char *palette)
 	else
 		vid.conwidth = 640;
 	
-	if (g_Common->COM_CheckParm("-w"))
+	// Missi: uncomment this if you want conwidth and conheight to be affected by the width and height parameters (6/28/2024)
+	/*if (g_Common->COM_CheckParm("-w"))
         vid.conwidth = width;
     if (g_Common->COM_CheckParm("-h"))
-        vid.conheight = height;
+        vid.conheight = height;*/
 
 	vid.conwidth &= 0xfff8; // make it a multiple of eight
 
