@@ -513,19 +513,19 @@ void CQuakeServer::SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 			continue;
 #endif
 
-// ignore if not touching a PV leaf
+        // ignore if not touching a PV leaf
 		if (ent != clent)	// clent is ALLWAYS sent
 		{
-// ignore ents without visible models
-			if (!ent->v.modelindex || !PR_GetString(ent->v.model))
+            // ignore ents without visible models
+            if (!ent->v.modelindex || !PR_GetString(ent->v.model)[0])
 				continue;
 
 			for (i=0 ; i < ent->num_leafs ; i++)
 				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
 					break;
 				
-			if (i == ent->num_leafs)
-				continue;		// not visible
+            if (i == ent->num_leafs && ent->num_leafs < MAX_ENT_LEAFS)
+                continue;		// not visible
 		}
 
 		if (msg->maxsize - msg->cursize < 16)
