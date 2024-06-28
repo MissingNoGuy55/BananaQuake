@@ -969,12 +969,12 @@ void VID_Init(unsigned char *palette)
     if (g_Common->COM_CheckParm("-w"))
     {
         vid.width = width;
-        vid.conwidth = width;
+        //vid.conwidth = width;
     }
     if (g_Common->COM_CheckParm("-h"))
     {
         vid.height = height;
-        vid.conheight = height;
+        //vid.conheight = height;
     }
 	vid.conwidth &= 0xfff8; // make it a multiple of eight
 
