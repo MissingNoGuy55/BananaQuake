@@ -1085,9 +1085,9 @@ again:
 /* OPTIONS MENU */
 
 #ifdef _WIN32
-#define	OPTIONS_ITEMS	14
+#define	OPTIONS_ITEMS	15		// Missi: was 14 (6/28/2024)
 #else
-#define	OPTIONS_ITEMS	13
+#define	OPTIONS_ITEMS	14		// Missi: was 13 (6/28/2024)
 #endif
 
 #define	SLIDER_RANGE	10
@@ -1232,6 +1232,14 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("_windowed_mouse", !_windowed_mouse.value);
 		break;
 #endif
+#ifdef _WIN32
+	case 14:	// lookstrafe
+#elif __linux__
+    case 13:
+#endif
+		scr_fov.value += dir * 1.0f;
+		Cvar_SetValue("fov", scr_fov.value);
+		break;
 	}
 }
 
@@ -1331,6 +1339,21 @@ void M_Options_Draw (void)
 #elif __linux__
 
 #endif
+
+    r = (scr_fov.value - 1) / 179;
+
+#ifdef _WIN32
+    M_DrawSlider(220, 144, r);
+	M_Print(-4, 144, "            Field of view (FOV)");
+#elif __linux
+    M_DrawSlider(220, 136, r);
+    M_Print(-4, 136, "            Field of view (FOV)");
+#endif
+
+	char val[4] = {};
+	snprintf(val, sizeof(val), "%d", (int)scr_fov.value);
+
+	M_Print(214, 150, val);
 
 // cursor
 	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(host->realtime*4)&1));
@@ -2126,16 +2149,27 @@ forward:
 	}
 
 	if (DirectConfig && (serialConfig_cursor == 3 || serialConfig_cursor == 4))
+    {
 		if (key == K_UPARROW)
+        {
 			serialConfig_cursor = 2;
+        }
 		else
+        {
 			serialConfig_cursor = 5;
-
+        }
+    }
 	if (SerialConfig && StartingGame && serialConfig_cursor == 4)
+    {
 		if (key == K_UPARROW)
+        {
 			serialConfig_cursor = 3;
+        }
 		else
+        {
 			serialConfig_cursor = 5;
+        }
+    }
 }
 
 //=============================================================================
@@ -2504,11 +2538,12 @@ void M_LanConfig_Key (int key)
 	}
 
 	if (StartingGame && lanConfig_cursor == 2)
+    {
 		if (key == K_UPARROW)
 			lanConfig_cursor = 1;
 		else
 			lanConfig_cursor = 0;
-
+    }
 	l =  Q_atoi(lanConfig_portname);
 	if (l > 65535)
 		l = lanConfig_port;

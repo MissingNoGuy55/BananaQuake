@@ -631,6 +631,9 @@ extern cvar_t level_fog_end_goal;
 extern cvar_t level_fog_force;
 extern cvar_t level_fog_lerp_time;
 
+// Missi: used to access FOV settings in menu.cpp (6/28/2024)
+extern cvar_t scr_fov;
+
 extern float fog_color_vec[4];
 
 extern COpenGLPic* SysErrorTex;                // Missi: WALLET (6/14/2024)

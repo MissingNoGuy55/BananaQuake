@@ -443,5 +443,7 @@ void CL_InitInput (void)
 	g_pCmds->Cmd_AddCommand ("+mlook", IN_MLookDown);
 	g_pCmds->Cmd_AddCommand ("-mlook", IN_MLookUp);
 
+	in_mlook.state |= 1;	// Missi: default mlook to on as most people have mice (6/28/2024)
+
 }
 
