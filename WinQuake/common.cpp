@@ -659,7 +659,7 @@ void MSG_WriteString (sizebuf_t *sb, const char *s)
 
 void MSG_WriteCoord (sizebuf_t *sb, float f)
 {
-	MSG_WriteShort (sb, (int)(f*8));
+	MSG_WriteFloat (sb, f);
 }
 
 void MSG_WriteAngle (sizebuf_t *sb, float f)
@@ -792,7 +792,7 @@ const char *MSG_ReadString (void)
 
 float MSG_ReadCoord (void)
 {
-	return MSG_ReadShort() * (1.0/8);
+	return MSG_ReadFloat();
 }
 
 float MSG_ReadAngle (void)
