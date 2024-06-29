@@ -73,7 +73,7 @@ Cbuf_Init
 */
 void CCommandBuffer::Cbuf_Init (void)
 {
-	SZ_Alloc (&cmd_text, 8192);		// space for commands and script files
+	SZ_Alloc (&cmd_text, 32768);		// space for commands and script files
 }
 
 
