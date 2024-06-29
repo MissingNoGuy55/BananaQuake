@@ -710,23 +710,37 @@ void PR_ExecuteProgram(func_t fnum)
 
 			case OP_CASE:
 			case OP_DEFAULT:
-			case OP_BREAK:
 			{
+				static dstatement_t* last_statement = nullptr;
 				dstatement_t* matching_statement = NULL;
 
-				if ((opa->string &~ 0 && opa->string == switch_string))
+				if ((opa->string & ~0 && opa->string == switch_string))
+				{
 					matching_statement = st;
-
-				if (opa->_float == switch_float)
+					last_statement = st;
+				}
+				else if (opa->_float == switch_float)
+				{
 					matching_statement = st;
-
-				if (opa->vector == switch_vector)
+					last_statement = st;
+				}
+				else if (opa->vector == switch_vector)
+				{
 					matching_statement = st;
-
-				if (opa->edict == EDICT_TO_PROG(switch_edict))
+					last_statement = st;
+				}
+				else if (opa->edict == EDICT_TO_PROG(switch_edict))
+				{
 					matching_statement = st;
+					last_statement = st;
+				}
+				else
+				{
+					matching_statement = nullptr;
+					last_statement = nullptr;
+				}
 
-				if (!matching_statement)
+				if (!matching_statement && !last_statement)
 				{
 					st++;
 					bool didbreak = false;
@@ -739,12 +753,17 @@ void PR_ExecuteProgram(func_t fnum)
 							case OP_CASE:
 							case OP_DEFAULT:
 							case OP_BREAK:
+							{
 								didbreak = true;
+							}
 						}
 					}
 				}
 				break;
 			}
+
+			case OP_BREAK:
+				break;
 
 			default:
 				pr_xstatement = st - pr_statements;

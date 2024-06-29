@@ -19,7 +19,7 @@ int		pr_error_count;
 
 const char	*pr_punctuation[] =
 // longer symbols must be before a shorter partial match
-{"&&", "||", "<=", ">=","==", "!=", ";", ",", "!", "*", "/", "(", ")", "-", "+", "=", "[", "]", "{", "}", "...", ".", "<", ">" , "#" , "&" , "|" , NULL};
+{"&&", "||", "<=", ">=","==", "!=", ";", ",", "!", "*", "/", "(", ")", "-", "+", "=", "[", "]", "{", "}", "...", ".", "<", ">" , "#" , "&" , "|" , ":", NULL};
 
 // simple types.  function types are dynamically allocated
 type_t	type_void = {ev_void, &def_void};
@@ -460,6 +460,40 @@ void PR_Lex (void)
 	if (c == '$')
 	{
 		PR_LexGrab ();
+		return;
+	}
+
+	int stringlen = strlen(&pr_file_p[1]);
+
+	if (c == '[' && pr_file_p[1] == ']' && pr_file_p[2] == ';')
+	{
+		pr_token_type = tt_immediate;
+		pr_immediate_type = &type_cppvector;
+
+		// pr_file_p += 3;
+
+		if (!PR_Check("["))
+			PR_LexPunctuation();
+
+		return;
+	}
+	/* Missi: this monolithic boolean statement is to get around an array-like statement in weapons.qc which looks like the following :
+
+	void()	s_explode1	=	[0,		s_explode2] {};
+	void()	s_explode2	=	[1,		s_explode3] {};
+	void()	s_explode3	=	[2,		s_explode4] {};
+	void()	s_explode4	=	[3,		s_explode5] {};
+	void()	s_explode5	=	[4,		s_explode6] {};
+	void()	s_explode6	=	[5,		SUB_Remove] {};
+	*/
+	else if (c == '[' && pr_file_p[1] != ',' && stringlen <= ((char)sizeof(int) * 4) && stringlen > 0)
+	{
+		constexpr char test = ((char)sizeof(int) * 4);
+
+		pr_token_type = tt_immediate;
+		pr_immediate_type = &type_float;
+		pr_immediate._float = PR_LexNumber();
+
 		return;
 	}
 	
