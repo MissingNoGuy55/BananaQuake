@@ -283,8 +283,8 @@ Cmd_Exec_f
 */
 void CCommand::Cmd_Exec_f (void)
 {
-	char	*f;
-	int		mark;
+	const char *f = nullptr;
+	int		mark = 0;
 
 	if (g_pCmds->Cmd_Argc () != 2)
 	{
