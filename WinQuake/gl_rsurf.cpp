@@ -1072,6 +1072,7 @@ void CGLRenderer::R_RecursiveWorldNode (mnode_t *node)
 
 	if (node->visframe != r_visframecount)
 		return;
+
 	if (R_CullBox (node->minmaxs, node->minmaxs+3))
 		return;
 	
@@ -1198,9 +1199,9 @@ void CGLRenderer::R_DrawWorld (void)
 
 	glColor3f (1,1,1);
 	memset (lightmap_polys, 0, sizeof(lightmap_polys));
-#ifdef QUAKE2
-	R_ClearSkyBox ();
-#endif
+
+	if (UsesQuake2Skybox())
+		R_ClearSkyBox ();
 
 	R_RecursiveWorldNode (cl.worldmodel->nodes);
 
@@ -1208,7 +1209,8 @@ void CGLRenderer::R_DrawWorld (void)
 
 	R_BlendLightmaps ();
 
-	R_DrawSkyBox ();
+	if (UsesQuake2Skybox())
+		R_DrawSkyBox ();
 }
 
 
