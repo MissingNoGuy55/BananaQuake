@@ -56,7 +56,7 @@ unsigned char	d_15to8table[65536];
 
 cvar_t	vid_mode = {"vid_mode","0",false};
  
-static bool        mouse_avail = true;
+static bool        mouse_avail;
 static bool        mouse_active;
 static int   mx, my;
 static int	old_mouse_x, old_mouse_y;
@@ -439,15 +439,22 @@ static void HandleEvents(void)
 
         case EnterNotify:
             vidmode_active = true;
-            install_grabs();
-            in_mlook.state |= 1;
+            if (g_Common->COM_CheckParm("-nomouse") == 0)
+            {
+                install_grabs();
+                in_mlook.state |= 1;
+            }
             break;
 
         case LeaveNotify:
             vidmode_active = false;
-            uninstall_grabs();
-            in_mlook.state &= ~1;
-            in_strafe.state &= ~1;  // Missi: prevents a bug on Linux where mlook is lost on alt+tabbing (6/27/2024)
+
+            if (g_Common->COM_CheckParm("-nomouse") == 0)
+            {
+                uninstall_grabs();
+                in_mlook.state &= ~1;
+                in_strafe.state &= ~1;  // Missi: prevents a bug on Linux where mlook is lost on alt+tabbing (6/27/2024)
+            }
             break;
 
 		case ConfigureNotify :
@@ -1124,7 +1131,11 @@ void IN_Init(void)
 {
     Cvar_RegisterVariable(&x11_grab_mouse);
 
-    IN_ActivateMouse();
+    if (g_Common->COM_CheckParm("-nomouse") == 0)
+    {
+        mouse_avail = true;
+        IN_ActivateMouse();
+    }
 }
 
 void IN_Shutdown(void)
@@ -1141,7 +1152,7 @@ void IN_Commands (void)
 	if (!dpy || !win)
 		return;
 
-    if (vidmode_active && key_dest == key_game) // Missi: used to be an || statement, but we need this to have full control if we want to use the mouse (6/23/2024)
+    if (vidmode_active && key_dest == key_game && g_Common->COM_CheckParm("-nomouse") == 0) // Missi: used to be an || statement, but we need this to have full control if we want to use the mouse (6/23/2024)
 		IN_ActivateMouse();
 	else
 		IN_DeactivateMouse ();
