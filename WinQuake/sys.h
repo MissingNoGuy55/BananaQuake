@@ -21,23 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sys.h -- non-portable functions
 
+#include <unistd.h>
+
 //
 // file IO
 //
-
-// returns the file size
-// return -1 if file is not present
-// the file should be in BINARY mode for stupid OSs that care
-int Sys_FileOpenRead (const char *path, int *hndl);
-
-int Sys_FileOpenWrite (const char *path);
-
-int Sys_FileType(const char* path);
-void Sys_FileClose (int handle);
-void Sys_FileSeek (int handle, int position);
-
-template<typename T>
-int Sys_FileRead (int handle, T *dest, size_t count);
 
 #ifdef _WIN32
 #include "sys_win.h"
@@ -47,9 +35,28 @@ int Sys_FileRead (int handle, T *dest, size_t count);
 #include "sys_linux.h"
 #endif
 
+// returns the file size
+// return -1 if file is not present
+// the file should be in BINARY mode for stupid OSs that care
+int Sys_FileOpenRead (const char *path, int *hndl);
+int Sys_FileOpenWrite (const char *path);
+
+int Sys_FileType(const char* path);
+void Sys_FileClose (int handle);
+void Sys_FileSeek (int handle, int position);
+
 int Sys_FileWrite (int handle, void *data, int count);
 int	Sys_FileTime (const char *path);
 void Sys_mkdir (const char *path);
+
+constexpr unsigned short MAX_HANDLES = 32;
+extern FILE* sys_handles[MAX_HANDLES];
+
+template<typename T>
+int Sys_FileRead (int handle, T *dest, size_t count)
+{
+    return fread (dest, 1, count, sys_handles[handle]);
+}
 
 //
 // memory protection
