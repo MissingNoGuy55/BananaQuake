@@ -159,8 +159,8 @@ typedef struct mnode_s
 	mplane_t	*plane;
 	struct mnode_s	*children[2];	
 
-	unsigned short		firstsurface;
-	unsigned short		numsurfaces;
+	unsigned int		firstsurface;
+	unsigned int		numsurfaces;
 } mnode_t;
 
 
