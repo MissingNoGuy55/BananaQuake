@@ -107,7 +107,7 @@ void CGLRenderer::R_SplitEntityOnNode (mnode_t *node)
 		if (!r_pefragtopnode)
 			r_pefragtopnode = node;
 
-		leaf = (mleaf_t *)node;
+		leaf = reinterpret_cast<mleaf_t*>(node);
 
 // grab an efrag off the free list
 		ef = cl.free_efrags;

@@ -60,7 +60,7 @@ mleaf_t *Mod_PointInLeaf (vec3_t p, model_t *model)
 	while (1)
 	{
 		if (node->contents < 0)
-			return (mleaf_t *)node;
+			return reinterpret_cast<mleaf_t*>(node);
 		plane = node->plane;
 		d = DotProduct (p,plane->normal) - plane->dist;
 		if (d > 0)

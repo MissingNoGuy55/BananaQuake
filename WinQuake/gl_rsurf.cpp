@@ -1079,7 +1079,7 @@ void CGLRenderer::R_RecursiveWorldNode (mnode_t *node)
 // if a leaf node, draw stuff
 	if (node->contents < 0)
 	{
-		pleaf = (mleaf_t *)node;
+		pleaf = reinterpret_cast<mleaf_t*>(node);
 
 		mark = pleaf->firstmarksurface;
 		c = pleaf->nummarksurfaces;
@@ -1247,7 +1247,7 @@ void CGLRenderer::R_MarkLeaves (void)
 	{
 		if (vis[i>>3] & (1<<(i&7)))
 		{
-			node = (mnode_t *)&cl.worldmodel->leafs[i+1];
+			node = reinterpret_cast<mnode_t*>(&cl.worldmodel->leafs[i + 1]);
 			do
 			{
 				if (node->visframe == r_visframecount)

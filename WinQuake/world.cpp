@@ -346,7 +346,7 @@ void SV_FindTouchedLeafs (edict_t *ent, mnode_t *node)
 		if (ent->num_leafs == MAX_ENT_LEAFS)
 			return;
 
-		leaf = (mleaf_t *)node;
+		leaf = reinterpret_cast<mleaf_t*>(node);
 		leafnum = leaf - sv->worldmodel->leafs - 1;
 
 		ent->leafnums[ent->num_leafs] = leafnum;
