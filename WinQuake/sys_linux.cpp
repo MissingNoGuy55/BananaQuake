@@ -29,6 +29,8 @@ const char *cachedir = "/tmp";
 
 cvar_t  sys_linerefresh = {"sys_linerefresh","0"};// set for entity display
 
+FILE* sys_handles[MAX_HANDLES];
+
 // =======================================================================
 // General routines
 // =======================================================================
@@ -179,6 +181,24 @@ void Sys_Warn (char *warning, ...)
 	fprintf(stderr, "Warning: %s", string);
 } 
 
+int Sys_FileType (const char *path)
+{
+    /*
+    if (access(path, R_OK) == -1)
+        return 0;
+    */
+    struct stat	st;
+
+    if (stat(path, &st) != 0)
+        return FS_ENT_NONE;
+    if (S_ISDIR(st.st_mode))
+        return FS_ENT_DIRECTORY;
+    if (S_ISREG(st.st_mode))
+        return FS_ENT_FILE;
+
+    return FS_ENT_NONE;
+}
+
 /*
 ============
 Sys_FileTime
@@ -196,6 +216,17 @@ int	Sys_FileTime (const char *path)
 	return buf.st_mtime;
 }
 
+int gethandle()
+{
+    for (int i = 1; i < MAX_HANDLES; i++)
+    {
+        if (!sys_handles[i])
+            return i;
+    }
+
+    Sys_Error("Ran out of file handles\n");
+    return -1;
+}
 
 void Sys_mkdir (const char *path)
 {
@@ -205,33 +236,40 @@ void Sys_mkdir (const char *path)
 int Sys_FileOpenRead (const char *path, int *handle)
 {
 	int	h;
+    FILE* f;
 	struct stat	fileinfo;
     
-	
-	h = open (path, O_RDONLY, 0666);
+    h = gethandle();
+    f = fopen (path, "rb");
+
 	*handle = h;
-	if (h == -1)
+    if (h == -1 || !f)
 		return -1;
 	
 	if (fstat (h,&fileinfo) == -1)
 		Sys_Error ("Error fstating %s", path);
+
+    sys_handles[h] = f;
 
 	return fileinfo.st_size;
 }
 
 int Sys_FileOpenWrite (const char *path)
 {
-	int     handle;
+    FILE*   f;
+    int     h;
 
 	umask (0);
 	
-	handle = open(path,O_RDWR | O_CREAT | O_TRUNC
-	, 0666);
+    h = gethandle();
+    f = fopen(path, "wb");
 
-	if (handle == -1)
+    if (h == -1)
 		Sys_Error ("Error opening %s: %s", path,strerror(errno));
 
-	return handle;
+    sys_handles[h] = f;
+
+    return h;
 }
 
 int Sys_FileWrite (int handle, void *src, int count)
@@ -241,12 +279,13 @@ int Sys_FileWrite (int handle, void *src, int count)
 
 void Sys_FileClose (int handle)
 {
-	close (handle);
+    fclose (sys_handles[handle]);
+	sys_handles[handle] = nullptr;
 }
 
 void Sys_FileSeek (int handle, int position)
 {
-	lseek (handle, position, SEEK_SET);
+    fseek (sys_handles[handle], position, SEEK_SET);
 }
 
 void Sys_DebugLog(const char *file, const char *fmt, ...)

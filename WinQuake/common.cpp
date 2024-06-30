@@ -1582,14 +1582,10 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 					if (strchr(filename, '/') || strchr(filename, '\\'))
 						continue;
 				}
-#ifdef _WIN32
 				snprintf(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
 
                 if (!(Sys_FileType(netpath) & FS_ENT_FILE))
                     continue;
-#else
-                snprintf(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
-#endif
 
 				/*findtime = Sys_FileTime(netpath);
 				if (findtime == -1)
@@ -1779,7 +1775,7 @@ pack_t* CCommon::COM_LoadPackFile (char *packfile)
 
 	if (Sys_FileOpenRead (packfile, &packhandle) == -1)
 	{
-//              Con_Printf ("Couldn't open %s\n", packfile);
+        Con_Printf ("Couldn't open %s\n", packfile);
 		return NULL;
 	}
 	Sys_FileRead (packhandle, &header, sizeof(header));
@@ -1875,22 +1871,19 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 		{
 			snprintf(pakfile, sizeof(pakfile), "%s/pak%i.pak", dir, i);
 			pak = COM_LoadPackFile(pakfile);
-
-			if (!pak)
-			{
-				snprintf(pakfile, sizeof(pakfile), "%s/Pak%i.pak", dir, i);
-				pak = COM_LoadPackFile(pakfile);
-
-				if (!pak)
-					break;
-			}
 		}
 
-		search = g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t));
-		search->path_id = path_id;
-		search->pack = pak;
-		search->next = com_searchpaths;
-		com_searchpaths = search;               
+        if (pak)
+        {
+            search = g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t));
+            search->path_id = path_id;
+            search->pack = pak;
+            search->next = com_searchpaths;
+            com_searchpaths = search;
+        }
+
+        if (!pak)
+            break;
 	}
 
 //

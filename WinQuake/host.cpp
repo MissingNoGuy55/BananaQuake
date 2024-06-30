@@ -505,7 +505,7 @@ void CQuakeHost::Host_ClearMemory (void)
 
 	cls.signon = 0;
 
-	free(sv->edicts);
+    free(sv->edicts);
 
 	memset(sv, 0, sizeof(*sv));
 	memset(&cl, 0, sizeof(cl));
