@@ -478,13 +478,8 @@ CQuakeHost::CQuakeHost(quakeparms_t<byte*> parms) :
     host_hunklevel(0),
 	sys_nostdout()
 {
-#ifdef __linux__
 	host_parms.basedir = parms.basedir ? parms.basedir : strdup("");
 	host_parms.cachedir = parms.cachedir ? parms.cachedir : strdup("");
-#elif _WIN32
-	host_parms.basedir = parms.basedir ? parms.basedir : _strdup("");
-	host_parms.cachedir = parms.cachedir ? parms.cachedir : _strdup("");
-#endif
 }
 
 /*
@@ -503,11 +498,9 @@ void CQuakeHost::Host_ClearMemory (void)
 	if (host_hunklevel)
 		g_MemCache->Hunk_FreeToLowMark(host_hunklevel);
 
-	cls.signon = 0;
+    cls.signon = 0;
 
-    free(sv->edicts);
-
-	memset(sv, 0, sizeof(*sv));
+    memset(sv, 0, sizeof(*sv));
 	memset(&cl, 0, sizeof(cl));
 }
 
@@ -961,10 +954,6 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		Sbar_Init ();
 		CL_Init ();
 	}
-	else
-	{
-		g_pCmdBuf->Cbuf_InsertText("exec autoexec.cfg\n");
-	}
 
 	g_MemCache->Hunk_AllocName<char>(0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = g_MemCache->Hunk_LowMark();
@@ -973,10 +962,11 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		g_pCmdBuf->Cbuf_InsertText("exec quake.rc\n");
 	else
 	{
-		g_pCmdBuf->Cbuf_InsertText("exec server.cfg\n");
+        g_pCmdBuf->Cbuf_InsertText("exec server.cfg\n");
+        g_pCmdBuf->Cbuf_AddText("exec autoexec.cfg\n");
 		g_pCmdBuf->Cbuf_AddText("stuffcmds");
-		g_pCmdBuf->Cbuf_Execute();
-	}
+        g_pCmdBuf->Cbuf_Execute();
+    }
 
 	host_initialized = true;
 }
