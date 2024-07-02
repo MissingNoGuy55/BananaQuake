@@ -140,6 +140,7 @@ void Mod_ClearAll (void)
 	model_t		*mod = nullptr;
 
 	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
+    {
 		if (mod->type != mod_alias)
 		{
 			mod->needload = true;
@@ -147,6 +148,7 @@ void Mod_ClearAll (void)
 			if (cls.state != ca_dedicated)
 				g_GLRenderer->GL_FreeTextureForModel(mod);
 		}
+    }
 }
 
 /*
@@ -197,7 +199,7 @@ void Mod_TouchModel (const char *name)
 	if (!mod->needload)
 	{
 		if (mod->type == mod_alias)
-			g_MemCache->Cache_Check<model_t>(&mod->cache); // Missi: come back to this later (11/22/2022)
+            g_MemCache->Cache_Check<model_t>(&mod->cache);
 	}
 }
 
