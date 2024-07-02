@@ -448,7 +448,6 @@ static void HandleEvents(void)
 
         case LeaveNotify:
             vidmode_active = false;
-
             if (g_Common->COM_CheckParm("-nomouse") == 0)
             {
                 uninstall_grabs();
