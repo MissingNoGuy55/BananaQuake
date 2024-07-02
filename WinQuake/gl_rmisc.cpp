@@ -53,6 +53,9 @@ void	CGLRenderer::R_InitTextures (void)
 					*dest++ = 0xff;
 			}
 	}	
+
+	r_notexture_mip->gltexture = GL_LoadTexture(nullptr, "notexture", 16, 16, SRC_INDEXED, (byte*)r_notexture_mip + r_notexture_mip->offsets[0], 0, TEXPREF_PERSIST);
+	Con_DPrintf("Initialized checkerboard texture\n");
 }
 
 byte	dottexture[8][8] =
