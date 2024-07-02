@@ -28,6 +28,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _strdup strdup
 #define _stricmp stricmp
 #define _strnicmp strnicmp
+#elif defined(_WIN32)
+#define strdup _strdup
+#define stricmp _stricmp
+#define strnicmp _strnicmp
 #endif
 
 #if !defined BYTE_DEFINED

@@ -207,9 +207,8 @@ void Q_strncpy (char *dest, const char *src, size_t count)
 
 int Q_strlen (const char *str)
 {
-	int             count;
-	
-	count = 0;
+	int	count = 0;
+
 	while (str[count])
 		count++;
 
@@ -1515,9 +1514,6 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 	int				i = 0;
 	int				findtime = 0, cachetime = 0;
 
-    //memset(netpath, 0, sizeof(netpath));
-    //memset(cachepath, 0, sizeof(cachepath));
-
 	if (file && handle)
 		Sys_Error ("COM_FindFile: both handle and file set");
 	
@@ -1526,124 +1522,81 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 //
 // search through the path, one element at a time
 //
-	search = com_searchpaths;
-
 	for (search = com_searchpaths; search; search = search->next)
-		{
-			// is the element a pak file?
-			if (search->pack)
-			{
-				// look through all the pak file elements
-				pak = search->pack;
-				for (i = 0; i < pak->numfiles; i++)
-					if (!strcmp(pak->files[i].name, filename))
-					{       // found it!
-                        Con_PrintColor(TEXT_COLOR_GREEN, "PackFile: %s : %s\n", pak->filename, filename);
-						file_from_pak = 1;
-						if (path_id)
-							*path_id = search->path_id;
-						if (handle)
-						{
-							*handle = pak->handle;
-							Sys_FileSeek(pak->handle, pak->files[i].filepos);
-						}
-						else
-						{
-							if (handle)
-							{
-								handle = &pak->handle;
-
-								if (*handle)
-									Sys_FileSeek(pak->handle, pak->files[i].filepos);
-								else
-									Sys_Error("Couldn't find file %s\n", pak->files[i].name);
-							}
-							else if (file)
-							{ /* open a new file on the pakfile */
-								*file = fopen(pak->filename, "rb");
-								if (*file)
-									fseek(*file, pak->files[i].filepos, SEEK_SET);
-								return com_filesize;
-							}
-							else /* for COM_FileExists() */
-							{
-								return com_filesize;
-							}
-						}
-						com_filesize = pak->files[i].filelen;
-						return com_filesize;
-					}
-			}
-			else
-			{
-				// check a file in the directory tree
-				if (!static_registered)
-				{       // if not a registered version, don't ever go beyond base
-					if (strchr(filename, '/') || strchr(filename, '\\'))
-						continue;
-				}
-				snprintf(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
-
-                if (!(Sys_FileType(netpath) & FS_ENT_FILE))
+    {
+        // is the element a pak file?
+        if (search->pack)	/* look through all the pak file elements */
+        {
+            pak = search->pack;
+            for (i = 0; i < pak->numfiles; i++)
+            {
+                if (strcmp(pak->files[i].name, filename) != 0)
                     continue;
+                // found it!
+                com_filesize = pak->files[i].filelen;
+                file_from_pak = 1;
+                if (path_id)
+                    *path_id = search->path_id;
+                if (handle)
+                {
+                    *handle = pak->handle;
+                    Sys_FileSeek (pak->handle, pak->files[i].filepos);
+                    return com_filesize;
+                }
+                else if (file)
+                { /* open a new file on the pakfile */
+                    *file = fopen (pak->filename, "rb");
+                    if (*file)
+                        fseek (*file, pak->files[i].filepos, SEEK_SET);
+                    return com_filesize;
+                }
+                else /* for COM_FileExists() */
+                {
+                    return com_filesize;
+                }
+            }
+        }
+        else
+        {
+            if (!registered.value)
+            { /* if not a registered version, don't ever go beyond base */
+                if ( strchr (filename, '/') || strchr (filename,'\\'))
+                    continue;
+            }
 
-				/*findtime = Sys_FileTime(netpath);
-				if (findtime == -1)
-					continue;*/
+            snprintf (netpath, sizeof(netpath), "%s/%s",search->filename, filename);
+            if (! (Sys_FileType(netpath) & FS_ENT_FILE))
+                continue;
 
-				// see if the file needs to be updated in the cache
-				if (!com_cachedir[0])
-					Q_strncpy(cachepath, netpath, MAX_OSPATH);
-				else
-				{
-#if defined(_WIN32)
-					if ((strlen(netpath) < 2) || (netpath[1] != ':'))
-						snprintf(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
-					else
-						snprintf(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath + 2);
-#else
-                    snprintf(cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
-#endif
-
-					cachetime = Sys_FileTime(cachepath);
-
-					if (cachetime < findtime)
-						COM_CopyFile(netpath, cachepath);
-					Q_strncpy(netpath, cachepath, MAX_OSPATH);
-				}
-
-				Sys_Printf("FindFile: %s\n", netpath);
-				com_filesize = Sys_FileOpenRead(netpath, &i);
-				if (path_id)
-					*path_id = search->path_id;
-				if (handle)
-				{
-					com_filesize = Sys_FileOpenRead(netpath, &i);
-					*handle = i;
-					return com_filesize;
-				}
-				else if (file)
-				{
-					*file = fopen(netpath, "rb");
-					com_filesize = (*file == NULL) ? -1 : COM_filelength(*file);
-					return com_filesize;
-				}
-				else
-				{
-					return 0; /* dummy valid value for COM_FileExists() */
-				}
-				return com_filesize;
-			}
-		}
+            if (path_id)
+                *path_id = search->path_id;
+            if (handle)
+            {
+                com_filesize = Sys_FileOpenRead (netpath, &i);
+                *handle = i;
+                return com_filesize;
+            }
+            else if (file)
+            {
+                *file = fopen (netpath, "rb");
+                com_filesize = (*file == NULL) ? -1 : COM_filelength (*file);
+                return com_filesize;
+            }
+            else
+            {
+                return 0; /* dummy valid value for COM_FileExists() */
+            }
+        }
+    }
 	
-	Sys_Printf ("FindFile: can't find %s\n", filename);
+    Sys_Printf ("FindFile: can't find %s\n", filename);
 	
 	if (handle)
 		*handle = -1;
 	if (file)
 		*file = NULL;
 	com_filesize = -1;
-	return -1;
+    return com_filesize;
 }
 
 /*
@@ -1836,55 +1789,57 @@ Missi: copied from QuakeSpasm (1/4/2023)
 */
 void CCommon::COM_AddGameDirectory (const char *dir)
 {
-	int                     i = 0;
-	searchpath_t			*search = nullptr;
-	pack_t                  *pak = nullptr;
-	char                    pakfile[1024] = {};
-	uintptr_t				path_id = 0;
+    int                     i = 0;
+    searchpath_t			*search = nullptr;
+    pack_t                  *pak = nullptr;
+    char                    pakfile[1024] = {};
+    uintptr_t				path_id = 0;
+    bool                    been_here = false;
 
-	Q_strcpy (com_gamedir, dir);
+    Q_strncpy (com_gamedir, dir, sizeof(com_gamedir));
 
     memset(pakfile, 0, sizeof(pakfile));
 
-	// assign a path_id to this game directory
-	if (com_searchpaths)
-		path_id = com_searchpaths->path_id << 1;
-	else	path_id = 1U;
+    // assign a path_id to this game directory
+    if (com_searchpaths)
+        path_id = com_searchpaths->path_id << 1;
+    else	path_id = 1U;
 
 //
 // add the directory to the search path
 //
-	search = g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t));
-	search->path_id = path_id;
+_add_dir:
+    search = mainzone->Z_Malloc<searchpath_t>(sizeof(searchpath_t));
+    search->path_id = path_id;
     Q_strncpy (search->filename, dir, sizeof(search->filename));
-	search->next = com_searchpaths;
-	com_searchpaths = search;
+    search->next = com_searchpaths;
+    com_searchpaths = search;
 
 //
 // add any pak files in the format pak0.pak pak1.pak, ...
 //
-	for (i=0 ; ; i++)
-	{
+    for (i=0 ; ; i++)
+    {
         snprintf (pakfile, sizeof(pakfile), "%s/PAK%i.PAK", dir, i);
-		pak = COM_LoadPackFile (pakfile);
-		if (!pak)
-		{
-			snprintf(pakfile, sizeof(pakfile), "%s/pak%i.pak", dir, i);
-			pak = COM_LoadPackFile(pakfile);
-		}
-
-        if (pak)
-        {
-            search = g_MemCache->Hunk_Alloc<searchpath_t>(sizeof(searchpath_t));
-            search->path_id = path_id;
-            search->pack = pak;
-            search->next = com_searchpaths;
-            com_searchpaths = search;
-        }
+        pak = COM_LoadPackFile (pakfile);
 
         if (!pak)
             break;
-	}
+
+        search = mainzone->Z_Malloc<searchpath_t>(sizeof(searchpath_t));
+        search->path_id = path_id;
+        search->pack = pak;
+        search->next = com_searchpaths;
+        com_searchpaths = search;
+    }
+
+    if (!been_here && host->host_parms.userdir != host->host_parms.basedir)
+    {
+        been_here = true;
+        //Q_strlcpy(com_gamedir, va("%s/%s", host->host_parms.basedir, dir), sizeof(com_gamedir));
+        //Sys_mkdir(com_gamedir);
+        goto _add_dir;
+    }
 
 //
 // add the contents of the parms.txt file to the end of the command line
