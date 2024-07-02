@@ -298,10 +298,12 @@ public:
 	// called after the world model has been loaded, before linking any entities
 
 	void SV_UnlinkEdict(edict_t* ent);
-	void SV_TouchLinks(edict_t* ent, struct areanode_s* node);
+
+    void SV_AreaTriggerEdicts ( edict_t *ent, struct areanode_s *node, edict_t **list, int *listcount, const int listspace );
+    void SV_TouchLinks(edict_t* ent);
 	// call before removing an entity, and before trying to move one,
 	// so it doesn't clip against itself
-	// flags ent->v.modified
+    // flags ent->v.modified
 
 	void SV_InitBoxHull(void);
     void SV_CheckFogVolumes(edict_t *ent);
