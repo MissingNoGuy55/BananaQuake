@@ -24,7 +24,7 @@ RPM_RELEASE=5
 USE_CODEC_WAVE=1
 USE_CODEC_FLAC=0
 # vvvv Missi: was 1
-USE_CODEC_MP3=0
+USE_CODEC_MP3=1
 USE_CODEC_VORBIS=1
 USE_CODEC_OPUS=0
 # either xmp or mikmod (or modplug)
@@ -46,8 +46,8 @@ MASTER_DIR=/QuakeCPP/QuakeMaster
 MESA_DIR=/usr/src/mesa
 TDFXGL_DIR = /home/zoid/3dfxgl
 
-BUILD_DEBUG_DIR=debug$(ARCH)$(LIBC++)
-BUILD_RELEASE_DIR=release$(ARCH)$(LIBC++)
+BUILD_DEBUG_DIR=debug_$(ARCH)$(LIBC++)
+BUILD_RELEASE_DIR=release_$(ARCH)$(LIBC++)
 
 # Missi: was gcc
 EGCS=/bin/g++
@@ -59,7 +59,7 @@ BASE_CPPFLAGS += $(call check_g++,-std=gnu11,)
 RELEASE_CPPFLAGS=$(BASE_CPPFLAGS) -g -mpentiumpro -O6 -ffast-math -funroll-loops \
 	-fomit-frame-pointer -fexpensive-optimizations
 DEBUG_CPPFLAGS=$(BASE_CPPFLAGS) -g
-LDFLAGS=-lm
+LDFLAGS=-z noexecstack
 SVGALDFLAGS=-lvga
 XLDFLAGS=-L/usr/X11R6/lib -lX11 -lXext -lXxf86dga
 XCPPFLAGS=-DX11
@@ -122,7 +122,7 @@ endif
 	
 GLLIBINCLUDE=-L/usr/lib/$(ARCH)-linux-gnu -L/usr/local/lib
 	
-GLLIBLINK=-lSDL2 -lm -lGL -lGLU -lX11 -lXext -lXxf86dga -lXxf86vm -lvorbis -lvorbisfile -ldl
+GLLIBLINK=-lSDL2 -lm -lGL -lGLU -lX11 -lXext -lXxf86dga -lXxf86vm -lvorbis -lvorbisfile -ldl -lmad
 
 GLINCLUDES=-I/usr/include/SDL2 -I/usr/include/vlc -I/usr/include/vorbis -I/QuakeCPP/WinQuake/mesa/3dfx/glide3/include/
 	
@@ -144,13 +144,13 @@ $(info    DO_GL_CC is '$(DO_GL_CC)')
 # SETUP AND BUILD
 #############################################################################
 
-TARGETS=$(BUILDDIR)/bin/glquake
+TARGETS=$(BUILDDIR)/bin/bananaquakeopengl
 	# $(BUILDDIR)/bin/unixded
 
 build_debug:
 	@-mkdir $(BUILD_DEBUG_DIR) \
 		$(BUILD_DEBUG_DIR)/bin \
-		$(BUILD_DEBUG_DIR)/glquake \
+		$(BUILD_DEBUG_DIR)/bananaquakeopengl \
 		# $(BUILD_DEBUG_DIR)/squake \
 		$(BUILD_DEBUG_DIR)/unixded \
 		$(BUILD_DEBUG_DIR)/x11
@@ -159,7 +159,7 @@ build_debug:
 build_release:
 	@-mkdir $(BUILD_RELEASE_DIR) \
 		$(BUILD_RELEASE_DIR)/bin \
-		$(BUILD_RELEASE_DIR)/glquake \
+		$(BUILD_RELEASE_DIR)/bananaquakeopengl \
 		# $(BUILD_RELEASE_DIR)/squake \
 		$(BUILD_RELEASE_DIR)/unixded \
 		$(BUILD_RELEASE_DIR)/x11
@@ -552,273 +552,286 @@ $(BUILDDIR)/squake/sys_dosa.o : ./sys_dosa.s
 #############################################################################
 
 GLQUAKE_OBJS= \
-	$(BUILDDIR)/glquake/bgmusic.o \
-	$(BUILDDIR)/glquake/cl_demo.o \
-	$(BUILDDIR)/glquake/cl_input.o \
-	$(BUILDDIR)/glquake/cl_main.o \
-	$(BUILDDIR)/glquake/cl_parse.o \
-	$(BUILDDIR)/glquake/cl_tent.o \
-	$(BUILDDIR)/glquake/cfgfile.o \
-	$(BUILDDIR)/glquake/chase.o \
-	$(BUILDDIR)/glquake/cmd.o \
-	$(BUILDDIR)/glquake/common.o \
-	$(BUILDDIR)/glquake/console.o \
-	$(BUILDDIR)/glquake/crc.o \
-	$(BUILDDIR)/glquake/cvar.o \
+	$(BUILDDIR)/bananaquakeopengl/bgmusic.o \
+	$(BUILDDIR)/bananaquakeopengl/cl_demo.o \
+	$(BUILDDIR)/bananaquakeopengl/cl_input.o \
+	$(BUILDDIR)/bananaquakeopengl/cl_main.o \
+	$(BUILDDIR)/bananaquakeopengl/cl_parse.o \
+	$(BUILDDIR)/bananaquakeopengl/cl_tent.o \
+	$(BUILDDIR)/bananaquakeopengl/cfgfile.o \
+	$(BUILDDIR)/bananaquakeopengl/chase.o \
+	$(BUILDDIR)/bananaquakeopengl/cmd.o \
+	$(BUILDDIR)/bananaquakeopengl/common.o \
+	$(BUILDDIR)/bananaquakeopengl/console.o \
+	$(BUILDDIR)/bananaquakeopengl/crc.o \
+	$(BUILDDIR)/bananaquakeopengl/cvar.o \
 	\
-	$(BUILDDIR)/glquake/gl_draw.o \
-	$(BUILDDIR)/glquake/gl_mesh.o \
-	$(BUILDDIR)/glquake/gl_model.o \
-	$(BUILDDIR)/glquake/gl_refrag.o \
-	$(BUILDDIR)/glquake/gl_rlight.o \
-	$(BUILDDIR)/glquake/gl_rmain.o \
-	$(BUILDDIR)/glquake/gl_rmisc.o \
-	$(BUILDDIR)/glquake/gl_rsurf.o \
-	$(BUILDDIR)/glquake/gl_screen.o \
-	$(BUILDDIR)/glquake/gl_test.o \
-	$(BUILDDIR)/glquake/gl_vidlinuxglx.o \
-	$(BUILDDIR)/glquake/gl_warp.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_draw.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_images.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_mesh.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_model.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_refrag.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_rlight.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_rmain.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_rmisc.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_rsurf.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_screen.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_test.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_vidlinuxglx.o \
+	$(BUILDDIR)/bananaquakeopengl/gl_warp.o \
 	\
-	$(BUILDDIR)/glquake/host.o \
-	$(BUILDDIR)/glquake/host_cmd.o \
-	$(BUILDDIR)/glquake/keys.o \
-	$(BUILDDIR)/glquake/menu.o \
-	$(BUILDDIR)/glquake/mathlib.o \
-	$(BUILDDIR)/glquake/net_dgrm.o \
-	$(BUILDDIR)/glquake/net_loop.o \
-	$(BUILDDIR)/glquake/net_main.o \
-	$(BUILDDIR)/glquake/net_vcr.o \
-	$(BUILDDIR)/glquake/net_udp.o \
-	$(BUILDDIR)/glquake/net_bsd.o \
-	$(BUILDDIR)/glquake/pr_cmds.o \
-	$(BUILDDIR)/glquake/pr_edict.o \
-	$(BUILDDIR)/glquake/pr_exec.o \
-	$(BUILDDIR)/glquake/r_part.o \
-	$(BUILDDIR)/glquake/sbar.o \
-	$(BUILDDIR)/glquake/strlcat.o \
-	$(BUILDDIR)/glquake/strlcpy.o \
-	$(BUILDDIR)/glquake/sv_main.o \
-	$(BUILDDIR)/glquake/sv_phys.o \
-	$(BUILDDIR)/glquake/sv_move.o \
-	$(BUILDDIR)/glquake/sv_user.o \
-	$(BUILDDIR)/glquake/zone.o	\
-	$(BUILDDIR)/glquake/view.o	\
-	$(BUILDDIR)/glquake/wad.o \
-	$(BUILDDIR)/glquake/world.o \
-	$(BUILDDIR)/glquake/cd_linux.o \
-	$(BUILDDIR)/glquake/sys_linux.o \
-	$(BUILDDIR)/glquake/snd_codec.o \
-	$(BUILDDIR)/glquake/snd_dma.o \
-	$(BUILDDIR)/glquake/snd_mem.o \
-	$(BUILDDIR)/glquake/snd_mix.o \
-	$(BUILDDIR)/glquake/snd_linux.o \
-	$(BUILDDIR)/glquake/snd_wave.o \
-	$(BUILDDIR)/glquake/snd_vorbis.o \
+	$(BUILDDIR)/bananaquakeopengl/host.o \
+	$(BUILDDIR)/bananaquakeopengl/host_cmd.o \
+	$(BUILDDIR)/bananaquakeopengl/keys.o \
+	$(BUILDDIR)/bananaquakeopengl/menu.o \
+	$(BUILDDIR)/bananaquakeopengl/mathlib.o \
+	$(BUILDDIR)/bananaquakeopengl/net_dgrm.o \
+	$(BUILDDIR)/bananaquakeopengl/net_loop.o \
+	$(BUILDDIR)/bananaquakeopengl/net_main.o \
+	$(BUILDDIR)/bananaquakeopengl/net_vcr.o \
+	$(BUILDDIR)/bananaquakeopengl/net_udp.o \
+	$(BUILDDIR)/bananaquakeopengl/net_bsd.o \
+	$(BUILDDIR)/bananaquakeopengl/pr_cmds.o \
+	$(BUILDDIR)/bananaquakeopengl/pr_edict.o \
+	$(BUILDDIR)/bananaquakeopengl/pr_exec.o \
+	$(BUILDDIR)/bananaquakeopengl/r_part.o \
+	$(BUILDDIR)/bananaquakeopengl/sbar.o \
+	$(BUILDDIR)/bananaquakeopengl/strlcat.o \
+	$(BUILDDIR)/bananaquakeopengl/strlcpy.o \
+	$(BUILDDIR)/bananaquakeopengl/sv_main.o \
+	$(BUILDDIR)/bananaquakeopengl/sv_phys.o \
+	$(BUILDDIR)/bananaquakeopengl/sv_move.o \
+	$(BUILDDIR)/bananaquakeopengl/sv_user.o \
+	$(BUILDDIR)/bananaquakeopengl/zone.o	\
+	$(BUILDDIR)/bananaquakeopengl/view.o	\
+	$(BUILDDIR)/bananaquakeopengl/wad.o \
+	$(BUILDDIR)/bananaquakeopengl/world.o \
+	$(BUILDDIR)/bananaquakeopengl/cd_linux.o \
+	$(BUILDDIR)/bananaquakeopengl/sys_linux.o \
+	$(BUILDDIR)/bananaquakeopengl/snd_codec.o \
+	$(BUILDDIR)/bananaquakeopengl/snd_dma.o \
+	$(BUILDDIR)/bananaquakeopengl/snd_mem.o \
+	$(BUILDDIR)/bananaquakeopengl/snd_mix.o \
+	$(BUILDDIR)/bananaquakeopengl/snd_linux.o \
+	$(BUILDDIR)/bananaquakeopengl/snd_mp3.o \
+	$(BUILDDIR)/bananaquakeopengl/snd_mp3tag.o \
+	$(BUILDDIR)/bananaquakeopengl/snd_wave.o \
+	$(BUILDDIR)/bananaquakeopengl/snd_vorbis.o \
 	\
-	$(BUILDDIR)/glquake/math.o \
-	$(BUILDDIR)/glquake/worlda.o \
-	$(BUILDDIR)/glquake/snd_mixa.o \
-	$(BUILDDIR)/glquake/utils.o
+	$(BUILDDIR)/bananaquakeopengl/math.o \
+	$(BUILDDIR)/bananaquakeopengl/worlda.o \
+	$(BUILDDIR)/bananaquakeopengl/snd_mixa.o \
+	$(BUILDDIR)/bananaquakeopengl/utils.o
 
-# GLSVGA_OBJS=$(BUILDDIR)/glquake/gl_vidlinux.o
+# GLSVGA_OBJS=$(BUILDDIR)/bananaquakeopengl/gl_vidlinux.o
 
-# GLX_OBJS=$(BUILDDIR)/glquake/gl_vidlinuxglx.o
+# GLX_OBJS=$(BUILDDIR)/bananaquakeopengl/gl_vidlinuxglx.o
 
 # $(GLSVGA_OBJS)
 
-$(BUILDDIR)/bin/glquake : $(GLQUAKE_OBJS)
+$(BUILDDIR)/bin/bananaquakeopengl : $(GLQUAKE_OBJS)
 	$(CC) $(GLCPPFLAGS) -o $@ $(GLQUAKE_OBJS) $(LDFLAGS) $(CODECLIBS) $(GLLIBINCLUDE) $(GLLIBLINK)
 
-$(BUILDDIR)/glquake/bgmusic.o :  	./bgmusic.cpp
+$(BUILDDIR)/bananaquakeopengl/bgmusic.o :  	./bgmusic.cpp
 	$(DO_GL_CC)	
 	
-$(BUILDDIR)/glquake/cfgfile.o :  	./cfgfile.cpp
+$(BUILDDIR)/bananaquakeopengl/cfgfile.o :  	./cfgfile.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/cl_demo.o :      ./cl_demo.cpp
+$(BUILDDIR)/bananaquakeopengl/cl_demo.o :      ./cl_demo.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/cl_input.o :     ./cl_input.cpp
+$(BUILDDIR)/bananaquakeopengl/cl_input.o :     ./cl_input.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/cl_main.o :      ./cl_main.cpp
+$(BUILDDIR)/bananaquakeopengl/cl_main.o :      ./cl_main.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/cl_parse.o :     ./cl_parse.cpp
+$(BUILDDIR)/bananaquakeopengl/cl_parse.o :     ./cl_parse.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/cl_tent.o :      ./cl_tent.cpp
+$(BUILDDIR)/bananaquakeopengl/cl_tent.o :      ./cl_tent.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/chase.o :        ./chase.cpp
+$(BUILDDIR)/bananaquakeopengl/chase.o :        ./chase.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/cmd.o :          ./cmd.cpp
+$(BUILDDIR)/bananaquakeopengl/cmd.o :          ./cmd.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/common.o :       ./common.cpp
+$(BUILDDIR)/bananaquakeopengl/common.o :       ./common.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/console.o :      ./console.cpp
+$(BUILDDIR)/bananaquakeopengl/console.o :      ./console.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/crc.o :          ./crc.cpp
+$(BUILDDIR)/bananaquakeopengl/crc.o :          ./crc.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/cvar.o :         ./cvar.cpp
+$(BUILDDIR)/bananaquakeopengl/cvar.o :         ./cvar.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/gl_draw.o :      ./gl_draw.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/gl_mesh.o :      ./gl_mesh.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/gl_model.o :     ./gl_model.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/gl_refrag.o :    ./gl_refrag.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/gl_rlight.o :    ./gl_rlight.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/gl_rmain.o :     ./gl_rmain.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/gl_rmisc.o :     ./gl_rmisc.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/gl_rsurf.o :     ./gl_rsurf.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/gl_screen.o :    ./gl_screen.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/gl_test.o :      ./gl_test.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/gl_vidlinuxglx.o :  ./gl_vidlinuxglx.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/gl_warp.o :      ./gl_warp.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/host.o :         ./host.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/host_cmd.o :     ./host_cmd.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/keys.o :         ./keys.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/menu.o :         ./menu.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/mathlib.o :      ./mathlib.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/net_dgrm.o :     ./net_dgrm.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/net_loop.o :     ./net_loop.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/net_main.o :     ./net_main.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/net_vcr.o :      ./net_vcr.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/net_udp.o :      ./net_udp.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/net_bsd.o :      ./net_bsd.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/pr_cmds.o :      ./pr_cmds.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/pr_edict.o :     ./pr_edict.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/pr_exec.o :      ./pr_exec.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/r_part.o :       ./r_part.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/sbar.o :         ./sbar.cpp
+$(BUILDDIR)/bananaquakeopengl/gl_draw.o :      ./gl_draw.cpp
 	$(DO_GL_CC)
 	
-$(BUILDDIR)/glquake/snd_codec.o :         ./snd_codec.cpp
+$(BUILDDIR)/bananaquakeopengl/gl_images.o :      ./gl_images.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/gl_mesh.o :      ./gl_mesh.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/gl_model.o :     ./gl_model.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/gl_refrag.o :    ./gl_refrag.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/gl_rlight.o :    ./gl_rlight.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/gl_rmain.o :     ./gl_rmain.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/gl_rmisc.o :     ./gl_rmisc.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/gl_rsurf.o :     ./gl_rsurf.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/gl_screen.o :    ./gl_screen.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/gl_test.o :      ./gl_test.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/gl_vidlinuxglx.o :  ./gl_vidlinuxglx.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/gl_warp.o :      ./gl_warp.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/host.o :         ./host.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/host_cmd.o :     ./host_cmd.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/keys.o :         ./keys.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/menu.o :         ./menu.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/mathlib.o :      ./mathlib.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/net_dgrm.o :     ./net_dgrm.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/net_loop.o :     ./net_loop.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/net_main.o :     ./net_main.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/net_vcr.o :      ./net_vcr.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/net_udp.o :      ./net_udp.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/net_bsd.o :      ./net_bsd.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/pr_cmds.o :      ./pr_cmds.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/pr_edict.o :     ./pr_edict.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/pr_exec.o :      ./pr_exec.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/r_part.o :       ./r_part.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/sbar.o :         ./sbar.cpp
 	$(DO_GL_CC)
 	
-$(BUILDDIR)/glquake/snd_wave.o :         ./snd_wave.cpp
+$(BUILDDIR)/bananaquakeopengl/snd_codec.o :         ./snd_codec.cpp
 	$(DO_GL_CC)
 	
-$(BUILDDIR)/glquake/snd_vorbis.o :         ./snd_vorbis.cpp
+$(BUILDDIR)/bananaquakeopengl/snd_mp3.o :         ./snd_mp3.cpp
 	$(DO_GL_CC)
 	
-$(BUILDDIR)/glquake/strlcat.o :         ./strlcat.cpp
+$(BUILDDIR)/bananaquakeopengl/snd_mp3tag.o :         ./snd_mp3tag.cpp
 	$(DO_GL_CC)
 	
-$(BUILDDIR)/glquake/strlcpy.o :         ./strlcpy.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/sv_main.o :      ./sv_main.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/sv_phys.o :      ./sv_phys.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/sv_move.o :      ./sv_move.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/sv_user.o :      ./sv_user.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/zone.o	:        ./zone.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/view.o	:        ./view.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/wad.o :          ./wad.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/world.o :        ./world.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/cd_linux.o :     ./cd_linux.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/sys_linux.o :    ./sys_linux.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/snd_dma.o :      ./snd_dma.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/snd_mem.o :      ./snd_mem.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/snd_mix.o :      ./snd_mix.cpp
-	$(DO_GL_CC)
-
-$(BUILDDIR)/glquake/snd_linux.o :    ./snd_linux.cpp
+$(BUILDDIR)/bananaquakeopengl/snd_wave.o :         ./snd_wave.cpp
 	$(DO_GL_CC)
 	
-$(BUILDDIR)/glquake/utils.o :    ./utils.cpp
+	
+$(BUILDDIR)/bananaquakeopengl/snd_vorbis.o :         ./snd_vorbis.cpp
+	$(DO_GL_CC)
+	
+$(BUILDDIR)/bananaquakeopengl/strlcat.o :         ./strlcat.cpp
+	$(DO_GL_CC)
+	
+$(BUILDDIR)/bananaquakeopengl/strlcpy.o :         ./strlcpy.cpp
 	$(DO_GL_CC)
 
-$(BUILDDIR)/glquake/math.o :         ./math.s
+$(BUILDDIR)/bananaquakeopengl/sv_main.o :      ./sv_main.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/sv_phys.o :      ./sv_phys.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/sv_move.o :      ./sv_move.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/sv_user.o :      ./sv_user.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/zone.o	:        ./zone.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/view.o	:        ./view.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/wad.o :          ./wad.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/world.o :        ./world.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/cd_linux.o :     ./cd_linux.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/sys_linux.o :    ./sys_linux.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/snd_dma.o :      ./snd_dma.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/snd_mem.o :      ./snd_mem.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/snd_mix.o :      ./snd_mix.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/snd_linux.o :    ./snd_linux.cpp
+	$(DO_GL_CC)
+	
+$(BUILDDIR)/bananaquakeopengl/utils.o :    ./utils.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/math.o :         ./math.s
 	$(DO_GL_AS)
 
-$(BUILDDIR)/glquake/worlda.o :       ./worlda.s
+$(BUILDDIR)/bananaquakeopengl/worlda.o :       ./worlda.s
 	$(DO_GL_AS)
 
-$(BUILDDIR)/glquake/snd_mixa.o :     ./snd_mixa.s
+$(BUILDDIR)/bananaquakeopengl/snd_mixa.o :     ./snd_mixa.s
 	$(DO_GL_AS)
 
 #############################################################################
@@ -839,9 +852,9 @@ rpm: rpm-quake rpm-quake-data rpm-hipnotic rpm-rogue
 rpm-quake: quake.spec \
 		$(BUILD_RELEASE_DIR)/bin/squake \
 		$(BUILD_RELEASE_DIR)/bin/quake.x11 \
-		$(BUILD_RELEASE_DIR)/bin/glquake \
-		$(BUILD_RELEASE_DIR)/bin/glquake.glx \
-		$(BUILD_RELEASE_DIR)/bin/glquake.3dfxgl
+		$(BUILD_RELEASE_DIR)/bin/bananaquakeopengl \
+		$(BUILD_RELEASE_DIR)/bin/bananaquakeopengl.glx \
+		$(BUILD_RELEASE_DIR)/bin/bananaquakeopengl.3dfxgl
 	touch $(RPMROOT)/SOURCES/quake-$(VERSION).tar.gz
 	if [ ! -d RPMS ];then mkdir RPMS;fi
 	cp $(MOUNT_DIR)/quake.gif $(RPMROOT)/SOURCES/quake.gif
@@ -853,12 +866,12 @@ rpm-quake: quake.spec \
 	strip $(RPMDIR)/$(INSTALLDIR)/squake
 	cp $(BUILD_RELEASE_DIR)/bin/quake.x11 $(RPMDIR)/$(INSTALLDIR)/quake.x11
 	strip $(RPMDIR)/$(INSTALLDIR)/quake.x11
-	cp $(BUILD_RELEASE_DIR)/bin/glquake $(RPMDIR)/$(INSTALLDIR)/glquake
-	strip $(RPMDIR)/$(INSTALLDIR)/glquake
-	cp $(BUILD_RELEASE_DIR)/bin/glquake.glx $(RPMDIR)/$(INSTALLDIR)/glquake.glx
-	strip $(RPMDIR)/$(INSTALLDIR)/glquake.glx
-	cp $(BUILD_RELEASE_DIR)/bin/glquake.3dfxgl $(RPMDIR)/$(INSTALLDIR)/glquake.3dfxgl
-	strip $(RPMDIR)/$(INSTALLDIR)/glquake.3dfxgl
+	cp $(BUILD_RELEASE_DIR)/bin/bananaquakeopengl $(RPMDIR)/$(INSTALLDIR)/bananaquakeopengl
+	strip $(RPMDIR)/$(INSTALLDIR)/bananaquakeopengl
+	cp $(BUILD_RELEASE_DIR)/bin/bananaquakeopengl.glx $(RPMDIR)/$(INSTALLDIR)/bananaquakeopengl.glx
+	strip $(RPMDIR)/$(INSTALLDIR)/bananaquakeopengl.glx
+	cp $(BUILD_RELEASE_DIR)/bin/bananaquakeopengl.3dfxgl $(RPMDIR)/$(INSTALLDIR)/bananaquakeopengl.3dfxgl
+	strip $(RPMDIR)/$(INSTALLDIR)/bananaquakeopengl.3dfxgl
 	-mkdirhier $(RPMDIR)/usr/lib
 	cp $(TDFXGL_DIR)/release$(ARCH)$(LIBC++)/lib3dfxgl.so $(RPMDIR)/usr/lib/lib3dfxgl.so
 	cp $(MESA_DIR)/lib/libMesaGL.so.2.6 $(RPMDIR)/usr/lib/libMesaGL.so.2.6
@@ -955,7 +968,7 @@ quake-rogue.spec : $(MOUNT_DIR)/quake-rogue.spec.sh
 #############################################################################
 
 clean: clean-debug clean-release
-	rm -f squake.spec glquake.spec quake.x11.spec
+	rm -f squake.spec bananaquakeopengl.spec quake.x11.spec
 
 clean-debug:
 	$(MAKE) clean2 BUILDDIR=$(BUILD_DEBUG_DIR) CPPFLAGS="$(DEBUG_CPPFLAGS)"
