@@ -144,8 +144,7 @@ $(info    DO_GL_CC is '$(DO_GL_CC)')
 # SETUP AND BUILD
 #############################################################################
 
-TARGETS=./sdl2 \
-	$(BUILDDIR)/bin/bananaquakeopengl
+TARGETS=$(BUILDDIR)/bin/bananaquakeopengl
 	# $(BUILDDIR)/bin/unixded
 
 build_debug:
@@ -977,9 +976,13 @@ clean: clean-debug clean-release
 
 clean-debug:
 	$(MAKE) clean2 BUILDDIR=$(BUILD_DEBUG_DIR) CPPFLAGS="$(DEBUG_CPPFLAGS)"
+	$(MAKE) clean -C ./sdl2
+	$(MAKE) clean -C ./SDL_image
 
 clean-release:
 	$(MAKE) clean2 BUILDDIR=$(BUILD_RELEASE_DIR) CPPFLAGS="$(DEBUG_CPPFLAGS)"
+	$(MAKE) clean -C ./sdl2
+	$(MAKE) clean -C ./SDL_image
 
 clean2:
 	-rm -f $(SQUAKE_OBJS) $(X11_OBJS) $(GLQUAKE_OBJS) $(GLSVGA_OBJS) \
