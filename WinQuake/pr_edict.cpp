@@ -1148,8 +1148,8 @@ void PR_LoadProgs (void)
 	pr_numknownstrings = 0;
 	pr_maxknownstrings = 0;
 	pr_stringssize = progs->numstrings;
-	if (pr_knownstrings.GetNumAllocated() > 0)
-		pr_knownstrings.RemoveEverything();
+    if (pr_knownstrings.GetNumAllocated() > 0)
+        pr_knownstrings.Clear();
 	PR_SetEngineString("");
 
 	pr_globaldefs = (ddef_t *)((byte *)progs + progs->ofs_globaldefs);
