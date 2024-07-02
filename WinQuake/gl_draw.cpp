@@ -1132,6 +1132,9 @@ void CGLRenderer::GL_FreeTexture(CGLTexture* kill)
 {
 	CGLTexture* glt, *next;
 
+	if (kill->flags & TEXPREF_PERSIST)
+		return;		// Missi: don't free if this is set (7/1/2024)
+
 	if (kill == NULL)
 	{
 		Con_Printf("GL_FreeTexture: NULL texture\n");
@@ -1184,7 +1187,7 @@ void CGLRenderer::GL_DeleteTexture(CGLTexture* texture)
 	texture->texnum = 0;
 
 	// Missi: prevents textures from leaking (6/22/2024)
-	texture->pic.datavec.RemoveEverything();
+	texture->pic.datavec.Clear();
 }
 
 /*
@@ -2019,5 +2022,5 @@ CGLTexture::CGLTexture(const CGLTexture& obj) : next(NULL),
 
 CGLTexture::~CGLTexture()
 {
-	pic.datavec.RemoveEverything();
+	pic.datavec.Clear();
 }
