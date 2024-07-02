@@ -85,7 +85,7 @@ CQuakeServer::~CQuakeServer()
 	memset(&reliable_datagram_buf, 0, sizeof(reliable_datagram_buf));
 	memset(&lightstyles, 0, sizeof(lightstyles));
 	memset(&datagram_buf, 0, sizeof(datagram_buf));
-	free(edicts)
+    free(edicts);
 	edicts = nullptr;
 }
 
