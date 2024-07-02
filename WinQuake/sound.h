@@ -47,7 +47,7 @@ typedef struct
 
 struct sfx_t
 {
-	char 	name[MAX_QPATH];
+	char 			name[MAX_QPATH];
 	cache_user_s	cache;
 };
 
@@ -60,15 +60,15 @@ struct sfxcache_t
 	int 	speed = 0;
 	int 	width = 0;
 	int 	stereo = 0;
-	byte		data[1];		// variable sized
+	byte	data[1];		// variable sized
 };
 
 typedef struct
 {
-	bool		gamealive;
-	bool		soundalive;
-	bool		splitbuffer;
-	bool		signed8;
+	bool			gamealive;
+	bool			soundalive;
+	bool			splitbuffer;
+	bool			signed8;
 	int				channels;
 	int				samples;				// mono samples in buffer
 	int				submission_chunk;		// don't mix less than this #
@@ -390,31 +390,11 @@ public:
 
 };
 #endif
-/*
-#ifdef __linux__
-class CSoundSystemLinux : public CSoundDMA
-{
-public:
 
-    CSoundSystemLinux() : CSoundDMA() {};
-
-	typedef void (*snd_callback)(void);
-
-	// Global crap
-
-    bool SNDDMA_Init(dma_t* dma);
-    int SNDDMA_GetDMAPos(void);
-    void SNDDMA_Shutdown(void);
-    void SNDDMA_Submit(void) override;
-    
-    static void paint_audio(void* unused, byte* stream, int len);
-};
-#endif
-*/
-extern	channel_t   channels[MAX_CHANNELS];
 // 0 to MAX_DYNAMIC_CHANNELS-1	= normal entity sounds
 // MAX_DYNAMIC_CHANNELS to MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS -1 = water, etc
 // MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS to total_channels = static sounds
+extern	channel_t   channels[MAX_CHANNELS];
 
 extern	int			total_channels;
 
