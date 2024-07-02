@@ -120,11 +120,11 @@ endif
 
 # -L/usr/X11/lib \
 	
-GLLIBINCLUDE=-L/usr/lib/$(ARCH)-linux-gnu -L/usr/local/lib
+GLLIBINCLUDE=-L./sdl2/build -L./SDL_image -L/usr/lib/$(ARCH)-linux-gnu -L/usr/local/lib
 	
-GLLIBLINK=-lSDL2 -lm -lGL -lGLU -lX11 -lXext -lXxf86dga -lXxf86vm -lvorbis -lvorbisfile -ldl -lmad
+GLLIBLINK=-lSDL2 -lSDL2_image -lm -lGL -lGLU -lX11 -lXext -lXxf86dga -lXxf86vm -lvorbis -lvorbisfile -ldl -lmad
 
-GLINCLUDES=-I/usr/include/SDL2 -I/usr/include/vlc -I/usr/include/vorbis -I/QuakeCPP/WinQuake/mesa/3dfx/glide3/include/
+GLINCLUDES=-I./sdl2/include -I./SDL_image/include -I/usr/include/vlc -I/usr/include/vorbis -I/QuakeCPP/WinQuake/mesa/3dfx/glide3/include/
 	
 GLOPTS:=-DGLQUAKE
 	
@@ -144,7 +144,8 @@ $(info    DO_GL_CC is '$(DO_GL_CC)')
 # SETUP AND BUILD
 #############################################################################
 
-TARGETS=$(BUILDDIR)/bin/bananaquakeopengl
+TARGETS=./sdl2 \
+	$(BUILDDIR)/bin/bananaquakeopengl
 	# $(BUILDDIR)/bin/unixded
 
 build_debug:
@@ -154,6 +155,10 @@ build_debug:
 		# $(BUILD_DEBUG_DIR)/squake \
 		$(BUILD_DEBUG_DIR)/unixded \
 		$(BUILD_DEBUG_DIR)/x11
+	(cd ./sdl2 && ./configure && cd ../)
+	$(MAKE) -C ./sdl2
+	(cd ./SDL_image && ./configure && cd ../)
+	$(MAKE) -C ./SDL_image
 	$(MAKE) targets BUILDDIR=$(BUILD_DEBUG_DIR) CPPFLAGS="$(DEBUG_CPPFLAGS)"
 
 build_release:
