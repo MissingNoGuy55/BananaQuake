@@ -17,7 +17,6 @@
 #include <sys/mman.h>
 #include <errno.h>
 
-#include "sys_linux.h"
 #include "quakedef.h"
 
 bool    isDedicated;
@@ -233,54 +232,82 @@ void Sys_mkdir (const char *path)
     mkdir (path, 0777);
 }
 
+/*
+================
+filelength
+================
+*/
+
+int filelength (FILE *f)
+{
+    int		pos;
+    int		end;
+
+    pos = ftell (f);
+    fseek (f, 0, SEEK_END);
+    end = ftell (f);
+    fseek (f, pos, SEEK_SET);
+
+    return end;
+}
+
 int Sys_FileOpenRead (const char *path, int *handle)
 {
-	int	h;
-    FILE* f;
-	struct stat	fileinfo;
-    
-    h = gethandle();
-    f = fopen (path, "rb");
+    FILE	*f = NULL;
+    int		i = 0, retval = 0;
+    int		t = 0;
 
-	*handle = h;
-    if (h == -1 || !f)
-		return -1;
-	
-	if (fstat (h,&fileinfo) == -1)
-		Sys_Error ("Error fstating %s", path);
+    i = gethandle ();
 
-    sys_handles[h] = f;
+    f = fopen(path, "rb");
 
-	return fileinfo.st_size;
+    if (!f)
+    {
+        *handle = -1;
+        retval = -1;
+    }
+    else
+    {
+        sys_handles[i] = f;
+        *handle = i;
+        retval = filelength(f);
+    }
+
+    return retval;
 }
 
 int Sys_FileOpenWrite (const char *path)
 {
-    FILE*   f;
-    int     h;
+    FILE	*f = NULL;
+    int		i = 0;
+    int		t = 0;
+    char	p[MAX_OSPATH];
 
-	umask (0);
-	
-    h = gethandle();
-    f = fopen(path, "wb");
+    i = gethandle ();
 
-    if (h == -1)
-		Sys_Error ("Error opening %s: %s", path,strerror(errno));
+    Q_strcpy(p, path);
 
-    sys_handles[h] = f;
+    f = fopen(path, "w+b");
+    if (!f)
+        Sys_Error ("Error opening %s: %s", path,strerror(errno));
+    sys_handles[i] = f;
 
-    return h;
+    return i;
 }
 
 int Sys_FileWrite (int handle, void *src, int count)
 {
-	return write (handle, src, count);
+    int		x;
+
+    x = fwrite (src, 1, count, sys_handles[handle]);
+
+    return x;
 }
 
 void Sys_FileClose (int handle)
 {
     fclose (sys_handles[handle]);
-	sys_handles[handle] = nullptr;
+    sys_handles[handle] = NULL;
 }
 
 void Sys_FileSeek (int handle, int position)
@@ -435,7 +462,7 @@ int main (int c, char **v)
 	parms.memsize = 8*1024*1024;
 #endif
 #else
-    parms.memsize = 32e9;
+    parms.memsize = DEFAULT_MEMORY;
 #endif
 
 	j = g_Common->COM_CheckParm("-mem");

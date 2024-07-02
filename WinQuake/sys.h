@@ -47,7 +47,7 @@ int Sys_FileWrite (int handle, void *data, int count);
 int	Sys_FileTime (const char *path);
 void Sys_mkdir (const char *path);
 
-constexpr unsigned short MAX_HANDLES = 32;
+constexpr int MAX_HANDLES = 32;
 extern FILE* sys_handles[MAX_HANDLES];
 
 template<typename T>
