@@ -66,7 +66,6 @@ public:
 	const int	GetNumAllocated() const { return m_iAllocated; }
 	T*			GetBase() { return m_pBase; }
 	size_t		GetSize() const { return m_iSize; }
-	void		RemoveEverything();
 
 	T& operator[](int i);
 	const T& operator[](int i) const;
@@ -96,17 +95,6 @@ CQVector<T>::~CQVector()
 }
 
 template<typename T>
-void CQVector<T>::RemoveEverything()
-{
-	int num = GetNumAllocated();
-
-	for (int i = 0; i < num; i++)
-		RemoveElement(i);
-
-	Shrink();
-}
-
-template<typename T>
 T& CQVector<T>::operator[](int i)
 {
 	return m_pBase[i];
@@ -121,10 +109,9 @@ const T& CQVector<T>::operator[](int i) const
 template<typename T>
 void CQVector<T>::Expand(size_t size)
 {
-	T* test = (T*)realloc(m_pBase, sizeof(T) * size);
-	m_pBase = static_cast<T*>(test);
-	m_iSize = (size * sizeof(T));
-	m_iAllocated = size;
+    m_pBase = (T*)realloc(m_pBase, size * sizeof(T));
+    m_iSize = (size * sizeof(T));
+    m_iAllocated = size;
 }
 
 template<typename T>
@@ -374,8 +361,11 @@ const T& CQVector<T>::Element(int num) const
 template<typename T>
 void CQVector<T>::Clear()
 {
-	for (int i = 0; i < m_iAllocated; i++)
-		RemoveElement(i);
+    free(m_pBase);
+    m_pBase = nullptr;
+
+    m_iSize = 0;
+    m_iAllocated = 0;
 }
 
 template<typename T>
