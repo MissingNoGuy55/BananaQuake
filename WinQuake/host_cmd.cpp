@@ -350,8 +350,9 @@ void CQuakeHost::Host_Changelevel_f (void)
 		Con_Printf ("Only the server may changelevel\n");
 		return;
 	}
+    key_dest = key_game;
 	sv->SV_SaveSpawnparms ();
-	Q_strncpy (level, g_pCmds->Cmd_Argv(1), sizeof(level));
+    Q_strlcpy (level, g_pCmds->Cmd_Argv(1), sizeof(level));
 	sv->SV_SpawnServer (level);
 #endif
 }
@@ -375,7 +376,7 @@ void CQuakeHost::Host_Restart_f (void)
 
 	if (cmd_source != src_command)
 		return;
-	Q_strncpy (mapname, sv->name, sizeof(mapname));	// must copy out, because it gets cleared
+    Q_strlcpy (mapname, sv->name, sizeof(mapname));	// must copy out, because it gets cleared
 								// in sv_spawnserver
 #ifdef QUAKE2
 	Q_strcpy(startspot, sv->startspot);
@@ -511,7 +512,7 @@ void CQuakeHost::Host_Savegame_f (void)
 		}
 	}
 
-	sprintf (name, "%s/%s", g_Common->com_gamedir, g_pCmds->Cmd_Argv(1));
+    snprintf (name, sizeof(name), "%s/%s", g_Common->com_gamedir, g_pCmds->Cmd_Argv(1));
 	g_Common->COM_DefaultExtension (name, ".sav");
 	
 	Con_Printf ("Saving game to %s...\n", name);
@@ -561,102 +562,102 @@ Host_Loadgame_f
 */
 void CQuakeHost::Host_Loadgame_f (void)
 {
-    static  char* start = nullptr;
-    const char* data = nullptr;
+    static char	*start;
 
-	char	name[MAX_OSPATH] = {};
-	char	mapname[MAX_QPATH] = {};
-	float	time = 0.0f, tfloat = 0.0f;
-	int		i = 0, r = 0;
-	edict_t	*ent = nullptr;
-	int		entnum = 0;
-	int		version = 0;
-	float	spawn_parms[NUM_SPAWN_PARMS] = {};
+    char	name[MAX_OSPATH];
+    char	mapname[MAX_QPATH];
+    float	time, tfloat;
+    const char	*data;
+    int	i;
+    edict_t	*ent;
+    int	entnum;
+    int	version;
+    float	spawn_parms[NUM_SPAWN_PARMS];
 
-	memset(savegame_string, 0, sizeof(savegame_string));
+    if (cmd_source != src_command)
+        return;
 
-	if (cmd_source != src_command)
-		return;
+    if (g_pCmds->Cmd_Argc() != 2)
+    {
+        Con_Printf ("load <savename> : load a game\n");
+        return;
+    }
 
-	if (g_pCmds->Cmd_Argc() != 2)
-	{
-		Con_Printf ("load <savename> : load a game\n");
-		return;
-	}
+    if (strstr(g_pCmds->Cmd_Argv(1), ".."))
+    {
+        Con_Printf ("Relative pathnames are not allowed.\n");
+        return;
+    }
 
-	cls.demonum = -1;		// stop demo loop in case this fails
+    cls.demonum = -1;		// stop demo loop in case this fails
 
     snprintf (name, sizeof(name), "%s/%s", g_Common->com_gamedir, g_pCmds->Cmd_Argv(1));
-	g_Common->COM_DefaultExtension (name, ".sav");
-	
+    g_Common->COM_AddExtension (name, ".sav", sizeof(name));
+
 // we can't call SCR_BeginLoadingPlaque, because too much stack space has
 // been used.  The menu calls it before stuffing loadgame command
 //	SCR_BeginLoadingPlaque ();
 
-	Con_Printf ("Loading game from %s...\n", name);
+    Con_Printf ("Loading game from %s...\n", name);
+
+// avoid leaking if the previous Host_Loadgame_f failed with a Host_Error
+    if (start != NULL)
+        free (start);
+
     start = (char *) g_Common->COM_LoadMallocFile_TextMode_OSPath(name, NULL);
-    if (!start)
-	{
-		Con_Printf ("ERROR: couldn't open.\n");
-        free(start);
-		return;
-	}
+    if (start == NULL)
+    {
+        Con_Printf ("ERROR: couldn't open.\n");
+        return;
+    }
 
     data = start;
-    data = g_Common->COM_ParseIntNewline(data, &version);
-
-	if (version != SAVEGAME_VERSION)
-	{
-        free(start);
-		Con_Printf ("Savegame is version %i, not %i\n", version, SAVEGAME_VERSION);
-		return;
-	}
+    data = g_Common->COM_ParseIntNewline (data, &version);
+    if (version != SAVEGAME_VERSION)
+    {
+        free (start);
+        start = NULL;
+        host->Host_Error ("Savegame is version %i, not %i", version, SAVEGAME_VERSION);
+        return;
+    }
     data = g_Common->COM_ParseStringNewline (data);
-	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
-        data = g_Common->COM_ParseFloatNewline(data, &spawn_parms[i]);
+    for (i = 0; i < NUM_SPAWN_PARMS; i++)
+        data = g_Common->COM_ParseFloatNewline (data, &spawn_parms[i]);
 // this silliness is so we can load 1.06 save files, which have float skill values
     data = g_Common->COM_ParseFloatNewline(data, &tfloat);
-	current_skill = (int)(tfloat + 0.1);
-	Cvar_SetValue ("skill", (float)current_skill);
-
-#ifdef QUAKE2
-	Cvar_SetValue ("deathmatch", 0);
-	Cvar_SetValue ("coop", 0);
-	Cvar_SetValue ("teamplay", 0);
-#endif
+    current_skill = (int)(tfloat + 0.1);
+    Cvar_SetValue ("skill", (float)current_skill);
 
     data = g_Common->COM_ParseStringNewline (data);
     Q_strlcpy (mapname, g_Common->com_token, sizeof(mapname));
     data = g_Common->COM_ParseFloatNewline (data, &time);
 
-	CL_Disconnect_f ();
-	
-#ifdef QUAKE2
-	sv->SV_SpawnServer (mapname, NULL);
-#else
-	sv->SV_SpawnServer (mapname);
-#endif
-	if (!sv->active)
-	{
-        free(start);
-		Con_Printf ("Couldn't load map\n");
-		return;
-	}
-	sv->paused = true;		// pause until all clients connect
-	sv->loadgame = true;
+    CL_Disconnect_f ();
+
+    sv->SV_SpawnServer (mapname);
+
+    if (!sv->active)
+    {
+        free (start);
+        start = NULL;
+        SCR_EndLoadingPlaque ();
+        Con_Printf ("Couldn't load map\n");
+        return;
+    }
+    sv->paused = true;		// pause until all clients connect
+    sv->loadgame = true;
 
 // load the light styles
-
-	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
-	{
-        data = g_Common->COM_ParseStringNewline(data);
-        sv->lightstyles[i] = (const char*)g_MemCache->Hunk_Strdup(savegame_string, "lightstyles");
-	}
+    for (i = 0; i < MAX_LIGHTSTYLES; i++)
+    {
+        data = g_Common->COM_ParseStringNewline (data);
+        sv->lightstyles[i] = (const char *)g_MemCache->Hunk_Strdup (g_Common->com_token, "lightstyles");
+    }
 
 // load the edicts out of the savegame file
-	entnum = -1;		// -1 is the globals
+    entnum = -1;		// -1 is the globals
     while (*data)
-	{
+    {
         data = g_Common->COM_Parse (data);
         if (!g_Common->com_token[0])
             break;		// end of file
@@ -664,20 +665,17 @@ void CQuakeHost::Host_Loadgame_f (void)
         {
             host->Host_Error ("First token isn't a brace");
         }
-			
-		if (entnum == -1)
-		{	// parse the global vars
+
+        if (entnum == -1)
+        {	// parse the global vars
             data = ED_ParseGlobals (data);
-		}
+        }
         else
         {	// parse an edict
             ent = EDICT_NUM(entnum);
             if (entnum < sv->num_edicts) {
                 ent->free = false;
                 memset (&ent->v, 0, progs->entityfields * 4);
-            }
-            else {
-                memset (ent, 0, pr_edict_size);
             }
             data = ED_ParseEdict (data, ent);
 
@@ -686,26 +684,27 @@ void CQuakeHost::Host_Loadgame_f (void)
                 sv->SV_LinkEdict (ent, false);
         }
 
-		entnum++;
-	}
+        entnum++;
+    }
 
+    // Free edicts allocated during map loading but no longer used after restoring saved game state
     for (i = entnum; i < sv->num_edicts; i++)
         ED_Free(EDICT_NUM(i));
-	
-	sv->num_edicts = entnum;
-	sv->time = time;
 
-    free(start);
-    start = nullptr;
+    sv->num_edicts = entnum;
+    sv->time = time;
 
-	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
-		svs.clients->spawn_parms[i] = spawn_parms[i];
+    free (start);
+    start = NULL;
 
-	if (cls.state != ca_dedicated)
-	{
-		CL_EstablishConnection ("local");
-		Host_Reconnect_f ();
-	}
+    for (i = 0; i < NUM_SPAWN_PARMS; i++)
+        svs.clients->spawn_parms[i] = spawn_parms[i];
+
+    if (cls.state != ca_dedicated)
+    {
+        CL_EstablishConnection ("local");
+        Host_Reconnect_f ();
+    }
 }
 
 #ifdef QUAKE2
