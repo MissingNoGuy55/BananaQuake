@@ -73,7 +73,7 @@ Cbuf_Init
 */
 void CCommandBuffer::Cbuf_Init (void)
 {
-	SZ_Alloc (&cmd_text, 32768);		// space for commands and script files
+	SZ_Alloc (&cmd_text, 524288);		// space for commands and script files
 }
 
 
@@ -96,7 +96,7 @@ void CCommandBuffer::Cbuf_AddText (const char *text)
 		return;
 	}
 
-	SZ_Write (&cmd_text, (void*)text, Q_strlen (text));	// something's going wrong here
+    SZ_Write (&cmd_text, text, Q_strlen (text));	// something's going wrong here
 }
 
 
@@ -127,6 +127,7 @@ void CCommandBuffer::Cbuf_InsertText (const char *text)
 		
 // add the entire text of the file
 	Cbuf_AddText (text);
+    SZ_Write (&cmd_text, "\n", 1);
 	
 // add the copied off data
 	if (templen)
@@ -283,7 +284,7 @@ Cmd_Exec_f
 */
 void CCommand::Cmd_Exec_f (void)
 {
-	const char *f = nullptr;
+    char *f = nullptr;
 	int		mark = 0;
 
 	if (g_pCmds->Cmd_Argc () != 2)
