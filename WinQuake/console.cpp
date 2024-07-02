@@ -364,23 +364,15 @@ void Con_DebugLog(const char *file, const char *fmt, ...)
     vsprintf(data, fmt, argptr);
     va_end(argptr);
 
-#ifdef __linux__
-    int fd = 0;
-	int fw = 0;
-    fd = open(file, O_WRONLY | O_CREAT | O_APPEND, 0666);
-    fw = write(fd, data, strlen(data));
-    close(fd);
-#elif _WIN32
 	FILE* fd = NULL;
 	size_t fw = 0;
-	fopen_s(&fd, file, "a+t"); // O_WRONLY | O_CREAT | O_APPEND, 0666);
+	fd = fopen(file, "a+t"); // O_WRONLY | O_CREAT | O_APPEND, 0666);
 
 	if (!fd)
 		return;
 
 	fw = fwrite(data, sizeof(char), strlen(data), fd);
 	fclose(fd);
-#endif
 }
 
 
