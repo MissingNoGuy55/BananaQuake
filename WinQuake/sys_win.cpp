@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sys_win.h"
 #include <direct.h>	// Missi: for _mkdir
 #include <time.h>
-#include <VersionHelpers.h>
+//#include <VersionHelpers.h>
 
 #define MINIMUM_WIN_MEMORY		0x0880000
 #define MAXIMUM_WIN_MEMORY		0x1000000
@@ -415,8 +415,6 @@ void Sys_Init (void)
 
 	vinfo.dwOSVersionInfoSize = sizeof(vinfo);
 
-	if (!IsWindowsXPOrGreater())
-		Sys_Error("Couldn't get OS info");
 /*
 	if ((vinfo.dwMajorVersion < 4) ||
 		(vinfo.dwPlatformId == VER_PLATFORM_WIN32s))
