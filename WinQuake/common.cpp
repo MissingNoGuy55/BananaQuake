@@ -1823,6 +1823,12 @@ _add_dir:
         snprintf (pakfile, sizeof(pakfile), "%s/PAK%i.PAK", dir, i);
         pak = COM_LoadPackFile (pakfile);
 
+		if (!pak)
+		{
+			snprintf (pakfile, sizeof(pakfile), "%s/pak%i.pak", dir, i);
+			pak = COM_LoadPackFile (pakfile);
+		}
+
         if (!pak)
             break;
 

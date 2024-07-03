@@ -159,6 +159,7 @@ build_debug:
 	$(MAKE) -C ./SDL_image
 	$(MAKE) -C ./SDL_image install
 	$(MAKE) targets BUILDDIR=$(BUILD_DEBUG_DIR) CPPFLAGS="$(DEBUG_CPPFLAGS)"
+	$(shell cp "./$(BUILD_DEBUG_DIR)/bin/bananaquakeopengl" "./")
 
 build_release:
 	@-mkdir $(BUILD_RELEASE_DIR) \
