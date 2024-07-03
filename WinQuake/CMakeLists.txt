@@ -1070,7 +1070,6 @@ target_link_libraries(bananaquakeopengl vorbis)
 target_link_libraries(bananaquakeopengl vorbisfile)
 
 target_link_libraries(bananaquakeopengl GL)
-target_link_libraries(bananaquakeopengl GLU)
 
 target_link_libraries(bananaquakeopengl SDL2)
 target_link_libraries(bananaquakeopengl SDL2main)
