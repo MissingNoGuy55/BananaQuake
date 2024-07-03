@@ -64,7 +64,7 @@ void Sbar_MiniDeathmatchOverlay (void);
 void Sbar_DeathmatchOverlay (void);
 void M_DrawPic (int x, int y, CQuakePic *pic);
 
-#ifdef __GNUC__
+#ifdef __linux__
 viddef_t vid;
 #endif
 
