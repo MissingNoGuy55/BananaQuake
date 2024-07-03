@@ -82,11 +82,11 @@ CODECLIBS+= $(shell $(PKG_CONFIG) --libs   opusfile)
 endif
 ifeq ($(USE_CODEC_VORBIS),1)
 BASE_CPPFLAGS+= -DUSE_CODEC_VORBIS
-CODECLIBS+= $(lib_vorbisdec)
+CODECLIBS+= -lvorbis -lvorbisfile
 endif
 ifeq ($(USE_CODEC_MP3),1)
 BASE_CPPFLAGS+= -DUSE_CODEC_MP3
-CODECLIBS+= $(lib_mp3dec)
+CODECLIBS+= -lmad
 endif
 ifeq ($(USE_CODEC_MIKMOD),1)
 BASE_CPPFLAGS+= -DUSE_CODEC_MIKMOD
@@ -120,25 +120,23 @@ endif
 
 # -L/usr/X11/lib \
 	
-GLLIBINCLUDE=-L./sdl2/build -L./SDL_image -L/usr/lib/$(ARCH)-linux-gnu -L/usr/local/lib
+GLLIBINCLUDE=-L./sdl2/build -L./SDL_image -L./codecs/x64
 	
-GLLIBLINK=-lSDL2 -lSDL2_image -lm -lGL -lGLU -lX11 -lXext -lXxf86dga -lXxf86vm -lvorbis -lvorbisfile -ldl -lmad
+GLLIBLINK=-lSDL2 -lSDL2_image -lm -lGL -lX11 -lXext -lXxf86dga -lXxf86vm -ldl $(CODECLIBS)
 
-GLINCLUDES=-I./sdl2/include -I./SDL_image/include -I/usr/include/vlc -I/usr/include/vorbis -I/QuakeCPP/WinQuake/mesa/3dfx/glide3/include/
+GLINCLUDES=-I./sdl2/include -I./SDL_image/include -I./codecs/include -I/QuakeCPP/WinQuake/mesa/3dfx/glide3/include/
 	
 GLOPTS:=-DGLQUAKE
 	
 GLCPPFLAGS=$(GLINCLUDES)
 
-DO_CC=$(CC) $(CPPFLAGS) -o $@ -c $<
-DO_DEBUG_CC=$(CC) $(DEBUG_CPPFLAGS) -o $@ -c $<
-DO_GL_CC=$(CC) $(CPPFLAGS) $(GLOPTS) $(GLCPPFLAGS) -o $@ -c $<
-DO_GL_DEBUG_CC=$(CC) $(DEBUG_CPPFLAGS) $(GLOPTS) $(GLCPPFLAGS) -o $@ -c $<
-DO_O_CC=$(CC) -O $(CPPFLAGS) -o $@ -c $<
-DO_AS=$(CC) $(CPPFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
-DO_GL_AS=$(CC) $(CPPFLAGS) $(GLCPPFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
-
-$(info    DO_GL_CC is '$(DO_GL_CC)')
+DO_CC=$(CC) $(BASE_CPPFLAGS) $(CPPFLAGS) -o $@ -c $<
+DO_DEBUG_CC=$(CC) $(BASE_CPPFLAGS) $(DEBUG_CPPFLAGS) -o $@ -c $<
+DO_GL_CC=$(CC) $(BASE_CPPFLAGS) $(CPPFLAGS) $(GLOPTS) $(GLCPPFLAGS) -o $@ -c $<
+DO_GL_DEBUG_CC=$(CC) $(BASE_CPPFLAGS) $(DEBUG_CPPFLAGS) $(GLOPTS) $(GLCPPFLAGS) -o $@ -c $<
+DO_O_CC=$(CC) $(BASE_CPPFLAGS) -O $(CPPFLAGS) -o $@ -c $<
+DO_AS=$(CC) $(BASE_CPPFLAGS) $(CPPFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
+DO_GL_AS=$(CC) $(BASE_CPPFLAGS) $(CPPFLAGS) $(GLCPPFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
 
 #############################################################################
 # SETUP AND BUILD
@@ -154,10 +152,12 @@ build_debug:
 		# $(BUILD_DEBUG_DIR)/squake \
 		$(BUILD_DEBUG_DIR)/unixded \
 		$(BUILD_DEBUG_DIR)/x11
-	(cd ./sdl2 && ./configure && cd ../)
+	(cd ./sdl2 && ./configure --prefix=${HOME}/sdl2 && cd ../)
 	$(MAKE) -C ./sdl2
-	(cd ./SDL_image && ./configure && cd ../)
+	$(MAKE) -C ./sdl2 install
+	(cd ./SDL_image && ./configure --prefix=${HOME}/SDL_image && cd ../)
 	$(MAKE) -C ./SDL_image
+	$(MAKE) -C ./SDL_image install
 	$(MAKE) targets BUILDDIR=$(BUILD_DEBUG_DIR) CPPFLAGS="$(DEBUG_CPPFLAGS)"
 
 build_release:
