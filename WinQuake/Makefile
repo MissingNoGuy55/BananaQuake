@@ -42,9 +42,6 @@ endif
 NOARCH=noarch
 
 MOUNT_DIR=/QuakeCPP/WinQuake
-MASTER_DIR=/QuakeCPP/QuakeMaster
-MESA_DIR=/usr/src/mesa
-TDFXGL_DIR = /home/zoid/3dfxgl
 
 BUILD_DEBUG_DIR=debug_$(ARCH)$(LIBC++)
 BUILD_RELEASE_DIR=release_$(ARCH)$(LIBC++)
@@ -56,8 +53,10 @@ CC=$(EGCS)
 BASE_CPPFLAGS=-Dstricmp=strcasecmp
 BASE_CPPFLAGS += $(call check_g++,-std=gnu11,)
 
-RELEASE_CPPFLAGS=$(BASE_CPPFLAGS) -g -mpentiumpro -O6 -ffast-math -funroll-loops \
-	-fomit-frame-pointer -fexpensive-optimizations
+RELEASE_CPPFLAGS=$(BASE_CPPFLAGS) -O6
+
+#RELEASE_CPPFLAGS=$(BASE_CPPFLAGS) -O6 -ffast-math -funroll-loops \
+#	-fomit-frame-pointer -fexpensive-optimizations
 DEBUG_CPPFLAGS=$(BASE_CPPFLAGS) -g
 LDFLAGS=-z noexecstack
 SVGALDFLAGS=-lvga
@@ -168,7 +167,14 @@ build_release:
 		# $(BUILD_RELEASE_DIR)/squake \
 		$(BUILD_RELEASE_DIR)/unixded \
 		$(BUILD_RELEASE_DIR)/x11
+	(cd ./sdl2 && ./configure --prefix=${HOME}/sdl2 && cd ../)
+	$(MAKE) -C ./sdl2
+	$(MAKE) -C ./sdl2 install
+	(cd ./SDL_image && ./configure --prefix=${HOME}/SDL_image && cd ../)
+	$(MAKE) -C ./SDL_image
+	$(MAKE) -C ./SDL_image install
 	$(MAKE) targets BUILDDIR=$(BUILD_RELEASE_DIR) CPPFLAGS="$(RELEASE_CPPFLAGS)"
+	$(shell cp "./$(BUILD_RELEASE_DIR)/bin/bananaquakeopengl" "./")
 
 all: build_debug build_release
 
