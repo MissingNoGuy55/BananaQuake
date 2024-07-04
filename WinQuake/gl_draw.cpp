@@ -40,7 +40,7 @@ bool gl_texture_NPOT = false;
 
 static cvar_t		gl_nobind =		{ "gl_nobind", "0" };
 static cvar_t		gl_picmip =		{ "gl_picmip", "0" };
-static cvar_t		gl_texturemode = {"gl_texturemode", ""};
+static cvar_t		gl_texturemode = {"gl_texturemode", "", true};
 
 cvar_t		gl_max_size =			{ "gl_max_size", "1024" };
 cvar_t		gl_fullbrights =		{ "gl_fullbrights", "0" };

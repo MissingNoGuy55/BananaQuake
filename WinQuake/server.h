@@ -466,6 +466,8 @@ extern	double		host_time;
 
 extern	edict_t		*sv_player;
 
+extern  cvar_t      sv_cheats;
+
 //===========================================================
 
 #endif

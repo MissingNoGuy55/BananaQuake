@@ -65,7 +65,7 @@ typedef struct cvar_s
 	const char	*name;
 	const char	*string;
 	bool archive;		// set to true to cause it to be saved to vars.rc
-	unsigned int flags;		// Missi: Source-styled cvar flags (7/3/2024)
+    unsigned int flags;		// Missi: Source-styled cvar flags (7/3/2024)
 	float	value;
 	struct cvar_s *next;
 } cvar_t;

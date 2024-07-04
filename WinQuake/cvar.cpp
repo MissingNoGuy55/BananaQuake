@@ -111,10 +111,16 @@ void Cvar_Set (const char *var_name, const char *value)
 	{	// there is an error in C code if this happens
 		Con_Printf ("Cvar_Set: variable %s not found\n", var_name);
 		return;
-	}
+    }
 
 	changed = Q_strcmp(var->string, value);
-	
+
+    if ((var->flags & CVAR_CHEAT) && sv_cheats.value == 0)
+    {
+        Con_Printf("Player attempted to set cheat value without sv_cheats enabled!\n");
+        return;
+    }
+
 	var->string = "";	// free the old value string
 	
 	char str[64];

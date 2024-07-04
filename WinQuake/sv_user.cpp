@@ -164,7 +164,7 @@ void CQuakeServer::SV_UserFriction (void)
 SV_Accelerate
 ==============
 */
-cvar_t	sv_maxspeed = {"sv_maxspeed", "320", false, true};
+cvar_t	sv_maxspeed = {"sv_maxspeed", "320", false, CVAR_SERVER | CVAR_NOTIFY | CVAR_CHEAT };
 cvar_t	sv_accelerate = {"sv_accelerate", "10"};
 #if 0
 void CQuakeServer::SV_Accelerate (vec3_t wishvel)

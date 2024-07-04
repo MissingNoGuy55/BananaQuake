@@ -407,6 +407,7 @@ struct cmd_function_t
 	struct cmd_function_t	*next = NULL;
 	const char					*name = "";
 	xcommand_t				function;
+    unsigned int            flags;
 }; // Missi: changed from typedef struct cmd_function_s
 
 
@@ -536,7 +537,7 @@ void CCommand::Cmd_TokenizeString (const char *text)
 Cmd_AddCommand
 ============
 */
-void CCommand::Cmd_AddCommand (const char *cmd_name, xcommand_t function)
+void CCommand::Cmd_AddCommand (const char *cmd_name, xcommand_t function, unsigned int flags)
 {
 	cmd_function_t	*cmd = NULL;
 
@@ -564,6 +565,7 @@ void CCommand::Cmd_AddCommand (const char *cmd_name, xcommand_t function)
 	cmd->name = cmd_name;
 	cmd->function = function;
 	cmd->next = cmd_functions;
+    cmd->flags = flags;
 	cmd_functions = cmd;
 }
 
@@ -637,6 +639,12 @@ void CCommand::Cmd_ExecuteString (const char *text, cmd_source_t src)
 	{
 		if (!Q_strcasecmp (cmd_argv[0],cmd->name))
 		{
+            if ((cmd->flags & CVAR_CHEAT) && sv_cheats.value == 0)
+            {
+                Con_Printf("Attempted to run cheat command \"%s\" without cheats enabled!\n", cmd->name);
+                return;
+            }
+
 			cmd->function ();
 			return;
 		}

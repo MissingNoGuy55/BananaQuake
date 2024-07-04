@@ -1926,9 +1926,9 @@ void CQuakeHost::Host_InitCommands (void)
 {
 	g_pCmds->Cmd_AddCommand ("status", Host_Status_f);
 	g_pCmds->Cmd_AddCommand ("quit", Host_Quit_f);
-	g_pCmds->Cmd_AddCommand ("god", Host_God_f);
-	g_pCmds->Cmd_AddCommand ("notarget", Host_Notarget_f);
-	g_pCmds->Cmd_AddCommand ("fly", Host_Fly_f);
+    g_pCmds->Cmd_AddCommand ("god", Host_God_f, CVAR_CHEAT);
+    g_pCmds->Cmd_AddCommand ("notarget", Host_Notarget_f, CVAR_CHEAT);
+    g_pCmds->Cmd_AddCommand ("fly", Host_Fly_f, CVAR_CHEAT);
 	g_pCmds->Cmd_AddCommand ("map", Host_Map_f);
 	g_pCmds->Cmd_AddCommand ("restart", Host_Restart_f);
 	g_pCmds->Cmd_AddCommand ("changelevel", Host_Changelevel_f);
@@ -1938,7 +1938,7 @@ void CQuakeHost::Host_InitCommands (void)
 	g_pCmds->Cmd_AddCommand ("connect", Host_Connect_f);
 	g_pCmds->Cmd_AddCommand ("reconnect", Host_Reconnect_f);
 	g_pCmds->Cmd_AddCommand ("name", Host_Name_f);
-	g_pCmds->Cmd_AddCommand ("noclip", Host_Noclip_f);
+    g_pCmds->Cmd_AddCommand ("noclip", Host_Noclip_f, CVAR_CHEAT);
 	g_pCmds->Cmd_AddCommand ("version", Host_Version_f);
 #ifdef IDGODS
 	g_pCmds->Cmd_AddCommand ("please", Host_Please_f);

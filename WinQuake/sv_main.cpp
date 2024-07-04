@@ -24,6 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 CQuakeServer*	sv = nullptr;
 server_static_t	svs;
 
+cvar_t		sv_cheats { "sv_cheats", "0", false, CVAR_SERVER | CVAR_NOTIFY };
+
 char	localmodels[MAX_MODELS][5];			// inline model names for precache
 
 //============================================================================
@@ -117,7 +119,11 @@ void CQuakeServer::SV_Init (void)
 	Cvar_RegisterVariable (&sv_accelerate);
 	Cvar_RegisterVariable (&sv_idealpitchscale);
 	Cvar_RegisterVariable (&sv_aim);
-	Cvar_RegisterVariable (&sv_nostep);
+    Cvar_RegisterVariable (&sv_nostep);
+    Cvar_RegisterVariable (&sv_cheats);
+
+    if (Cvar_VariableValue("developer") != 0)
+        Cvar_Set("sv_cheats", "1");
 
 	for (i=0 ; i<MAX_MODELS ; i++)
 		snprintf (localmodels[i], sizeof(localmodels[i]), "*%i", i);
