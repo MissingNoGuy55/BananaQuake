@@ -55,12 +55,17 @@ Cvars are restricted from having the same names as commands to keep this
 interface from being ambiguous.
 */
 
+constexpr unsigned int CVAR_SERVER 		= 0x00000001;
+constexpr unsigned int CVAR_NOTIFY 		= 0x00000002;
+constexpr unsigned int CVAR_CHEAT 		= 0x00000004;
+constexpr unsigned int CVAR_READONLY 	= 0x00000008;	// Missi: cannot be changed under any circumstance EXCEPT through progs; used for things like fog values (7/3/2024)
+
 typedef struct cvar_s
 {
 	const char	*name;
 	const char	*string;
 	bool archive;		// set to true to cause it to be saved to vars.rc
-	bool server;		// notifies players when changed
+	unsigned int flags;		// Missi: Source-styled cvar flags (7/3/2024)
 	float	value;
 	struct cvar_s *next;
 } cvar_t;

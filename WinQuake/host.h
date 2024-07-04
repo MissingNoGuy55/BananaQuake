@@ -85,15 +85,17 @@ public:
 	cvar_t	host_framerate = { "host_framerate","0" };	// set for slow motion
 	cvar_t	host_speeds = { "host_speeds","0" };			// set for running times
 
+	cvar_t host_timescale { "host_timescale", "1.0", false, CVAR_SERVER | CVAR_CHEAT };
+
 	cvar_t	sys_ticrate = { "sys_ticrate","0.05" };
 	cvar_t	serverprofile = { "serverprofile","0" };
 
-	cvar_t	fraglimit = { "fraglimit","0",false,true };
-	cvar_t	timelimit = { "timelimit","0",false,true };
-	cvar_t	teamplay = { "teamplay","0",false,true };
+	cvar_t	fraglimit = { "fraglimit","0",false, CVAR_SERVER };
+	cvar_t	timelimit = { "timelimit","0",false, CVAR_SERVER };
+	cvar_t	teamplay = { "teamplay","0",false, CVAR_SERVER };
 
 	cvar_t	samelevel = { "samelevel","0" };
-	cvar_t	noexit = { "noexit","0",false,true };
+	cvar_t	noexit = { "noexit","0",false, CVAR_SERVER };
 
 #ifdef QUAKE2
 	cvar_t	developer = { "developer","1" };	// should be 0 for release!

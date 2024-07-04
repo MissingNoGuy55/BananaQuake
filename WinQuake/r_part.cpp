@@ -205,7 +205,7 @@ void CCoreRenderer::R_ReadPointFile_f (void)
 	particle_t	*p;
 	char	name[MAX_OSPATH];
 	
-	snprintf (name, sizeof(name), "maps/%s.pts", sv->name);
+	snprintf (name, sizeof(name), "maps/%s.pts", sv->GetMapName());
 
 	g_Common->COM_FOpenFile (name, &f, NULL);
 	if (!f)

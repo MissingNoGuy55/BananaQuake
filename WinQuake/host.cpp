@@ -66,7 +66,7 @@ void CQuakeHost::Host_EndGame (const char *message, ...)
 	va_end (argptr);
 	Con_DPrintf ("Host_EndGame: %s\n",string);
 	
-	if (sv->active)
+	if (sv->IsServerActive())
 		Host_ShutdownServer (false);
 
 	if (cls.state == ca_dedicated)
@@ -104,7 +104,7 @@ void CQuakeHost::Host_Error (const char *error, ...)
 	va_end (argptr);
 	Con_Printf ("Host_Error: %s\n",string);
 	
-	if (sv->active)
+	if (sv->IsServerActive())
 		Host_ShutdownServer (false);
 
 	if (cls.state == ca_dedicated)
@@ -181,6 +181,7 @@ void CQuakeHost::Host_InitLocal (void)
 	
 	Cvar_RegisterVariable (&host_framerate);
 	Cvar_RegisterVariable (&host_speeds);
+	Cvar_RegisterVariable (&host_timescale);
 
 	Cvar_RegisterVariable (&sys_ticrate);
 	Cvar_RegisterVariable (&serverprofile);
@@ -379,10 +380,10 @@ void CQuakeHost::Host_ShutdownServer(bool crash)
 	char		message[4] = {};
 	double		start = 0.0;
 
-	if (!sv->active)
+	if (!sv->IsServerActive())
 		return;
 
-	sv->active = false;
+	sv->SetServerActive(false);
 
 // stop all client sounds immediately
 	if (cls.state == ca_connected)
@@ -522,7 +523,7 @@ bool CQuakeHost::Host_FilterTime (float time)
 	if (!cls.timedemo && realtime - oldrealtime < 1.0/72.0)
 		return false;		// framerate is too high
 
-	host_frametime = realtime - oldrealtime;
+	host_frametime = (realtime - oldrealtime) * host_timescale.value;
 	oldrealtime = realtime;
 
 	if (host_framerate.value > 0)
@@ -630,7 +631,7 @@ void CQuakeHost::Host_ServerFrame (void)
 	
 // move things around and think
 // always pause in single player if in console or menus
-	if (!sv->paused && (svs.maxclients > 1 || key_dest == key_game) )
+	if (!sv->IsServerPaused() && (svs.maxclients > 1 || key_dest == key_game) )
 		sv->SV_Physics ();
 
 // send all messages to the clients
@@ -676,7 +677,7 @@ void CQuakeHost::_Host_Frame (float time)
 	NET_Poll();
 
 // if running the server locally, make intentions now
-	if (sv->active)
+	if (sv->IsServerActive())
 		CL_SendCmd ();
 	
 //-------------------
@@ -688,7 +689,7 @@ void CQuakeHost::_Host_Frame (float time)
 // check for commands typed to the host
 	Host_GetConsoleCommands ();
 	
-	if (sv->active)
+	if (sv->IsServerActive())
 		Host_ServerFrame ();
 
 //-------------------
@@ -699,7 +700,7 @@ void CQuakeHost::_Host_Frame (float time)
 
 // if running the server remotely, send intentions now after
 // the incoming messages have been read
-	if (!sv->active)
+	if (!sv->IsServerActive())
 		CL_SendCmd ();
 
 	host_time += host_frametime;

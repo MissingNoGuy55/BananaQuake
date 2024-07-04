@@ -46,7 +46,7 @@ void Loop_Listen (bool state)
 
 void Loop_SearchForHosts (bool xmit)
 {
-	if (!sv->active)
+    if (!sv->IsServerActive())
 		return;
 
 	hostCacheCount = 1;
@@ -54,7 +54,7 @@ void Loop_SearchForHosts (bool xmit)
 		Q_strcpy(hostcache[0].name, "local");
 	else
 		Q_strcpy(hostcache[0].name, hostname.string);
-	Q_strcpy(hostcache[0].map, sv->name);
+    Q_strcpy(hostcache[0].map, sv->GetMapName());
 	hostcache[0].users = net_activeconnections;
 	hostcache[0].maxusers = svs.maxclients;
 	hostcache[0].driver = net_driverlevel;

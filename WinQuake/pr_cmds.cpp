@@ -243,7 +243,7 @@ static void PF_setmodel (void)
 	m = G_STRING(OFS_PARM1);
 
 // check to see if model was properly precached
-	for (i = 0, check = sv->model_precache; *check; i++, check++)
+	for (i = 0, check = sv->GetModelPrecache(); *check; i++, check++)
 	{
 		if (!strcmp(*check, m))
 			break;
@@ -256,7 +256,7 @@ static void PF_setmodel (void)
 	e->v.model = PR_SetEngineString(*check);
 	e->v.modelindex = i; //SV_ModelIndex (m);
 
-	mod = sv->models[ (int)e->v.modelindex];  // Mod_ForName (m, true);
+	mod = sv->GetModels()[ (int)e->v.modelindex];  // Mod_ForName (m, true);
 	
 	if (mod)
 		SetMinMaxSize (e, mod->mins, mod->maxs, true);
@@ -518,9 +518,11 @@ void PF_ambientsound (void)
 	samp = G_STRING(OFS_PARM1);
 	vol = G_FLOAT(OFS_PARM2);
 	attenuation = G_FLOAT(OFS_PARM3);
+
+	const char** precache = (const char**)sv->GetSoundPrecache();
 	
 // check to see if samp was properly precached
-	for (soundnum=0, check = sv->sound_precache ; *check ; check++, soundnum++)
+	for (soundnum=0, check = precache ; *check ; check++, soundnum++)
 		if (!strcmp(*check,samp))
 			break;
 			
@@ -532,14 +534,14 @@ void PF_ambientsound (void)
 
 // add an svc_spawnambient command to the level signon packet
 
-	MSG_WriteByte (&sv->signon,svc_spawnstaticsound);
+	MSG_WriteByte (&sv->GetSignOnBuffer(),svc_spawnstaticsound);
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord(&sv->signon, pos[i]);
+		MSG_WriteCoord(&sv->GetSignOnBuffer(), pos[i]);
 
-	MSG_WriteByte (&sv->signon, soundnum);
+	MSG_WriteByte (&sv->GetSignOnBuffer(), soundnum);
 
-	MSG_WriteByte (&sv->signon, vol*255);
-	MSG_WriteByte (&sv->signon, attenuation*64);
+	MSG_WriteByte (&sv->GetSignOnBuffer(), vol*255);
+	MSG_WriteByte (&sv->GetSignOnBuffer(), attenuation*64);
 
 }
 
@@ -638,7 +640,7 @@ void PF_traceline (void)
 	if (trace.ent)
 		pr_global_struct->trace_ent = EDICT_TO_PROG(trace.ent);
 	else
-		pr_global_struct->trace_ent = EDICT_TO_PROG(sv->edicts);
+		pr_global_struct->trace_ent = EDICT_TO_PROG(sv->GetServerEdicts());
 }
 
 
@@ -667,7 +669,7 @@ void PF_TraceToss (void)
 	if (trace.ent)
 		pr_global_struct->trace_ent = EDICT_TO_PROG(trace.ent);
 	else
-		pr_global_struct->trace_ent = EDICT_TO_PROG(sv->edicts);
+		pr_global_struct->trace_ent = EDICT_TO_PROG(sv->GetServerEdicts());
 }
 #endif
 
@@ -733,9 +735,9 @@ int PF_newcheckclient (int check)
 
 // get the PVS for the entity
 	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
-	leaf = Mod_PointInLeaf (org, sv->worldmodel);
-	pvs = Mod_LeafPVS (leaf, sv->worldmodel);
-	memcpy (checkpvs, pvs, (sv->worldmodel->numleafs+7)>>3 );
+	leaf = Mod_PointInLeaf (org, sv->GetWorldModel());
+	pvs = Mod_LeafPVS (leaf, sv->GetWorldModel());
+	memcpy (checkpvs, pvs, (sv->GetWorldModel()->numleafs+7)>>3 );
 
 	return i;
 }
@@ -765,29 +767,29 @@ void PF_checkclient (void)
 	vec3_t	view;
 	
 // find a new check if on a new frame
-	if (sv->time - sv->lastchecktime >= 0.1)
+	if (sv->GetServerTime() - sv->GetLastCheckTime() >= 0.1)
 	{
-		sv->lastcheck = PF_newcheckclient (sv->lastcheck);
-		sv->lastchecktime = sv->time;
+		sv->SetLastCheck(PF_newcheckclient (sv->GetLastCheck()));
+		sv->SetLastCheckTime(sv->GetServerTime());
 	}
 
 // return check if it might be visible	
-	ent = EDICT_NUM(sv->lastcheck);
+	ent = EDICT_NUM(sv->GetLastCheck());
 	if (ent->free || ent->v.health <= 0)
 	{
-		RETURN_EDICT(sv->edicts);
+		RETURN_EDICT(sv->GetServerEdicts());
 		return;
 	}
 
 // if current entity can't possibly see the check entity, return 0
 	self = PROG_TO_EDICT(pr_global_struct->self);
 	VectorAdd (self->v.origin, self->v.view_ofs, view);
-	leaf = Mod_PointInLeaf (view, sv->worldmodel);
-	l = (leaf - sv->worldmodel->leafs) - 1;
+	leaf = Mod_PointInLeaf (view, sv->GetWorldModel());
+	l = (leaf - sv->GetWorldModel()->leafs) - 1;
 	if ( (l<0) || !(checkpvs[l>>3] & (1<<(l&7)) ) )
 	{
 c_notvis++;
-		RETURN_EDICT(sv->edicts);
+		RETURN_EDICT(sv->GetServerEdicts());
 		return;
 	}
 
@@ -892,13 +894,13 @@ void PF_findradius (void)
 	vec3_t	eorg;
 	int		i, j;
 
-	chain = (edict_t *)sv->edicts;
+	chain = (edict_t *)sv->GetServerEdicts();
 	
 	org = G_VECTOR(OFS_PARM0);
 	rad = G_FLOAT(OFS_PARM1);
 
-	ent = NEXT_EDICT(sv->edicts);
-	for (i=1 ; i<sv->num_edicts ; i++, ent = NEXT_EDICT(ent))
+	ent = NEXT_EDICT(sv->GetServerEdicts());
+	for (i=1 ; i<sv->GetNumEdicts() ; i++, ent = NEXT_EDICT(ent))
 	{
 		if (ent->free)
 			continue;
@@ -990,7 +992,7 @@ void PF_Find (void)
 	edict_t	*second;
 	edict_t	*last;
 
-	first = second = last = (edict_t *)sv->edicts;
+	first = second = last = (edict_t *)sv->GetServerEdicts();
 	e = G_EDICTNUM(OFS_PARM0);
 	f = G_INT(OFS_PARM1);
 	s = G_STRING(OFS_PARM2);
@@ -1007,9 +1009,9 @@ void PF_Find (void)
 			continue;
 		if (!strcmp(t,s))
 		{
-			if (first == (edict_t *)sv->edicts)
+			if (first == (edict_t *)sv->GetServerEdicts())
 				first = ed;
-			else if (second == (edict_t *)sv->edicts)
+			else if (second == (edict_t *)sv->GetServerEdicts())
 				second = ed;
 			ed->v.chain = EDICT_TO_PROG(last);
 			last = ed;
@@ -1022,7 +1024,7 @@ void PF_Find (void)
 			first->v.chain = last->v.chain;
 		else
 			first->v.chain = EDICT_TO_PROG(last);
-		last->v.chain = EDICT_TO_PROG((edict_t *)sv->edicts);
+		last->v.chain = EDICT_TO_PROG((edict_t *)sv->GetServerEdicts());
 		if (second && second != last)
 			second->v.chain = EDICT_TO_PROG(last);
 	}
@@ -1041,7 +1043,7 @@ void PF_Find (void)
 	if (!s)
 		PR_RunError ("PF_Find: bad search string");
 		
-	for (e++ ; e < sv->num_edicts ; e++)
+	for (e++ ; e < sv->GetNumEdicts() ; e++)
 	{
 		ed = EDICT_NUM(e);
 		if (ed->free)
@@ -1056,7 +1058,7 @@ void PF_Find (void)
 		}
 	}
 
-	RETURN_EDICT(sv->edicts);
+	RETURN_EDICT(sv->GetServerEdicts());
 }
 #endif
 
@@ -1081,7 +1083,7 @@ void PF_precache_sound (void)
 	const char	*s;
 	int		i;
 	
-	if (sv->state != ss_loading)
+	if (sv->GetServerState() != ss_loading)
 		PR_RunError ("PF_Precache_*: Precache can only be done in spawn functions");
 		
 	s = G_STRING(OFS_PARM0);
@@ -1090,12 +1092,12 @@ void PF_precache_sound (void)
 	
 	for (i=0 ; i<MAX_SOUNDS ; i++)
 	{
-		if (!sv->sound_precache[i])
+		if (!sv->GetSoundPrecache()[i])
 		{
-			sv->sound_precache[i] = s;
+			sv->SetSoundPrecacheEntry(i, s);
 			return;
 		}
-		if (!strcmp(sv->sound_precache[i], s))
+		if (!strcmp(sv->GetSoundPrecacheEntry(i), s))
 			return;
 	}
 	PR_RunError ("PF_precache_sound: overflow");
@@ -1106,7 +1108,7 @@ static void PF_precache_model (void)
 	const char* s;
 	int		i, m;
 
-	if (sv->state != ss_loading)
+	if (sv->GetServerState() != ss_loading)
 		PR_RunError("PF_Precache_*: Precache can only be done in spawn functions");
 
 	s = G_STRING(OFS_PARM0);
@@ -1115,13 +1117,13 @@ static void PF_precache_model (void)
 
 	for (i = 0; i < MAX_MODELS; i++)
 	{
-		if (!sv->model_precache[i])
+		if (!sv->GetModelPrecache()[i])
 		{
-			sv->model_precache[i] = s;
-			sv->models[i] = Mod_ForName(s, true);
+			sv->GetModelPrecache()[i] = s;
+			sv->GetModels()[i] = Mod_ForName(s, true);
 			return;
 		}
-		if (!strcmp(sv->model_precache[i], s))
+		if (!strcmp(sv->GetModelPrecache()[i], s))
 			return;
 	}
 	PR_RunError("PF_precache_model: overflow");
@@ -1248,10 +1250,10 @@ void PF_lightstyle (void)
 	}
 
 // change the string in sv
-	sv->lightstyles[style] = val;
+	sv->SetLightStyle(style, val);
 	
 // send message to all clients on this server
-	if (sv->state != ss_active)
+	if (sv->GetServerState() != ss_active)
 		return;
 	
 	for (j=0, client = svs.clients ; j<svs.maxclients ; j++, client++)
@@ -1326,9 +1328,9 @@ void PF_nextent (void)
 	while (1)
 	{
 		i++;
-		if (i == sv->num_edicts)
+		if (i == sv->GetNumEdicts())
 		{
-			RETURN_EDICT(sv->edicts);
+			RETURN_EDICT(sv->GetServerEdicts());
 			return;
 		}
 		ent = EDICT_NUM(i);
@@ -1381,8 +1383,8 @@ void PF_aim (void)
 	bestdist = sv_aim.value;
 	bestent = NULL;
 	
-	check = NEXT_EDICT(sv->edicts);
-	for (i=1 ; i<sv->num_edicts ; i++, check = NEXT_EDICT(check) )
+	check = NEXT_EDICT(sv->GetServerEdicts());
+	for (i=1 ; i<sv->GetNumEdicts() ; i++, check = NEXT_EDICT(check) )
 	{
 		if (check->v.takedamage != DAMAGE_AIM)
 			continue;
@@ -1532,7 +1534,7 @@ sizebuf_t *WriteDest (void)
 	switch (dest)
 	{
 	case MSG_BROADCAST:
-		return &sv->datagram;
+		return &sv->GetDatagramBuffer();
 	
 	case MSG_ONE:
 		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
@@ -1542,10 +1544,10 @@ sizebuf_t *WriteDest (void)
 		return &svs.clients[entnum-1].message;
 		
 	case MSG_ALL:
-		return &sv->reliable_datagram;
+		return &sv->GetReliableDatagramBuffer();
 	
 	case MSG_INIT:
-		return &sv->signon;
+		return &sv->GetSignOnBuffer();
 
 	default:
 		PR_RunError ("WriteDest: bad destination");
@@ -1611,17 +1613,17 @@ void PF_makestatic (void)
 		return; //can't display the correct model & frame, so don't show it at all
 	}
 
-	MSG_WriteByte (&sv->signon,svc_spawnstatic);
+	MSG_WriteByte (&sv->GetSignOnBuffer(),svc_spawnstatic);
 
-	MSG_WriteByte (&sv->signon, sv->SV_ModelIndex(PR_GetString(ent->v.model)));
+	MSG_WriteByte (&sv->GetSignOnBuffer(), sv->SV_ModelIndex(PR_GetString(ent->v.model)));
 
-	MSG_WriteByte (&sv->signon, ent->v.frame);
-	MSG_WriteByte (&sv->signon, ent->v.colormap);
-	MSG_WriteByte (&sv->signon, ent->v.skin);
+	MSG_WriteByte (&sv->GetSignOnBuffer(), ent->v.frame);
+	MSG_WriteByte (&sv->GetSignOnBuffer(), ent->v.colormap);
+	MSG_WriteByte (&sv->GetSignOnBuffer(), ent->v.skin);
 	for (i=0 ; i<3 ; i++)
 	{
-		MSG_WriteCoord(&sv->signon, ent->v.origin[i]);
-		MSG_WriteAngle(&sv->signon, ent->v.angles[i]);
+		MSG_WriteCoord(&sv->GetSignOnBuffer(), ent->v.origin[i]);
+		MSG_WriteAngle(&sv->GetSignOnBuffer(), ent->v.angles[i]);
 	}
 
 // throw the entity away now
@@ -1716,7 +1718,7 @@ void PF_WaterMove (void)
 
 	if (self->v.movetype == MOVETYPE_NOCLIP)
 	{
-		self->v.air_finished = sv->time + 12;
+		self->v.air_finished = sv->GetServerTime() + 12;
 		G_FLOAT(OFS_RETURN) = damage;
 		return;
 	}
@@ -1739,26 +1741,26 @@ void PF_WaterMove (void)
 	if (!(flags & (FL_IMMUNE_WATER + FL_GODMODE)))
 		if (((flags & FL_SWIM) && (waterlevel < drownlevel)) || (waterlevel >= drownlevel))
 		{
-			if (self->v.air_finished < sv->time)
-				if (self->v.pain_finished < sv->time)
+			if (self->v.air_finished < sv->GetServerTime())
+				if (self->v.pain_finished < sv->GetServerTime())
 				{
 					self->v.dmg = self->v.dmg + 2;
 					if (self->v.dmg > 15)
 						self->v.dmg = 10;
 //					T_Damage (self, world, world, self.dmg, 0, FALSE);
 					damage = self->v.dmg;
-					self->v.pain_finished = sv->time + 1.0;
+					self->v.pain_finished = sv->GetServerTime() + 1.0;
 				}
 		}
 		else
 		{
-			if (self->v.air_finished < sv->time)
+			if (self->v.air_finished < sv->GetServerTime())
 //				sound (self, CHAN_VOICE, "player/gasp2.wav", 1, ATTN_NORM);
 				SV_StartSound (self, CHAN_VOICE, "player/gasp2.wav", 255, ATTN_NORM);
-			else if (self->v.air_finished < sv->time + 9)
+			else if (self->v.air_finished < sv->GetServerTime() + 9)
 //				sound (self, CHAN_VOICE, "player/gasp1.wav", 1, ATTN_NORM);
 				SV_StartSound (self, CHAN_VOICE, "player/gasp1.wav", 255, ATTN_NORM);
-			self->v.air_finished = sv->time + 12.0;
+			self->v.air_finished = sv->GetServerTime() + 12.0;
 			self->v.dmg = 2;
 		}
 	
@@ -1771,7 +1773,7 @@ void PF_WaterMove (void)
 			SV_StartSound (self, CHAN_BODY, "misc/outwater.wav", 255, ATTN_NORM);
 			self->v.flags = (float)(flags &~FL_INWATER);
 		}
-		self->v.air_finished = sv->time + 12.0;
+		self->v.air_finished = sv->GetServerTime() + 12.0;
 		G_FLOAT(OFS_RETURN) = damage;
 		return;
 	}
@@ -1779,12 +1781,12 @@ void PF_WaterMove (void)
 	if (watertype == CONTENT_LAVA)
 	{	// do damage
 		if (!(flags & (FL_IMMUNE_LAVA + FL_GODMODE)))
-			if (self->v.dmgtime < sv->time)
+			if (self->v.dmgtime < sv->GetServerTime())
 			{
-				if (self->v.radsuit_finished < sv->time)
-					self->v.dmgtime = sv->time + 0.2;
+				if (self->v.radsuit_finished < sv->GetServerTime())
+					self->v.dmgtime = sv->GetServerTime() + 0.2;
 				else
-					self->v.dmgtime = sv->time + 1.0;
+					self->v.dmgtime = sv->GetServerTime() + 1.0;
 //				T_Damage (self, world, world, 10*self.waterlevel, 0, TRUE);
 				damage = (float)(10*waterlevel);
 			}
@@ -1792,9 +1794,9 @@ void PF_WaterMove (void)
 	else if (watertype == CONTENT_SLIME)
 	{	// do damage
 		if (!(flags & (FL_IMMUNE_SLIME + FL_GODMODE)))
-			if (self->v.dmgtime < sv->time && self->v.radsuit_finished < sv->time)
+			if (self->v.dmgtime < sv->GetServerTime() && self->v.radsuit_finished < sv->GetServerTime())
 			{
-				self->v.dmgtime = sv->time + 1.0;
+				self->v.dmgtime = sv->GetServerTime() + 1.0;
 //				T_Damage (self, world, world, 4*self.waterlevel, 0, TRUE);
 				damage = (float)(4*waterlevel);
 			}

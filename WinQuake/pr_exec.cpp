@@ -511,7 +511,7 @@ void PR_ExecuteProgram(func_t fnum)
 				opc->_float = !opa->function;
 				break;
 			case OP_NOT_ENT:
-				opc->_float = (PROG_TO_EDICT(opa->edict) == sv->edicts);
+				opc->_float = (PROG_TO_EDICT(opa->edict) == sv->GetServerEdicts());
 				break;
 
 			case OP_EQ_F:
@@ -568,11 +568,11 @@ void PR_ExecuteProgram(func_t fnum)
 			case OP_STOREP_FLD:	// integers
 			case OP_STOREP_S:
 			case OP_STOREP_FNC:	// pointers
-				ptr = (eval_t*)((byte*)sv->edicts + opb->_int);
+				ptr = (eval_t*)((byte*)sv->GetServerEdicts() + opb->_int);
 				ptr->_int = opa->_int;
 				break;
 			case OP_STOREP_V:
-				ptr = (eval_t*)((byte*)sv->edicts + opb->_int);
+				ptr = (eval_t*)((byte*)sv->GetServerEdicts() + opb->_int);
 				ptr->vector[0] = opa->vector[0];
 				ptr->vector[1] = opa->vector[1];
 				ptr->vector[2] = opa->vector[2];
@@ -583,12 +583,12 @@ void PR_ExecuteProgram(func_t fnum)
 #ifdef PARANOID
 				NUM_FOR_EDICT(ed);	// Make sure it's in range
 #endif
-				if (ed == (edict_t*)sv->edicts && sv->state == ss_active)
+				if (ed == (edict_t*)sv->GetServerEdicts() && sv->GetServerState() == ss_active)
 				{
 					pr_xstatement = st - pr_statements;
 					PR_RunError("assignment to world entity");
 				}
-				opc->_int = (byte*)((int*)&ed->v + opb->_int) - (byte*)sv->edicts;
+				opc->_int = (byte*)((int*)&ed->v + opb->_int) - (byte*)sv->GetServerEdicts();
 				break;
 
 			case OP_LOAD_F:

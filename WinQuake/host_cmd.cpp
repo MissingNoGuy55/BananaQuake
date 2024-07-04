@@ -64,7 +64,7 @@ void CQuakeHost::Host_Status_f (void)
 	
 	if (cmd_source == src_command)
 	{
-		if (!sv->active)
+		if (!sv->IsServerActive())
 		{
 			g_pCmds->Cmd_ForwardToServer();
 			return;
@@ -80,7 +80,7 @@ void CQuakeHost::Host_Status_f (void)
 		print ("tcp/ip:  %s\n", my_tcpip_address);
 	if (ipxAvailable)
 		print ("ipx:     %s\n", my_ipx_address);
-	print ("map:     %s\n", sv->name);
+	print ("map:     %s\n", sv->GetMapName());
 	print ("players: %i active (%i max)\n\n", net_activeconnections, svs.maxclients);
 	for (j=0, client = svs.clients ; j<svs.maxclients ; j++, client++)
 	{
@@ -284,7 +284,7 @@ void CQuakeHost::Host_Map_f (void)
 #else
 	sv->SV_SpawnServer (name);
 #endif
-	if (!sv->active)
+	if (!sv->IsServerActive())
 		return;
 	
 	if (cls.state != ca_dedicated)
@@ -320,7 +320,7 @@ void CQuakeHost::Host_Changelevel_f (void)
 		Con_Printf ("changelevel <levelname> : continue game on a new level\n");
 		return;
 	}
-	if (!sv->active || cls.demoplayback)
+	if (!sv->IsServerActive() || cls.demoplayback)
 	{
 		Con_Printf ("Only the server may changelevel\n");
 		return;
@@ -345,7 +345,7 @@ void CQuakeHost::Host_Changelevel_f (void)
 		Con_Printf ("changelevel <levelname> : continue game on a new level\n");
 		return;
 	}
-	if (!sv->active || cls.demoplayback)
+	if (!sv->IsServerActive() || cls.demoplayback)
 	{
 		Con_Printf ("Only the server may changelevel\n");
 		return;
@@ -371,12 +371,12 @@ void CQuakeHost::Host_Restart_f (void)
 	char	startspot[MAX_QPATH] = {};
 #endif
 
-	if (cls.demoplayback || !sv->active)
+	if (cls.demoplayback || !sv->IsServerActive())
 		return;
 
 	if (cmd_source != src_command)
 		return;
-    Q_strlcpy (mapname, sv->name, sizeof(mapname));	// must copy out, because it gets cleared
+    Q_strlcpy (mapname, sv->GetMapName(), sizeof(mapname));	// must copy out, because it gets cleared
 								// in sv_spawnserver
 #ifdef QUAKE2
 	Q_strcpy(startspot, sv->startspot);
@@ -473,7 +473,7 @@ void CQuakeHost::Host_Savegame_f (void)
 	if (cmd_source != src_command)
 		return;
 
-	if (!sv->active)
+	if (!sv->IsServerActive())
 	{
 		Con_Printf ("Not playing a local game.\n");
 		return;
@@ -529,22 +529,22 @@ void CQuakeHost::Host_Savegame_f (void)
 	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
 		fprintf (f, "%f\n", svs.clients->spawn_parms[i]);
 	fprintf (f, "%d\n", current_skill);
-	fprintf (f, "%s\n", sv->name);
-	fprintf (f, "%f\n",sv->time);
+	fprintf (f, "%s\n", sv->GetMapName());
+	fprintf (f, "%f\n",sv->GetServerTime());
 
 // write the light styles
 
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
-		if (sv->lightstyles[i])
-			fprintf (f, "%s\n", sv->lightstyles[i]);
+		if (sv->GetLightStyles()[i])
+			fprintf (f, "%s\n", sv->GetLightStyles()[i]);
 		else
 			fprintf (f,"m\n");
 	}
 
 
 	ED_WriteGlobals (f);
-	for (i=0 ; i<sv->num_edicts ; i++)
+	for (i=0 ; i<sv->GetNumEdicts() ; i++)
 	{
 		ED_Write (f, EDICT_NUM(i));
 		fflush (f);
@@ -636,7 +636,7 @@ void CQuakeHost::Host_Loadgame_f (void)
 
     sv->SV_SpawnServer (mapname);
 
-    if (!sv->active)
+    if (!sv->IsServerActive())
     {
         free (start);
         start = NULL;
@@ -644,14 +644,14 @@ void CQuakeHost::Host_Loadgame_f (void)
         Con_Printf ("Couldn't load map\n");
         return;
     }
-    sv->paused = true;		// pause until all clients connect
-    sv->loadgame = true;
+    sv->SetServerPaused(true);		// pause until all clients connect
+    sv->SetLoadGame(true);
 
 // load the light styles
     for (i = 0; i < MAX_LIGHTSTYLES; i++)
     {
         data = g_Common->COM_ParseStringNewline (data);
-        sv->lightstyles[i] = (const char *)g_MemCache->Hunk_Strdup (g_Common->com_token, "lightstyles");
+        sv->SetLightStyle(i, (const char *)g_MemCache->Hunk_Strdup (g_Common->com_token, "lightstyles"));
     }
 
 // load the edicts out of the savegame file
@@ -673,7 +673,7 @@ void CQuakeHost::Host_Loadgame_f (void)
         else
         {	// parse an edict
             ent = EDICT_NUM(entnum);
-            if (entnum < sv->num_edicts) {
+            if (entnum < sv->GetNumEdicts()) {
                 ent->free = false;
                 memset (&ent->v, 0, progs->entityfields * 4);
             }
@@ -688,11 +688,11 @@ void CQuakeHost::Host_Loadgame_f (void)
     }
 
     // Free edicts allocated during map loading but no longer used after restoring saved game state
-    for (i = entnum; i < sv->num_edicts; i++)
+    for (i = entnum; i < sv->GetNumEdicts(); i++)
         ED_Free(EDICT_NUM(i));
 
-    sv->num_edicts = entnum;
-    sv->time = time;
+    sv->SetNumEdicts(entnum);
+    sv->SetServerTime(time);
 
     free (start);
     start = NULL;
@@ -800,7 +800,7 @@ int CQuakeHost::LoadGamestate(char *level, char *startspot)
 
 	SV_SpawnServer (mapname, startspot);
 
-	if (!sv->active)
+	if (!sv->IsServerActive())
 	{
 		Con_Printf ("Couldn't load map\n");
 		return -1;
@@ -874,7 +874,7 @@ void CQuakeHost::Host_Changelevel2_f (void)
 		Con_Printf ("changelevel2 <levelname> : continue game on a new level in the unit\n");
 		return;
 	}
-	if (!sv->active || cls.demoplayback)
+	if (!sv->IsServerActive() || cls.demoplayback)
 	{
 		Con_Printf ("Only the server may changelevel\n");
 		return;
@@ -949,9 +949,9 @@ void CQuakeHost::Host_Name_f (void)
 	
 // send notification to all clients
 	
-	MSG_WriteByte (&sv->reliable_datagram, svc_updatename);
-	MSG_WriteByte (&sv->reliable_datagram, host_client - svs.clients);
-	MSG_WriteString (&sv->reliable_datagram, host_client->name);
+	MSG_WriteByte (&sv->GetReliableDatagramBuffer(), svc_updatename);
+	MSG_WriteByte (&sv->GetReliableDatagramBuffer(), host_client - svs.clients);
+	MSG_WriteString (&sv->GetReliableDatagramBuffer(), host_client->name);
 }
 
 	
@@ -1192,9 +1192,9 @@ void CQuakeHost::Host_Color_f(void)
 	host_client->edict->v.team = bottom + 1;
 
 // send notification to all clients
-	MSG_WriteByte (&sv->reliable_datagram, svc_updatecolors);
-	MSG_WriteByte (&sv->reliable_datagram, host_client - svs.clients);
-	MSG_WriteByte (&sv->reliable_datagram, host_client->colors);
+	MSG_WriteByte (&sv->GetReliableDatagramBuffer(), svc_updatecolors);
+	MSG_WriteByte (&sv->GetReliableDatagramBuffer(), host_client - svs.clients);
+	MSG_WriteByte (&sv->GetReliableDatagramBuffer(), host_client->colors);
 }
 
 /*
@@ -1216,7 +1216,7 @@ void CQuakeHost::Host_Kill_f (void)
 		return;
 	}
 	
-	pr_global_struct->time = sv->time;
+	pr_global_struct->time = sv->GetServerTime();
 	pr_global_struct->self = EDICT_TO_PROG(sv_player);
 	PR_ExecuteProgram (pr_global_struct->ClientKill);
 }
@@ -1239,9 +1239,11 @@ void CQuakeHost::Host_Pause_f (void)
 		sv->SV_ClientPrintf ("Pause not allowed.\n");
 	else
 	{
-		sv->paused ^= 1;
+		int pause = sv->IsServerPaused();
 
-		if (sv->paused)
+		sv->SetServerPaused(pause ^= 1);
+
+		if (sv->IsServerPaused())
 		{
 			sv->SV_BroadcastPrintf ("%s paused the game\n", PR_GetString(sv_player->v.netname));
 		}
@@ -1251,8 +1253,8 @@ void CQuakeHost::Host_Pause_f (void)
 		}
 
 	// send notification to all clients
-		MSG_WriteByte (&sv->reliable_datagram, svc_setpause);
-		MSG_WriteByte (&sv->reliable_datagram, sv->paused);
+		MSG_WriteByte (&sv->GetReliableDatagramBuffer(), svc_setpause);
+		MSG_WriteByte (&sv->GetReliableDatagramBuffer(), sv->IsServerPaused());
 	}
 }
 
@@ -1278,7 +1280,7 @@ void CQuakeHost::Host_PreSpawn_f (void)
 		return;
 	}
 	
-	SZ_Write (&host_client->message, sv->signon.data, sv->signon.cursize);
+	SZ_Write (&host_client->message, sv->GetSignOnBufferData(), sv->GetSignOnBufferCursize());
 	MSG_WriteByte (&host_client->message, svc_signonnum);
 	MSG_WriteByte (&host_client->message, 2);
 	host_client->sendsignon = true;
@@ -1308,10 +1310,10 @@ void CQuakeHost::Host_Spawn_f (void)
 	}
 
 // run the entrance script
-	if (sv->loadgame)
+	if (sv->IsLoadGame())
 	{	// loaded games are fully inited allready
 		// if this is the last client to be connected, unpause
-		sv->paused = false;
+		sv->SetServerPaused(false);
 	}
 	else
 	{
@@ -1330,11 +1332,11 @@ void CQuakeHost::Host_Spawn_f (void)
 
 		// call the spawn function
 
-		pr_global_struct->time = sv->time;
+		pr_global_struct->time = sv->GetServerTime();
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
 		PR_ExecuteProgram (pr_global_struct->ClientConnect);
 
-		if ((Sys_DoubleTime() - host_client->netconnection->connecttime) <= sv->time)
+		if ((Sys_DoubleTime() - host_client->netconnection->connecttime) <= sv->GetServerTime())
 			Sys_Printf ("%s entered the game\n", host_client->name);
 
 		PR_ExecuteProgram (pr_global_struct->PutClientInServer);	
@@ -1346,7 +1348,7 @@ void CQuakeHost::Host_Spawn_f (void)
 
 // send time of update
 	MSG_WriteByte (&host_client->message, svc_time);
-	MSG_WriteFloat (&host_client->message, sv->time);
+	MSG_WriteFloat (&host_client->message, sv->GetServerTime());
 
 	for (i=0, client = svs.clients ; i<svs.maxclients ; i++, client++)
 	{
@@ -1366,7 +1368,7 @@ void CQuakeHost::Host_Spawn_f (void)
 	{
 		MSG_WriteByte (&host_client->message, svc_lightstyle);
 		MSG_WriteByte (&host_client->message, (char)i);
-		MSG_WriteString (&host_client->message, sv->lightstyles[i]);
+		MSG_WriteString (&host_client->message, sv->GetLightStyles()[i]);
 	}
 
 //
@@ -1444,7 +1446,7 @@ void CQuakeHost::Host_Kick_f (void)
 
 	if (cmd_source == src_command)
 	{
-		if (!sv->active)
+		if (!sv->IsServerActive())
 		{
 			g_pCmds->Cmd_ForwardToServer ();
 			return;
@@ -1685,7 +1687,7 @@ edict_t	*FindViewthing (void)
 	int		i;
 	edict_t	*e;
 	
-	for (i=0 ; i<sv->num_edicts ; i++)
+	for (i=0 ; i<sv->GetNumEdicts() ; i++)
 	{
 		e = EDICT_NUM(i);
 		if ( !strcmp (PR_GetString(e->v.classname), "viewthing") )
@@ -1853,7 +1855,7 @@ void CQuakeHost::Host_Startdemos_f (void)
 
 	if (cls.state == ca_dedicated)
 	{
-		if (!sv->active)
+		if (!sv->IsServerActive())
 			g_pCmdBuf->Cbuf_AddText ("map start\n");
 		return;
 	}
@@ -1869,7 +1871,7 @@ void CQuakeHost::Host_Startdemos_f (void)
 	for (i=1 ; i<c+1 ; i++)
 		strncpy (cls.demos[i-1], g_pCmds->Cmd_Argv(i), sizeof(cls.demos[0])-1);
 
-	if (!sv->active && cls.demonum != -1 && !cls.demoplayback)
+	if (!sv->IsServerActive() && cls.demonum != -1 && !cls.demoplayback)
 	{
 		cls.demonum = 0;
 		CL_NextDemo ();

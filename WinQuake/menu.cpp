@@ -449,11 +449,11 @@ void M_SinglePlayer_Key (int key)
 		switch (m_singleplayer_cursor)
 		{
 		case 0:
-			if (sv->active)
+            if (sv->IsServerActive())
 				if (!SCR_ModalMessage("Are you sure you want to\nstart a new game?\n"))
 					break;
 			key_dest = key_game;
-			if (sv->active)
+            if (sv->IsServerActive())
 				g_pCmdBuf->Cbuf_AddText ("disconnect\n");
 			g_pCmdBuf->Cbuf_AddText ("maxplayers 1\n");
 			g_pCmdBuf->Cbuf_AddText ("map start\n");
@@ -518,7 +518,7 @@ void M_Menu_Load_f (void)
 
 void M_Menu_Save_f (void)
 {
-	if (!sv->active)
+    if (!sv->IsServerActive())
 		return;
 	if (cl.intermission)
 		return;
@@ -2993,7 +2993,7 @@ void M_GameOptions_Key (int key)
 		g_SoundSystem->S_LocalSound ("misc/menu2.wav");
 		if (gameoptions_cursor == 0)
 		{
-			if (sv->active)
+            if (sv->IsServerActive())
 				g_pCmdBuf->Cbuf_AddText ("disconnect\n");
 			g_pCmdBuf->Cbuf_AddText ("listen 0\n");	// so host_netport will be re-examined
 			g_pCmdBuf->Cbuf_AddText (g_Common->va ("maxplayers %u\n", maxplayers) );

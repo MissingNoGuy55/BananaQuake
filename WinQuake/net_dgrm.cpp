@@ -111,7 +111,7 @@ void NET_Ban_f (void)
 
 	if (cmd_source == src_command)
 	{
-		if (!sv->active)
+        if (!sv->IsServerActive())
 		{
 			g_pCmds->Cmd_ForwardToServer ();
 			return;
@@ -875,7 +875,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 		dfunc.GetSocketAddr(acceptsock, &newaddr);
 		MSG_WriteString(&net_message, dfunc.AddrToString(&newaddr));
 		MSG_WriteString(&net_message, hostname.string);
-		MSG_WriteString(&net_message, sv->name);
+        MSG_WriteString(&net_message, sv->GetMapName());
 		MSG_WriteByte(&net_message, net_activeconnections);
 		MSG_WriteByte(&net_message, svs.maxclients);
 		MSG_WriteByte(&net_message, NET_PROTOCOL_VERSION);
@@ -943,7 +943,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 		// search for the next server cvar
 		while (var)
 		{
-			if (var->server)
+			if (var->flags & CVAR_SERVER)
 				break;
 			var = var->next;
 		}

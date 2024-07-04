@@ -1534,7 +1534,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 		mod->rmaxs[0] = mod->rmaxs[1] = mod->rmaxs[2] = mod->ymaxs[0] = mod->ymaxs[1] = mod->ymaxs[2] = radius;
 		mod->rmins[0] = mod->rmins[1] = mod->rmins[2] = mod->ymins[0] = mod->ymins[1] = mod->ymins[2] = -radius;
 
-		if (i > 0 || strcmp(mod->name, sv->modelname) != 0) //skip submodel 0 of sv.worldmodel, which is the actual world
+        if (i > 0 || strcmp(mod->name, sv->GetMapFileName()) != 0) //skip submodel 0 of sv.worldmodel, which is the actual world
 		{
 			// start with the hull0 bounds
 			VectorCopy(mod->maxs, mod->clipmaxs);

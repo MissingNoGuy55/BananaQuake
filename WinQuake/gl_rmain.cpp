@@ -1206,7 +1206,7 @@ void CGLRenderer::R_RenderView (void)
 	glEnable(GL_FOG);
 ********************************************/
 
-    if (!sv->level_has_fog)
+    if (!sv->DoesLevelHaveFog())
     {
         glDisable(GL_FOG);
     }

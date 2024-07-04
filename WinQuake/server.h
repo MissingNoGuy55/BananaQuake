@@ -353,6 +353,62 @@ public:
 
 	// passedict is explicitly excluded from clipping checks (normally NULL)
 
+	// Missi: set/get stuff (7/3/2024)
+	const bool	DoesLevelHaveFog() const { return level_has_fog; }
+	void		SetLevelHasFog(bool bNewVal) { level_has_fog = bNewVal; }
+
+	const bool	IsServerActive() const { return active; }
+	void		SetServerActive(bool bNewVal) { active = bNewVal; }
+
+	const bool	IsServerPaused() const { return paused; }
+	void		SetServerPaused(bool bNewVal) { paused = bNewVal; }
+
+	const edict_t*	GetServerEdicts() const { return edicts; }
+	const double 	GetServerTime() const { return time; }
+
+	void		SetServerTime(double dNewVal) { time = dNewVal; }
+
+	const char*	GetMapName() const { return name; }
+	const char*	GetMapFileName() const { return modelname; }
+
+	const int	GetNumEdicts() const { return num_edicts; }
+	const int	GetMaxEdicts() const { return max_edicts; }
+
+	const char** GetModelPrecache() { return model_precache; }
+	const char** GetSoundPrecache() { return sound_precache; }
+
+	const char* GetSoundPrecacheEntry(int pos) { return sound_precache[pos]; }
+	void 		SetSoundPrecacheEntry(int pos, const char* pszSound) { sound_precache[pos] = pszSound; }
+
+	const char** 	GetLightStyles() { return lightstyles; }
+	void 			SetLightStyle(int pos, const char* pszStyle) { lightstyles[pos] = pszStyle; }
+
+	const server_state_t GetServerState() const { return state; }
+
+	struct model_s** GetModels() { return models; }
+	struct model_s* GetWorldModel() { return worldmodel; }
+
+	void 		SetNumEdicts(int iNewVal) { num_edicts = iNewVal; }
+	void 		IncrementEdicts() { num_edicts++; }
+
+	const bool	IsLoadGame() const { return loadgame; }
+	void		SetLoadGame(bool bNewVal) { loadgame = bNewVal; }
+
+	sizebuf_t&	GetSignOnBuffer() { return signon; }
+	const void*	GetSignOnBufferData() { return signon.data; }
+	int			GetSignOnBufferCursize() { return signon.cursize; }
+	sizebuf_t&	GetReliableDatagramBuffer() { return reliable_datagram; }
+
+	sizebuf_t&	GetDatagramBuffer() { return datagram; }
+
+	int			GetLastCheck() { return lastcheck; }
+	double		GetLastCheckTime() { return lastchecktime; }
+
+	void		SetLastCheck(int iNewVal) { lastcheck = iNewVal; }
+	void		SetLastCheckTime(double dNewVal) { lastchecktime = dNewVal; }
+
+private:
+
 	bool		level_has_fog;
 
 	bool		active;				// false if only a net client

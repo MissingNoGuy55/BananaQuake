@@ -140,7 +140,7 @@ hull_t * CQuakeServer::SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs,
 		if (ent->v.movetype != MOVETYPE_PUSH)
 			Sys_Error ("SOLID_BSP without MOVETYPE_PUSH");
 
-		model = sv->models[ (int)ent->v.modelindex ];
+		model = sv->GetModels()[ (int)ent->v.modelindex ];
 
 		if (!model || model->type != mod_brush)
 		{
@@ -364,7 +364,7 @@ void CQuakeServer::SV_TouchLinks (edict_t *ent)
 
         pr_global_struct->self = EDICT_TO_PROG(touch);
         pr_global_struct->other = EDICT_TO_PROG(ent);
-        pr_global_struct->time = sv->time;
+        pr_global_struct->time = sv->GetServerTime();
         PR_ExecuteProgram (touch->v.touch);
 
         pr_global_struct->self = old_self;
@@ -400,7 +400,7 @@ void SV_FindTouchedLeafs (edict_t *ent, mnode_t *node)
 			return;
 
 		leaf = reinterpret_cast<mleaf_t*>(node);
-		leafnum = leaf - sv->worldmodel->leafs - 1;
+		leafnum = leaf - sv->GetWorldModel()->leafs - 1;
 
 		ent->leafnums[ent->num_leafs] = leafnum;
 		ent->num_leafs++;			

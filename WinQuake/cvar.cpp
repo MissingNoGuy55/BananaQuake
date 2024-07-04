@@ -127,9 +127,9 @@ void Cvar_Set (const char *var_name, const char *value)
     var->string = strdup(str);
 #endif
 	var->value = Q_atof (str);
-	if (var->server && changed)
+	if ((var->flags & CVAR_NOTIFY) && changed)
 	{
-		if (sv->active)
+        if (sv->IsServerActive())
 			sv->SV_BroadcastPrintf ("\"%s\" changed to \"%s\"\n", var->name, var->string);
 	}
 }
