@@ -74,6 +74,7 @@ typedef unsigned char byte;
 #include <setjmp.h>
 #include <string>
 #include <vector>
+#include <fstream>
 // #include <dsound.h>
 #if (_WIN32) || (WIN64)
 #include <windows.h>
@@ -83,6 +84,10 @@ using cxxstring = std::string;
 
 template<typename T>
 using cxxvector = std::vector<T>;
+
+using cxxfstream = std::fstream;
+using cxxifstream = std::ifstream;
+using cxxofstream = std::ofstream;
 
 #include <SDL.h>
 
@@ -265,6 +270,7 @@ typedef uintptr_t src_offset_t;
 
 #include "common.h"
 #include "bspfile.h"
+#include "bspfile_goldsrc.h"
 #include "vid.h"
 #include "sys.h"
 #include "zone.h"
