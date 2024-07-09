@@ -80,7 +80,7 @@ static bool S_VORBIS_CodecOpenStream (snd_stream_t *stream)
 	long numstreams;
 	int res;
 
-	ovFile = (OggVorbis_File*)calloc(1, sizeof(OggVorbis_File));
+    ovFile = (OggVorbis_File*)calloc(1, sizeof(OggVorbis_File));
 	stream->priv = ovFile;
 	res = ov_open_callbacks(&stream->fh, ovFile, NULL, 0, ovc_qfs);
 	if (res != 0)
@@ -128,7 +128,7 @@ static bool S_VORBIS_CodecOpenStream (snd_stream_t *stream)
 _fail:
 	if (res == 0)
 		ov_clear(ovFile);
-	mainzone->Z_Free<OggVorbis_File>(ovFile);
+    free(ovFile);
 	return false;
 }
 
