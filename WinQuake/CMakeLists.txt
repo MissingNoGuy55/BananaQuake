@@ -986,7 +986,7 @@ target_include_directories(bananaquakesoftware PUBLIC
 ]]
 
 target_compile_definitions(bananaquakeopengl PUBLIC $<$<CONFIG:Debug>:DEBUG>)
-target_compile_definitions(bananaquakeopengl PUBLIC $<$<CONFIG:Debug>:_DEBUG>)
+#target_compile_definitions(bananaquakeopengl PUBLIC $<$<CONFIG:Debug>:_DEBUG>)
 target_compile_definitions(bananaquakeopengl PUBLIC GLQUAKE)
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_VORBIS)
 target_compile_definitions(bananaquakeopengl PUBLIC USE_CODEC_WAVE)
