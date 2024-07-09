@@ -84,11 +84,22 @@ public:
     CQVector<void*> datavec;
 };
 
+#define MAX_WAD_TEXWIDTH 4096
+#define MAX_WAD_TEXHEIGHT 4096
+
+typedef struct qpicbuf_goldsrc_s
+{
+    int width, height;
+    char data[MAX_WAD_TEXHEIGHT][MAX_WAD_TEXWIDTH]; //Image is stored as 8-bit numbers of colors in palette
+    short colors_used; //Number of colors in palette (can't be more than 256)
+    char lbmpalette[256][3]; //8-bit RGB palette data
+} qpicbuf_goldsrc_t;
+
 typedef struct qpicbuf_s
 {
-	int		width;
-	int		height;
-	byte	data[1];
+    int		width;
+    int		height;
+    byte	data[1];
 } qpicbuf_t;
 
 typedef struct
@@ -109,11 +120,25 @@ typedef struct
 	char		name[16];				// must be null terminated
 } lumpinfo_t;
 
+#define MAXTEXTURENAME 16
+
+typedef struct goldsrc_lumpinfo_s
+{
+   int nFilePos;                    // offset in WAD
+   int nDiskSize;                   // size in file
+   int nSize;                       // uncompressed size
+   char nType;                      // type of entry
+   bool bCompression;               // 0 if none
+   short nDummy;                    // not used
+   char szName[MAXTEXTURENAME];     // must be null terminated
+} goldsrc_lumpinfo_t;
+
 extern	int			wad_numlumps;
 extern	lumpinfo_t	*wad_lumps;
 extern	byte	*wad_base;
 
 void	W_LoadWadFile (const char *filename);
+void    W_LoadWadFile_GoldSrc (const char *filename);
 void	W_CleanupName (const char *in, char *out);
 lumpinfo_t	*W_GetLumpinfo (const char *name);
 
