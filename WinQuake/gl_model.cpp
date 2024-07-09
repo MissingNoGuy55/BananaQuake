@@ -243,10 +243,10 @@ void Mod_LoadTextures (lump_t *l)
 
 	int		i, j, pixels, num, max, altmax;
 	miptex_t	*mt;
-	texture_t	*tx, *tx2;
+    texture_t	*tx, *tx2;
 	texture_t	*anims[10];
 	texture_t	*altanims[10];
-	uintptr_t		offset;
+    uintptr_t		offset;
 	dmiptexlump_t *m;
 
 	if (!l->filelen)
@@ -261,44 +261,89 @@ void Mod_LoadTextures (lump_t *l)
 	loadmodel->numtextures = m->nummiptex;
 	loadmodel->textures = g_MemCache->Hunk_AllocName<texture_t*>(m->nummiptex * sizeof(*loadmodel->textures) , loadname);
 
-	for (i=0 ; i<m->nummiptex ; i++)
-	{
-		m->dataofs[i] = LittleLong(m->dataofs[i]);
-		if (m->dataofs[i] == -1)
-			continue;
-		mt = (miptex_t *)((byte *)m + m->dataofs[i]);
-		mt->width = LittleLong (mt->width);
-		mt->height = LittleLong (mt->height);
-		for (j=0 ; j<MIPLEVELS ; j++)
-			mt->offsets[j] = LittleLong (mt->offsets[j]);
-		
-		if ( (mt->width & 15) || (mt->height & 15) )
-			Sys_Error ("Texture %s is not 16 aligned", mt->name);
-		pixels = mt->width*mt->height/64*85;
-		tx = g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) +pixels, loadname );
-		loadmodel->textures[i] = tx;
+    if (loadmodel->bspversion == BSPVERSION_GOLDSRC)
+    {
+        for (i=0 ; i<m->nummiptex ; i++)
+        {
+            m->dataofs[i] = LittleLong(m->dataofs[i]);
+            if (m->dataofs[i] == -1)
+                continue;
+            mt = (miptex_t *)((byte *)m + m->dataofs[i]);
+            mt->width = LittleLong (mt->width);
+            mt->height = LittleLong (mt->height);
+            for (j=0 ; j<MIPLEVELS ; j++)
+                mt->offsets[j] = LittleLong (mt->offsets[j]);
 
-		memcpy (tx->name, mt->name, sizeof(tx->name));
-		tx->width = mt->width;
-		tx->height = mt->height;
-		for (j=0 ; j<MIPLEVELS ; j++)
-			tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
-		// the pixels immediately follow the structures
-		memcpy ( tx+1, mt+1, pixels);
+            if ( (mt->width & 15) || (mt->height & 15) )
+                Sys_Error ("Texture %s is not 16 aligned", mt->name);
+            pixels = mt->width*mt->height;
+            tx = g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) +pixels, loadname );
+            loadmodel->textures[i] = tx;
 
-        g_GLRenderer->SetUsesQuake2Skybox(false);
+            memcpy (tx->name, mt->name, sizeof(tx->name));
+            tx->width = mt->width;
+            tx->height = mt->height;
+            for (j=0 ; j<MIPLEVELS ; j++)
+                tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
 
-		if (!Q_strncmp(mt->name,"sky",3))	
-			g_GLRenderer->R_InitSky (tx);
-		else
-		{
-			offset = (src_offset_t)(mt + 1) - (src_offset_t)mod_base;
+            // the pixels immediately follow the structures
+            memcpy ( tx+1, mt+1, pixels);
 
-			//texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
-			tx->gltexture = g_GLRenderer->GL_LoadTexture (loadmodel, mt->name, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), offset, TEXPREF_NONE);
-			//texture_mode = GL_LINEAR;
-		}
-	}
+            g_GLRenderer->SetUsesQuake2Skybox(false);
+
+            if (!Q_strncmp(mt->name,"sky",3))
+                g_GLRenderer->R_InitSky (tx);
+            else
+            {
+                offset = (src_offset_t)(mt + 1) - (src_offset_t)mod_base;
+
+                //texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
+                tx->gltexture = g_GLRenderer->GL_LoadTexture (loadmodel, mt->name, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), offset, TEXPREF_NONE);
+                //texture_mode = GL_LINEAR;
+            }
+        }
+    }
+    else
+    {
+        for (i=0 ; i<m->nummiptex ; i++)
+        {
+            m->dataofs[i] = LittleLong(m->dataofs[i]);
+            if (m->dataofs[i] == -1)
+                continue;
+            mt = (miptex_t *)((byte *)m + m->dataofs[i]);
+            mt->width = LittleLong (mt->width);
+            mt->height = LittleLong (mt->height);
+            for (j=0 ; j<MIPLEVELS ; j++)
+                mt->offsets[j] = LittleLong (mt->offsets[j]);
+
+            if ( (mt->width & 15) || (mt->height & 15) )
+                Sys_Error ("Texture %s is not 16 aligned", mt->name);
+            pixels = mt->width*mt->height/64*85;
+            tx = g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) +pixels, loadname );
+            loadmodel->textures[i] = tx;
+
+            memcpy (tx->name, mt->name, sizeof(tx->name));
+            tx->width = mt->width;
+            tx->height = mt->height;
+            for (j=0 ; j<MIPLEVELS ; j++)
+                tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
+            // the pixels immediately follow the structures
+            memcpy ( tx+1, mt+1, pixels);
+
+            g_GLRenderer->SetUsesQuake2Skybox(false);
+
+            if (!Q_strncmp(mt->name,"sky",3))
+                g_GLRenderer->R_InitSky (tx);
+            else
+            {
+                offset = (src_offset_t)(mt + 1) - (src_offset_t)mod_base;
+
+                //texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
+                tx->gltexture = g_GLRenderer->GL_LoadTexture (loadmodel, mt->name, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), offset, TEXPREF_NONE);
+                //texture_mode = GL_LINEAR;
+            }
+        }
+    }
 
 //
 // sequence the animations
@@ -405,7 +450,7 @@ void Mod_LoadLighting (lump_t *l)
 {
 	int i, mark;
 	byte* in, * out, * data;
-	byte d, q64_b0, q64_b1;
+	byte d;
 	char litfilename[MAX_OSPATH];
 	uintptr_t path_id;
 
@@ -456,6 +501,20 @@ void Mod_LoadLighting (lump_t *l)
 	if (!l->filelen)
 	{
 		loadmodel->lightdata = NULL;
+		return;
+	}
+
+	// Missi: GoldSrc BSP lightmaps (7/8/2024)
+	if (loadmodel->bspversion == BSPVERSION_GOLDSRC)
+	{
+		loadmodel->lightdata = g_MemCache->Hunk_AllocName<byte>((l->filelen) * 3, litfilename);
+		in = mod_base + l->fileofs;
+		out = loadmodel->lightdata;
+
+        for (i = 0; i < (l->filelen); i++)
+		{
+            *out++ = *in++;
+		}
 		return;
 	}
 
@@ -834,7 +893,12 @@ void Mod_LoadFaces (lump_t *l, int bsp2)
 		if (lofs == -1)
 			out->samples = NULL;
 		else
-			out->samples = loadmodel->lightdata + (lofs * 3); //johnfitz -- lit support via lordhavoc (was "+ i")
+		{
+			if (loadmodel->bspversion == BSPVERSION_GOLDSRC)
+				out->samples = loadmodel->lightdata + lofs;
+			else
+				out->samples = loadmodel->lightdata + (lofs * 3); //johnfitz -- lit support via lordhavoc (was "+ i")
+		}
 		
 	// set the drawing flags flag
 	
@@ -1463,6 +1527,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	switch (mod->bspversion)
 	{
 	case BSPVERSION:
+	case BSPVERSION_GOLDSRC:
 		bsp2 = false;
 		break;
 	case BSP2VERSION_2PSB:

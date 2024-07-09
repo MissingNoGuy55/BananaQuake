@@ -77,6 +77,20 @@ typedef struct texture_s
 	unsigned	offsets[MIPLEVELS];		// four mip maps stored
 } texture_t;
 
+typedef struct _BSPTEXTUREINFO
+{
+    vec3_t vS;
+    float fSShift;    // Texture shift in s direction
+    vec3_t vT;
+    float fTShift;    // Texture shift in t direction
+    int iMiptex; // Index into textures array
+    int nFlags;  // Texture flags
+} BSPTEXTUREINFO;
+
+typedef struct _BSPTEXTUREHEADER
+{
+    int nMipTextures; // Number of BSPMIPTEX structures
+} BSPTEXTUREHEADER;
 
 #define	SURF_PLANEBACK		2
 #define	SURF_DRAWSKY		4
