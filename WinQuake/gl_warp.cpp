@@ -357,7 +357,7 @@ void CGLRenderer::R_LoadSkys (void)
 		LoadTGA(f);
 //		LoadPCX (f);
 
-		glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, targa_rgba);
+		glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, targa_header.width, targa_header.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, targa_rgba);
 		//glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, pcx_rgb);
 
 		free (targa_rgba);
