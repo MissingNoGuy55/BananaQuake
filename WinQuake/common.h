@@ -241,6 +241,7 @@ public:
 	static void COM_CreatePath(const char* path);
 	int COM_OpenFile (const char *filename, int *handle, uintptr_t* path_id);
 	static int COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id);
+    int COM_FOpenFile_FStream(const char* filename, cxxifstream* file, uintptr_t* path_id);
 	void COM_CloseFile (int h);
 
 	byte* COM_LoadMallocFile_TextMode_OSPath(const char* path, long* len_out);
@@ -249,7 +250,9 @@ public:
 
 	void COM_InitFilesystem();
 	static int COM_FindFile(const char* filename, int* handle, FILE** file, uintptr_t* path_id);
+    int COM_FindFile_FStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id);
 	static long COM_filelength(FILE* f);
+    size_t COM_filelength_FStream(cxxifstream* f);
 	pack_t* COM_LoadPackFile(char* packfile);
 
 	static void COM_Path_f(void);
@@ -415,10 +418,76 @@ inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 }
 
 template<typename T>
+inline T* COM_LoadFile_FStream(const char* path, int usehunk, uintptr_t* path_id)
+{
+    cxxifstream         f;
+    T* buf				= nullptr;
+    char base[32]		= {};
+    size_t	len			= 0;
+
+    // look for it in the filesystem or pack files
+    len = g_Common->COM_FOpenFile_FStream(path, &f, path_id);
+    if (f.bad())
+        return nullptr;
+
+    // extract the filename base name for hunk tag
+    g_Common->COM_FileBase(path, base, len);
+
+    switch (usehunk)
+    {
+    case HUNK_FULL:
+        buf = static_cast<T*>(g_MemCache->Hunk_AllocName<T>(len + 1, base));
+        break;
+    case HUNK_TEMP:
+        buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
+        break;
+    case HUNK_ZONE:
+        buf = static_cast<T*>(mainzone->Z_Malloc<T>(len + 1));
+        break;
+    case HUNK_CACHE:
+        buf = static_cast<T*>(g_MemCache->Cache_Alloc<T>(loadcache, len + 1, base));
+        break;
+    case HUNK_TEMP_FILL:
+        if (len + 1 > loadsize<T>)
+        {
+            buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
+            break;
+        }
+        else
+        {
+            buf = loadbuf<T>;
+            break;
+        }
+
+    default:
+
+        Sys_Error("COM_LoadFile: bad usehunk");
+        break;
+
+    }
+
+    if (!buf)
+        Sys_Error("COM_LoadFile: not enough space for %s", path);
+    else
+        ((byte*)buf)[len] = 0;
+
+    f.read(buf, len);
+
+    return buf;
+}
+
+template<typename T>
 T* COM_LoadHunkFile(const char* path, uintptr_t* path_id)
 {
 	return COM_LoadFile<T>(path, HUNK_FULL, path_id);
 }
+
+template<typename T>
+T* COM_LoadHunkFile_FStream(const char* path, uintptr_t* path_id)
+{
+    return COM_LoadFile_FStream<T>(path, HUNK_FULL, path_id);
+}
+
 template<typename T>
 T* COM_LoadTempFile(const char* path, uintptr_t* path_id)
 {

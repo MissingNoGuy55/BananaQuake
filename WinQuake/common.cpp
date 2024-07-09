@@ -1600,6 +1600,108 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 }
 
 /*
+===========
+COM_FindFile_IOStream
+
+Finds the file in the search path.
+Sets com_filesize and one of handle or file
+===========
+*/
+int CCommon::COM_FindFile_FStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id)
+{
+	searchpath_t*	search = NULL;
+	char			netpath[MAX_OSPATH] = {};
+	char			cachepath[MAX_OSPATH] = {};
+	pack_t*			pak = NULL;
+	int				i = 0;
+	int				findtime = 0, cachetime = 0;
+
+	if (file && handle)
+		Sys_Error("COM_FindFile: both handle and file set");
+
+	file_from_pak = 0;
+
+	//
+	// search through the path, one element at a time
+	//
+	for (search = com_searchpaths; search; search = search->next)
+	{
+		// is the element a pak file?
+		if (search->pack)	/* look through all the pak file elements */
+		{
+			pak = search->pack;
+			for (i = 0; i < pak->numfiles; i++)
+			{
+				if (strcmp(pak->files[i].name, filename) != 0)
+					continue;
+				// found it!
+				com_filesize = pak->files[i].filelen;
+				file_from_pak = 1;
+				if (path_id)
+					*path_id = search->path_id;
+				if (handle)
+				{
+					*handle = pak->handle;
+					Sys_FileSeek(pak->handle, pak->files[i].filepos);
+					return com_filesize;
+				}
+				else if (file)
+				{ /* open a new file on the pakfile */
+                    file->open(pak->filename, cxxifstream::in);
+                    file->seekg(pak->files[i].filepos, std::ios_base::cur);
+					return com_filesize;
+				}
+				else /* for COM_FileExists() */
+				{
+					return com_filesize;
+				}
+			}
+		}
+		else
+		{
+			if (!registered.value)
+			{ /* if not a registered version, don't ever go beyond base */
+				if (strchr(filename, '/') || strchr(filename, '\\'))
+					continue;
+			}
+
+			snprintf(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
+			if (!(Sys_FileType(netpath) & FS_ENT_FILE))
+				continue;
+
+			if (path_id)
+				*path_id = search->path_id;
+			if (handle)
+			{
+				com_filesize = Sys_FileOpenRead(netpath, &i);
+				*handle = i;
+				return com_filesize;
+			}
+			else if (file)
+			{
+                file->open(netpath);
+                com_filesize = COM_filelength_FStream(file);
+				return com_filesize;
+			}
+			else
+			{
+				return 0; /* dummy valid value for COM_FileExists() */
+			}
+		}
+	}
+
+	Sys_Printf("FindFile: can't find %s\n", filename);
+
+	if (handle)
+		*handle = -1;
+	if (file)
+		file->close();
+	com_filesize = -1;
+	return com_filesize;
+}
+
+
+/*
 ================
 COM_filelength
 ================
@@ -1612,6 +1714,22 @@ long CCommon::COM_filelength(FILE* f)
 	fseek(f, 0, SEEK_END);
 	end = ftell(f);
 	fseek(f, pos, SEEK_SET);
+
+	return end;
+}
+
+/*
+================
+COM_filelength
+================
+*/
+size_t CCommon::COM_filelength_FStream(cxxifstream* f)
+{
+    size_t		end;
+
+	f->seekg(0,	f->end);
+	end = f->tellg();
+    f->seekg(0, f->beg);
 
 	return end;
 }
@@ -1641,6 +1759,19 @@ into the file.
 int CCommon::COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id)
 {
 	return COM_FindFile (filename, nullptr, file, path_id);
+}
+
+/*
+===========
+COM_FOpenFile
+
+If the requested file is inside a packfile, a new FILE * will be opened
+into the file.
+===========
+*/
+int CCommon::COM_FOpenFile_FStream(const char* filename, cxxifstream* file, uintptr_t* path_id)
+{
+	return COM_FindFile_FStream(filename, nullptr, file, path_id);
 }
 
 /*
