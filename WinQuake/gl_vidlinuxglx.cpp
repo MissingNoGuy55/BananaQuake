@@ -35,14 +35,14 @@ extern XF86VidModeModeInfo** GetVideoModes();
 #define WARP_HEIGHT             200
 
 static Display *dpy = NULL;
-static int scrnum;
-static Window win;
+static int      scrnum;
+static Window   win;
 static GLXContext ctx = NULL;
-static bool fullscreen = true;
+static bool     fullscreen = true;
 
-static bool mouse_override = false;
+static bool     mouse_override = false;
 
-static cvar_t x11_grab_mouse { "x11_grab_mouse", "1" };
+static cvar_t   x11_grab_mouse { "x11_grab_mouse", "1" };
 
 #define KEY_MASK (KeyPressMask | KeyReleaseMask)
 #define MOUSE_MASK (ButtonPressMask | ButtonReleaseMask | \
@@ -54,23 +54,23 @@ unsigned short	d_8to16table[256];
 unsigned int	d_8to24table[256];
 unsigned char	d_15to8table[65536];
 
-cvar_t	vid_mode = {"vid_mode","0",false};
+cvar_t          vid_mode = {"vid_mode","0",false};
  
-static bool        mouse_avail;
-static bool        mouse_active;
-static int   mx, my;
-static int	old_mouse_x, old_mouse_y;
+static bool     mouse_avail;
+static bool     mouse_active;
+static int      mx, my;
+static int      old_mouse_x, old_mouse_y;
 
-static cvar_t in_mouse = {"in_mouse", "1", false};
-static cvar_t in_dgamouse = {"in_dgamouse", "1", false};
-static cvar_t m_filter = {"m_filter", "0"};
+static cvar_t   in_mouse = {"in_mouse", "1", false};
+static cvar_t   in_dgamouse = {"in_dgamouse", "1", false};
+static cvar_t   m_filter = {"m_filter", "0"};
 
-bool dgamouse = false;
-bool vidmode_ext = false;
+bool            dgamouse = false;
+bool            vidmode_ext = false;
 
-static int win_x, win_y;
+static int      win_x, win_y;
 
-static int scr_width, scr_height;
+static int      scr_width, scr_height;
 
 static XF86VidModeModeInfo **vidmodes;
 static int default_dotclock_vidmode;
@@ -81,8 +81,8 @@ static bool vidmode_active = false;
 
 //int		texture_mode = GL_NEAREST;
 //int		texture_mode = GL_NEAREST_MIPMAP_NEAREST;
-//int		texture_mode = GL_NEAREST_MIPMAP_LINEAR;
-int		texture_mode = GL_LINEAR;
+//int       texture_mode = GL_NEAREST_MIPMAP_LINEAR;
+int         texture_mode = GL_LINEAR;
 //int		texture_mode = GL_LINEAR_MIPMAP_NEAREST;
 //int		texture_mode = GL_LINEAR_MIPMAP_LINEAR;
 
@@ -92,19 +92,19 @@ float		gldepthmin, gldepthmax;
 
 cvar_t	gl_ztrick = {"gl_ztrick","1"};
 
-const char *gl_vendor;
-const char *gl_renderer;
-const char *gl_version;
-const char *gl_extensions;
+const char      *gl_vendor;
+const char      *gl_renderer;
+const char      *gl_version;
+const char      *gl_extensions;
 
 void (*qglColorTableEXT) (int, int, int, int, int, const void*);
 void (*qgl3DfxSetPaletteEXT) (GLuint *);
 
 static float vid_gamma = 1.0;
 
-bool is8bit = false;
-bool isPermedia = false;
-bool gl_mtexable = false;
+bool        is8bit = false;
+bool        isPermedia = false;
+bool        gl_mtexable = false;
 
 XF86VidModeModeInfo** GetVideoModes()
 {
