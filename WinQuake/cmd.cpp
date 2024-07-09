@@ -294,7 +294,7 @@ void CCommand::Cmd_Exec_f (void)
 	}
 
 	mark = g_MemCache->Hunk_LowMark ();
-	f = COM_LoadHunkFile<char> (g_pCmds->Cmd_Argv(1), NULL);
+    f = COM_LoadHunkFile_FStream<char> (g_pCmds->Cmd_Argv(1), NULL);
 	if (!f)
 	{
 		Con_Printf ("couldn't exec %s\n", g_pCmds->Cmd_Argv(1));

@@ -215,23 +215,23 @@ Writes key bindings and archived cvars to config.cfg
 */
 void CQuakeHost::Host_WriteConfiguration (void)
 {
-	FILE	*f = nullptr;
+    cxxofstream	f(g_Common->va("%s/config.cfg", g_Common->com_gamedir));
 
 // dedicated servers initialize the host but don't parse and set the
 // config.cfg cvars
 	if (host_initialized && !isDedicated)
-	{
-		f = fopen (g_Common->va("%s/config.cfg", g_Common->com_gamedir), "w");
-		if (!f)
+    {
+        if (f.bad())
 		{
-			Con_Printf ("Couldn't write config.cfg.\n");
+            Con_Printf ("Couldn't write config.cfg.\n");
+            f.close();
 			return;
 		}
 		
 		Key_WriteBindings (f);
 		Cvar_WriteVariables (f);
 
-		fclose (f);
+        f.close();
 	}
 }
 
