@@ -44,10 +44,10 @@ static music_handler_t wanted_handlers[] =
 // Only support for OGG at the moment. There is no support for WAV due 
 // to its poor and numerous specifications (6/5/2024)
 //======================================================================
-void CBackgroundMusic::GetSongArtistAndName(const char* filename, uintptr_t* path_id, const char* ext, artistinfo_t artistinfo)
+void CBackgroundMusic::GetSongArtistAndName(const char* filename, uintptr_t* path_id, const char* ext, artistinfo_t& artistinfo)
 {
-	FILE* f = nullptr;
-	int size = g_Common->COM_FOpenFile(filename, &f, path_id);
+    cxxifstream f;
+	int size = g_Common->COM_FOpenFile_FStream(filename, &f, path_id);
 
 	if (size == -1)
 	{
@@ -57,59 +57,36 @@ void CBackgroundMusic::GetSongArtistAndName(const char* filename, uintptr_t* pat
 
 	if (!Q_strncmp(ext, "ogg", 3))
 	{
-		char substr[2048] = {};
-		char songname[2048] = {};
-		char artist[2048] = {};
+        char song[256] = {};
+        char artist[256] = {};
 
-		int lastpos = OGG_SONG_NAME_FILEPOS;
+        size_t len = 0;
 
-		while (1)
-		{
-			fseek(f, lastpos, SEEK_SET);
-			fscanf(f, "%s", substr);
-			rewind(f);
-			
-			if (!substr[0])
-				break;
-			
-			char songtitlebuf[256] = {};
+        size_t lastpos = OGG_SONG_NAME_FILEPOS;
 
-            sscanf(substr, "%[A-z]", songtitlebuf);
+        f.seekg(lastpos, f.beg);
 
-            strncat(songname, songtitlebuf, strlen(songname));
-            strncat(songname, " ", sizeof(char));
+        f.getline(song, sizeof(song), '\0');
 
-			lastpos += Q_strlen(substr) + 1;
-		}
-
-		if (Q_strlen(songname) == 0)
+        if (Q_strlen(song) == 0)
 		{
 			Con_Printf("No song name found for track %s\n", filename);
 		}
 		else
 		{
-			songname[Q_strlen(songname) + 1] = '\0';
-			songname[Q_strlen(songname) - 1] = '\0';
-			songname[Q_strlen(songname)] = '\0';
-			artistinfo.song = songname;
+            song[Q_strlen(song) + 1] = '\0';
+            song[Q_strlen(song) - 1] = '\0';
+            song[Q_strlen(song)] = '\0';
+            Q_strncpy(artistinfo.song, song, Q_strlen(song));
 		}
 
-		while (1)
-		{
-			fseek(f, lastpos + 9, SEEK_SET);
-			fscanf(f, "%s", substr);
-			rewind(f);
+        lastpos += Q_strlen(song);
 
-			if (!substr[0])
-				break;
 
-			Q_strcat(artist, substr);
-			Q_strcat(artist, " ");
+        f.seekg(lastpos + 11, f.beg);
+        f.getline(artist, sizeof(artist), '\0');
 
-			lastpos += Q_strlen(substr) + 1;
-		}
-
-		if (Q_strlen(artist) == 0)
+        if (Q_strlen(artist) == 0)
 		{
 			Con_Printf("No artist found for track %s\n", filename);
 		}
@@ -117,11 +94,12 @@ void CBackgroundMusic::GetSongArtistAndName(const char* filename, uintptr_t* pat
 		{
 			artist[Q_strlen(artist) - 1] = '\0';
 			artist[Q_strlen(artist)] = '\0';
-			artistinfo.band = artist;
+            Q_strncpy(artistinfo.band, artist, Q_strlen(artist));
 		}
-	}
 
-    fclose(f);
+    }
+
+    f.close();
 }
 
 void CBackgroundMusic::BGM_Play_f(void)

@@ -25,8 +25,8 @@ typedef struct music_handler_s
 
 typedef struct artistinfo_s
 {
-	const char* band;
-	const char* song;
+    char band[256];
+	char song[256];
 } artistinfo_t;
 
 class CBackgroundMusic
@@ -65,7 +65,7 @@ public:
 	static void BGM_Stop_f(void);
 	static void BGM_Jump_f(void);
 
-    void GetSongArtistAndName(const char* filename, uintptr_t* path_id, const char* ext, artistinfo_t artistinfo);
+    void GetSongArtistAndName(const char* filename, uintptr_t* path_id, const char* ext, artistinfo_t& artistinfo);
 
 	static bool		bgmloop;
 
