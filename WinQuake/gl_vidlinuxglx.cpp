@@ -275,7 +275,7 @@ static Cursor CreateNullCursor(Display *display, Window root)
 static void install_grabs(void)
 {
 
-// inviso cursor
+    // inviso cursor
 	XDefineCursor(dpy, win, CreateNullCursor(dpy, win));
 
 	XGrabPointer(dpy, win,
