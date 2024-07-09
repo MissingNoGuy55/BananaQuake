@@ -28,7 +28,6 @@
 *.suo
 
 /WinQuake/progs.dat
-/WinQuake/id1/*
 #/WinQuake/.vs
 /WinQuake/glew
 #/WinQuake/release_gl
@@ -46,12 +45,6 @@
 #/tools/qcc/x64
 #/tools/.vs
 #/tools/qcc/.vs
-/WinQuake/scitech-mgl/*
 /WinQuake/build/*
-/WinQuake/svgalib/*
-/WinQuake/tracy/*
-/WinQuake/vorbis-svn/*
-/WinQuake/7z/*
-/WinQuake/autosave/*
 /WinQuake/build
 /tools/qutils/build
