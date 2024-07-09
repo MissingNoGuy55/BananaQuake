@@ -137,6 +137,21 @@ DO_O_CC=$(CC) $(BASE_CPPFLAGS) -O $(CPPFLAGS) -o $@ -c $<
 DO_AS=$(CC) $(BASE_CPPFLAGS) $(CPPFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
 DO_GL_AS=$(CC) $(BASE_CPPFLAGS) $(CPPFLAGS) $(GLCPPFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
 
+MAKEFILE_SDL2 ?= $(shell find -O3 ./sdl2 -maxdepth 1 -name Makefile -print)
+MAKEFILE_SDL_IMAGE ?= $(shell find -O3 ./SDL_image -maxdepth 1 -name Makefile -print)
+
+SDL2_CONFIG=
+SDL_IMAGE_CONFIG=
+
+# Missi: check if any makefiles were found so we only have to configure once per installation (7/8/2024)
+#
+ifeq ($(MAKEFILE_SDL2),)	# Missi: check for empty string (7/8/2024)
+	SDL2_CONFIG += (cd ./sdl2 && ./configure --prefix=${HOME}/sdl2 && cd ../)
+endif
+ifeq ($(MAKEFILE_SDL_IMAGE),)	# Missi: check for empty string (7/8/2024)
+	SDL_IMAGE_CONFIG += (cd ./SDL_image && ./configure --prefix=${HOME}/SDL_image && cd ../)
+endif
+
 #############################################################################
 # SETUP AND BUILD
 #############################################################################
@@ -151,10 +166,10 @@ build_debug:
 		# $(BUILD_DEBUG_DIR)/squake \
 		$(BUILD_DEBUG_DIR)/unixded \
 		$(BUILD_DEBUG_DIR)/x11
-	(cd ./sdl2 && ./configure --prefix=${HOME}/sdl2 && cd ../)
+	$(SDL2_CONFIG)
 	$(MAKE) -C ./sdl2
 	$(MAKE) -C ./sdl2 install
-	(cd ./SDL_image && ./configure --prefix=${HOME}/SDL_image && cd ../)
+	$(SDL_IMAGE_CONFIG)
 	$(MAKE) -C ./SDL_image
 	$(MAKE) -C ./SDL_image install
 	$(MAKE) targets BUILDDIR=$(BUILD_DEBUG_DIR) CPPFLAGS="$(DEBUG_CPPFLAGS)"
@@ -167,10 +182,10 @@ build_release:
 		# $(BUILD_RELEASE_DIR)/squake \
 		$(BUILD_RELEASE_DIR)/unixded \
 		$(BUILD_RELEASE_DIR)/x11
-	(cd ./sdl2 && ./configure --prefix=${HOME}/sdl2 && cd ../)
+	$(SDL2_CONFIG)
 	$(MAKE) -C ./sdl2
 	$(MAKE) -C ./sdl2 install
-	(cd ./SDL_image && ./configure --prefix=${HOME}/SDL_image && cd ../)
+	$(SDL_IMAGE_CONFIG)
 	$(MAKE) -C ./SDL_image
 	$(MAKE) -C ./SDL_image install
 	$(MAKE) targets BUILDDIR=$(BUILD_RELEASE_DIR) CPPFLAGS="$(RELEASE_CPPFLAGS)"
