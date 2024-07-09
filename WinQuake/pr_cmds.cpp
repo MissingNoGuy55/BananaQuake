@@ -519,7 +519,7 @@ void PF_ambientsound (void)
 	vol = G_FLOAT(OFS_PARM2);
 	attenuation = G_FLOAT(OFS_PARM3);
 
-	const char** precache = (const char**)sv->GetSoundPrecache();
+    const char** precache = sv->GetSoundPrecache();
 	
 // check to see if samp was properly precached
 	for (soundnum=0, check = precache ; *check ; check++, soundnum++)
@@ -1092,7 +1092,7 @@ void PF_precache_sound (void)
 	
 	for (i=0 ; i<MAX_SOUNDS ; i++)
 	{
-		if (!sv->GetSoundPrecache()[i])
+        if (!sv->GetSoundPrecacheEntry(i))
 		{
 			sv->SetSoundPrecacheEntry(i, s);
 			return;
@@ -1117,13 +1117,13 @@ static void PF_precache_model (void)
 
 	for (i = 0; i < MAX_MODELS; i++)
 	{
-		if (!sv->GetModelPrecache()[i])
+        if (!sv->GetModelPrecacheEntry(i))
 		{
-			sv->GetModelPrecache()[i] = s;
-			sv->GetModels()[i] = Mod_ForName(s, true);
+            sv->SetModelPrecacheEntry(i, s);
+            sv->SetModelEntry(i, Mod_ForName(s, true));
 			return;
 		}
-		if (!strcmp(sv->GetModelPrecache()[i], s))
+        if (!strcmp(sv->GetModelPrecacheEntry(i), s))
 			return;
 	}
 	PR_RunError("PF_precache_model: overflow");

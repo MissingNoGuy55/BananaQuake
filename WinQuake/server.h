@@ -363,7 +363,7 @@ public:
 	const bool	IsServerPaused() const { return paused; }
 	void		SetServerPaused(bool bNewVal) { paused = bNewVal; }
 
-	const edict_t*	GetServerEdicts() const { return edicts; }
+    edict_t*	GetServerEdicts() { return edicts; }
 	const double 	GetServerTime() const { return time; }
 
 	void		SetServerTime(double dNewVal) { time = dNewVal; }
@@ -372,12 +372,16 @@ public:
 	const char*	GetMapFileName() const { return modelname; }
 
 	const int	GetNumEdicts() const { return num_edicts; }
+    edict_t*    GetEdict(int pos) { return &edicts[pos]; }
 	const int	GetMaxEdicts() const { return max_edicts; }
 
-	const char** GetModelPrecache() { return model_precache; }
-	const char** GetSoundPrecache() { return sound_precache; }
+    const char** GetModelPrecache() { return model_precache; }
+    const char** GetSoundPrecache() { return sound_precache; }
 
-	const char* GetSoundPrecacheEntry(int pos) { return sound_precache[pos]; }
+    const char* GetModelPrecacheEntry(int pos) const { return model_precache[pos]; }
+    void 		SetModelPrecacheEntry(int pos, const char* pszModel) { model_precache[pos] = pszModel; }
+
+    const char* GetSoundPrecacheEntry(int pos) const { return sound_precache[pos]; }
 	void 		SetSoundPrecacheEntry(int pos, const char* pszSound) { sound_precache[pos] = pszSound; }
 
 	const char** 	GetLightStyles() { return lightstyles; }
@@ -388,6 +392,9 @@ public:
 	struct model_s** GetModels() { return models; }
 	struct model_s* GetWorldModel() { return worldmodel; }
 
+    struct model_s* GetModelEntry(int pos) const { return models[pos]; }
+    void        SetModelEntry(int pos, struct model_s* pModel) { models[pos] = pModel; }
+
 	void 		SetNumEdicts(int iNewVal) { num_edicts = iNewVal; }
 	void 		IncrementEdicts() { num_edicts++; }
 
@@ -396,8 +403,8 @@ public:
 
 	sizebuf_t&	GetSignOnBuffer() { return signon; }
 	const void*	GetSignOnBufferData() { return signon.data; }
-	int			GetSignOnBufferCursize() { return signon.cursize; }
-	sizebuf_t&	GetReliableDatagramBuffer() { return reliable_datagram; }
+    const int   GetSignOnBufferCursize() const { return signon.cursize; }
+    sizebuf_t&	GetReliableDatagramBuffer() { return reliable_datagram; }
 
 	sizebuf_t&	GetDatagramBuffer() { return datagram; }
 

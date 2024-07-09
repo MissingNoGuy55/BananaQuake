@@ -199,16 +199,16 @@ void CQuakeServer::SV_StartSound (edict_t *entity, int channel, const char *samp
 	if (channel < 0 || channel > 7)
 		Sys_Error ("SV_StartSound: channel = %i", channel);
 
-	if (sv->datagram.cursize > MAX_DATAGRAM-16)
+	if (datagram.cursize > MAX_DATAGRAM-16)
 		return;	
 
 // find precache number for sound
     for (sound_num=1 ; sound_num<MAX_SOUNDS
-        && sv->sound_precache[sound_num] ; sound_num++)
-        if (!strcmp(sample, sv->sound_precache[sound_num]))
+        && sound_precache[sound_num] ; sound_num++)
+        if (!strcmp(sample, sound_precache[sound_num]))
             break;
     
-    if ( sound_num == MAX_SOUNDS || !sv->sound_precache[sound_num] )
+    if ( sound_num == MAX_SOUNDS || !sound_precache[sound_num] )
     {
         Con_Printf ("SV_StartSound: %s not precacheed\n", sample);
         return;
@@ -225,16 +225,16 @@ void CQuakeServer::SV_StartSound (edict_t *entity, int channel, const char *samp
 		field_mask |= SND_ATTENUATION;
 
 // directed messages go only to the entity the are targeted on
-	MSG_WriteByte (&sv->datagram, svc_sound);
-	MSG_WriteByte (&sv->datagram, field_mask);
+	MSG_WriteByte (&datagram, svc_sound);
+	MSG_WriteByte (&datagram, field_mask);
 	if (field_mask & SND_VOLUME)
-		MSG_WriteByte (&sv->datagram, vol);
+		MSG_WriteByte (&datagram, vol);
 	if (field_mask & SND_ATTENUATION)
-		MSG_WriteByte (&sv->datagram, attenuation*64);
-	MSG_WriteShort (&sv->datagram, channel);
-	MSG_WriteByte (&sv->datagram, sound_num);
+		MSG_WriteByte (&datagram, attenuation*64);
+	MSG_WriteShort (&datagram, channel);
+	MSG_WriteByte (&datagram, sound_num);
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord (&sv->datagram, entity->v.origin[i] + 0.5 * (entity->v.mins[i] + entity->v.maxs[i]));
+		MSG_WriteCoord (&datagram, entity->v.origin[i] + 0.5 * (entity->v.mins[i] + entity->v.maxs[i]));
 }           
 
 /*

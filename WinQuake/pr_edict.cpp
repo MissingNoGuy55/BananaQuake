@@ -1235,6 +1235,64 @@ void PR_LoadProgs (void)
 		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
 }
 
+/*
+===============
+ED_Entfire_f
+
+Missi: ent_fire command similar to the one in Source, but different
+due to how Quake interprets targets (7/5/2024)
+===============
+*/
+
+static void ED_EntFire_f()
+{
+    if (g_pCmds->Cmd_Argc() < 2)
+    {
+        Con_Printf("usage: ent_fire <targetname> <targetname2> <targetname3>...\n");
+        return;
+    }
+
+    const char* targetname = nullptr;
+
+    for (int i = 1; i < g_pCmds->Cmd_Argc(); i++)
+    {
+        for (int j = 1; j < sv->GetNumEdicts(); j++)    // Missi: skip worldspawn (7/5/2024)
+        {
+            edict_t* ed = EDICT_NUM(j);
+
+            if (!ed)
+                break;
+
+            string_t tgtname = ed->v.targetname;
+
+            targetname = PR_GetString(tgtname);
+
+            if (!Q_strcmp(targetname, g_pCmds->Cmd_Argv(i)))
+            {
+                if (!ed->v.use)
+                    break;
+
+                int old_self = pr_global_struct->self;
+                int old_other = pr_global_struct->other;
+
+                pr_global_struct->self = EDICT_TO_PROG(ed);
+                pr_global_struct->time = sv->GetServerTime();
+                PR_ExecuteProgram (ed->v.use);
+
+                pr_global_struct->self = old_self;
+
+                //PR_ExecuteProgram(ed->v.use);     // Missi: execute the "use" function
+                Con_Printf("Firing entity \"%s\"\n", targetname);
+            }
+        }
+
+        if (!targetname)
+        {
+            Con_Printf("No entity named %s found", g_pCmds->Cmd_Argv(i));
+            break;
+        }
+    }
+}
 
 /*
 ===============
@@ -1247,6 +1305,7 @@ void PR_Init (void)
 	g_pCmds->Cmd_AddCommand ("edicts", ED_PrintEdicts);
 	g_pCmds->Cmd_AddCommand ("edictcount", ED_Count);
 	g_pCmds->Cmd_AddCommand ("profile", PR_Profile_f);
+    g_pCmds->Cmd_AddCommand ("ent_fire", ED_EntFire_f, CVAR_CHEAT);
 	Cvar_RegisterVariable (&nomonsters);
 	Cvar_RegisterVariable (&gamecfg);
 	Cvar_RegisterVariable (&scratch1);
