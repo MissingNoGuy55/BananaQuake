@@ -1,24 +1,16 @@
 #pragma once
 
-struct tgaheader_t
-{
-    unsigned char idlength;
-    unsigned char colortype;
-    unsigned char imagetype;
+typedef struct _TargaHeader {
+    unsigned char 	id_length, colormap_type, image_type;
+    unsigned short	colormap_index, colormap_length;
+    unsigned char	colormap_size;
+    unsigned short	x_origin, y_origin, width, height;
+    unsigned char	pixel_size, attributes;
+} TargaHeader;
 
-    unsigned short colormap_first_entry;
-    unsigned short colormap_length;
-    unsigned char colormap_entrysize;
+constexpr size_t TARGA_HEADER_SIZE = sizeof(TargaHeader);
 
-    unsigned short x_origin;
-    unsigned short y_origin;
-    unsigned short width;
-    unsigned short height;
-    unsigned char pixel_depth;
-    unsigned char pixel_descriptor;
-};
-
-constexpr size_t TARGA_HEADER_SIZE = sizeof(tgaheader_t);
+extern TargaHeader  targa_header;
 
 extern byte* LoadTGA(FILE* fin);
 extern byte* LoadPCX(FILE* f);
