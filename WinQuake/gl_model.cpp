@@ -223,7 +223,7 @@ model_t *Mod_ForName (const char *name, bool crash)
 /*
 ===============================================================================
 
-					BRUSHMODEL LOADING
+                    BRUSHMODEL LOADING
 
 ===============================================================================
 */
@@ -243,9 +243,11 @@ void Mod_LoadTextures (lump_t *l)
 
 	int		i, j, pixels, num, max, altmax;
 	miptex_t	*mt;
+    goldsrc_miptex_t    *gmt;
+    byte*       gmt_data;
     texture_t	*tx, *tx2;
 	texture_t	*anims[10];
-	texture_t	*altanims[10];
+    texture_t	*altanims[10];
     uintptr_t		offset;
 	dmiptexlump_t *m;
 
@@ -255,6 +257,7 @@ void Mod_LoadTextures (lump_t *l)
 		return;
 	}
 	m = (dmiptexlump_t *)(mod_base + l->fileofs);
+    goldsrc_miptex_t* goldsrcpic = nullptr;
 	
 	m->nummiptex = LittleLong (m->nummiptex);
 	
@@ -268,37 +271,77 @@ void Mod_LoadTextures (lump_t *l)
             m->dataofs[i] = LittleLong(m->dataofs[i]);
             if (m->dataofs[i] == -1)
                 continue;
-            mt = (miptex_t *)((byte *)m + m->dataofs[i]);
-            mt->width = LittleLong (mt->width);
-            mt->height = LittleLong (mt->height);
-            for (j=0 ; j<MIPLEVELS ; j++)
-                mt->offsets[j] = LittleLong (mt->offsets[j]);
+            gmt = (goldsrc_miptex_t *)((byte *)m + m->dataofs[i]);
+            gmt->width = LittleLong (gmt->width);
+            gmt->height = LittleLong (gmt->height);
 
-            if ( (mt->width & 15) || (mt->height & 15) )
-                Sys_Error ("Texture %s is not 16 aligned", mt->name);
-            pixels = mt->width*mt->height;
-            tx = g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) +pixels, loadname );
+			int pos = W_GetExternalTextureWadFile(gmt->name);
+			lumpinfo_t* lumpinfo = W_GetExternalTextureLumpInfo(gmt->name);
+
+			if (!lumpinfo)
+				return;
+
+            for (j=0 ; j<MIPLEVELS ; j++)
+                gmt->offsets[j] = LittleLong (gmt->offsets[j]);
+
+            if ( (gmt->width & 15) || (gmt->height & 15) )
+                Sys_Error ("Texture %s is not 16 aligned", gmt->name);
+
+            pixels = gmt->width*gmt->height;
+            tx = g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) + pixels, loadname );
             loadmodel->textures[i] = tx;
 
-            memcpy (tx->name, mt->name, sizeof(tx->name));
-            tx->width = mt->width;
-            tx->height = mt->height;
+            memcpy (tx->name, gmt->name, sizeof(tx->name));
+            tx->width = gmt->width;
+            tx->height = gmt->height;
             for (j=0 ; j<MIPLEVELS ; j++)
-                tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
+                tx->offsets[j] = gmt->offsets[j] + sizeof(texture_t) - sizeof(goldsrc_miptex_t);
 
             // the pixels immediately follow the structures
-            memcpy ( tx+1, mt+1, pixels);
+            memcpy ( tx+1, gmt+1, pixels);
 
-            g_GLRenderer->SetUsesQuake2Skybox(false);
+            g_GLRenderer->SetUsesQuake2Skybox(true);
 
-            if (!Q_strncmp(mt->name,"sky",3))
-                g_GLRenderer->R_InitSky (tx);
+            if (!Q_strncmp(gmt->name,"sky",3))
+                g_GLRenderer->R_InitSky (tx, NULL);
             else
             {
-                offset = (src_offset_t)(mt + 1) - (src_offset_t)mod_base;
+                offset = (src_offset_t)(gmt+1) - (src_offset_t)mod_base;
 
                 //texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
-                tx->gltexture = g_GLRenderer->GL_LoadTexture (loadmodel, mt->name, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), offset, TEXPREF_NONE);
+
+                int filepos = lumpinfo->filepos;
+
+                goldsrc_miptex_t* miptex = (goldsrc_miptex_t*)((byte*)(wad_base[pos] + (filepos)));
+
+				if (miptex->offsets[0] == 0 &&
+					miptex->offsets[1] == 0 &&
+					miptex->offsets[2] == 0 &&
+					miptex->offsets[3] == 0)
+				{
+					Con_DPrintf("Test\n");
+				}
+
+                goldsrc_wad_palette_t* basepal = (goldsrc_wad_palette_t*)((byte*)(((wad_base[pos] + filepos) + gmt->offsets[3] + ((gmt->offsets[3] - gmt->offsets[2]) / 4))) + 2);
+
+                goldsrc_wad_palette_rgba_t newpal = {};
+
+                for (int palpos = 0; palpos < 256; palpos++)
+                {
+                    newpal.colors[palpos][0] = (basepal->colors[palpos][0]);
+                    newpal.colors[palpos][1] = (basepal->colors[palpos][1]);
+                    newpal.colors[palpos][2] = (basepal->colors[palpos][2]);
+                    newpal.colors[palpos][3] = 0;
+                }
+
+				int alphaflag = 0;
+
+				if (tx->name[0] == '{')
+				{
+					alphaflag |= TEXPREF_ALPHA;
+				}
+
+                tx->gltexture = g_GLRenderer->GL_LoadTexture (loadmodel, gmt->name, tx->width, tx->height, SRC_INDEXED_WAD, (byte*)(miptex+1), offset, TEXPREF_MIPMAP | alphaflag, (byte*)&newpal);
                 //texture_mode = GL_LINEAR;
             }
         }
@@ -333,7 +376,7 @@ void Mod_LoadTextures (lump_t *l)
             g_GLRenderer->SetUsesQuake2Skybox(false);
 
             if (!Q_strncmp(mt->name,"sky",3))
-                g_GLRenderer->R_InitSky (tx);
+                g_GLRenderer->R_InitSky (tx, GFX_WAD);
             else
             {
                 offset = (src_offset_t)(mt + 1) - (src_offset_t)mod_base;

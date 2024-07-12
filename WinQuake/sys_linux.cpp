@@ -164,6 +164,8 @@ void Sys_Error (const char *error, ...)
     vsprintf (string,error,argptr);
     va_end (argptr);
 	fprintf(stderr, "Error: %s\n", string);
+
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", string, NULL);
 	host->Host_Shutdown ();
     exit (1);
 

@@ -1335,8 +1335,8 @@ Missi: made this buffer-size safe (4/30/2023)
 */
 const char* CCommon::va(const char *format, ...)
 {
-	va_list			argptr;
-	static char		string[1024];
+    va_list			argptr = {};
+    static char		string[1024] = {};
 	
 	va_start (argptr, format);
 	vsnprintf (string, sizeof(string), format,argptr);

@@ -175,6 +175,7 @@ constexpr unsigned int TEXPREF_WARPIMAGE	= 0x0800;	// resize this texture when w
 
 extern unsigned short	d_8to16table[256];
 extern unsigned int		d_8to24table[256];
+extern unsigned int		d_8to24table_wad[MAX_MAP_TEXTURES][256];
 extern unsigned int		d_8to24table_fbright[256];
 extern unsigned int		d_8to24table_fbright_fence[256];
 extern unsigned int		d_8to24table_nobright[256];
@@ -221,10 +222,19 @@ public:
 	unsigned int		checksum;
 	unsigned int		flags;
 
+	byte				palette[256][3];
+
 private:
 	CGLTexture(const CGLTexture& obj);
 
 };
+
+#pragma pack(push, 1)
+struct int24
+{
+	unsigned int _num : 24;
+};
+#pragma pack(pop)
 
 class CGLRenderer : public CCoreRenderer
 {
@@ -245,11 +255,17 @@ public:
 
 	int GL_SafeTextureSize(int s);
 
+	unsigned short* GL_8to16(byte* in, int pixels, unsigned short* usepal);
+
+	int24* GL_8to24(byte* in, int pixels, int24* usepal);
+
 	static unsigned* GL_8to32(byte* in, int pixels, unsigned int* usepal);
 
 	int GL_PadConditional(int s);
 
-	CQuakePic* Draw_PicFromWad(const char* name);
+    CQuakePic* Draw_PicFromWad(const char* name, const char* wadname);
+
+	CQuakePic* Draw_PicFromWad_GoldSrc(const char* name, const char* wadname);
 
 	CQuakePic* Draw_CachePic(const char* path);
 
@@ -296,7 +312,7 @@ public:
 
 	void GL_Resample8BitTexture(byte* in, int inwidth, int inheight, byte* out, int outwidth, int outheight);
 	void GL_SelectTexture(GLenum target);
-	CGLTexture* GL_LoadPicTexture(CQuakePic* pic);
+    CGLTexture* GL_LoadPicTexture(CQuakePic* pic, const char* wadName);
 	byte* GL_PadImageW(byte* in, int width, int height, byte padbyte);
 	byte* GL_PadImageH(byte* in, int width, int height, byte padbyte);
 	void GL_PadEdgeFixW(byte* data, int width, int height);
@@ -304,9 +320,10 @@ public:
 
 	void GL_LoadImage32(CGLTexture* glt, unsigned* data);
 	void GL_LoadImage8(CGLTexture* glt, byte* data);
+	void GL_LoadImage8_WAD(CGLTexture* glt, byte* data, unsigned* palette);
 	void GL_LoadLightmap(CGLTexture* glt, byte* data);
 
-	CGLTexture* GL_LoadTexture(model_t* owner, const char* identifier, int width, int height, enum srcformat_t format, byte* data, uintptr_t offset, int flags = TEXPREF_NONE);
+    CGLTexture* GL_LoadTexture(model_t* owner, const char* identifier, int width, int height, enum srcformat_t format, byte* data, uintptr_t offset, int flags = TEXPREF_NONE, byte* palette = nullptr);
 
 	void GL_SetCanvas(canvastype newcanvas);
 
@@ -350,7 +367,7 @@ public:
 	void R_DrawViewModel(void);
 	void R_RecursiveWorldNode(mnode_t* node);
 	void R_RenderBrushPoly(msurface_t* fa);
-	void R_InitSky(texture_t* mt);
+    void R_InitSky(texture_t* mt, const char* wadName);
 	void R_AddDynamicLights(msurface_t* surf);
 	void R_BuildLightMap(msurface_t* surf, byte* dest, int stride);
 	void R_BlendLightmaps(void);

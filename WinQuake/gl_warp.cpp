@@ -729,13 +729,17 @@ A sky texture is 256*128, with the right side being a masked overlay
 Missi: revised to allow higher-quality skies
 ==============
 */
-void CGLRenderer::R_InitSky (texture_t *mt)
+void CGLRenderer::R_InitSky (texture_t *mt, const char* wadFile)
 {
 	int			i, j, p;
 	byte		*src;
+    int wad = -1;
 
     if (skyTrans)
         delete[] skyTrans;
+
+    if (wadFile)
+        wad = W_GetLoadedWadFile(wadFile);
 
     skyTrans = new unsigned[mt->height*mt->height];
 	unsigned	transpix;
@@ -786,7 +790,7 @@ void CGLRenderer::R_InitSky (texture_t *mt)
 
 	uintptr_t offset;
 
-	offset = (uintptr_t)(mt + 1) - (uintptr_t)wad_base;	// Missi: Come back to this later (12/4/2022)
+    offset = (uintptr_t)(mt + 1) - (uintptr_t)wad;	// Missi: Come back to this later (12/4/2022)
 
 	if (!solidskytexture)
         solidskytexture = g_GLRenderer->GL_LoadTexture(NULL, "skysolid", height, height, SRC_INDEXED, (byte*)&skyTrans, offset, TEXPREF_NOPICMIP | TEXPREF_ALPHA); // &g_GLRenderer->gltextures[texture_extension_number-1]; // ++];

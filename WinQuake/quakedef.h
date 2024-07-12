@@ -65,6 +65,7 @@ typedef unsigned char byte;
 #endif
 
 #include <cmath>
+#include <cstdint>
 #include <stdint.h>
 #include <string.h>
 #include <stdarg.h>

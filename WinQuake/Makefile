@@ -152,6 +152,9 @@ ifeq ($(MAKEFILE_SDL_IMAGE),)	# Missi: check for empty string (7/8/2024)
 	SDL_IMAGE_CONFIG += (cd ./SDL_image && ./configure --prefix=${HOME}/SDL_image && cd ../)
 endif
 
+COPY_FILE_DEBUG=cp "./$(BUILD_DEBUG_DIR)/bin/bananaquakeopengl" "./"
+COPY_FILE_RELEASE=cp "./$(BUILD_RELEASE_DIR)/bin/bananaquakeopengl" "./"
+
 #############################################################################
 # SETUP AND BUILD
 #############################################################################
@@ -173,7 +176,7 @@ build_debug:
 	$(MAKE) -C ./SDL_image
 	$(MAKE) -C ./SDL_image install
 	$(MAKE) targets BUILDDIR=$(BUILD_DEBUG_DIR) CPPFLAGS="$(DEBUG_CPPFLAGS)"
-	$(shell cp "./$(BUILD_DEBUG_DIR)/bin/bananaquakeopengl" "./")
+	$(COPY_FILE_DEBUG)
 
 build_release:
 	@-mkdir $(BUILD_RELEASE_DIR) \
@@ -189,7 +192,7 @@ build_release:
 	$(MAKE) -C ./SDL_image
 	$(MAKE) -C ./SDL_image install
 	$(MAKE) targets BUILDDIR=$(BUILD_RELEASE_DIR) CPPFLAGS="$(RELEASE_CPPFLAGS)"
-	$(shell cp "./$(BUILD_RELEASE_DIR)/bin/bananaquakeopengl" "./")
+	$(COPY_FILE_RELEASE)
 
 all: build_debug build_release
 

@@ -888,7 +888,8 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	//Host_InitVCR (parms);
 	g_Common->COM_Init (parms.basedir);
 	Host_InitLocal ();
-	W_LoadWadFile ("gfx.wad");
+	W_LoadWadFile (GFX_WAD);
+    W_LoadWadFile_GoldSrc("halflife.wad");
 	if (cls.state != ca_dedicated)
 	{
 		Key_Init ();

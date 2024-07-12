@@ -119,11 +119,27 @@ typedef struct
 #define	MIPLEVELS	4
 typedef struct miptex_s
 {
-	char		name[16];
-	unsigned	width, height;
-	unsigned	offsets[MIPLEVELS];		// four mip maps stored
+    char            name[16];
+    unsigned int	width, height;
+    unsigned int	offsets[MIPLEVELS];		// four mip maps stored
 } miptex_t;
 
+typedef struct goldsrc_wad_palette_s
+{
+    uint8_t colors[256][3];
+} goldsrc_wad_palette_t;
+
+typedef struct goldsrc_wad_palette_rgba_s
+{
+    uint8_t colors[256][4];
+} goldsrc_wad_palette_rgba_t;
+
+typedef struct goldsrc_miptex_s
+{
+    char					name[16];
+    unsigned int			width, height;
+    unsigned int			offsets[MIPLEVELS];		// four mip maps stored
+} goldsrc_miptex_t;
 
 typedef struct
 {

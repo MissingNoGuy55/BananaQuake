@@ -44,7 +44,8 @@ enum srcformat_t
 	SRC_NONE,
 	SRC_INDEXED,
 	SRC_LIGHTMAP,
-	SRC_RGBA
+	SRC_RGBA,
+	SRC_INDEXED_WAD
 };
 
 struct CQuakePic
@@ -55,15 +56,8 @@ public:
 	CQuakePic(byte& mem);
 	~CQuakePic() { datavec.Clear(); }
 
-	/*CQuakePic& operator=(void* src);
-	CQuakePic& operator=(const void* src);*/
-
 	int			width;
 	int			height;
-	//byte		data[1];		// Missi: Array size has been treated as a constant expression in C++ for a long time. 
-								// While C variable-length arrays are supported in C++17 and beyond, they're extremely 
-								// susceptible to corruption and overruns from other memory.
-								// See the comment in CGLRenderer::Draw_PicFromWad (12/8/2022)
     CQVector<byte>	datavec;
 
 private:
@@ -87,13 +81,7 @@ public:
 #define MAX_WAD_TEXWIDTH 4096
 #define MAX_WAD_TEXHEIGHT 4096
 
-typedef struct qpicbuf_goldsrc_s
-{
-    int width, height;
-    char data[MAX_WAD_TEXHEIGHT][MAX_WAD_TEXWIDTH]; //Image is stored as 8-bit numbers of colors in palette
-    short colors_used; //Number of colors in palette (can't be more than 256)
-    char lbmpalette[256][3]; //8-bit RGB palette data
-} qpicbuf_goldsrc_t;
+constexpr const char* GFX_WAD   =   "gfx.wad";
 
 typedef struct qpicbuf_s
 {
@@ -106,7 +94,7 @@ typedef struct
 {
 	char		identification[4];		// should be WAD2 or 2DAW
 	int			numlumps;
-	int			infotableofs;
+    int			infotableofs;
 } wadinfo_t;
 
 typedef struct
@@ -115,64 +103,123 @@ typedef struct
 	int			disksize;
 	int			size;					// uncompressed
 	char		type;
-	char		compression;
+	bool		compression;
 	char		pad1, pad2;
 	char		name[16];				// must be null terminated
 } lumpinfo_t;
 
-#define MAXTEXTURENAME 16
-
-typedef struct goldsrc_lumpinfo_s
+typedef struct goldsrc_qpic_s
 {
-   int nFilePos;                    // offset in WAD
-   int nDiskSize;                   // size in file
-   int nSize;                       // uncompressed size
-   char nType;                      // type of entry
-   bool bCompression;               // 0 if none
-   short nDummy;                    // not used
-   char szName[MAXTEXTURENAME];     // must be null terminated
-} goldsrc_lumpinfo_t;
+    int width, height;
+    byte* data; //Image is stored as 8-bit numbers of colors in palette
+    short colors_used; //Number of colors in palette (can't be more than 256)
+    byte lbmpalette[256][3]; //8-bit RGB palette data
+} goldsrc_qpic_t;
 
-extern	int			wad_numlumps;
-extern	lumpinfo_t	*wad_lumps;
-extern	byte	*wad_base;
+constexpr unsigned int      MAX_LOADED_WADS = 32;
 
-void	W_LoadWadFile (const char *filename);
-void    W_LoadWadFile_GoldSrc (const char *filename);
-void	W_CleanupName (const char *in, char *out);
-lumpinfo_t	*W_GetLumpinfo (const char *name);
+extern  wadinfo_t*          loaded_wads[MAX_LOADED_WADS];
+extern	int			        wad_numlumps[MAX_LOADED_WADS];
+extern	lumpinfo_t*         wad_lumps[MAX_LOADED_WADS];
+extern	byte*               wad_base[MAX_LOADED_WADS];
+extern	const char*         wad_names[MAX_LOADED_WADS];
+
+int                 W_GetLoadedWadFile(const char* filename);
+void	            W_LoadWadFile (const char *filename);
+void                W_LoadWadFile_GoldSrc (const char *filename);
+void	            W_CleanupName (const char *in, char *out);
+lumpinfo_t*         W_GetLumpinfo (const char *name, const char* wadname);
+lumpinfo_t*         W_GetLumpinfo_GoldSrc(const char* name, const char* wadname);
 
 template<typename T>
-T	*W_GetLumpName (const char *name);
+T* W_GetLumpName (const char *name, const char* wadname);
+
 template<typename T>
-T	*W_GetLumpNum (int num);
+T* W_GetLumpName_GoldSrc(const char* name, const char* wadname);
+
+template<typename T>
+T* W_GetLumpNum (const char* name, int num);
+
+template<typename T>
+T* W_GetExternalTexture (const char* name);
+
+int W_GetExternalTextureWadFile(const char* name);
+int W_GetExternalTextureLumpPos(const char* name);
+lumpinfo_t* W_GetExternalTextureLumpInfo(const char* name);
+goldsrc_qpic_t*  W_GetExternalQPic (const char* name);
 
 void	SwapPic(qpicbuf_t* pic);
+void    SwapPic_GoldSrc (goldsrc_qpic_t *pic);
 
 template<typename T>
-T* W_GetLumpName(const char* name)
+T* W_GetLumpName_GoldSrc(const char* name, const char* wadname)
 {
 	lumpinfo_t* lump;
 
-	lump = W_GetLumpinfo(name);
+	lump = W_GetLumpinfo_GoldSrc(name, wadname);
 
 	if (!lump)
 		return nullptr;
 
-	return (T*)(wad_base + lump->filepos);
+	int wad = W_GetLoadedWadFile(wadname);
+
+	return (T*)(wad_base[wad] + lump->filepos);
 }
 
 template<typename T>
-T* W_GetLumpNum(int num)
+T* W_GetLumpName(const char* name, const char* wadname)
+{
+	lumpinfo_t* lump = nullptr;
+
+    lump = W_GetLumpinfo(name, wadname);
+
+	if (!lump)
+		return nullptr;
+
+    int wad = W_GetLoadedWadFile(wadname);
+
+    return (T*)(wad_base[wad] + lump->filepos);
+}
+
+template<typename T>
+T* W_GetLumpNum(const char* name, int num)
 {
 	lumpinfo_t* lump;
 
-	if (num < 0 || num > wad_numlumps)
+    int wad = W_GetLoadedWadFile(name);
+
+    if (num < 0 || num > wad_numlumps[wad])
 		Sys_Error("W_GetLumpNum: bad number: %i", num);
 
-	lump = wad_lumps + num;
+    lump = wad_lumps[wad] + num;
 
-	return (T*)(wad_base + lump->filepos);
+    return (T*)(wad_base[wad] + lump->filepos);
+}
+
+template<typename T>
+T* W_GetExternalTexture (const char* name)
+{
+    for (int i = 0; i < MAX_LOADED_WADS; i++)
+    {
+        if (!wad_lumps[i])
+            continue;
+
+        lumpinfo_t* lump = wad_lumps[i];
+
+        while (lump->name[0])
+        {
+            if (lump && !Q_strcmp(lump->name, name))
+            {
+                return (T*)(wad_base[i] + lump->filepos);
+            }
+
+            lump++;
+        }
+    }
+
+    Con_Printf("Couldn't find texture %s\n", name);
+
+    return nullptr;
 }
 
 #endif

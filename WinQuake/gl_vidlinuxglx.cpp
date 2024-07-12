@@ -53,6 +53,7 @@ static cvar_t   x11_grab_mouse { "x11_grab_mouse", "1" };
 unsigned short	d_8to16table[256];
 unsigned int	d_8to24table[256];
 unsigned char	d_15to8table[65536];
+unsigned int	d_8to24table_wad[MAX_MAP_TEXTURES][256];
 
 cvar_t          vid_mode = {"vid_mode","0",false};
  

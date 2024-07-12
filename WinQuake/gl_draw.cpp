@@ -171,6 +171,32 @@ static glmode_t glmodes[] = {
 constexpr static int NUM_GLMODES = (int)(sizeof(glmodes)/sizeof(glmodes[0]));
 static int glmode_idx = NUM_GLMODES - 1;
 
+unsigned short* CGLRenderer::GL_8to16(byte* in, int pixels, unsigned short* usepal)
+{
+	int i;
+	unsigned short* out, * data;
+
+	out = data = g_MemCache->Hunk_Alloc<unsigned short>(pixels * 4);
+
+	for (i = 0; i < pixels; i++)
+		*out++ = usepal[*in++];
+
+	return data;
+}
+
+int24* CGLRenderer::GL_8to24(byte* in, int pixels, int24* usepal)
+{
+	int i;
+	int24* out, * data;
+
+	out = data = g_MemCache->Hunk_Alloc<int24>(pixels * 4);
+
+	for (i = 0; i < pixels; i++)
+		*out++ = usepal[*in++];
+
+	return data;
+}
+
 unsigned* CGLRenderer::GL_8to32(byte* in, int pixels, unsigned int* usepal)
 {
 	int i;
@@ -409,14 +435,14 @@ int CGLRenderer::GL_PadConditional(int s)
 CGLRenderer::Draw_PicFromWad
 ===============
 */
-CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name)
+CQuakePic* CGLRenderer::Draw_PicFromWad(const char* name, const char* wadname)
 {
 	CQuakePic* p = NULL;
 	qpicbuf_t* pbuf = NULL;
 	COpenGLPic	gl;
 	uintptr_t offset;
 
-	pbuf = W_GetLumpName<qpicbuf_t>(name);
+	pbuf = W_GetLumpName<qpicbuf_t>(name, wadname);
 	
 	if (!pbuf) return NULL; //Missi -- copied from QuakeSpasm (5/28/2022)
 
@@ -654,7 +680,7 @@ void CGLRenderer::Draw_Init (void)
 
 	g_pCmds->Cmd_AddCommand ("gl_texturemode", CGLRenderer::Draw_TextureMode_f);
 
-	draw_chars = W_GetLumpName<byte>("conchars");
+    draw_chars = W_GetLumpName<byte>("conchars", GFX_WAD);
 
 	if (!draw_chars)
 	{
@@ -662,7 +688,9 @@ void CGLRenderer::Draw_Init (void)
 		draw_chars = COM_LoadHunkFile<byte>("gfx/conchars.lmp", &path);
 	}
 
-	offset = (uintptr_t)draw_chars - (uintptr_t)wad_base;
+    int wad = W_GetLoadedWadFile(GFX_WAD);
+
+    offset = (uintptr_t)draw_chars - (uintptr_t)wad_base[wad];
 
 	// Missi: FIXME: for some reason, this needs to be done as the changes from QuakeSpasm
 	// for applying d_8to24table_conchars will make the charset blank (9/13/2023)
@@ -701,8 +729,8 @@ void CGLRenderer::Draw_Init (void)
 	//
 	// get the other pics we need
 	//
-	draw_disc = Draw_PicFromWad ("disc");
-	draw_backtile = Draw_PicFromWad ("backtile");
+    draw_disc = Draw_PicFromWad ("disc", GFX_WAD);
+    draw_backtile = Draw_PicFromWad ("backtile", GFX_WAD);
 }
 
 /*
@@ -1721,7 +1749,7 @@ void CGLRenderer::GL_LoadImage32(CGLTexture* glt, unsigned* data)
 	GL_Bind(glt);
 	internalformat = (glt->flags & TEXPREF_ALPHA) ? gl_alpha_format : gl_solid_format;
 	glt->pic.datavec.AddMultipleToEnd(glt->source_width * glt->source_height, (byte*)data);
-	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, glt->width, glt->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalformat, glt->width, glt->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	// upload mipmaps
 	if (glt->flags & TEXPREF_MIPMAP && !(glt->flags & TEXPREF_WARPIMAGE)) // warp image mipmaps are generated later
@@ -1741,7 +1769,7 @@ void CGLRenderer::GL_LoadImage32(CGLTexture* glt, unsigned* data)
 				GL_MipMapH(data, mipwidth, mipheight);
 				mipheight >>= 1;
 			}
-			glTexImage2D(GL_TEXTURE_2D, miplevel, internalformat, mipwidth, mipheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(GL_TEXTURE_2D, miplevel, internalformat, mipwidth, mipheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		}
 	}
 
@@ -1850,6 +1878,96 @@ void CGLRenderer::GL_LoadImage8(CGLTexture* glt, byte* data)
 
 /*
 ================
+CGLRenderer::GL_LoadImage8 -- handles 8bit source data, then passes it to LoadImage32
+================
+*/
+void CGLRenderer::GL_LoadImage8_WAD(CGLTexture* glt, byte* data, unsigned* palette)
+{
+	extern cvar_t gl_fullbrights;
+	bool padw = false, padh = false;
+	byte padbyte;
+	unsigned int* usepal;
+	int i;
+
+	// detect false alpha cases
+	if (glt->flags & TEXPREF_ALPHA && !(glt->flags & TEXPREF_CONCHARS))
+	{
+		for (i = 0; i < (int)(glt->width * glt->height); i++)
+			if (data[i] == 255) //transparent index
+				break;
+		if (i == (int)(glt->width * glt->height))
+			glt->flags -= TEXPREF_ALPHA;
+	}
+
+	// choose palette and padbyte
+	if (glt->flags & TEXPREF_FULLBRIGHT)
+	{
+		if (glt->flags & TEXPREF_ALPHA)
+			usepal = d_8to24table_fbright_fence;
+		else
+			usepal = d_8to24table_fbright;
+		padbyte = 0;
+	}
+	else if (glt->flags & TEXPREF_NOBRIGHT && gl_fullbrights.value)
+	{
+		if (glt->flags & TEXPREF_ALPHA)
+			usepal = d_8to24table_nobright_fence;
+		else
+			usepal = d_8to24table_nobright;
+		padbyte = 0;
+	}
+	else if (glt->flags & TEXPREF_CONCHARS)
+	{
+		// Missi: FIXME: for some reason, this needs to be set to d_8to24table as the changes from QuakeSpasm
+		// for applying d_8to24table_conchars will make the charset blank (9/13/2023)
+		usepal = *d_8to24table_wad;
+		padbyte = 255;
+	}
+	else
+    {
+        Q_memcpy(d_8to24table_wad[glt->texnum], palette, sizeof(goldsrc_wad_palette_rgba_t));
+
+        usepal = d_8to24table_wad[glt->texnum];
+        padbyte = 255;
+	}
+
+	// pad each dimention, but only if it's not going to be downsampled later
+	if (glt->flags & TEXPREF_PAD)
+	{
+		if ((int)glt->width < GL_SafeTextureSize(glt->width))
+		{
+			data = GL_PadImageW(data, glt->width, glt->height, padbyte);
+			glt->width = GL_Pad(glt->width);
+			padw = true;
+		}
+		if ((int)glt->height < GL_SafeTextureSize(glt->height))
+		{
+			data = GL_PadImageH(data, glt->width, glt->height, padbyte);
+			glt->height = GL_Pad(glt->height);
+			padh = true;
+		}
+	}
+
+	// convert to 32bit
+	data = (byte*)GL_8to32(data, glt->width * glt->height, (unsigned*)usepal);
+
+	// fix edges
+	if (glt->flags & TEXPREF_ALPHA)
+		GL_AlphaEdgeFix(data, glt->width, glt->height);
+	else
+	{
+		if (padw)
+			GL_PadEdgeFixW(data, glt->source_width, glt->source_height);
+		if (padh)
+			GL_PadEdgeFixH(data, glt->source_width, glt->source_height);
+	}
+
+	// upload it
+	GL_LoadImage32(glt, (unsigned*)data);
+}
+
+/*
+================
 CGLRenderer::GL_LoadLightmap -- handles lightmap data
 ================
 */
@@ -1870,7 +1988,7 @@ CGLRenderer::GL_LoadTexture -- Missi: revised (3/18/2022)
 Loads an OpenGL texture via string ID or byte data. Can take an empty string if you don't need a name.
 ================
 */
-CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, int width, int height, enum srcformat_t format, byte* data, uintptr_t offset, int flags)
+CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, int width, int height, enum srcformat_t format, byte* data, uintptr_t offset, int flags, byte* palette)
 {
     CGLTexture*		glt = nullptr;
     int				CRCBlock = 0;
@@ -1881,6 +1999,7 @@ CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, 
 	switch (format)
 	{
 		case SRC_INDEXED:
+		case SRC_INDEXED_WAD:
 			CRCBlock = g_CRCManager->CRC_Block(data, width * height);
 			break;
 		case SRC_LIGHTMAP:
@@ -1921,9 +2040,12 @@ CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, 
 	mark = g_MemCache->Hunk_LowMark();
 
 	switch (glt->source_format)
-	{
+    {
 	case SRC_INDEXED:
 		GL_LoadImage8(glt, data);
+		break;
+	case SRC_INDEXED_WAD:
+        GL_LoadImage8_WAD(glt, data, (unsigned*)palette);
 		break;
 	case SRC_LIGHTMAP:
 		GL_LoadLightmap(glt, data);
@@ -1947,11 +2069,11 @@ CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, 
 CGLRenderer::GL_LoadPicTexture
 ================
 */
-CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic)
+CGLTexture* CGLRenderer::GL_LoadPicTexture (CQuakePic* pic, const char* wadName)
 {
 	uintptr_t offset;
 
-	offset = (uintptr_t)pic->datavec.GetBase() - (uintptr_t)wad_base;
+    offset = (uintptr_t)pic->datavec.GetBase() - (uintptr_t)wad_base;
 
 	return GL_LoadTexture(NULL, "", pic->width, pic->height, SRC_INDEXED, pic->datavec.GetBase(), TEXPREF_ALPHA);
 }

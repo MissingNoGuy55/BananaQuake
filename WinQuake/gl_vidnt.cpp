@@ -111,6 +111,7 @@ viddef_t	vid;				// global video state
 
 unsigned short	d_8to16table[256];
 unsigned int	d_8to24table[256];
+unsigned int	d_8to24table_wad[MAX_MAP_TEXTURES][256];
 unsigned char d_15to8table[65536];
 
 float		gldepthmin, gldepthmax;
