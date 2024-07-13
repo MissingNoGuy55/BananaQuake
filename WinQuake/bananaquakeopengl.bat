@@ -1,0 +1,1 @@
+bananaquakeopengl.exe -game id1 -sw -w 1600 -h 900
