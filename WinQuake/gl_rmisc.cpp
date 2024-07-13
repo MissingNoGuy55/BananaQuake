@@ -406,7 +406,7 @@ void CGLRenderer::R_NewMap (void)
 	{
 		if (!Q_strncmp(levelData, "}", 1))
 			break;
-		if (!Q_strncmp(levelData, "\"sky\"", 3))
+        if (!Q_strncmp(levelData, "\"sky\"", 5) || !Q_strncmp(levelData, "\"skyname\"", 9))
 		{
 			levelData = g_Common->COM_ParseStringNewline(levelData);
 			int len = 1;

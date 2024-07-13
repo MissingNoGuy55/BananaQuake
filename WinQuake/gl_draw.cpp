@@ -30,8 +30,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 unsigned int d_8to24table_fbright[256];
 unsigned int d_8to24table_fbright_fence[256];
+unsigned int d_8to24table_fbright_fence_wad[MAX_MAP_TEXTURES][256];
 unsigned int d_8to24table_nobright[256];
 unsigned int d_8to24table_nobright_fence[256];
+unsigned int d_8to24table_nobright_fence_wad[MAX_MAP_TEXTURES][256];
 unsigned int d_8to24table_conchars[256];
 unsigned int d_8to24table_shirt[256];
 unsigned int d_8to24table_pants[256];
@@ -660,6 +662,7 @@ void CGLRenderer::Draw_Init (void)
 	Cvar_RegisterVariable (&gl_nobind);
 	Cvar_RegisterVariable (&gl_max_size);
 	Cvar_RegisterVariable (&gl_picmip);
+    Cvar_RegisterVariable (&gl_fullbrights);
 
     Cvar_RegisterVariable (&level_fog_color_r);
     Cvar_RegisterVariable (&level_fog_color_g);
@@ -1925,10 +1928,19 @@ void CGLRenderer::GL_LoadImage8_WAD(CGLTexture* glt, byte* data, unsigned* palet
 	}
 	else
     {
-        Q_memcpy(d_8to24table_wad[glt->texnum], palette, sizeof(goldsrc_wad_palette_rgba_t));
-
-        usepal = d_8to24table_wad[glt->texnum];
-        padbyte = 255;
+        if (glt->identifier[0] == '{')
+        {
+            palette[255] = 0;
+            Q_memcpy(&d_8to24table_fbright_fence_wad[glt->texnum], palette, sizeof(goldsrc_wad_palette_rgba_t));
+            usepal = d_8to24table_fbright_fence_wad[glt->texnum];
+            padbyte = 0;
+        }
+        else
+        {
+            Q_memcpy(d_8to24table_wad[glt->texnum], palette, sizeof(goldsrc_wad_palette_rgba_t));
+            usepal = d_8to24table_wad[glt->texnum];
+            padbyte = 255;
+        }
 	}
 
 	// pad each dimention, but only if it's not going to be downsampled later

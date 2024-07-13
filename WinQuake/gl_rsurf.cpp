@@ -488,11 +488,11 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 
 		t = R_TextureAnimation (s->texinfo->texture);
 		GL_Bind (t->gltexture);
-		DrawGLWaterPoly (p);
+        DrawGLWaterPoly (p);
 
 		GL_Bind (lightmap_textures[s->lightmaptexturenum]);
 		glEnable (GL_BLEND);
-		DrawGLWaterPolyLightmap (p);
+        DrawGLWaterPolyLightmap (p);
 		glDisable (GL_BLEND);
 	}
 }
@@ -513,7 +513,7 @@ void CGLRenderer::DrawGLWaterPoly (glpoly_t *p)
 
 	GL_DisableMultitexture();
 
-	glBegin (GL_TRIANGLE_FAN);
+    glBegin (GL_TRIANGLE_FAN);
 	v = p->verts[0];
 	for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
 	{
@@ -524,7 +524,7 @@ void CGLRenderer::DrawGLWaterPoly (glpoly_t *p)
 		nv[2] = v[2];
 
 		glVertex3fv (nv);
-	}
+    }
 	glEnd ();
 }
 
@@ -688,10 +688,23 @@ void CGLRenderer::R_RenderBrushPoly (msurface_t *fa)
 		return;
 	}
 
+    if (fa->flags & SURF_DRAWFENCE)
+    {
+        glDepthMask(GL_FALSE);
+        glEnable(GL_BLEND);
+        glBlendFunc (GL_ONE, GL_ONE_MINUS_DST_ALPHA);
+    }
+
 	if (fa->flags & SURF_UNDERWATER)
 		DrawGLWaterPoly (fa->polys);
 	else
 		DrawGLPoly (fa->polys);
+
+    if (fa->flags & SURF_DRAWFENCE)
+    {
+        glDisable(GL_BLEND);
+        glDepthMask(GL_TRUE);
+    }
 
 	// add the poly to the proper lightmap chain
 
@@ -928,7 +941,8 @@ void CGLRenderer::DrawTextureChains (void)
 		else
 		{
 			if ((s->flags & SURF_DRAWTURB) && r_wateralpha.value != 1.0)
-				continue;	// draw translucent water later
+                continue;	// draw translucent water later
+
 			for ( ; s ; s=s->texturechain)
 				R_RenderBrushPoly (s);
 		}

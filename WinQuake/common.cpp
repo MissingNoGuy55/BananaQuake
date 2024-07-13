@@ -1378,7 +1378,7 @@ QUAKE FILESYSTEM
 
 int     com_filesize;
 
-#define MAX_FILES_IN_PACK       2048
+#define MAX_FILES_IN_PACK       8192    // Missi: was 2048 (7/12/2024)
 
 struct searchpath_t
 {

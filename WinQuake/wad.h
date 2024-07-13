@@ -127,6 +127,7 @@ extern	const char*         wad_names[MAX_LOADED_WADS];
 int                 W_GetLoadedWadFile(const char* filename);
 void	            W_LoadWadFile (const char *filename);
 void                W_LoadWadFile_GoldSrc (const char *filename);
+void                W_LoadGoldSrcWadFiles();
 void	            W_CleanupName (const char *in, char *out);
 lumpinfo_t*         W_GetLumpinfo (const char *name, const char* wadname);
 lumpinfo_t*         W_GetLumpinfo_GoldSrc(const char* name, const char* wadname);

@@ -889,7 +889,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	g_Common->COM_Init (parms.basedir);
 	Host_InitLocal ();
 	W_LoadWadFile (GFX_WAD);
-    W_LoadWadFile_GoldSrc("halflife.wad");
+    W_LoadGoldSrcWadFiles();
 	if (cls.state != ca_dedicated)
 	{
 		Key_Init ();

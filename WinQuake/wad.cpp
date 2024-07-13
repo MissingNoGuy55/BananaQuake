@@ -129,6 +129,13 @@ void W_LoadWadFile (const char *filename)
 	}
 }
 
+void W_LoadGoldSrcWadFiles()
+{
+    W_LoadWadFile_GoldSrc("halflife.wad");
+    W_LoadWadFile_GoldSrc("liquids.wad");
+    W_LoadWadFile_GoldSrc("xeno.wad");
+}
+
 /*
 ====================
 W_LoadWadFile_GoldSrc

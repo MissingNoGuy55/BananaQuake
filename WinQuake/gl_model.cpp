@@ -250,6 +250,7 @@ void Mod_LoadTextures (lump_t *l)
     texture_t	*altanims[10];
     uintptr_t		offset;
 	dmiptexlump_t *m;
+    bool        external_texture = false;
 
 	if (!l->filelen)
 	{
@@ -279,10 +280,20 @@ void Mod_LoadTextures (lump_t *l)
 			lumpinfo_t* lumpinfo = W_GetExternalTextureLumpInfo(gmt->name);
 
 			if (!lumpinfo)
-				return;
+                continue;
 
             for (j=0 ; j<MIPLEVELS ; j++)
                 gmt->offsets[j] = LittleLong (gmt->offsets[j]);
+
+            if (gmt->offsets[0] == 0    &&
+                gmt->offsets[1] == 0    &&
+                gmt->offsets[2] == 0    &&
+                gmt->offsets[3] == 0)   // Missi: if all offsets are 0, then this texture is only referenced -- the actual data lies in a WAD (7/12/2024)
+            {
+                gmt = (goldsrc_miptex_t*)((byte*)(wad_base[pos] + lumpinfo->filepos));
+
+                Con_DPrintf("Loading external texture %s\n", gmt->name);
+            }
 
             if ( (gmt->width & 15) || (gmt->height & 15) )
                 Sys_Error ("Texture %s is not 16 aligned", gmt->name);
@@ -291,16 +302,16 @@ void Mod_LoadTextures (lump_t *l)
             tx = g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) + pixels, loadname );
             loadmodel->textures[i] = tx;
 
-            memcpy (tx->name, gmt->name, sizeof(tx->name));
+            Q_strncpy (tx->name, gmt->name, sizeof(tx->name));
             tx->width = gmt->width;
             tx->height = gmt->height;
             for (j=0 ; j<MIPLEVELS ; j++)
                 tx->offsets[j] = gmt->offsets[j] + sizeof(texture_t) - sizeof(goldsrc_miptex_t);
 
             // the pixels immediately follow the structures
-            memcpy ( tx+1, gmt+1, pixels);
+            Q_memcpy ( tx+1, gmt+1, pixels);
 
-            g_GLRenderer->SetUsesQuake2Skybox(true);
+            g_GLRenderer->SetUsesQuake2Skybox(false);
 
             if (!Q_strncmp(gmt->name,"sky",3))
                 g_GLRenderer->R_InitSky (tx, NULL);
@@ -314,14 +325,6 @@ void Mod_LoadTextures (lump_t *l)
 
                 goldsrc_miptex_t* miptex = (goldsrc_miptex_t*)((byte*)(wad_base[pos] + (filepos)));
 
-				if (miptex->offsets[0] == 0 &&
-					miptex->offsets[1] == 0 &&
-					miptex->offsets[2] == 0 &&
-					miptex->offsets[3] == 0)
-				{
-					Con_DPrintf("Test\n");
-				}
-
                 goldsrc_wad_palette_t* basepal = (goldsrc_wad_palette_t*)((byte*)(((wad_base[pos] + filepos) + gmt->offsets[3] + ((gmt->offsets[3] - gmt->offsets[2]) / 4))) + 2);
 
                 goldsrc_wad_palette_rgba_t newpal = {};
@@ -334,12 +337,12 @@ void Mod_LoadTextures (lump_t *l)
                     newpal.colors[palpos][3] = 0;
                 }
 
-				int alphaflag = 0;
+                int alphaflag = 0;
 
-				if (tx->name[0] == '{')
-				{
-					alphaflag |= TEXPREF_ALPHA;
-				}
+                if (tx->name[0] == '{')
+                {
+                    alphaflag |= TEXPREF_ALPHA;
+                }
 
                 tx->gltexture = g_GLRenderer->GL_LoadTexture (loadmodel, gmt->name, tx->width, tx->height, SRC_INDEXED_WAD, (byte*)(miptex+1), offset, TEXPREF_MIPMAP | alphaflag, (byte*)&newpal);
                 //texture_mode = GL_LINEAR;
@@ -362,7 +365,7 @@ void Mod_LoadTextures (lump_t *l)
             if ( (mt->width & 15) || (mt->height & 15) )
                 Sys_Error ("Texture %s is not 16 aligned", mt->name);
             pixels = mt->width*mt->height/64*85;
-            tx = g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) +pixels, loadname );
+            tx = g_MemCache->Hunk_AllocName<texture_t>(sizeof(texture_t) + pixels, loadname );
             loadmodel->textures[i] = tx;
 
             memcpy (tx->name, mt->name, sizeof(tx->name));
@@ -956,7 +959,7 @@ void Mod_LoadFaces (lump_t *l, int bsp2)
 				continue;
 			}
 
-			if (!Q_strncmp(out->texinfo->texture->name, "*", 1))		// turbulent
+            if ((loadmodel->bspversion == BSPVERSION_GOLDSRC && !Q_strncmp(out->texinfo->texture->name, "!", 1)) || !Q_strncmp(out->texinfo->texture->name, "*", 1))		// turbulent
 			{
 				out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
 				for (i = 0; i < 2; i++)
@@ -967,6 +970,11 @@ void Mod_LoadFaces (lump_t *l, int bsp2)
                 g_GLRenderer->GL_SubdivideSurface(out);	// cut up polygon for warps
 				continue;
 			}
+
+            if (!Q_strncmp(out->texinfo->texture->name, "{", 1))
+            {
+                out->flags |= SURF_DRAWFENCE;
+            }
 		}
 	}
 }

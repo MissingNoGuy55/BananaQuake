@@ -178,8 +178,10 @@ extern unsigned int		d_8to24table[256];
 extern unsigned int		d_8to24table_wad[MAX_MAP_TEXTURES][256];
 extern unsigned int		d_8to24table_fbright[256];
 extern unsigned int		d_8to24table_fbright_fence[256];
+extern unsigned int     d_8to24table_fbright_fence_wad[MAX_MAP_TEXTURES][256];
 extern unsigned int		d_8to24table_nobright[256];
 extern unsigned int		d_8to24table_nobright_fence[256];
+extern unsigned int     d_8to24table_nobright_fence_wad[MAX_MAP_TEXTURES][256];
 extern unsigned int		d_8to24table_conchars[256];
 extern unsigned int		d_8to24table_shirt[256];
 extern unsigned int		d_8to24table_pants[256];
@@ -388,8 +390,8 @@ public:
 	void R_Envmap_f(void);
 
 	void DrawTextureChains(void);
-	void DrawGLWaterPoly(glpoly_t* p);
-	void DrawGLWaterPolyLightmap(glpoly_t* p);
+    void DrawGLWaterPoly(glpoly_t* p);
+    void DrawGLWaterPolyLightmap(glpoly_t* p);
 
 	texture_t* R_TextureAnimation(texture_t* base);
 
