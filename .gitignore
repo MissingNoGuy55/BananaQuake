@@ -20,11 +20,11 @@
 *.vcxproj
 *.7z
 *.map
-*.lmp
 *.zip
 *.json
 *.db
 *.suo
+*.ms2
 
 /WinQuake/progs.dat
 #/WinQuake/.vs
