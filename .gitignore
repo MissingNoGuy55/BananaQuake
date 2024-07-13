@@ -3,7 +3,6 @@
 *.lib
 *.dll.*
 *.lib.*
-*.exe
 *.exp
 *.ilk
 *.pdb
