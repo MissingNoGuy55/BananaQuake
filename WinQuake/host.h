@@ -109,8 +109,6 @@ public:
 
 	cvar_t	pausable = { "pausable","1" };
 
-	cvar_t	temp1 = { "temp1","0" };
-
 	void Host_FindMaxClients(void);
 
 	// Missi: console commands (6/21/2024)
@@ -150,6 +148,8 @@ public:
 	static void Host_God_f(void);
 	static void Host_Notarget_f(void);
 	static void Host_Noclip_f(void);
+
+	jmp_buf 	host_abortserver;
 
 private:
 

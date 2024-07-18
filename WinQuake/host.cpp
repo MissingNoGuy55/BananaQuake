@@ -77,7 +77,7 @@ void CQuakeHost::Host_EndGame (const char *message, ...)
 	else
 		CL_Disconnect ();
 
-	host_died = true;
+	longjmp(host_abortserver, 1);
 }
 
 /*
@@ -115,7 +115,7 @@ void CQuakeHost::Host_Error (const char *error, ...)
 
 	inerror = false;
 
-	host_died = true;
+	longjmp(host_abortserver, 1);
 }
 
 /*
@@ -197,8 +197,6 @@ void CQuakeHost::Host_InitLocal (void)
 	Cvar_RegisterVariable (&coop);
 
 	Cvar_RegisterVariable (&pausable);
-
-	Cvar_RegisterVariable (&temp1);
 
 	Host_FindMaxClients ();
 	
@@ -551,6 +549,9 @@ void CQuakeHost::Host_GetConsoleCommands (void)
 {
 	char	*cmd = nullptr;
 
+	if (!isDedicated)
+		return;
+
 	while (1)
 	{
 		cmd = Sys_ConsoleInput ();
@@ -655,7 +656,7 @@ void CQuakeHost::_Host_Frame (float time)
 	static double		time3 = 0.0;
 	int			pass1 = 0, pass2 = 0, pass3 = 0;
 
-	if (host_died)
+	if ( setjmp(host_abortserver) )
 		return;			// something bad happened, or the server disconnected
 
 // keep the random time dependent
