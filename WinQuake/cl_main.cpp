@@ -103,6 +103,8 @@ void CL_Disconnect (void)
 	
 // bring the console down and fade the colors back to normal
 //	SCR_BringDownConsole ();
+	g_pBGM->BGM_Stop();
+	CDAudio_Stop();
 
 // if running a local server, shut it down
 	if (cls.demoplayback)
