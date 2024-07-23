@@ -367,6 +367,10 @@ void CL_SendMove (usercmd_t *cmd)
 	if (in_jump.state & 3)
 		bits |= 2;
 	in_jump.state &= ~2;
+
+	if (in_use.state & 3)
+		bits |= 4;
+	in_use.state &= ~2;
 	
     MSG_WriteByte (&buf, bits);
 
