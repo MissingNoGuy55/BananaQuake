@@ -1344,10 +1344,10 @@ void M_Options_Draw (void)
 
 #ifdef _WIN32
     M_DrawSlider(220, 144, r);
-	M_Print(-4, 144, "            Field of view (FOV)");
+	M_Print(-36, 144, "            Field of view (FOV)");
 #elif __linux
     M_DrawSlider(220, 136, r);
-    M_Print(-4, 136, "            Field of view (FOV)");
+    M_Print(-36, 136, "            Field of view (FOV)");
 #endif
 
 	char val[4] = {};
@@ -1476,7 +1476,7 @@ static const char *bindnames[][2] =
 {"+klook", 			"keyboard look"},
 {"+moveup",			"swim up"},
 {"+movedown",		"swim down"},
-{"+mouselook",		"mouse look"}
+{"+use",			"use"}
 };
 
 #define	NUMCOMMANDS	(sizeof(bindnames)/sizeof(bindnames[0]))
