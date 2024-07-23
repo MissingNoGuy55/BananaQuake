@@ -872,7 +872,7 @@ void NET_Init (void)
 
 	// initialize all the drivers
 	for (net_driverlevel=0 ; net_driverlevel<net_numdrivers ; net_driverlevel++)
-		{
+	{
 		controlSocket = net_drivers[net_driverlevel].Init();
 		if (controlSocket == -1)
 			continue;
@@ -880,7 +880,16 @@ void NET_Init (void)
 		net_drivers[net_driverlevel].controlSock = controlSocket;
 		if (listening)
 			net_drivers[net_driverlevel].Listen (true);
-		}
+	}
+
+	/* Loop_Init() returns -1 for dedicated server case,
+	 * therefore the i == 0 check is correct */
+	if (i == 0
+		&& cls.state == ca_dedicated
+		)
+	{
+		Sys_Error("Network not available!");
+	}
 
 	if (*my_ipx_address)
 		Con_DPrintf("IPX address %s\n", my_ipx_address);
