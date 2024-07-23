@@ -692,7 +692,8 @@ void CGLRenderer::R_RenderBrushPoly (msurface_t *fa)
     {
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
-        glBlendFunc (GL_ONE, GL_ONE_MINUS_DST_ALPHA);
+		glEnable(GL_ALPHA_TEST);
+		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     }
 
 	if (fa->flags & SURF_UNDERWATER)
@@ -702,6 +703,7 @@ void CGLRenderer::R_RenderBrushPoly (msurface_t *fa)
 
     if (fa->flags & SURF_DRAWFENCE)
     {
+		glDisable(GL_ALPHA_TEST);
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
     }
@@ -1173,13 +1175,18 @@ void CGLRenderer::R_RecursiveWorldNode (mnode_t *node)
 						surf->texturechain = surf->texinfo->texture->texturechain;
 						surf->texinfo->texture->texturechain = surf;
 					}
-				} else if (surf->flags & SURF_DRAWSKY) {
+				} 
+				else if (surf->flags & SURF_DRAWSKY)
+				{
 					surf->texturechain = skychain;
 					skychain = surf;
-				} else if (surf->flags & SURF_DRAWTURB) {
+				}
+				else if (surf->flags & SURF_DRAWTURB)
+				{
 					surf->texturechain = waterchain;
 					waterchain = surf;
-				} else
+				}
+				else
 					R_DrawSequentialPoly (surf);
 
 			}

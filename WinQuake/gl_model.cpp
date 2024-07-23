@@ -313,40 +313,47 @@ void Mod_LoadTextures (lump_t *l)
 
             g_GLRenderer->SetUsesQuake2Skybox(false);
 
-            if (!Q_strncmp(gmt->name,"sky",3))
-                g_GLRenderer->R_InitSky (tx, NULL);
-            else
-            {
-                offset = (src_offset_t)(gmt+1) - (src_offset_t)mod_base;
+			if (!host->isDedicated)
+			{
+				if (!Q_strncmp(gmt->name, "sky", 3))
+					g_GLRenderer->R_InitSky(tx, NULL);
+				else
+				{
+					offset = (src_offset_t)(gmt + 1) - (src_offset_t)mod_base;
 
-                //texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
+					//texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
 
-                int filepos = lumpinfo->filepos;
+					int filepos = lumpinfo->filepos;
 
-                goldsrc_miptex_t* miptex = (goldsrc_miptex_t*)((byte*)(wad_base[pos] + (filepos)));
+					goldsrc_miptex_t* miptex = (goldsrc_miptex_t*)((byte*)(wad_base[pos] + (filepos)));
 
-                goldsrc_wad_palette_t* basepal = (goldsrc_wad_palette_t*)((byte*)(((wad_base[pos] + filepos) + gmt->offsets[3] + ((gmt->offsets[3] - gmt->offsets[2]) / 4))) + 2);
+					goldsrc_wad_palette_t* basepal = (goldsrc_wad_palette_t*)((byte*)(((wad_base[pos] + filepos) + gmt->offsets[3] + ((gmt->offsets[3] - gmt->offsets[2]) / 4))) + 2);
 
-                goldsrc_wad_palette_rgba_t newpal = {};
+					goldsrc_wad_palette_rgba_t newpal = {};
 
-                for (int palpos = 0; palpos < 256; palpos++)
-                {
-                    newpal.colors[palpos][0] = (basepal->colors[palpos][0]);
-                    newpal.colors[palpos][1] = (basepal->colors[palpos][1]);
-                    newpal.colors[palpos][2] = (basepal->colors[palpos][2]);
-                    newpal.colors[palpos][3] = 0;
-                }
+					for (int palpos = 0; palpos < 256; palpos++)
+					{
+						newpal.colors[palpos][0] = (basepal->colors[palpos][0]);
+						newpal.colors[palpos][1] = (basepal->colors[palpos][1]);
+						newpal.colors[palpos][2] = (basepal->colors[palpos][2]);
 
-                int alphaflag = 0;
+						if (palpos < 255)
+							newpal.colors[palpos][3] = 255;
+						else
+							newpal.colors[palpos][3] = 0;
+					}
 
-                if (tx->name[0] == '{')
-                {
-                    alphaflag |= TEXPREF_ALPHA;
-                }
+					int alphaflag = 0;
 
-                tx->gltexture = g_GLRenderer->GL_LoadTexture (loadmodel, gmt->name, tx->width, tx->height, SRC_INDEXED_WAD, (byte*)(miptex+1), offset, TEXPREF_MIPMAP | alphaflag, (byte*)&newpal);
-                //texture_mode = GL_LINEAR;
-            }
+					if (tx->name[0] == '{')
+					{
+						alphaflag |= TEXPREF_ALPHA;
+					}
+
+					tx->gltexture = g_GLRenderer->GL_LoadTexture(loadmodel, gmt->name, tx->width, tx->height, SRC_INDEXED_WAD, (byte*)(miptex + 1), offset, TEXPREF_MIPMAP | alphaflag, (byte*)&newpal);
+					//texture_mode = GL_LINEAR;
+				}
+			}
         }
     }
     else
@@ -378,16 +385,19 @@ void Mod_LoadTextures (lump_t *l)
 
             g_GLRenderer->SetUsesQuake2Skybox(false);
 
-            if (!Q_strncmp(mt->name,"sky",3))
-                g_GLRenderer->R_InitSky (tx, GFX_WAD);
-            else
-            {
-                offset = (src_offset_t)(mt + 1) - (src_offset_t)mod_base;
+			if (!host->isDedicated)
+			{
+				if (!Q_strncmp(mt->name, "sky", 3))
+					g_GLRenderer->R_InitSky(tx, GFX_WAD);
+				else
+				{
+					offset = (src_offset_t)(mt + 1) - (src_offset_t)mod_base;
 
-                //texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
-                tx->gltexture = g_GLRenderer->GL_LoadTexture (loadmodel, mt->name, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), offset, TEXPREF_NONE);
-                //texture_mode = GL_LINEAR;
-            }
+					//texture_mode = GL_LINEAR_MIPMAP_NEAREST; //_LINEAR;
+					tx->gltexture = g_GLRenderer->GL_LoadTexture(loadmodel, mt->name, tx->width, tx->height, SRC_INDEXED, (byte*)(tx + 1), offset, TEXPREF_NONE);
+					//texture_mode = GL_LINEAR;
+				}
+			}
         }
     }
 
@@ -858,7 +868,7 @@ void CalcSurfaceExtents (msurface_t *s)
 		s->texturemins[i] = bmins[i] * 16;
 		s->extents[i] = (bmaxs[i] - bmins[i]) * 16;
 
-		if (!(tex->flags & TEX_SPECIAL) && s->extents[i] > 2000) // was 512 in glquake, 256 in winquake -- Missi: copied from QuakeSpasm (6/3/2024)
+		if (!(tex->flags & TEX_SPECIAL) && s->extents[i] > 4096) // was 512 in glquake, 256 in winquake -- Missi: copied from QuakeSpasm (6/3/2024)
 			Sys_Error("Bad surface extents");
 	}
 }
@@ -1606,11 +1616,8 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	Mod_LoadVertexes (&header->lumps[LUMP_VERTEXES]);
 	Mod_LoadEdges (&header->lumps[LUMP_EDGES], bsp2);
 	Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
-	if (cls.state != ca_dedicated)
-	{
-		Mod_LoadTextures(&header->lumps[LUMP_TEXTURES]);
-		Mod_LoadLighting(&header->lumps[LUMP_LIGHTING]);	// Missi: not needed on servers, but it causes some caching issues I think (6/8/2024)
-	}
+	Mod_LoadTextures(&header->lumps[LUMP_TEXTURES]);
+	Mod_LoadLighting(&header->lumps[LUMP_LIGHTING]);	// Missi: not needed on servers, but it causes some caching issues I think (6/8/2024)
 	Mod_LoadPlanes (&header->lumps[LUMP_PLANES]);
 	Mod_LoadTexinfo (&header->lumps[LUMP_TEXINFO]);
 	Mod_LoadFaces (&header->lumps[LUMP_FACES], bsp2);

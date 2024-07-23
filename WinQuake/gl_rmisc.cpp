@@ -420,6 +420,15 @@ void CGLRenderer::R_NewMap (void)
 			usesQ2Sky = true;
 			break;
 		}
+
+        // Missi: HACK: Crossfire in HL1 has no skybox set by default, which defaults to 'desert' in HL1, so we have to do this (7/19/2024)
+        if (!Q_strncmp(cl.worldmodel->name, "maps/crossfire.bsp", 18))
+        {
+            Q_strncpy(q2SkyName, "desert", 6);
+
+            usesQ2Sky = true;
+            break;
+        }
 	}
 
 	if (usesQ2Sky)

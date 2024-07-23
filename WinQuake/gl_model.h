@@ -565,3 +565,5 @@ T* Mod_Extradata(model_t* mod)
 }
 
 #endif	// __MODEL__
+
+model_t* Mod_FindName(const char* name);

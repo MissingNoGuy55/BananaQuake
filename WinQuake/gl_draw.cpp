@@ -45,7 +45,7 @@ static cvar_t		gl_picmip =		{ "gl_picmip", "0" };
 static cvar_t		gl_texturemode = {"gl_texturemode", "", true};
 
 cvar_t		gl_max_size =			{ "gl_max_size", "1024" };
-cvar_t		gl_fullbrights =		{ "gl_fullbrights", "0" };
+cvar_t		gl_fullbrights =		{ "gl_fullbrights", "1" };
 GLint		gl_hardware_maxsize;
 
 static byte	conback_buffer[sizeof(CQuakePic)];
@@ -2005,6 +2005,9 @@ CGLTexture* CGLRenderer::GL_LoadTexture(model_t* owner, const char* identifier, 
     CGLTexture*		glt = nullptr;
     int				CRCBlock = 0;
 	int				mark = 0;
+
+	if (host->isDedicated)
+		return nullptr;
 
 // Missi: the below two lines used to be an else statement in vanilla GLQuake... with horrible results (3/22/2022)
 
