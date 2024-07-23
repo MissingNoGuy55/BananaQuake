@@ -51,7 +51,6 @@ static double		pfreq;
 static double		curtime = 0.0;
 static double		lastcurtime = 0.0;
 static int			lowshift;
-static bool			isDedicated;
 static bool			sc_return_on_enter = false;
 HANDLE		hinput, houtput;
 
@@ -454,7 +453,7 @@ void Sys_Error (const char *error, ...)
 	vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
-	if (isDedicated)
+	if (host->isDedicated)
 	{
 		va_start (argptr, error);
 		vsnprintf (text, sizeof(text), error, argptr);
@@ -517,7 +516,7 @@ void Sys_Printf (const char *fmt, ...)
 	char		text[1024];
 	DWORD		dummy;
 	
-	if (isDedicated)
+	if (host->isDedicated)
 	{
 		va_start (argptr,fmt);
 		Q_vsnprintf_s(text, sizeof(text), 1024, fmt, argptr);
@@ -533,7 +532,7 @@ void Sys_Warning(const char* fmt, ...)
 	char		text[1024];
 	DWORD		dummy;
 
-	if (isDedicated)
+	if (host->isDedicated)
 	{
 		va_start(argptr, fmt);
 		Q_vsnprintf_s(text, sizeof(text), 1024, fmt, argptr);
@@ -553,7 +552,7 @@ void Sys_Quit (void)
 	if (tevent)
 		CloseHandle (tevent);
 
-	if (isDedicated)
+	if (host->isDedicated)
 		FreeConsole ();
 
 // shut down QHOST hooks if necessary
@@ -701,9 +700,8 @@ char *Sys_ConsoleInput (void)
 	int		ch = 0; 
 	DWORD	dummy, numread, numevents;
 
-	if (!isDedicated)
+	if (!host->isDedicated)
 		return NULL;
-
 
 	for ( ;; )
 	{
@@ -933,9 +931,9 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	parms.argc = g_Common->com_argc;
 	parms.argv = g_Common->com_argv;
 
-	isDedicated = (g_Common->COM_CheckParm ("-dedicated") != 0);
+	host->isDedicated = (g_Common->COM_CheckParm ("-dedicated") != 0);
 
-	if (!isDedicated)
+	if (!host->isDedicated)
 	{
 
 		hwnd_dialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_DIALOG1), NULL, NULL);
@@ -1007,7 +1005,7 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	if (!tevent)
 		Sys_Error ("Couldn't create event");
 
-	if (isDedicated)
+	if (host->isDedicated)
 	{
 		if (!AllocConsole ())
 		{
@@ -1016,26 +1014,7 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 		hinput = GetStdHandle (STD_INPUT_HANDLE);
 		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
-#ifndef WIN64
-	// give QHOST a chance to hook into the console
-		if ((t = g_Common->COM_CheckParm ("-HFILE")) > 0)
-		{
-			if (t < g_Common->com_argc)
-				hFile = (HANDLE)Q_atoi (g_Common->com_argv[t+1]);
-		}
-			
-		if ((t = g_Common->COM_CheckParm ("-HPARENT")) > 0)
-		{
-			if (t < g_Common->com_argc)
-				heventParent = (HANDLE)Q_atoi (g_Common->com_argv[t+1]);
-		}
-			
-		if ((t = g_Common->COM_CheckParm ("-HCHILD")) > 0)
-		{
-			if (t < g_Common->com_argc)
-				heventChild = (HANDLE)Q_atoi (g_Common->com_argv[t+1]);
-		}
-#endif
+
 		g_ConProc->InitConProc (hFile, heventParent, heventChild);
 	}
 
@@ -1052,7 +1031,7 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     /* main window message loop */
 	while (1)
 	{
-		if (isDedicated)
+		if (host->isDedicated)
 		{
 			newtime = Sys_DoubleTime ();
 			time = newtime - oldtime;
