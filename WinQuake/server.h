@@ -91,6 +91,7 @@ typedef struct client_s
 #define	MOVETYPE_NOCLIP			8
 #define	MOVETYPE_FLYMISSILE		9		// extra size to monsters
 #define	MOVETYPE_BOUNCE			10
+#define MOVETYPE_LADDER			13
 #ifdef QUAKE2
 #define MOVETYPE_BOUNCEMISSILE	11		// bounce w/o gravity
 #define MOVETYPE_FOLLOW			12		// track movement of aiment
@@ -103,6 +104,7 @@ typedef struct client_s
 #define	SOLID_SLIDEBOX			3		// touch on edge, but not an onground
 #define	SOLID_BSP				4		// bsp clip, touch on edge, block
 #define SOLID_FOG_VOLUME        5       //
+#define	SOLID_MONSTERONLY		6
 
 // edict->deadflag values
 #define	DEAD_NO					0
@@ -128,6 +130,7 @@ typedef struct client_s
 #define	FL_PARTIALGROUND		1024	// not all corners are valid
 #define	FL_WATERJUMP			2048	// player jumping out of water
 #define	FL_JUMPRELEASED			4096	// for jump debouncing
+#define FL_ONLADDER				8192
 #ifdef QUAKE2
 #define FL_FLASHLIGHT			8192
 #define FL_ARCHIVE_OVERRIDE		1048576
@@ -217,12 +220,16 @@ public:
 
 	void SV_Physics_Step(edict_t* ent);
 
+	void SV_Physics_Ladder(edict_t* ent);
+
 	void SV_Physics(void);
 
 	bool SV_CheckBottom(edict_t* ent);
 	bool SV_movestep(edict_t* ent, vec3_t move, bool relink);
 
 	bool SV_StepDirection(edict_t* ent, float yaw, float dist);
+
+	bool SV_LadderStepDirection(edict_t* ent, float yaw, float dist);
 
 	void SV_FixCheckBottom(edict_t* ent);
 
@@ -283,6 +290,8 @@ public:
 	int SV_TryUnstick(edict_t* ent, vec3_t oldvel);
 
 	void SV_WalkMove(edict_t* ent);
+
+	void SV_LadderMove(edict_t* ent);
 
 	void SV_Physics_Client(edict_t* ent, int num);
 
