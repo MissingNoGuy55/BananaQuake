@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define	VERSION				1.09
 #define	GLQUAKE_VERSION		1.00
-#define	BANANAQUAKE_VERSION	0.12
+#define	BANANAQUAKE_VERSION	0.13
 #define	D3DQUAKE_VERSION	0.01
 #define	WINQUAKE_VERSION	0.996
 #define	LINUX_VERSION		1.30
@@ -76,15 +76,15 @@ typedef unsigned char byte;
 #include <string>
 #include <vector>
 #include <fstream>
+#include <thread>
+#include <future>
+#include <functional>
 // #include <dsound.h>
 #if (_WIN32) || (WIN64)
 #include <windows.h>
 #endif
 
 using cxxstring = std::string;
-
-template<typename T>
-using cxxvector = std::vector<T>;
 
 using cxxfstream = std::fstream;
 using cxxifstream = std::ifstream;
@@ -172,96 +172,98 @@ constexpr int	MAX_STYLESTRING = 64;
 //
 // stats are integers communicated to the client by the server
 //
-constexpr int	MAX_CL_STATS = 32;
-constexpr int	STAT_HEALTH = 0;
-constexpr int	STAT_FRAGS = 1;
-constexpr int	STAT_WEAPON = 2;
-constexpr int	STAT_AMMO = 3;
-constexpr int	STAT_ARMOR = 4;
-constexpr int	STAT_WEAPONFRAME = 5;
-constexpr int	STAT_SHELLS = 6;
-constexpr int	STAT_NAILS = 7;
-constexpr int	STAT_ROCKETS = 8;
-constexpr int	STAT_CELLS = 9;
-constexpr int	STAT_ACTIVEWEAPON = 10;
-constexpr int	STAT_TOTALSECRETS = 11;
-constexpr int	STAT_TOTALMONSTERS = 12;
-constexpr int	STAT_SECRETS = 13;		// bumped on client side by svc_foundsecret
-constexpr int	STAT_MONSTERS = 14;		// bumped by svc_killedmonster
+constexpr int MAX_CL_STATS				= 32;
+constexpr int STAT_HEALTH				= 0;
+constexpr int STAT_FRAGS				= 1;
+constexpr int STAT_WEAPON				= 2;
+constexpr int STAT_AMMO					= 3;
+constexpr int STAT_ARMOR				= 4;
+constexpr int STAT_WEAPONFRAME			= 5;
+constexpr int STAT_SHELLS				= 6;
+constexpr int STAT_NAILS				= 7;
+constexpr int STAT_ROCKETS				= 8;
+constexpr int STAT_CELLS				= 9;
+constexpr int STAT_ACTIVEWEAPON			= 10;
+constexpr int STAT_TOTALSECRETS			= 11;
+constexpr int STAT_TOTALMONSTERS		= 12;
+constexpr int STAT_SECRETS				= 13;		// bumped on client side by svc_foundsecret
+constexpr int STAT_MONSTERS				= 14;		// bumped by svc_killedmonster
 
 // stock defines
 
-constexpr long  IT_SHOTGUN = 1;
-constexpr long	IT_SUPER_SHOTGUN = 2;
-constexpr long	IT_NAILGUN = 4;
-constexpr long	IT_SUPER_NAILGUN = 8;
-constexpr long	IT_GRENADE_LAUNCHER = 16;
-constexpr long	IT_ROCKET_LAUNCHER = 32;
-constexpr long	IT_LIGHTNING = 64;
-constexpr long  IT_SUPER_LIGHTNING = 128;
-constexpr long  IT_SHELLS = 256;
-constexpr long  IT_NAILS = 512;
-constexpr long  IT_ROCKETS = 1024;
-constexpr long  IT_CELLS = 2048;
-constexpr long  IT_AXE = 4096;
-constexpr long  IT_ARMOR1 = 8192;
-constexpr long  IT_ARMOR2 = 16384;
-constexpr long  IT_ARMOR3 = 32768;
-constexpr long  IT_SUPERHEALTH = 65536;
-constexpr long  IT_KEY1 = 131072;
-constexpr long  IT_KEY2 = 262144;
-constexpr long	IT_INVISIBILITY = 524288;
-constexpr long	IT_INVULNERABILITY = 1048576;
-constexpr long	IT_SUIT = 2097152;
-constexpr long	IT_QUAD = 4194304;
-constexpr long  IT_SIGIL1 = (1<<28);
-constexpr long  IT_SIGIL2 = (1<<29);
-constexpr long  IT_SIGIL3 = (1<<30);
-constexpr long  IT_SIGIL4 = (1<<31);
+constexpr long long IT_SHOTGUN				= 1;
+constexpr long long IT_SUPER_SHOTGUN		= 2;
+constexpr long long IT_NAILGUN				= 4;
+constexpr long long IT_SUPER_NAILGUN		= 8;
+constexpr long long IT_GRENADE_LAUNCHER		= 16;
+constexpr long long IT_ROCKET_LAUNCHER		= 32;
+constexpr long long IT_LIGHTNING			= 64;
+constexpr long long IT_SUPER_LIGHTNING		= 128;
+constexpr long long IT_SHELLS				= 256;
+constexpr long long IT_NAILS				= 512;
+constexpr long long IT_ROCKETS				= 1024;
+constexpr long long IT_CELLS				= 2048;
+constexpr long long IT_AXE					= 4096;
+constexpr long long IT_ARMOR1				= 8192;
+constexpr long long IT_ARMOR2				= 16384;
+constexpr long long IT_ARMOR3				= 32768;
+constexpr long long IT_SUPERHEALTH			= 65536;
+constexpr long long IT_KEY1					= 131072;
+constexpr long long IT_KEY2					= 262144;
+constexpr long long IT_INVISIBILITY			= 524288;
+constexpr long long IT_INVULNERABILITY		= 1048576;
+constexpr long long IT_SUIT					= 2097152;
+constexpr long long IT_QUAD					= 4194304;
+constexpr long long IT_SIGIL1				= 268435456;
+constexpr long long IT_SIGIL2				= 536870912;
+constexpr long long IT_SIGIL3				= 1073741824;
+constexpr long long IT_SIGIL4				= (1<<31);
+
+constexpr long long IT_BULLET_TIME			= 4294967296;
 
 //===========================================
 //rogue changed and added defines
 
-#define RIT_SHELLS              128
-#define RIT_NAILS               256
-#define RIT_ROCKETS             512
-#define RIT_CELLS               1024
-#define RIT_AXE                 2048
-#define RIT_LAVA_NAILGUN        4096
-#define RIT_LAVA_SUPER_NAILGUN  8192
-#define RIT_MULTI_GRENADE       16384
-#define RIT_MULTI_ROCKET        32768
-#define RIT_PLASMA_GUN          65536
-#define RIT_ARMOR1              8388608
-#define RIT_ARMOR2              16777216
-#define RIT_ARMOR3              33554432
-#define RIT_LAVA_NAILS          67108864
-#define RIT_PLASMA_AMMO         134217728
-#define RIT_MULTI_ROCKETS       268435456
-#define RIT_SHIELD              536870912
-#define RIT_ANTIGRAV            1073741824
-#define RIT_SUPERHEALTH         2147483648
+constexpr long long RIT_SHELLS				= 128;
+constexpr long long RIT_NAILS				= 256;
+constexpr long long RIT_ROCKETS				= 512;
+constexpr long long RIT_CELLS				= 1024;
+constexpr long long RIT_AXE					= 2048;
+constexpr long long RIT_LAVA_NAILGUN		= 4096;
+constexpr long long RIT_LAVA_SUPER_NAILGUN	= 8192;
+constexpr long long RIT_MULTI_GRENADE		= 16384;
+constexpr long long RIT_MULTI_ROCKET		= 32768;
+constexpr long long RIT_PLASMA_GUN			= 65536;
+constexpr long long RIT_ARMOR1				= 8388608;
+constexpr long long RIT_ARMOR2				= 16777216;
+constexpr long long RIT_ARMOR3				= 33554432;
+constexpr long long RIT_LAVA_NAILS			= 67108864;
+constexpr long long RIT_PLASMA_AMMO			= 134217728;
+constexpr long long RIT_MULTI_ROCKETS		= 268435456;
+constexpr long long RIT_SHIELD				= 536870912;
+constexpr long long RIT_ANTIGRAV			= 1073741824;
+constexpr long long RIT_SUPERHEALTH			= 2147483648;
 
 //MED 01/04/97 added hipnotic defines
 //===========================================
 //hipnotic added defines
-#define HIT_PROXIMITY_GUN_BIT 16
-#define HIT_MJOLNIR_BIT       7
-#define HIT_LASER_CANNON_BIT  23
-#define HIT_PROXIMITY_GUN   (1<<HIT_PROXIMITY_GUN_BIT)
-#define HIT_MJOLNIR         (1<<HIT_MJOLNIR_BIT)
-#define HIT_LASER_CANNON    (1<<HIT_LASER_CANNON_BIT)
-#define HIT_WETSUIT         (1<<(23+2))
-#define HIT_EMPATHY_SHIELDS (1<<(23+3))
+constexpr long long HIT_PROXIMITY_GUN_BIT	= 16;
+constexpr long long HIT_MJOLNIR_BIT			= 7;
+constexpr long long HIT_LASER_CANNON_BIT	= 23;
+constexpr long long HIT_PROXIMITY_GUN		= (1<<HIT_PROXIMITY_GUN_BIT);
+constexpr long long HIT_MJOLNIR				= (1<<HIT_MJOLNIR_BIT);
+constexpr long long HIT_LASER_CANNON		= (1<<HIT_LASER_CANNON_BIT);
+constexpr long long HIT_WETSUIT				= (1<<(23+2));
+constexpr long long HIT_EMPATHY_SHIELDS		= (1<<(23+3));
 
 //===========================================
 
 typedef uintptr_t src_offset_t;
 
-#define	MAX_SCOREBOARD		16
-#define	MAX_SCOREBOARDNAME	32
+constexpr int MAX_SCOREBOARD		= 16;
+constexpr int MAX_SCOREBOARDNAME	= 32;
 
-#define	SOUND_CHANNELS		8
+constexpr int SOUND_CHANNELS		= 8;
 
 // This makes anyone on id's net privileged
 // Use for multiplayer testing only - VERY dangerous!!!
