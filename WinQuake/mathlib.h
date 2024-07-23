@@ -47,6 +47,9 @@ extern	int nanmask;
 
 #define	IS_NAN(x) (((*(int *)&x)&nanmask)==nanmask)
 
+#define DEG2RAD( a ) ( a * M_PI ) / 180.0F
+#define RAD2DEG( a ) ( a * 180.0F) / M_PI;
+
 #define DotProduct(x,y) (x[0]*y[0]+x[1]*y[1]+x[2]*y[2])
 #define DoublePrecisionDotProduct(x,y) ((double)(x)[0]*(y)[0]+(double)(x)[1]*(y)[1]+(double)(x)[2]*(y)[2])
 #define VectorSubtract(a,b,c) {c[0]=a[0]-b[0];c[1]=a[1]-b[1];c[2]=a[2]-b[2];}
@@ -86,6 +89,84 @@ float	anglemod(float a);
 
 void RotatePointAroundVector(vec3_t dst, const vec3_t dir, const vec3_t point, float degrees);
 vec_t VectorLength(vec3_t v);
+
+void RotateVector(vec3_t& input, vec3_t& forward, vec3_t& right, vec3_t& up, float angle);
+void RotationFromVector(vec3_t& distanceBetweenPoints, vec3_t& output);
+
+//================================
+// Missi: 3D vector class
+// So I don't have to keep using the annoying vec3_t functions (7/22/2024)
+//================================
+class Vector3
+{
+public:
+	Vector3()
+	{
+		x = 0.0f;
+		y = 0.0f;
+		z = 0.0f;
+	}
+	Vector3(vec3_t& vec)
+	{
+		x = vec[0];
+		y = vec[1];
+		z = vec[2];
+	}
+	Vector3(const vec3_t& vec)
+	{
+		x = vec[0];
+		y = vec[1];
+		z = vec[2];
+	}
+	Vector3(Vector3& vec)
+	{
+		x = vec.x;
+		y = vec.y;
+		z = vec.z;
+	}
+	Vector3(const Vector3& vec)
+	{
+		x = vec.x;
+		y = vec.y;
+		z = vec.z;
+	}
+	Vector3(float x1, float y1, float z1)
+	{
+		x = x1;
+		y = y1;
+		z = z1;
+	}
+
+	void RotateAlongAxis(Vector3& forward, Vector3& right, Vector3& up, float angle);
+	vec3_t& ToVec3_t();
+
+	Vector3 Rotation(vec3_t dist);
+
+	Vector3 operator=(const Vector3& other);
+	Vector3 operator=(const vec3_t& other);
+
+	Vector3& operator+(const Vector3& other);
+	Vector3& operator+(const float& other);
+	
+	Vector3& operator-(const Vector3& other);
+	Vector3& operator-(const float& other);
+	
+	Vector3& operator*(const Vector3& other);
+	Vector3& operator*(const float& other);
+	
+	Vector3& operator*=(const Vector3& other);
+	Vector3& operator*=(const float& other);
+
+	Vector3& operator/(const Vector3& other);
+	Vector3& operator/(const float& other);
+
+	const bool operator==(const Vector3& vec1);
+	const bool operator!=(const Vector3& vec1);
+
+	float x, y, z;
+};
+
+extern Vector3 vec_null;
 
 #define BOX_ON_PLANE_SIDE(emins, emaxs, p)	\
 	(((p)->type < 3)?						\

@@ -27,13 +27,42 @@ void Sys_Error (char *error, ...);
 vec3_t vec3_origin = {0,0,0};
 int nanmask = 255<<23;
 
-/*-----------------------------------------------------------------*/
+Vector3 vec_null = Vector3(0.0f, 0.0f, 0.0f);
 
-#define DEG2RAD( a ) ( a * M_PI ) / 180.0F
+/*-----------------------------------------------------------------*/
 
 vec_t VectorLength(vec3_t v)
 {
 	return sqrt(DotProduct(v, v));
+}
+
+void RotateVector(vec3_t& input, vec3_t& forward, vec3_t& right, vec3_t& up, float angle)
+{
+	if (angle == 0.0f)
+		return;
+
+	input[0] *= forward[0] + forward[1] + forward[2] *
+		forward[1] + cos(angle) + -sin(angle) *
+		forward[2] + sin(angle) + cos(angle);
+
+	input[1] *= cos(angle) + right[0] + sin(angle) *
+		right[0] + right[1] + right[2] *
+		-sin(angle) + right[0] + cos(angle);
+
+	input[2] *= cos(angle) + -sin(angle) + up[0] *
+		sin(angle) + cos(angle) + up[1] *
+		up[0] + up[1] + up[2];
+}
+
+void RotationFromVector(vec3_t& distanceBetweenPoints, vec3_t& output)
+{
+	float yaw = atan2(distanceBetweenPoints[1], distanceBetweenPoints[0]) * (180 / M_PI);
+
+	float pitch = atan2(distanceBetweenPoints[2], sqrt(distanceBetweenPoints[0] * distanceBetweenPoints[0] + distanceBetweenPoints[1] * distanceBetweenPoints[1])) * (180 / M_PI);
+
+	vec3_t ang = { pitch, yaw + 180.0f, 0 };
+
+	VectorCopy(ang, output);
 }
 
 void ProjectPointOnPlane( vec3_t dst, const vec3_t p, const vec3_t normal )
@@ -580,3 +609,154 @@ fixed16_t Invert24To16(fixed16_t val)
 }
 
 #endif
+
+void Vector3::RotateAlongAxis(Vector3& forward, Vector3& right, Vector3& up, float angle)
+{
+	if (angle == 0.0f)
+		return;
+
+	if (forward != vec_null)
+	{
+		x *= forward.x + forward.y + forward.z *
+			forward.y + cos(angle) + -sin(angle) *
+			forward.z + sin(angle) + cos(angle);
+	}
+
+	if (right != vec_null)
+	{
+		y *= cos(angle) + right.x + sin(angle) *
+			right.x + right.y + right.z *
+			-sin(angle) + right.x + cos(angle);
+	}
+
+	if (up != vec_null)
+	{
+		z *= cos(angle) + -sin(angle) + up.x *
+			sin(angle) + cos(angle) + up.y *
+			up.x + up.y + up.z;
+	}
+}
+
+vec3_t& Vector3::ToVec3_t()
+{
+	vec3_t test;
+
+	test[0] = x;
+	test[1] = y;
+	test[2] = z;
+
+	return test;
+}
+
+Vector3 Vector3::Rotation(vec3_t dist)
+{
+	float yaw = atan2(dist[1], dist[0]) * (180 / M_PI);
+
+	float pitch = atan2(dist[2], sqrt(dist[0] * dist[0] + dist[1] * dist[1])) * (180 / M_PI);
+
+	return Vector3( pitch, yaw + 180.0f, 0.0f );
+}
+
+Vector3 Vector3::operator=(const Vector3& other)
+{
+	return Vector3(other);
+}
+
+Vector3 Vector3::operator=(const vec3_t& other)
+{
+	return Vector3(other);
+}
+
+Vector3& Vector3::operator+(const Vector3& other)
+{
+	x += other.x;
+	y += other.y;
+	z += other.z;
+
+	return *this;
+}
+
+Vector3& Vector3::operator+(const float& other)
+{
+	x += y += z += other;
+
+	return *this;
+}
+
+Vector3& Vector3::operator-(const float& other)
+{
+	x -= y -= z -= other;
+
+	return *this;
+}
+
+Vector3& Vector3::operator-(const Vector3& other)
+{
+	x -= other.x;
+	y -= other.y;
+	z -= other.z;
+
+	return *this;
+}
+
+Vector3& Vector3::operator*(const Vector3& other)
+{
+	x *= other.x;
+	y *= other.y;
+	z *= other.z;
+
+	return *this;
+}
+
+Vector3& Vector3::operator*(const float& other)
+{
+	x *= other;
+	y *= other;
+	z *= other;
+
+	return *this;
+}
+
+Vector3& Vector3::operator*=(const Vector3& other)
+{
+	x *= other.x;
+	y *= other.y;
+	z *= other.z;
+
+	return *this;
+}
+
+Vector3& Vector3::operator*=(const float& other)
+{
+	x *= y *= z *= other;
+
+	return *this;
+}
+
+Vector3& Vector3::operator/(const Vector3& other)
+{
+	x /= other.x;
+	y /= other.y;
+	z /= other.z;
+
+	return *this;
+}
+
+Vector3& Vector3::operator/(const float& other)
+{
+	x /= other;
+	y /= other;
+	z /= other;
+
+	return *this;
+}
+
+const bool Vector3::operator==(const Vector3& vec1)
+{
+	return !memcmp(this, &vec1, sizeof(Vector3));
+}
+
+const bool Vector3::operator!=(const Vector3& vec1)
+{
+	return memcmp(this, &vec1, sizeof(Vector3));
+}
