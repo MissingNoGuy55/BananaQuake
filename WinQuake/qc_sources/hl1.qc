@@ -1,3 +1,190 @@
+/*
+==============================================================================
+
+BRUSH ENTITIES
+
+==============================================================================
+*/
+
+void() func_monsterclip =
+{
+	self.solid = SOLID_NOT;
+	self.movetype = MOVETYPE_NONE;
+	setmodel(self, self.model);
+};
+
+void() func_tracktrain_find =
+
+{
+	local entity	targ;
+
+	targ = find (world, targetname, self.target);
+	self.target = targ.target;
+	
+	setorigin (self, targ.origin);
+	adjusttrain(self, self.target);
+	if (!self.targetname)
+	{	// not triggered, so start immediately
+		self.nextthink = self.ltime + 0.1;
+		self.think = train_next;
+	}
+};
+
+/*QUAKED func_tracktrain (0 .5 .8) ?
+Trains are moving platforms that players can ride.
+The targets origin specifies the min point of the train at each corner.
+The train spawns at the first target it is pointing at.
+If the train is the target of a button or trigger, it will not begin moving until activated.
+speed	default 100
+dmg		default	2
+sounds
+1) ratchet metal
+
+.float height;
+
+*/
+void() func_tracktrain =
+{	
+	if (!self.speed)
+		self.speed = 100;
+	if (!self.target)
+		objerror ("func_tracktrain without a target");
+	if (!self.dmg)
+		self.dmg = 2;
+
+	if (self.sounds == 0)
+	{
+		self.noise = ("misc/null.wav");
+		precache_sound ("misc/null.wav");
+		self.noise1 = ("misc/null.wav");
+		precache_sound ("misc/null.wav");
+	}
+
+	if (self.sounds == 1)
+	{
+		self.noise = ("plats/train2.wav");
+		precache_sound ("plats/train2.wav");
+		self.noise1 = ("plats/train1.wav");
+		precache_sound ("plats/train1.wav");
+	}
+
+	self.cnt = 1;
+	self.solid = SOLID_BSP;
+	self.movetype = MOVETYPE_PUSH;
+	self.blocked = train_blocked;
+	self.use = train_use;
+	self.classname = "train";
+
+	setmodel (self, self.model);
+	setsize (self, self.mins , self.maxs);
+	setorigin (self, self.origin);
+
+// start trains on the second frame, to make sure their targets have had
+// a chance to spawn
+	self.nextthink = self.ltime + 0.1;
+	self.think = func_tracktrain_find;
+};
+
+void() func_ladder =
+{
+	self.solid = SOLID_BSP;
+	self.movetype = MOVETYPE_PUSH;
+	
+	precache_sound("player/pl_ladder1.wav");
+	precache_sound("player/pl_ladder2.wav");
+	precache_sound("player/pl_ladder3.wav");
+	precache_sound("player/pl_ladder4.wav");
+	
+	setmodel(self, self.model);
+	setcontents(self, CONTENT_LADDER);
+};
+
+void() func_rotating =
+{
+
+	self.movetype = MOVETYPE_PUSH;
+	self.solid = SOLID_BSP;
+	
+	setmodel(self, self.model);
+	setorigin(self, self.origin);
+
+};
+
+void() func_water =
+{	
+	if (!self.t_length)
+		self.t_length = 80;
+	if (!self.t_width)
+		self.t_width = 10;
+
+	if (self.sounds == 0)
+		self.sounds = 2;
+// FIX THIS TO LOAD A GENERIC PLAT SOUND
+
+	if (self.sounds == 1)
+	{
+		precache_sound ("plats/plat1.wav");
+		precache_sound ("plats/plat2.wav");
+		self.noise = "plats/plat1.wav";
+		self.noise1 = "plats/plat2.wav";
+	}
+
+	if (self.sounds == 2)
+	{
+		precache_sound ("plats/medplat1.wav");
+		precache_sound ("plats/medplat2.wav");
+		self.noise = "plats/medplat1.wav";
+		self.noise1 = "plats/medplat2.wav";
+	}
+
+
+	self.mangle = self.angles;
+	self.angles = '0 0 0';
+
+	self.solid = SOLID_NOT;
+	self.movetype = MOVETYPE_NONE;
+	setorigin (self, self.origin);	
+	setmodel (self, self.model);
+	setsize (self, self.mins , self.maxs);
+
+	self.blocked = plat_crush;
+	if (!self.speed)
+		self.speed = 150;
+
+// pos1 is the top position, pos2 is the bottom
+	self.pos1 = self.origin;
+	self.pos2 = self.origin;
+	if (self.height)
+		self.pos2_z = self.origin_z - self.height;
+	else
+		self.pos2_z = self.origin_z - self.size_z + 8;
+
+	self.use = plat_trigger_use;
+
+	// plat_spawn_inside_trigger ();	// the "start moving" trigger	
+
+	if (self.targetname)
+	{
+		self.state = STATE_UP;
+		self.use = plat_use;
+	}
+	else
+	{
+		setorigin (self, self.pos2);
+		self.state = STATE_BOTTOM;
+	}
+	
+	setmodel(self, self.model);
+};
+
+void() func_pushable =
+{
+	self.movetype = MOVETYPE_PUSH;
+	self.solid = SOLID_BSP;
+	
+	setmodel(self, self.model);
+};
+
 .float charge_amount_health;
 .float charge_replenish_health_time;
 .float charge_replenish_health_deny_time;
@@ -40,7 +227,7 @@ void() healthcharger_use =
 			{
 				sound(self, CHAN_VOICE, "items/medshot4.wav", 1, ATTN_NORM);
 				self.charge_sound1_time_health = time + 999999;
-				self.charge_sound2_time_health = time + 1;
+				self.charge_sound2_time_health = time + 0.8;
 			}
 		}
 		
@@ -131,7 +318,7 @@ void() suitcharger_use =
 			{
 				sound(self, CHAN_VOICE, "items/suitchargeok1.wav", 1, ATTN_NORM);
 				self.charge_sound1_time = time + 999999;
-				self.charge_sound2_time = time + 1;
+				self.charge_sound2_time = time + 0.8;
 			}
 		}
 		
@@ -201,30 +388,62 @@ void() func_breakable =
 
 };
 
+/*
+==============================================================================
+
+POINT ENTITIES
+
+==============================================================================
+*/
+
+void() env_glow =
+{
+	self.solid = SOLID_NOT;
+	self.movetype = MOVETYPE_NONE;
+};
+
+.string netnamed;
+
+void() path_track = 
+{
+	self.model = string_null;
+	self.solid = SOLID_NOT;
+	self.movetype = MOVETYPE_NONE;
+	
+	if (!self.speed)
+		self.speed = 100;
+};
+
 .float playing;
 
-void() ambient_generic_startsound =
+void() ambient_generic_use =
 {
 	if (self.playing == 0)
 	{
 		ambientsound (self.origin, self.message, self.health, ATTN_STATIC);
 		self.playing = 1;
 	}
+	else
+	{
+		ambientsound (self.origin, "common/null.wav", self.health, ATTN_STATIC);
+		self.playing = 0;
+	}
+	return;
 };
 
 void() ambient_generic =
 {
 	precache_sound (self.message);
-
+	
 	self.playing = 0;
-
+	
 	if (!(self.spawnflags & 16))
 	{
-		self.playing = 1;
 		ambientsound (self.origin, self.message, self.health, ATTN_STATIC);
+		self.playing = 1;
 	}
-
-	self.use = ambient_generic_startsound;
+	
+	self.use = ambient_generic_use;
 };
 
 .entity nextnode;
@@ -233,82 +452,6 @@ void() info_node =
 {
 	self.model = string_null;
 	self.nextnode = findradius(self.origin, 512.0);
-};
-
-void() func_water =
-{	
-	if (!self.t_length)
-		self.t_length = 80;
-	if (!self.t_width)
-		self.t_width = 10;
-
-	if (self.sounds == 0)
-		self.sounds = 2;
-// FIX THIS TO LOAD A GENERIC PLAT SOUND
-
-	if (self.sounds == 1)
-	{
-		precache_sound ("plats/plat1.wav");
-		precache_sound ("plats/plat2.wav");
-		self.noise = "plats/plat1.wav";
-		self.noise1 = "plats/plat2.wav";
-	}
-
-	if (self.sounds == 2)
-	{
-		precache_sound ("plats/medplat1.wav");
-		precache_sound ("plats/medplat2.wav");
-		self.noise = "plats/medplat1.wav";
-		self.noise1 = "plats/medplat2.wav";
-	}
-
-
-	self.mangle = self.angles;
-	self.angles = '0 0 0';
-
-	self.solid = SOLID_NOT;
-	self.movetype = MOVETYPE_NONE;
-	setorigin (self, self.origin);	
-	setmodel (self, self.model);
-	setsize (self, self.mins , self.maxs);
-
-	self.blocked = plat_crush;
-	if (!self.speed)
-		self.speed = 150;
-
-// pos1 is the top position, pos2 is the bottom
-	self.pos1 = self.origin;
-	self.pos2 = self.origin;
-	if (self.height)
-		self.pos2_z = self.origin_z - self.height;
-	else
-		self.pos2_z = self.origin_z - self.size_z + 8;
-
-	self.use = plat_trigger_use;
-
-	// plat_spawn_inside_trigger ();	// the "start moving" trigger	
-
-	if (self.targetname)
-	{
-		self.state = STATE_UP;
-		self.use = plat_use;
-	}
-	else
-	{
-		setorigin (self, self.pos2);
-		self.state = STATE_BOTTOM;
-	}
-	
-	setmodel(self, self.model);
-	setcontents(self, CONTENT_WATER);
-};
-
-void() func_pushable =
-{
-	self.movetype = MOVETYPE_PUSH;
-	self.solid = SOLID_BSP;
-	
-	setmodel(self, self.model);
 };
 
 void() info_target =
@@ -368,17 +511,10 @@ void() scripted_sequence_think =
 	self.think = scripted_sequence_think;
 };
 
-void() func_rotating =
-{
-
-	self.movetype = MOVETYPE_PUSH;
-	self.solid = SOLID_BSP;
-
-};
-
 void() multi_manager_cycle =
 {
 	multimanager(self);
+	self.master_triggered = 1;
 };
 
 void() multi_manager =
@@ -386,35 +522,56 @@ void() multi_manager =
 	self.use = multi_manager_cycle;
 };
 
-.float triggerstate;
-
-void() trigger_auto_fire =
+void() multisource_use =
 {
-	SUB_UseTargets();
+	self.master_triggered = 1;
 };
+
+void() multisource =
+{
+	self.solid = SOLID_NOT;
+	self.movetype = MOVETYPE_NONE;
+	self.model = string_null;
+	
+	self.use = multisource_use;
+};
+
+.float triggerstate;
 
 void() trigger_auto =
 {
-	self.use = trigger_auto_fire;
+	self.use = SUB_UseTargets;
 	self.triggerstate = self.triggerstate;
 	
 	bprint("Triggerstate is: ");
 	bprint(ftos(self.triggerstate));
 };
 
-void() func_ladder =
+.string sentence;
+.string entity;
+
+void() scripted_sentence_talk =
 {
-	self.solid = SOLID_BSP;
-	self.movetype = MOVETYPE_PUSH;
-	
-	precache_sound("player/pl_ladder1.wav");
-	precache_sound("player/pl_ladder2.wav");
-	precache_sound("player/pl_ladder3.wav");
-	precache_sound("player/pl_ladder4.wav");
-	
-	setmodel(self, self.model);
-	setcontents(self, CONTENT_LADDER);
+	speak_sentence(self, self.sentence);
 };
+
+void() scripted_sentence =
+{
+	self.sentence = self.sentence;
+	
+	precache_sentence(self.sentence);
+	
+	self.use = scripted_sentence_talk;
+	self.entity = self.entity;
+};
+
+/*
+==============================================================================
+
+ITEMS/AMMO
+
+==============================================================================
+*/
 
 void() item_healthkit =
 {
