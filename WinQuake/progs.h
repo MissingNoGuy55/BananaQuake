@@ -493,7 +493,14 @@ void PR_RunError (const char *error, ...);
 
 void ED_PrintEdicts (void);
 void ED_PrintNum (int ent);
+
+const char* _ED_ParseMultiManager(const char* data, edict_t* ed);
+
+dfunction_t* ED_FindFunction(const char* name);
 extern progvector_t* ED_FindCPPVector(const char* name);
 
 eval_t* GetEdictFieldValue(edict_t* ed, const char* field);
+edict_t* ED_FindEdict(const char* targetname);
+const char* ED_FindEdictTextBlock(const char* targetname);
+void GetEdictFieldValues(edict_t* ed, CQVector<eval_t*>* vec);
 const char *PR_UglyValueString (int type, eval_t *val);

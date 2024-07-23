@@ -328,6 +328,51 @@ Done:
 	return (eval_t*)((char*)&ed->v + def->ofs * 4);
 }
 
+edict_t* ED_FindEdict(const char* targetname)
+{
+	for (int i = 1; i < sv->GetNumEdicts(); i++)
+	{
+		edict_t* ed = EDICT_NUM(i);
+
+		if (!Q_strcmp(targetname, PR_GetString(ed->v.targetname)))
+			return ed;
+	}
+
+	return nullptr;
+}
+
+const char* ED_FindEdictTextBlock(const char* targetname)
+{
+	const char* start = nullptr;
+
+    for (const char* edict = sv->GetWorldModel()->entities; edict[0]; edict = g_Common->COM_ParseStringNewline(edict))
+	{
+        if (!Q_strncmp(edict, "{", 1))
+		{
+            start = edict+1;
+		}
+
+		if (!Q_strncmp(edict, "\"targetname\"", 12))
+		{
+			char tgtname[128] = {};
+
+			edict = g_Common->COM_ParseStringNewline(edict);
+
+            sscanf(edict, "\"%s\"", tgtname);
+
+            tgtname[Q_strlen(tgtname) - 1] = '\0';
+
+			if (!Q_strcmp(targetname, tgtname))
+			{
+				edict = start;
+
+				return edict;
+			}
+		}
+	}
+
+	return nullptr;
+}
 /*
 ============
 ED_FindGlobal
@@ -985,7 +1030,55 @@ const char *ED_ParseEdict (const char *data, edict_t *ent)
 		if (g_Common->com_token[0] == '}')
 			Sys_Error ("ED_ParseEntity: closing brace without data");
 
-		init = true;	
+		init = true;
+
+		if (!Q_strncmp(g_Common->com_token, "func_water", 10))
+		{
+			vec3_t offset = {};
+
+			hull_t* hull = sv->SV_HullForEntity(ent, ent->v.mins, ent->v.maxs, offset);
+			mclipnode_t* node = nullptr;
+			mplane_t* plane = nullptr;
+			float d = 0.0f;
+			int hullnum = 0;
+
+			while (hullnum >= 0)
+			{
+				if (hullnum < hull->firstclipnode || hullnum > hull->lastclipnode)
+					Sys_Error("SV_HullPointContents: bad node number");
+
+				node = hull->clipnodes + hullnum;
+				plane = hull->planes + node->planenum;
+
+				if (plane->type < 3)
+					d = offset[plane->type] - plane->dist;
+				else
+					d = DotProduct(plane->normal, offset) - plane->dist;
+				if (d < 0)
+				{
+					node->children[1] = CONTENTS_WATER;
+					hullnum = node->children[1];
+				}
+				else
+				{
+					node->children[0] = CONTENTS_WATER;
+					hullnum = node->children[0];
+				}
+
+				model_t* model = Mod_FindName(PR_GetString(ent->v.model));
+
+				if (model)
+				{
+					for (int i = 0; i < model->numleafs; i++)
+					{
+						mleaf_t* leaf = &model->leafs[i];
+						leaf->contents = CONTENTS_WATER;
+					}
+				}
+			}
+
+			Con_DPrintf("Hull contents: %d\n", hullnum);
+		}
 
 		// keynames with a leading underscore are used for utility comments,
 		// and are immediately discarded by quake
@@ -1016,6 +1109,152 @@ const char *ED_ParseEdict (const char *data, edict_t *ent)
 	return data;
 }
 
+unsigned int ProgTimerCallback(unsigned int interval, void* data)
+{
+    edict_t* ed = (edict_t*)data;
+
+	if (!ed)
+		return 0;
+
+    const char* targetname = PR_GetString(ed->v.targetname);
+    Con_DPrintf("Firing \"%s\" from multi_manager\n", PR_GetString(ed->v.targetname));
+
+    int old_self = pr_global_struct->self;
+    int old_other = pr_global_struct->other;
+
+    pr_global_struct->self = EDICT_TO_PROG(ed);
+    pr_global_struct->time = sv->GetServerTime();
+    PR_ExecuteProgram (ed->v.use);
+
+    pr_global_struct->self = old_self;
+
+    return 0;
+}
+
+void TimerCallback(void* parm1)
+{
+	edict_t* ed = (edict_t*)parm1;
+
+	if (!ed)
+		return;
+
+	const char* targetname = PR_GetString(ed->v.targetname);
+	Con_DPrintf("Firing \"%s\" from multi_manager\n", PR_GetString(ed->v.targetname));
+
+	int old_self = pr_global_struct->self;
+	int old_other = pr_global_struct->other;
+
+	pr_global_struct->self = EDICT_TO_PROG(ed);
+	pr_global_struct->time = sv->GetServerTime();
+	PR_ExecuteProgram(ed->v.use);
+
+	pr_global_struct->self = old_self;
+}
+
+/*
+====================
+Missi: _ED_ParseMultiManager
+
+Basically a modified version of ED_ParseEdict without intialization of edicts. Used to parse targetnames
+listed in a GoldSrc multi_manager entity. Operates on map entity data (7/14/2024)
+====================
+*/
+
+const char* _ED_ParseMultiManager (const char *data, edict_t* ed)
+{
+    ddef_t		*key;
+    bool        anglehack;
+    char		keyname[256];
+    int			n;
+
+    // go through all the dictionary pairs
+    while (1)
+    {
+    // parse key
+        data = g_Common->COM_Parse (data);
+        if (g_Common->com_token[0] == '}')
+            break;
+        if (!data)
+            Sys_Error ("ED_ParseEntity: EOF without closing brace");
+
+        // anglehack is to allow QuakeEd to write single scalar angles
+        // and allow them to be turned into vectors. (FIXME...)
+        if (!strcmp(g_Common->com_token, "angle"))
+        {
+            Q_strcpy (g_Common->com_token, "angles");
+            anglehack = true;
+        }
+        else
+            anglehack = false;
+
+        // FIXME: change light to _light to get rid of this hack
+        if (!strcmp(g_Common->com_token, "light"))
+            Q_strcpy (g_Common->com_token, "light_lev");	// hack for single light def
+
+        Q_strcpy (keyname, g_Common->com_token);
+
+        // another hack to fix heynames with trailing spaces
+        n = strlen(keyname);
+        while (n && keyname[n-1] == ' ')
+        {
+            keyname[n-1] = 0;
+            n--;
+        }
+
+        if (!Q_strncmp(g_Common->com_token, "origin", 6) || 
+			!Q_strncmp(g_Common->com_token, "classname", 9) ||
+			!Q_strncmp(g_Common->com_token, "targetname", 10))
+        {
+            data = g_Common->COM_Parse (data);
+            continue;
+        }
+
+        cxxstring targetname(g_Common->com_token);
+
+        // parse value
+        data = g_Common->COM_Parse (data);
+        if (!data)
+            Sys_Error ("ED_ParseEntity: EOF without closing brace");
+
+        if (g_Common->com_token[0] == '}')
+            Sys_Error ("ED_ParseEntity: closing brace without data");
+
+        if (!targetname.empty())
+        {
+            size_t pos = targetname.find_first_of('\"');
+
+            while (pos != cxxstring::npos)
+            {
+                targetname = targetname.erase(pos, 1);
+                pos = targetname.find_first_of('\"');
+            }
+
+			pos = targetname.find_first_of('#');
+
+			while (pos != cxxstring::npos)
+			{
+				targetname = targetname.erase(pos, 2);
+				pos = targetname.find_first_of('#');
+			}
+
+            edict_t* find = ED_FindEdict(targetname.c_str());
+
+			if (!find)
+				continue;
+
+            int time = Q_atoi(g_Common->com_token);
+
+			CQTimer* timer = new CQTimer(time, TimerCallback, find);
+        }
+
+        // keynames with a leading underscore are used for utility comments,
+        // and are immediately discarded by quake
+        if (keyname[0] == '_')
+            continue;
+    }
+
+    return data;
+}
 
 /*
 ================

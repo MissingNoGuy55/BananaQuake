@@ -342,6 +342,18 @@ void PF_centerprint (void)
 	MSG_WriteString (&client->message, s );
 }
 
+void PF_drawdebugline()
+{
+	float* origin = G_VECTOR(OFS_PARM0);
+	float* end = G_VECTOR(OFS_PARM1);
+	float* color = G_VECTOR(OFS_PARM2);
+
+	glBegin(GL_POLYGON);
+	glColor3fv(color);
+	glVertex3fv(origin);
+	glVertex3fv(end);
+	glEnd();
+}
 
 /*
 =================
@@ -627,7 +639,13 @@ void PF_traceline (void)
 	nomonsters = G_FLOAT(OFS_PARM2);
 	ent = G_EDICT(OFS_PARM3);
 
-	trace = sv->SV_Move (v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
+	if (IS_NAN(v1[0]) || IS_NAN(v1[2]) || IS_NAN(v1[1]))
+		Con_Warning("PF_traceline: NaN in v1 variable!\n");
+
+	if (IS_NAN(v2[0]) || IS_NAN(v2[2]) || IS_NAN(v2[1]))
+		Con_Warning("PF_traceline: NaN in v1 variable!\n");
+
+	trace = sv->SV_Move (v1, vec3_origin, vec3_origin, v2, nomonsters, EDICT_NUM(0));
 
 	pr_global_struct->trace_allsolid = trace.allsolid;
 	pr_global_struct->trace_startsolid = trace.startsolid;
@@ -643,9 +661,7 @@ void PF_traceline (void)
 		pr_global_struct->trace_ent = EDICT_TO_PROG(sv->GetServerEdicts());
 }
 
-
-#ifdef QUAKE2
-extern trace_t SV_Trace_Toss (edict_t *ent, edict_t *ignore);
+/*extern trace_t SV_Trace_Toss(edict_t* ent, edict_t* ignore);
 
 void PF_TraceToss (void)
 {
@@ -670,9 +686,7 @@ void PF_TraceToss (void)
 		pr_global_struct->trace_ent = EDICT_TO_PROG(trace.ent);
 	else
 		pr_global_struct->trace_ent = EDICT_TO_PROG(sv->GetServerEdicts());
-}
-#endif
-
+}*/
 
 /*
 =================
@@ -939,7 +953,7 @@ void PF_ftos (void)
 	if (v == (int)v)
 		snprintf (pr_string_temp, sizeof(pr_string_temp), "%d",(int)v);
 	else
-		snprintf (pr_string_temp, sizeof(pr_string_temp), "%5.1f",v);
+		snprintf (pr_string_temp, sizeof(pr_string_temp), "%f",v);
 	G_INT(OFS_RETURN) = PR_SetEngineString(pr_string_temp);
 }
 
@@ -956,13 +970,11 @@ void PF_vtos (void)
 	G_INT(OFS_RETURN) = PR_SetEngineString(pr_string_temp);
 }
 
-#ifdef QUAKE2
 void PF_etos (void)
 {
 	sprintf (pr_string_temp, "entity %i", G_EDICTNUM(OFS_PARM0));
 	G_INT(OFS_RETURN) = pr_string_temp - pr_strings;
 }
-#endif
 
 void PF_Spawn (void)
 {
@@ -1467,7 +1479,6 @@ void PF_changeyaw (void)
 	ent->v.angles[1] = anglemod (current + move);
 }
 
-#ifdef QUAKE2
 /*
 ==============
 PF_changepitch
@@ -1509,7 +1520,6 @@ void PF_changepitch (void)
 	
 	ent->v.angles[0] = anglemod (current + move);
 }
-#endif
 
 /*
 ===============================================================================
@@ -1689,9 +1699,6 @@ void PF_changelevel (void)
 #endif
 }
 
-
-#ifdef QUAKE2
-
 #define	CONTENT_WATER	-3
 #define CONTENT_SLIME	-4
 #define CONTENT_LAVA	-5
@@ -1756,10 +1763,10 @@ void PF_WaterMove (void)
 		{
 			if (self->v.air_finished < sv->GetServerTime())
 //				sound (self, CHAN_VOICE, "player/gasp2.wav", 1, ATTN_NORM);
-				SV_StartSound (self, CHAN_VOICE, "player/gasp2.wav", 255, ATTN_NORM);
+				sv->SV_StartSound (self, CHAN_VOICE, "player/gasp2.wav", 255, ATTN_NORM);
 			else if (self->v.air_finished < sv->GetServerTime() + 9)
 //				sound (self, CHAN_VOICE, "player/gasp1.wav", 1, ATTN_NORM);
-				SV_StartSound (self, CHAN_VOICE, "player/gasp1.wav", 255, ATTN_NORM);
+				sv->SV_StartSound (self, CHAN_VOICE, "player/gasp1.wav", 255, ATTN_NORM);
 			self->v.air_finished = sv->GetServerTime() + 12.0;
 			self->v.dmg = 2;
 		}
@@ -1770,7 +1777,7 @@ void PF_WaterMove (void)
 		{	
 			// play leave water sound
 //			sound (self, CHAN_BODY, "misc/outwater.wav", 1, ATTN_NORM);
-			SV_StartSound (self, CHAN_BODY, "misc/outwater.wav", 255, ATTN_NORM);
+			sv->SV_StartSound (self, CHAN_BODY, "misc/outwater.wav", 255, ATTN_NORM);
 			self->v.flags = (float)(flags &~FL_INWATER);
 		}
 		self->v.air_finished = sv->GetServerTime() + 12.0;
@@ -1808,13 +1815,13 @@ void PF_WaterMove (void)
 // player enter water sound
 		if (watertype == CONTENT_LAVA)
 //			sound (self, CHAN_BODY, "player/inlava.wav", 1, ATTN_NORM);
-			SV_StartSound (self, CHAN_BODY, "player/inlava.wav", 255, ATTN_NORM);
+			sv->SV_StartSound (self, CHAN_BODY, "player/inlava.wav", 255, ATTN_NORM);
 		if (watertype == CONTENT_WATER)
 //			sound (self, CHAN_BODY, "player/inh2o.wav", 1, ATTN_NORM);
-			SV_StartSound (self, CHAN_BODY, "player/inh2o.wav", 255, ATTN_NORM);
+			sv->SV_StartSound (self, CHAN_BODY, "player/inh2o.wav", 255, ATTN_NORM);
 		if (watertype == CONTENT_SLIME)
 //			sound (self, CHAN_BODY, "player/slimbrn2.wav", 1, ATTN_NORM);
-			SV_StartSound (self, CHAN_BODY, "player/slimbrn2.wav", 255, ATTN_NORM);
+			sv->SV_StartSound (self, CHAN_BODY, "player/slimbrn2.wav", 255, ATTN_NORM);
 
 		self->v.flags = (float)(flags | FL_INWATER);
 		self->v.dmgtime = 0;
@@ -1823,12 +1830,11 @@ void PF_WaterMove (void)
 	if (! (flags & FL_WATERJUMP) )
 	{
 //		self.velocity = self.velocity - 0.8*self.waterlevel*frametime*self.velocity;
-		VectorMA (self->v.velocity, -0.8 * self->v.waterlevel * host_frametime, self->v.velocity, self->v.velocity);
+		VectorMA (self->v.velocity, -0.8 * self->v.waterlevel * host->host_frametime, self->v.velocity, self->v.velocity);
 	}
 
 	G_FLOAT(OFS_RETURN) = damage;
 }
-
 
 void PF_sin (void)
 {
@@ -1844,7 +1850,6 @@ void PF_sqrt (void)
 {
 	G_FLOAT(OFS_RETURN) = sqrt(G_FLOAT(OFS_PARM0));
 }
-#endif
 
 /*
 =================
@@ -1855,7 +1860,7 @@ adds to a C++-like vector in QC
 cxxvectoradd_flt (vecname, data) (6/12/2024)
 =================
 */
-void PF_cxxvectoradd_flt(void)
+static void PF_cxxvectoradd_flt(void)
 {
 	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
 	float* val = new float(G_FLOAT(OFS_PARM1));
@@ -1872,7 +1877,7 @@ adds to a C++-like vector in QC
 cxxvectoradd_int (vecname, data) (6/12/2024)
 =================
 */
-void PF_cxxvectoradd_int(void)
+static void PF_cxxvectoradd_int(void)
 {
 	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
 	int* val = new int((int)G_FLOAT(OFS_PARM1));
@@ -1889,7 +1894,7 @@ adds to a C++-like vector in QC
 cxxvectoradd_ent (vecname, data) (6/12/2024)
 =================
 */
-void PF_cxxvectoradd_ent(void)
+static void PF_cxxvectoradd_ent(void)
 {
 	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
 	edict_t* val = new edict_t(*G_EDICT(OFS_PARM1));
@@ -1906,7 +1911,7 @@ adds to a C++-like vector in QC
 cxxvectoradd_str (vecname, data) (6/12/2024)
 =================
 */
-void PF_cxxvectoradd_str(void)
+static void PF_cxxvectoradd_str(void)
 {
 	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
 	string_t* val = new string_t(*G_STRING(OFS_PARM1));
@@ -1923,7 +1928,7 @@ pulls a value from a C++-like vector in QC
 PF_vec_access_flt (vecname, element) (6/12/2024)
 =================
 */
-void PF_vec_access_flt(void)
+static void PF_vec_access_flt(void)
 {
 	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
 	int pos = (int)G_FLOAT(OFS_PARM1);
@@ -1951,7 +1956,7 @@ pulls a value from a C++-like vector in QC
 PF_vec_access_int (vecname, element) (6/12/2024)
 =================
 */
-void PF_vec_access_int(void)
+static void PF_vec_access_int(void)
 {
 	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
 	int pos = (int)G_FLOAT(OFS_PARM1);
@@ -1979,7 +1984,7 @@ pulls a value from a C++-like vector in QC
 PF_vec_access_ent (vecname, element) (6/12/2024)
 =================
 */
-void PF_vec_access_ent(void)
+static void PF_vec_access_ent(void)
 {
 	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
 	int pos = (int)G_FLOAT(OFS_PARM1);
@@ -2007,7 +2012,7 @@ pulls a value from a C++-like vector in QC
 PF_vec_access_str (vecname, element) (6/12/2024)
 =================
 */
-void PF_vec_access_str(void)
+static void PF_vec_access_str(void)
 {
 	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
 	int pos = (int)G_FLOAT(OFS_PARM1);
@@ -2035,13 +2040,332 @@ obtains the size of a C++-like vector in QC
 PF_vec_size (vecname) (6/12/2024)
 =================
 */
-void PF_vec_size(void)
+static void PF_vec_size(void)
 {
 	progvector_t* vec = G_CPPVECTOR(G_STRING(OFS_PARM0));
 	int size = vec->data->GetNumAllocated();
 	float flsize = (float)size;
 
 	G_FLOAT(OFS_RETURN) = flsize;
+}
+
+/*
+=================
+Missi: PF_findfield
+
+finds a field in an entity
+
+findfield (entity, field) (6/12/2024)
+=================
+*/
+static void PF_findfield(void)
+{
+	edict_t* ed = G_EDICT(OFS_PARM0);
+	const char* field = G_STRING(OFS_PARM1);
+
+	eval_t* def = GetEdictFieldValue(ed, field);
+
+	if (def && def->string == G_STRING_MOD(OFS_PARM1))
+	{
+		G_STRING_MOD(OFS_RETURN) = def->string;
+	}
+}
+
+static void _PF_RunMultiManager()
+{
+    edict_t* ed = G_EDICT(OFS_PARM0);
+
+    const char* edict = ED_FindEdictTextBlock(PR_GetString(ed->v.targetname));
+
+    _ED_ParseMultiManager(edict, ed);
+}
+
+/*
+=================
+Missi: PF_findfield
+
+cycles the targetnames listed in a multi_manager entity
+
+multimanager (entity) (6/12/2024)
+=================
+*/
+static void PF_multimanager(void)
+{
+    _PF_RunMultiManager();
+
+    /*
+    while (1)
+    {
+        edict = g_Common->COM_Parse (edict);
+
+        if (g_Common->com_token[0] == '}')
+            break;
+
+        if (!Q_strncmp(edict, "\"targetname\"", 13))
+            break;
+
+		char targettofire[MAX_VALUE] = {};
+        float time = 0.0f;
+
+        sscanf(edict, "\"%s\"", targettofire);
+        targettofire[Q_strlen(targettofire) - 1] = '\0';
+
+        edict = g_Common->COM_ParseStringNewline(edict);
+
+        sscanf(edict, "\"%f\"", &time);
+
+        Con_DPrintf("Firing \"%s\" from multi_manager!\n", targettofire);
+
+		edict_t* ed = ED_FindEdict(targettofire);
+
+        if ((ed) && ed->v.use != 0)
+        {
+            int old_self = pr_global_struct->self;
+            int old_other = pr_global_struct->other;
+
+            pr_global_struct->self = EDICT_TO_PROG(ed);
+            pr_global_struct->time = sv->GetServerTime();
+            PR_ExecuteProgram (ed->v.use);
+
+            pr_global_struct->self = old_self;
+        }
+	}
+    */
+}
+
+/*
+=================
+Missi: PF_setcontents
+
+mainly used for func_water. sets the contents of a brush model
+
+setcontents (entity, contents) (7/15/2024)
+=================
+*/
+static void PF_setcontents(void)
+{
+	edict_t* ed = nullptr;
+
+	ed = G_EDICT(OFS_PARM0);
+
+	if (!ed)
+		return;
+
+	model_t* mod = Mod_FindName(PR_GetString(ed->v.model));
+
+	mod->leafs->contents = G_FLOAT(OFS_PARM1);
+}
+
+/*
+=================
+Missi: PF_setcontents
+
+mainly used for func_water. sets the contents of a brush model
+
+setcontents (entity, contents) (7/15/2024)
+=================
+*/
+static void PF_precache_sentence(void)
+{
+	const char* sentence = nullptr;
+
+	sentence = G_STRING(OFS_PARM0);
+
+	if (!sentence)
+		return;
+
+	cxxifstream f;
+	uintptr_t path_id = 0;
+	cxxstring sound = {};
+
+	g_Common->COM_FOpenFile_FStream("sound/sentences.txt", &f, &path_id);
+
+	if (f.bad())
+	{
+		f.close();
+		return;
+	}
+
+	char line[256] = {};
+
+	while (f.getline(line, sizeof(line)))
+	{
+		if (Q_strncmp(line, sentence+1, Q_strlen(sentence) - 1))
+			continue;
+
+		sound = line + Q_strlen(sentence);
+		sound.append(".wav");
+		
+		for (int i = 0; i < MAX_SOUNDS; i++)
+		{
+			if (!sv->GetSoundPrecacheEntry(i))
+			{
+				sv->SetSoundPrecacheEntry(i, sound.c_str());
+				break;
+			}
+			if (!strcmp(sv->GetSoundPrecacheEntry(i), sound.c_str()))
+			{
+				break;
+			}
+		}
+	}
+
+	f.close();
+}
+
+/*
+=================
+Missi: PF_setcontents
+
+mainly used for func_water. sets the contents of a brush model
+
+setcontents (entity, contents) (7/15/2024)
+=================
+*/
+static void PF_speak_sentence(void)
+{
+	edict_t* ed = nullptr;
+	const char* sentence = nullptr;
+
+	ed = G_EDICT(OFS_PARM0);
+	sentence = G_STRING(OFS_PARM1);
+
+	if (!ed || !sentence)
+		return;
+
+	cxxifstream f;
+	uintptr_t path_id = 0;
+
+	g_Common->COM_FOpenFile_FStream("sound/sentences.txt", &f, &path_id);
+
+	if (f.bad())
+	{
+		f.close();
+		return;
+	}
+
+	char line[256] = {};
+	cxxstring test(sentence);
+	size_t pos = 0;
+
+	while ((pos = test.find("!")) != cxxstring::npos)
+		test.erase(pos, 1);
+
+	while (f.getline(line, sizeof(line)))
+	{
+		if (Q_strncmp(line, test.c_str(), Q_strlen(sentence) - 1))
+			continue;
+
+		cxxstring sound = line + Q_strlen(sentence);
+		sound.append(".wav");
+
+		sv->SV_StartSound(ed, 0, sound.c_str(), 255, 1.0f);
+	}
+}
+
+/*
+=================
+Missi: PF_adjusttrain
+
+mainly used for func_water. sets the contents of a brush model
+
+adjusttrain(entity, targetname) (7/15/2024)
+=================
+*/
+static void PF_adjusttrain(void)
+{
+	edict_t* ed = G_EDICT(OFS_PARM0);
+	const char* ed2 = G_STRING(OFS_PARM1);
+
+	edict_t* targ = ED_FindEdict(ed2);
+
+	if (!ed || !targ)
+		return;
+
+	vec3_t dist = {};
+	vec3_t minsfinal = {};
+	vec3_t maxsfinal = {};
+	vec3_t forward = {}, right = {}, up = {};
+	mplane_t mins[4] = {}, maxs[4] = {};
+
+	edict_t* secondpath = ED_FindEdict(PR_GetString(targ->v.target));
+
+	if (!secondpath)
+	{
+		VectorSubtract(targ->v.origin, ed->v.origin, dist);
+
+		float yaw = atan2(dist[1], dist[0]) * (180 / M_PI);
+
+		float pitch = atan2(dist[2], sqrt(dist[0] * dist[0] + dist[1] * dist[1])) * (180 / M_PI);
+
+		vec3_t finalang = { pitch, yaw, 0.0f };
+
+		// Missi: before copying off the vectors, we have to update mins/maxs, or else the collision will be wonky (7/20/2024)
+
+		vec3_t dest;
+
+		RotatePointAroundVector(dest, finalang, minsfinal, finalang[0]);
+		RotatePointAroundVector(dest, finalang, minsfinal, finalang[1]);
+		RotatePointAroundVector(dest, finalang, maxsfinal, finalang[0]);
+		RotatePointAroundVector(dest, finalang, maxsfinal, finalang[1]);
+
+		SetMinMaxSize(ed, minsfinal, maxsfinal, false);
+
+		VectorCopy(finalang, ed->v.angles);
+
+		eval_t* height = GetEdictFieldValue(ed, "height");
+
+		if (height)
+		{
+			vec3_t offset = { 0.0f, 0.0f, height->_float };
+			vec3_t offset_output;
+
+			VectorAdd(ed->v.origin, offset, offset_output);
+			VectorCopy(offset_output, ed->v.origin);
+		}
+	}
+	else
+	{
+		VectorSubtract(secondpath->v.origin, targ->v.origin, dist);
+
+		Vector3 distVec = dist;
+		AngleVectors(ed->v.angles, forward, right, up);
+
+		Vector3 vpn = forward;
+		Vector3 vpr = right;
+		Vector3 vpu = up;
+		
+		Vector3 test = distVec.Rotation(dist);
+		
+		Vector3 vMins = ed->v.mins;
+		Vector3 vMaxs = ed->v.maxs;
+		vMins.RotateAlongAxis(vec_null, vpr * -1, vec_null, 90.0f);
+		vMaxs.RotateAlongAxis(vec_null, vpr, vec_null, 90.0f);
+
+		// Missi: before copying off the vectors, we have to update mins/maxs, or else the collision will be wonky (7/20/2024)
+
+		/*VectorCopy(ed->v.mins, minsfinal);
+		VectorCopy(ed->v.maxs, maxsfinal);
+
+
+		RotateVector(minsfinal, forward, vec3_origin, vec3_origin, 270.0f);
+		RotateVector(maxsfinal, forward, vec3_origin, vec3_origin, 270.0f);*/
+
+		SetMinMaxSize(ed, vMins.ToVec3_t(), vMaxs.ToVec3_t(), true);
+
+		VectorCopy(distVec.ToVec3_t(), ed->v.angles);
+
+		eval_t* height = GetEdictFieldValue(ed, "height");
+
+		if (height)
+		{
+			vec3_t offset = { 0.0f, 0.0f, height->_float };
+			vec3_t offset_output;
+
+			VectorAdd(ed->v.origin, offset, offset_output);
+			VectorCopy(offset_output, ed->v.origin);
+		}
+	}
 }
 
 void PF_Fixme (void)
@@ -2113,23 +2437,13 @@ PF_WriteAngle,
 PF_WriteString,
 PF_WriteEntity,
 
-#ifdef QUAKE2
 PF_sin,
 PF_cos,
 PF_sqrt,
 PF_changepitch,
-PF_TraceToss,
+PF_Fixme,
 PF_etos,
 PF_WaterMove,
-#else
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-#endif
 
 PF_MoveToGoal,
 PF_precache_file,
@@ -2157,11 +2471,19 @@ PF_cxxvectoradd_flt,	// void(string vecname, float elem) CPPVectorAdd
 PF_cxxvectoradd_int,	// void(string vecname, float elem) CPPVectorAdd
 PF_cxxvectoradd_ent,	// void(string vecname, float elem) CPPVectorAdd
 PF_cxxvectoradd_str,	// void(string vecname, float elem) CPPVectorAdd
-PF_vec_access_flt,	// float(string vecname, float elem) vec_access_flt
-PF_vec_access_int,	// float(string vecname, float elem) vec_access_int
-PF_vec_access_ent,	// entity(string vecname, float elem) vec_access_ent
-PF_vec_access_str,	// string(string vecname, float elem) vec_access_str
-PF_vec_size			// float(vecname) vec_size
+PF_vec_access_flt,		// float(string vecname, float elem) vec_access_flt
+PF_vec_access_int,		// float(string vecname, float elem) vec_access_int
+PF_vec_access_ent,		// entity(string vecname, float elem) vec_access_ent
+PF_vec_access_str,		// string(string vecname, float elem) vec_access_str
+PF_vec_size,			// float(vecname) vec_size
+
+PF_findfield,
+PF_multimanager,
+PF_setcontents,
+PF_drawdebugline,
+PF_speak_sentence,
+PF_precache_sentence,
+PF_adjusttrain
 };
 
 builtin_t *pr_builtins = pr_builtin;
