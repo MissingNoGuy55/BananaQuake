@@ -1064,6 +1064,77 @@ void CQuakeServer::SV_WalkMove (edict_t *ent)
 	}
 }
 
+/*
+=====================
+SV_WalkMove
+
+Only used by players
+======================
+*/
+void CQuakeServer::SV_LadderMove(edict_t* ent)
+{
+	vec3_t		upmove, downmove;
+	vec3_t		oldorg, oldvel;
+	vec3_t		nosteporg, nostepvel;
+	int			clip;
+	trace_t		steptrace;
+
+	//
+	// do a regular slide move unless it looks like you ran into a step
+	//
+	VectorCopy(ent->v.origin, oldorg);
+	VectorCopy(ent->v.velocity, oldvel);
+
+	clip = SV_FlyMove(ent, host->host_frametime, &steptrace);
+
+	VectorMA(ent->v.origin, host->host_frametime, ent->v.velocity, ent->v.origin);
+
+	vec3_t cross;
+	vec3_t forward, right, up;
+
+	AngleVectors(ent->v.angles, forward, right, up);
+	CrossProduct(right, forward, cross);
+
+	VectorCopy(ent->v.origin, nosteporg);
+	VectorCopy(ent->v.velocity, nostepvel);
+
+	//
+	// try moving up and forward to go up a step
+	//
+	VectorCopy(oldorg, ent->v.origin);	// back to start pos
+
+	VectorCopy(vec3_origin, upmove);
+	VectorCopy(vec3_origin, downmove);
+
+	upmove[2] = (ent->v.v_angle[0] * -cross[2]) / 10.0f;
+
+	/*upmove[2] = STEPSIZE;
+	downmove[2] = -STEPSIZE + oldvel[2] * host->host_frametime;*/
+
+	// move up
+	SV_PushEntity(ent, upmove);	// FIXME: don't link?
+
+	// move forward
+	/*ent->v.velocity[0] = oldvel[0];
+	ent->v.velocity[1] = oldvel[1];
+	ent->v.velocity[2] = 0;
+	clip = SV_FlyMove(ent, host->host_frametime, &steptrace);
+
+	// check for stuckness, possibly due to the limited precision of floats
+	// in the clipping hulls
+	if (clip)
+	{
+		if (fabs(oldorg[1] - ent->v.origin[1]) < 0.03125
+			&& fabs(oldorg[0] - ent->v.origin[0]) < 0.03125)
+		{	// stepping up didn't make any progress
+			clip = SV_TryUnstick(ent, oldvel);
+		}
+	}*/
+
+	// extra friction based on view angle
+	if (clip & 2)
+		SV_WallFriction(ent, &steptrace);
+}
 
 /*
 ================
@@ -1130,6 +1201,10 @@ void CQuakeServer::SV_Physics_Client (edict_t	*ent, int num)
 		if (!SV_RunThink (ent))
 			return;
 		VectorMA (ent->v.origin, host->host_frametime, ent->v.velocity, ent->v.origin);
+		break;
+
+	case MOVETYPE_LADDER:
+		SV_LadderMove(ent);
 		break;
 		
 	default:
@@ -1486,7 +1561,7 @@ void CQuakeServer::SV_Physics_Step (edict_t *ent)
 	bool	hitsound;
 
 // freefall if not onground
-	if ( ! ((int)ent->v.flags & (FL_ONGROUND | FL_FLY | FL_SWIM) ) )
+	if ( ! ((int)ent->v.flags & (FL_ONGROUND | FL_FLY | FL_SWIM | FL_ONLADDER) ) )
 	{
 		if (ent->v.velocity[2] < sv_gravity.value*-0.1)
 			hitsound = true;
@@ -1512,6 +1587,16 @@ void CQuakeServer::SV_Physics_Step (edict_t *ent)
 }
 #endif
 
+void CQuakeServer::SV_Physics_Ladder(edict_t* ent)
+{
+	// regular thinking
+	SV_RunThink(ent);
+
+	SV_LinkEdict(ent, true);
+
+	SV_CheckWaterTransition(ent);
+}
+
 //============================================================================
 
 /*
@@ -1531,6 +1616,7 @@ void CQuakeServer::SV_Physics (void)
 	pr_global_struct->time = sv->time;
 	PR_ExecuteProgram (pr_global_struct->StartFrame);
 
+
 //SV_CheckAllEnts ();
 
 //
@@ -1547,6 +1633,70 @@ void CQuakeServer::SV_Physics (void)
 			SV_LinkEdict (ent, true);	// force retouch even for stationary
 		}
 
+		// Missi: this was once in progs, but it was unreliable and didn't work on dedicated servers, so... (7/17/2024)
+		if (worldmodel && !Q_strncmp(PR_GetString(ent->v.classname), "player", 6))
+		{
+			vec3_t v_forward, v_right, v_up;
+			vec3_t start, end;
+			trace_t ladder_trace;
+
+			memset(&ladder_trace, 0, sizeof(trace_t));
+
+			AngleVectors(ent->v.angles, v_forward, v_right, v_up);
+			VectorMA(ent->v.origin, 0.1f, v_up, start);
+			VectorMA(ent->v.origin, 24.0f, v_forward, end);
+
+			ladder_trace = SV_Move(start, ent->v.mins, ent->v.maxs, end, MOVE_BRUSH, ent);
+
+			if (ladder_trace.ent)
+			{
+				if (!Q_strncmp(PR_GetString(ladder_trace.ent->v.classname), "func_ladder", 11))
+				{
+					ent->v.flags = (int)ent->v.flags | FL_ONLADDER;
+					ent->v.movetype = MOVETYPE_LADDER;
+				}
+				else
+				{
+					if ((int)ent->v.flags & FL_ONLADDER && ent->v.movetype == MOVETYPE_LADDER)
+					{
+						vec3_t vel;
+						vec3_t combined;
+						vec3_t adjusted;
+						vec3_t playeradjust = { 0.0f, 0.0f, 1.0f };
+
+						VectorAdd(ent->v.origin, playeradjust, adjusted);
+						VectorAdd(v_forward, v_up, combined);
+						VectorMA(ent->v.velocity, 200.0f, combined, vel);
+
+						VectorCopy(adjusted, ent->v.origin);
+						VectorCopy(vel, ent->v.velocity);
+
+						ent->v.flags = (int)ent->v.flags & ~FL_ONLADDER;
+						ent->v.movetype = MOVETYPE_WALK;
+					}
+				}
+			}
+			else
+			{
+				if ((int)ent->v.flags & FL_ONLADDER && ent->v.movetype == MOVETYPE_LADDER)
+				{
+					vec3_t vel;
+					vec3_t combined;
+					vec3_t adjusted;
+					vec3_t playeradjust = { 0.0f, 0.0f, 1.0f };
+
+					VectorAdd(ent->v.origin, playeradjust, adjusted);
+					VectorAdd(v_forward, v_up, combined);
+					VectorMA(ent->v.velocity, 200.0f, combined, vel);
+
+					VectorCopy(adjusted, ent->v.origin);
+					VectorCopy(vel, ent->v.velocity);
+
+					ent->v.flags = (int)ent->v.flags & ~FL_ONLADDER;
+					ent->v.movetype = MOVETYPE_WALK;
+				}
+			}
+		}
 		if (i > 0 && i <= svs.maxclients)
 			SV_Physics_Client (ent, i);
 		else if (ent->v.movetype == MOVETYPE_PUSH)
@@ -1561,6 +1711,8 @@ void CQuakeServer::SV_Physics (void)
 			SV_Physics_Noclip (ent);
 		else if (ent->v.movetype == MOVETYPE_STEP)
 			SV_Physics_Step (ent);
+		else if (ent->v.movetype == MOVETYPE_LADDER)
+			SV_Physics_Ladder(ent);
 		else if (ent->v.movetype == MOVETYPE_TOSS 
 		|| ent->v.movetype == MOVETYPE_BOUNCE
 #ifdef QUAKE2

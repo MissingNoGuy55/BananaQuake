@@ -259,6 +259,35 @@ bool CQuakeServer::SV_StepDirection (edict_t *ent, float yaw, float dist)
 	return false;
 }
 
+bool CQuakeServer::SV_LadderStepDirection(edict_t* ent, float yaw, float dist)
+{
+	vec3_t		move, oldorigin;
+	float		delta;
+
+	ent->v.ideal_yaw = yaw;
+	PF_changeyaw();
+
+	yaw = yaw * M_PI * 2 / 360;
+	move[0] = cos(yaw) * dist;
+	move[1] = sin(yaw) * dist;
+	move[2] = dist;
+
+	VectorCopy(ent->v.origin, oldorigin);
+	if (SV_movestep(ent, move, false))
+	{
+		delta = ent->v.angles[YAW] - ent->v.ideal_yaw;
+		if (delta > 45 && delta < 315)
+		{		// not turned far enough, so don't take the step
+			VectorCopy(oldorigin, ent->v.origin);
+		}
+		SV_LinkEdict(ent, true);
+		return true;
+	}
+	SV_LinkEdict(ent, true);
+
+	return false;
+}
+
 /*
 ======================
 SV_FixCheckBottom

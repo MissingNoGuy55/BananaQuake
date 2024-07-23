@@ -435,36 +435,68 @@ void CQuakeServer::SV_ClientThink (void)
 SV_ReadClientMove
 ===================
 */
-void CQuakeServer::SV_ReadClientMove (usercmd_t *move)
+void CQuakeServer::SV_ReadClientMove(usercmd_t* move)
 {
 	int		i;
 	vec3_t	angle;
 	int		bits;
-	
-// read ping time
-	host_client->ping_times[host_client->num_pings%NUM_PING_TIMES]
-		= sv->time - MSG_ReadFloat ();
+
+	// read ping time
+	host_client->ping_times[host_client->num_pings % NUM_PING_TIMES]
+		= sv->time - MSG_ReadFloat();
 	host_client->num_pings++;
 
-// read current angles	
-	for (i=0 ; i<3 ; i++)
-		angle[i] = MSG_ReadAngle ();
+	// read current angles	
+	for (i = 0; i < 3; i++)
+		angle[i] = MSG_ReadAngle();
 
-	VectorCopy (angle, host_client->edict->v.v_angle);
-		
-// read movement
-	move->forwardmove = MSG_ReadShort ();
-	move->sidemove = MSG_ReadShort ();
-	move->upmove = MSG_ReadShort ();
-	
-// read buttons
-	bits = MSG_ReadByte ();
+	VectorCopy(angle, host_client->edict->v.v_angle);
+
+	// read movement
+	move->forwardmove = MSG_ReadShort();
+	move->sidemove = MSG_ReadShort();
+	move->upmove = MSG_ReadShort();
+
+	// read buttons
+	bits = MSG_ReadByte();
 	host_client->edict->v.button0 = bits & 1;
-	host_client->edict->v.button2 = (bits & 2)>>1;
+	host_client->edict->v.button1 = (bits & 4);
+	host_client->edict->v.button2 = (bits & 2) >> 1;
 
-	i = MSG_ReadByte ();
+	i = MSG_ReadByte();
 	if (i)
 		host_client->edict->v.impulse = i;
+
+	if (host_client->edict->v.button1 > 0)
+	{
+		trace_t trace = {};
+		vec3_t modified;
+		vec3_t view;
+		vec3_t view_modified;
+		vec3_t forward, right, up;
+
+		AngleVectors(host_client->edict->v.angles, forward, right, up);
+
+		VectorAdd(host_client->edict->v.origin, host_client->edict->v.view_ofs, view_modified);
+		VectorMA(view_modified, 16.0f, forward, modified);
+
+		trace = SV_Move(view_modified, host_client->edict->v.mins, host_client->edict->v.maxs, modified, MOVE_NOMONSTERS, host_client->edict);
+
+		if (trace.ent)
+		{
+			if (trace.ent->v.use > 0)
+			{
+				int old_self = pr_global_struct->self;
+				int old_other = pr_global_struct->other;  
+
+				pr_global_struct->self = EDICT_TO_PROG(trace.ent);
+				pr_global_struct->time = sv->GetServerTime();
+				PR_ExecuteProgram(trace.ent->v.use);
+
+ 				pr_global_struct->self = old_self;
+			}
+		}
+	}
 
 #ifdef QUAKE2
 // read light level
