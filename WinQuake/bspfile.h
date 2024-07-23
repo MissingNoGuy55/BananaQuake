@@ -182,6 +182,17 @@ typedef struct
 #define	CONTENTS_CURRENT_UP		-13
 #define	CONTENTS_CURRENT_DOWN	-14
 
+//========================================================================
+// Missi: goldsrc contents (7/18/2024)
+
+#define CONTENTS_TRANSLUCENT	-15
+#define CONTENTS_LADDER			-16
+#define CONTENTS_FLYFIELD		-17
+#define CONTENTS_GRAVITY_FLYFIELD		-18
+#define CONTENTS_FOG		-19
+
+//========================================================================
+
 
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
 typedef struct
