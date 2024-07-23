@@ -213,12 +213,12 @@ Writes key bindings and archived cvars to config.cfg
 */
 void CQuakeHost::Host_WriteConfiguration (void)
 {
-    cxxofstream	f(g_Common->va("%s/config.cfg", g_Common->com_gamedir));
-
 // dedicated servers initialize the host but don't parse and set the
 // config.cfg cvars
 	if (host_initialized && !isDedicated)
     {
+		cxxofstream	f(g_Common->va("%s/config.cfg", g_Common->com_gamedir), std::ios_base::binary);
+
         if (f.bad())
 		{
             Con_Printf ("Couldn't write config.cfg.\n");
@@ -746,8 +746,13 @@ void CQuakeHost::_Host_Frame (float time)
 		Con_Printf ("%3i tot %3i server %3i gfx %3i snd\n",
 					pass1+pass2+pass3, pass1, pass2, pass3);
 	}
-	
+
 	host_framecount++;
+
+	for (int i = 0; i < g_pTimers.GetNumAllocated(); i++)
+	{
+		g_pTimers[i].UpdateTimer();
+	}
 }
 
 void CQuakeHost::Host_Frame (float time)
@@ -861,6 +866,9 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 
 	if (SDL_Init(0) < 0)
 		Sys_Error("Couldn't initialize SDL");
+
+    if (SDL_Init(SDL_INIT_TIMER) < 0)
+        Sys_Error("Couldn't initialize SDL timers");
 
     if (standard_quake)
         minimum_memory = MINIMUM_MEMORY;
