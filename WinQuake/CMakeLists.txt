@@ -977,6 +977,7 @@ endif(APPLE)
 
 #=================================================================
 #[[
+target_compile_definitions(bananaquakesoftware PUBLIC BQUAKE)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_VORBIS)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_WAVE)
 target_compile_definitions(bananaquakesoftware PUBLIC USE_CODEC_MP3)
@@ -985,6 +986,7 @@ target_include_directories(bananaquakesoftware PUBLIC
 )
 ]]
 
+target_compile_definitions(bananaquakeopengl PUBLIC BQUAKE)
 target_compile_definitions(bananaquakeopengl PUBLIC $<$<CONFIG:Debug>:DEBUG>)
 #target_compile_definitions(bananaquakeopengl PUBLIC $<$<CONFIG:Debug>:_DEBUG>)
 target_compile_definitions(bananaquakeopengl PUBLIC GLQUAKE)
