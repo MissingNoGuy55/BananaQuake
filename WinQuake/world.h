@@ -38,6 +38,9 @@ typedef struct
 	edict_t* ent;			// entity the surface is on
 } trace_t;
 
+void TraceLine(vec3_t start, vec3_t end, vec3_t impact, trace_t trace);
+
 #define	MOVE_NORMAL		0
 #define	MOVE_NOMONSTERS	1
 #define	MOVE_MISSILE	2
+#define MOVE_BRUSH		3

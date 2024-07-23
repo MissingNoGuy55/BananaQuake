@@ -819,7 +819,7 @@ trace_t CQuakeServer::SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mi
 #endif
 
 // trace a line through the apropriate clipping hull
-	sv->SV_RecursiveHullCheck (hull, hull->firstclipnode, 0, 1, start_l, end_l, &trace);
+	SV_RecursiveHullCheck (hull, hull->firstclipnode, 0, 1, start_l, end_l, &trace);
 
 #ifdef QUAKE2
 	// rotate endpos back to world frame of reference
@@ -857,6 +857,14 @@ trace_t CQuakeServer::SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mi
 		trace.ent = ent;
 
 	return trace;
+}
+
+void TraceLine(vec3_t start, vec3_t end, vec3_t impact, trace_t trace)
+{
+	memset(&trace, 0, sizeof(trace));
+	sv->SV_RecursiveHullCheck(cl.worldmodel->hulls, 0, 0, 1, start, end, &trace);
+
+	VectorCopy(trace.endpos, impact);
 }
 
 //===========================================================================
