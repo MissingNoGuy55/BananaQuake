@@ -35,6 +35,10 @@ public:
 
 	void		AddToEnd(const T& element);
 	void		AddToEnd(T& element);
+
+    void		AddToEnd(const T* element);
+    void		AddToEnd(T* element);
+
 	void		AddToStart(const T& element);
 	void		AddToStart(T& element);
 
@@ -42,6 +46,11 @@ public:
 	void		AddMultipleToStart(int num, const T* element);
 	void		AddMultipleToEnd(int num, T* element);
 	void		AddMultipleToEnd(int num, const T* element);
+
+	int			FindElement(T& val);
+	int			FindElement(const T& val);
+	int			FindElement(T* val);
+	int			FindElement(const T* val);
 
 	void		Expand(size_t size);
 	void		Destroy(T* mem);
@@ -137,25 +146,6 @@ void CQVector<T>::Shrink()
 }
 
 template<typename T>
-void CQVector<T>::AddToEnd(T& element)
-{
-	if (!m_pBase)
-		m_pBase = (T*)malloc(sizeof(T));
-	else
-	{
-		T* test = (T*)realloc(m_pBase, sizeof(T) * m_iSize);
-		m_pBase = static_cast<T*>(test);
-	}
-
-	if (m_pBase)
-	{
-		memcpy(&m_pBase[m_iAllocated], element, sizeof(T));
-		m_iSize += sizeof(T);
-		m_iAllocated++;
-	}
-}
-
-template<typename T>
 void CQVector<T>::AddToStart()
 {
 	const T newElement = {};
@@ -185,6 +175,25 @@ void CQVector<T>::AddToEnd()
 }
 
 template<typename T>
+void CQVector<T>::AddToEnd(T& element)
+{
+    if (!m_pBase)
+        m_pBase = (T*)malloc(sizeof(T));
+    else
+    {
+        T* test = (T*)realloc(m_pBase, sizeof(T) * m_iSize);
+        m_pBase = static_cast<T*>(test);
+    }
+
+    if (m_pBase)
+    {
+        memcpy(&m_pBase[m_iAllocated], element, sizeof(T));
+        m_iSize += sizeof(T);
+        m_iAllocated++;
+    }
+}
+
+template<typename T>
 void CQVector<T>::AddToEnd(const T& element)
 {
 	if (!m_pBase)
@@ -201,6 +210,44 @@ void CQVector<T>::AddToEnd(const T& element)
 		m_iSize += sizeof(T);
 		m_iAllocated++;
 	}
+}
+
+template<typename T>
+void CQVector<T>::AddToEnd(T* element)
+{
+    if (!m_pBase)
+        m_pBase = (T*)malloc(sizeof(T));
+    else
+    {
+        T* test = (T*)realloc(m_pBase, sizeof(T) * m_iSize);
+        m_pBase = static_cast<T*>(test);
+    }
+
+    if (m_pBase)
+    {
+        memcpy(&m_pBase[m_iAllocated], element, sizeof(T));
+        m_iSize += sizeof(T);
+        m_iAllocated++;
+    }
+}
+
+template<typename T>
+void CQVector<T>::AddToEnd(const T* element)
+{
+    if (!m_pBase)
+        m_pBase = (T*)malloc(sizeof(T));
+    else
+    {
+        T* newMem = (T*)realloc(m_pBase, sizeof(T) * m_iSize);
+        m_pBase = static_cast<T*>(newMem);
+    }
+
+    if (m_pBase)
+    {
+        memcpy(&m_pBase[m_iAllocated], element, sizeof(T));
+        m_iSize += sizeof(T);
+        m_iAllocated++;
+    }
 }
 
 template<typename T>
@@ -341,9 +388,63 @@ void CQVector<T>::AddMultipleToEnd(int num, const T* element)
 }
 
 template<typename T>
+inline int CQVector<T>::FindElement(T& val)
+{
+	for (int i = 0; i < GetNumAllocated(); i++)
+	{
+		if (!memcmp(&Element(i), &val, sizeof(val)))
+			return i;
+	}
+
+	return -1;
+}
+
+template<typename T>
+inline int CQVector<T>::FindElement(const T& val)
+{
+	for (int i = 0; i < GetNumAllocated(); i++)
+	{
+		if (!memcmp(&Element(i), &val, sizeof(val)))
+			return i;
+	}
+
+	return -1;
+}
+
+template<typename T>
+inline int CQVector<T>::FindElement(T* val)
+{
+	for (int i = 0; i < GetNumAllocated(); i++)
+	{
+		if (!memcmp(&Element(i), val, sizeof(*val)))
+			return i;
+	}
+
+	return -1;
+}
+
+template<typename T>
+inline int CQVector<T>::FindElement(const T* val)
+{
+	for (int i = 0; i < GetNumAllocated(); i++)
+	{
+		if (!memcmp(&Element(i), val, sizeof(*val)))
+			return i;
+	}
+
+	return -1;
+}
+
+template<typename T>
 void CQVector<T>::RemoveElement(int elem)
 {
+	void* pos1 = &Element(elem);
+	void* pos2 = &Element(elem)+1;
 	Destroy(&Element(elem));
+
+	size_t size = sizeof(T) * (GetNumAllocated() - elem);
+
+	memmove(&m_pBase[elem], pos2, size);
 }
 
 template<typename T>
@@ -381,3 +482,77 @@ void CQVector<T>::ShiftMultipleRight(int num)
 	if ((m_iAllocated > 0))
 		memmove(&m_pBase[m_iAllocated + num], &m_pBase[0], (m_iAllocated * sizeof(T)) * num);
 }
+
+/*
+=============================================================================
+* Missi: C++ timer
+=============================================================================
+*/
+
+extern CQVector<class CQTimer> g_pTimers;
+
+typedef void (*timercommand_t)(void*);
+
+class CQTimer
+{
+public:
+
+	CQTimer()
+	{
+		m_dTime = -1;
+		m_bElapsed = false;
+		m_dElapsed = 0.0;
+		callbackParm = nullptr;
+		m_fCallback = nullptr;
+
+		g_pTimers.AddToEnd(this);
+	}
+
+	CQTimer(double dTime)
+	{
+		m_dTime = dTime;
+		m_bElapsed = false;
+		m_dElapsed = 0.0;
+		callbackParm = nullptr;
+		m_fCallback = nullptr;
+
+		g_pTimers.AddToEnd(this);
+	}
+
+	CQTimer(double dTime, timercommand_t command, void* parm1 = nullptr)
+	{
+		m_dTime = dTime;
+		m_bElapsed = false;
+		m_dElapsed = 0.0;
+		callbackParm = parm1;
+		m_fCallback = command;
+
+		g_pTimers.AddToEnd(this);
+	}
+
+	~CQTimer()
+	{
+		m_dTime = 0.0;
+		m_bElapsed = false;
+		m_dElapsed = 0.0;
+		callbackParm = nullptr;
+		m_fCallback = nullptr;		
+	}
+
+	void UpdateTimer();
+
+	void SetTime(double dTime) { m_dTime = dTime; }
+	void SetCallback(timercommand_t fCallback, void* parm = nullptr);
+	void ResetTimer() { m_dTime = 1; m_bElapsed = false; }
+	const double GetElapsedTime() const { return m_dElapsed; }
+	const bool HasElapsed() const { return m_bElapsed; }
+
+private:
+
+	double m_dTime;
+	double m_dElapsed;
+	bool m_bElapsed;
+	void* callbackParm;
+
+	timercommand_t m_fCallback;
+};
