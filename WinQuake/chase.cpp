@@ -47,23 +47,13 @@ void Chase_Reset (void)
 //	start position 12 units behind head
 }
 
-void TraceLine (vec3_t start, vec3_t end, vec3_t impact)
-{
-	trace_t	trace;
-
-	memset (&trace, 0, sizeof(trace));
-	sv->SV_RecursiveHullCheck(cl.worldmodel->hulls, 0, 0, 1, start, end, &trace);
-
-	VectorCopy (trace.endpos, impact);
-}
-
 void Chase_Update (void)
 {
 	int		i;
 	float	dist;
 	vec3_t	forward, up, right;
 	vec3_t	dest, stop;
-
+	trace_t trace = {};
 
 	// if can't see player, reset
 	AngleVectors (cl.viewangles, forward, right, up);
@@ -77,7 +67,7 @@ void Chase_Update (void)
 
 	// find the spot the player is looking at
 	VectorMA (r_refdef.vieworg, 4096, forward, dest);
-	TraceLine (r_refdef.vieworg, dest, stop);
+	TraceLine (r_refdef.vieworg, dest, stop, trace);
 
 	// calculate pitch to look at the same spot from camera
 	VectorSubtract (stop, r_refdef.vieworg, stop);
