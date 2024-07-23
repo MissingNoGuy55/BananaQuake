@@ -1647,7 +1647,7 @@ int CCommon::COM_FindFile_FStream(const char* filename, int* handle, cxxifstream
 				}
 				else if (file)
 				{ /* open a new file on the pakfile */
-                    file->open(pak->filename, cxxifstream::in);
+                    file->open(pak->filename, cxxifstream::binary);
                     file->seekg(pak->files[i].filepos, std::ios_base::cur);
 					return com_filesize;
 				}
