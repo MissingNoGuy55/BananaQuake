@@ -2339,31 +2339,23 @@ static void PF_adjusttrain(void)
 		
 		Vector3 vMins = ed->v.mins;
 		Vector3 vMaxs = ed->v.maxs;
+
+		// Missi: before copying off the vectors, we have to update mins/maxs, or else the collision will be wonky (7/20/2024)
 		vMins.RotateAlongAxis(vec_null, vpr * -1, vec_null, 90.0f);
 		vMaxs.RotateAlongAxis(vec_null, vpr, vec_null, 90.0f);
 
-		// Missi: before copying off the vectors, we have to update mins/maxs, or else the collision will be wonky (7/20/2024)
-
-		/*VectorCopy(ed->v.mins, minsfinal);
-		VectorCopy(ed->v.maxs, maxsfinal);
-
-
-		RotateVector(minsfinal, forward, vec3_origin, vec3_origin, 270.0f);
-		RotateVector(maxsfinal, forward, vec3_origin, vec3_origin, 270.0f);*/
-
 		SetMinMaxSize(ed, vMins.ToVec3_t(), vMaxs.ToVec3_t(), true);
 
-		VectorCopy(distVec.ToVec3_t(), ed->v.angles);
+		VectorCopy(test.ToVec3_t(), ed->v.angles);
 
 		eval_t* height = GetEdictFieldValue(ed, "height");
 
 		if (height)
 		{
-			vec3_t offset = { 0.0f, 0.0f, height->_float };
-			vec3_t offset_output;
+			Vector3 offset = ed->v.origin;
+			offset += Vector3(0.0f, 0.0f, height->_float);
 
-			VectorAdd(ed->v.origin, offset, offset_output);
-			VectorCopy(offset_output, ed->v.origin);
+			VectorCopy(offset.ToVec3_t(), ed->v.origin);
 		}
 	}
 }

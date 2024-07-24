@@ -717,6 +717,56 @@ Vector3& Vector3::operator*(const float& other)
 	return *this;
 }
 
+Vector3& Vector3::operator/(const Vector3& other)
+{
+	x /= other.x;
+	y /= other.y;
+	z /= other.z;
+
+	return *this;
+}
+
+Vector3& Vector3::operator/(const float& other)
+{
+	x /= other;
+	y /= other;
+	z /= other;
+
+	return *this;
+}
+
+Vector3& Vector3::operator+=(const Vector3& other)
+{
+	x += other.x;
+	y += other.y;
+	z += other.z;
+
+	return *this;
+}
+
+Vector3& Vector3::operator+=(const float& other)
+{
+	x += y += z += other;
+
+	return *this;
+}
+
+Vector3& Vector3::operator-=(const Vector3& other)
+{
+	x -= other.x;
+	y -= other.y;
+	z -= other.z;
+
+	return *this;
+}
+
+Vector3& Vector3::operator-=(const float& other)
+{
+	x -= y -= z -= other;
+
+	return *this;
+}
+
 Vector3& Vector3::operator*=(const Vector3& other)
 {
 	x *= other.x;
@@ -733,7 +783,7 @@ Vector3& Vector3::operator*=(const float& other)
 	return *this;
 }
 
-Vector3& Vector3::operator/(const Vector3& other)
+Vector3& Vector3::operator/=(const Vector3& other)
 {
 	x /= other.x;
 	y /= other.y;
@@ -742,11 +792,9 @@ Vector3& Vector3::operator/(const Vector3& other)
 	return *this;
 }
 
-Vector3& Vector3::operator/(const float& other)
+Vector3& Vector3::operator/=(const float& other)
 {
-	x /= other;
-	y /= other;
-	z /= other;
+	x /= y /= z /= other;
 
 	return *this;
 }
