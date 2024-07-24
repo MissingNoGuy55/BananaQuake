@@ -2275,6 +2275,12 @@ static void PF_speak_sentence(void)
 		cxxstring sound = line + Q_strlen(sentence);
 		sound.append(".wav");
 
+		if (!g_Common->COM_FileExists(sound.c_str(), nullptr))
+		{
+			cxxstring sound = line + Q_strlen(sentence);
+			sound.append(".ogg");
+		}
+
 		sv->SV_StartSound(ed, 0, sound.c_str(), 255, 1.0f);
 	}
 }
