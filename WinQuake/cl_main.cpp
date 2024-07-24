@@ -567,10 +567,9 @@ void CL_RelinkEntities (void)
 		if (i == cl.viewentity && !chase_active.value)
 			continue;
 
-#ifdef QUAKE2
 		if ( ent->effects & EF_NODRAW )
 			continue;
-#endif
+
 		if (cl_numvisedicts < MAX_VISEDICTS)
 		{
 			cl_visedicts[cl_numvisedicts] = ent;
