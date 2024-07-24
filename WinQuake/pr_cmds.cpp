@@ -2208,6 +2208,22 @@ static void PF_precache_sentence(void)
 				break;
 			}
 		}
+
+		sound = line + Q_strlen(sentence);
+		sound.append(".ogg");
+
+		for (int i = 0; i < MAX_SOUNDS; i++)
+		{
+			if (!sv->GetSoundPrecacheEntry(i))
+			{
+				sv->SetSoundPrecacheEntry(i, sound.c_str());
+				break;
+			}
+			if (!strcmp(sv->GetSoundPrecacheEntry(i), sound.c_str()))
+			{
+				break;
+			}
+		}
 	}
 
 	f.close();
