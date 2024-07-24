@@ -2158,11 +2158,11 @@ static void PF_setcontents(void)
 
 /*
 =================
-Missi: PF_setcontents
+Missi: PF_precache_sentence
 
-mainly used for func_water. sets the contents of a brush model
+precaches a sentence defined in sentences.txt
 
-setcontents (entity, contents) (7/15/2024)
+precache_sentence (sentence) (7/15/2024)
 =================
 */
 static void PF_precache_sentence(void)
@@ -2215,11 +2215,11 @@ static void PF_precache_sentence(void)
 
 /*
 =================
-Missi: PF_setcontents
+Missi: PF_speak_sentence
 
-mainly used for func_water. sets the contents of a brush model
+makes an NPC speak a sentence defined in sentences.txt
 
-setcontents (entity, contents) (7/15/2024)
+speak_sentence (entity, sentence) (7/15/2024)
 =================
 */
 static void PF_speak_sentence(void)
@@ -2267,7 +2267,7 @@ static void PF_speak_sentence(void)
 =================
 Missi: PF_adjusttrain
 
-mainly used for func_water. sets the contents of a brush model
+fixes the angle on func_tracktrain from GoldSrc
 
 adjusttrain(entity, targetname) (7/15/2024)
 =================
