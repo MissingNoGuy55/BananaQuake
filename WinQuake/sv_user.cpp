@@ -141,22 +141,49 @@ void CQuakeServer::SV_UserFriction (void)
 
 	trace = SV_Move (start, vec3_origin, vec3_origin, stop, true, sv_player);
 
-	if (trace.fraction == 1.0)
-		friction = sv_friction.value*sv_edgefriction.value;
+	if (trace.ent && !Q_strncmp(PR_GetString(trace.ent->v.classname), "func_friction", 13))
+	{
+		eval_t* frictionmod = GetEdictFieldValue(trace.ent, "modifier");
+
+		if (!frictionmod)
+			return;
+
+		if (trace.fraction == 1.0)
+			friction = frictionmod->_float * sv_edgefriction.value;
+		else
+			friction = frictionmod->_float;
+
+		// apply friction	
+		control = speed < sv_stopspeed.value ? sv_stopspeed.value : speed;
+		newspeed = speed - host->host_frametime * control * friction;
+
+		if (newspeed < 0)
+			newspeed = 0;
+		newspeed /= speed;
+
+		vel[0] = vel[0] * newspeed;
+		vel[1] = vel[1] * newspeed;
+		vel[2] = vel[2] * newspeed;
+	}
 	else
-		friction = sv_friction.value;
+	{
+		if (trace.fraction == 1.0)
+			friction = sv_friction.value * sv_edgefriction.value;
+		else
+			friction = sv_friction.value;
 
-// apply friction	
-	control = speed < sv_stopspeed.value ? sv_stopspeed.value : speed;
-	newspeed = speed - host->host_frametime*control*friction;
-	
-	if (newspeed < 0)
-		newspeed = 0;
-	newspeed /= speed;
+		// apply friction	
+		control = speed < sv_stopspeed.value ? sv_stopspeed.value : speed;
+		newspeed = speed - host->host_frametime * control * friction;
 
-	vel[0] = vel[0] * newspeed;
-	vel[1] = vel[1] * newspeed;
-	vel[2] = vel[2] * newspeed;
+		if (newspeed < 0)
+			newspeed = 0;
+		newspeed /= speed;
+
+		vel[0] = vel[0] * newspeed;
+		vel[1] = vel[1] * newspeed;
+		vel[2] = vel[2] * newspeed;
+	}
 }
 
 /*

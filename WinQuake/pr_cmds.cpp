@@ -2379,6 +2379,8 @@ static void PF_adjusttrain(void)
 
 			VectorCopy(offset.ToVec3_t(), ed->v.origin);
 		}
+
+		sv->SV_LinkEdict(ed, false);
 	}
 }
 

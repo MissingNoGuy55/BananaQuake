@@ -122,6 +122,7 @@ void CQuakeServer::SV_Init (void)
     Cvar_RegisterVariable (&sv_nostep);
     Cvar_RegisterVariable (&sv_cheats);
 
+	// Missi: set sv_cheats if developer is enabled (7/26/2024)
     if (Cvar_VariableValue("developer") != 0)
         Cvar_Set("sv_cheats", "1");
 
