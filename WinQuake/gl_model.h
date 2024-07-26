@@ -225,7 +225,6 @@ SPRITE MODELS
 ==============================================================================
 */
 
-
 // FIXME: shorten these?
 typedef struct mspriteframe_s
 {
@@ -234,6 +233,14 @@ typedef struct mspriteframe_s
 	float	up, down, left, right;
 	CGLTexture* gltexture;
 } mspriteframe_t;
+
+typedef struct mspriteframe_goldsrc_s
+{
+	int		width;
+	int		height;
+	float	up, down, left, right;
+	CGLTexture* gltexture;
+} mspriteframe_goldsrc_t;
 
 typedef struct
 {
@@ -244,9 +251,22 @@ typedef struct
 
 typedef struct
 {
+	int				numframes;
+	float			*intervals;
+	mspriteframe_t	*frames[1];
+} mspritegroup_goldsrc_t;
+
+typedef struct
+{
 	spriteframetype_t	type;
 	mspriteframe_t		*frameptr;
 } mspriteframedesc_t;
+
+typedef struct
+{
+	mspriteframe_goldsrc_t		*frameptr;
+	spriteframetype_t	type;
+} mspriteframedesc_goldsrc_t;
 
 typedef struct
 {
@@ -259,6 +279,14 @@ typedef struct
 	mspriteframedesc_t	frames[1];
 } msprite_t;
 
+typedef struct
+{
+	int					type;
+	int					maxwidth;
+	int					maxheight;
+	int					numframes;
+	mspriteframedesc_goldsrc_t	frames[1];
+} msprite_t_goldsrc;
 
 /*
 ==============================================================================

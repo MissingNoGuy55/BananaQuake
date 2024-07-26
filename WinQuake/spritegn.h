@@ -59,6 +59,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #define SPRITE_VERSION	1
+#define SPRITE_VERSION_GOLDSRC 2
 
 // must match definition in modelgen.h
 #ifndef SYNCTYPE_T
@@ -79,6 +80,19 @@ typedef struct {
 	synctype_t	synctype;
 } dsprite_t;
 
+typedef struct {
+	char		ident[4];
+	int			version;
+	int			type;
+	int			boundingradius;
+	unsigned short		palptr;
+	int			width;
+	int			height;
+	int			numframes;
+	float		beamlength;
+	synctype_t	synctype;
+} dsprite_t_goldsrc;
+
 #define SPR_VP_PARALLEL_UPRIGHT		0
 #define SPR_FACING_UPRIGHT			1
 #define SPR_VP_PARALLEL				2
@@ -92,18 +106,36 @@ typedef struct {
 } dspriteframe_t;
 
 typedef struct {
+	int			origin[2];
+	int			width;
+	int			height;
+} dspriteframe_goldsrc_t;
+
+typedef struct {
 	int			numframes;
 } dspritegroup_t;
 
 typedef struct {
+	int			numframes;
+} dspritegroup_goldsrc_t;
+
+typedef struct {
 	float	interval;
 } dspriteinterval_t;
+
+typedef struct {
+	float	interval;
+} dspriteinterval_goldsrc_t;
 
 typedef enum { SPR_SINGLE=0, SPR_GROUP } spriteframetype_t;
 
 typedef struct {
 	spriteframetype_t	type;
 } dspriteframetype_t;
+
+typedef struct {
+	spriteframetype_t	type;
+} dspriteframetype_goldsrc_t;
 
 #define IDSPRITEHEADER	(('P'<<24)+('S'<<16)+('D'<<8)+'I')
 														// little-endian "IDSP"

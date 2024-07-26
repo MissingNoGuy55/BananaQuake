@@ -2168,6 +2168,54 @@ T* Mod_LoadSpriteFrame (T* pin, mspriteframe_t **ppframe, int framenum)
 	return (T *)((byte *)pinframe + sizeof (dspriteframe_t) + size);
 }
 
+/*
+=================
+Mod_LoadSpriteFrame_GoldSrc
+=================
+*/
+template<typename T>
+T* Mod_LoadSpriteFrame_GoldSrc(T* pin, mspriteframe_goldsrc_t** ppframe, int framenum)
+{
+	dspriteframe_goldsrc_t* pinframe;
+	mspriteframe_goldsrc_t* pspriteframe;
+	int					i, width, height, size, origin[2];
+	unsigned short* ppixout;
+	byte* ppixin;
+	char				name[64];
+	uintptr_t			offset;
+
+	pinframe = (dspriteframe_goldsrc_t*)pin;
+
+	offset = (uintptr_t)pinframe + 1 - (uintptr_t)mod_base;
+
+	width = LittleLong(pinframe->width);
+	height = LittleLong(pinframe->height);
+	size = width * height;
+
+	pspriteframe = g_MemCache->Hunk_AllocName<mspriteframe_goldsrc_t>(sizeof(mspriteframe_goldsrc_t), loadname);
+
+	Q_memset(pspriteframe, 0, sizeof(mspriteframe_goldsrc_t));
+
+	*ppframe = pspriteframe;
+
+	pspriteframe->width = width;
+	pspriteframe->height = height;
+	origin[0] = LittleLong(pinframe->origin[0]);
+	origin[1] = LittleLong(pinframe->origin[1]);
+
+	pspriteframe->up = origin[1];
+	pspriteframe->down = origin[1] - height;
+	pspriteframe->left = origin[0];
+	pspriteframe->right = width + origin[0];
+
+	if (cls.state != ca_dedicated)
+	{
+		sprintf(name, "%s_%i", loadmodel->name, framenum);
+		pspriteframe->gltexture = g_GLRenderer->GL_LoadTexture(loadmodel, name, width, height, SRC_INDEXED, (byte*)(pinframe + 1), offset, TEXPREF_ALPHA | TEXPREF_MIPMAP);
+	}
+
+	return (T*)((byte*)pinframe + sizeof(dspriteframe_goldsrc_t) + size);
+}
 
 /*
 =================
@@ -2221,6 +2269,57 @@ T * Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum)
 	return (T*)ptemp;
 }
 
+/*
+=================
+Mod_LoadSpriteGroup_GoldSrc
+=================
+*/
+template<typename T>
+T* Mod_LoadSpriteGroup_GoldSrc(void* pin, mspriteframe_goldsrc_t** ppframe, int framenum)
+{
+	dspritegroup_goldsrc_t* pingroup;
+	mspritegroup_goldsrc_t* pspritegroup;
+	int					i, numframes;
+	dspriteinterval_goldsrc_t* pin_intervals;
+	float* poutintervals;
+	T* ptemp;
+
+	pingroup = (dspritegroup_goldsrc_t*)pin;
+
+	numframes = LittleLong(pingroup->numframes);
+
+	pspritegroup = g_MemCache->Hunk_AllocName<mspritegroup_goldsrc_t>(sizeof(mspritegroup_goldsrc_t) +
+		(numframes - 1) * sizeof(pspritegroup->frames[0]), loadname);
+
+	pspritegroup->numframes = numframes;
+
+	*ppframe = (mspriteframe_goldsrc_t*)pspritegroup;
+
+	pin_intervals = (dspriteinterval_goldsrc_t*)(pingroup + 1);
+
+	poutintervals = g_MemCache->Hunk_AllocName<float>(numframes * sizeof(float), loadname);
+
+	pspritegroup->intervals = poutintervals;
+
+	for (i = 0; i < numframes; i++)
+	{
+		*poutintervals = LittleFloat(pin_intervals->interval);
+		if (*poutintervals <= 0.0)
+			Sys_Error("Mod_LoadSpriteGroup: interval<=0");
+
+		poutintervals++;
+		pin_intervals++;
+	}
+
+	ptemp = (T*)pin_intervals;
+
+	for (i = 0; i < numframes; i++)
+	{
+		ptemp = Mod_LoadSpriteFrame<T>(ptemp, &pspritegroup->frames[i], framenum * 100 + i);
+	}
+
+	return (T*)ptemp;
+}
 
 /*
 =================
@@ -2232,64 +2331,131 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 	int					i;
 	int					version;
 	dsprite_t			*pin;
+	dsprite_t_goldsrc	*pin_goldsrc;
 	msprite_t			*psprite;
+	msprite_t_goldsrc	*psprite_goldsrc;
 	int					numframes;
 	int					size;
 	dspriteframetype_t	*pframetype;
+	dspriteframetype_goldsrc_t* pframetype_goldsrc;
 	
 	pin = (dsprite_t *)buffer;
+	pin_goldsrc = (dsprite_t_goldsrc*)buffer;
 
 	version = LittleLong (pin->version);
-	if (version != SPRITE_VERSION)
+	if (version > SPRITE_VERSION_GOLDSRC)
+	{
+		Sys_Error ("%s has wrong version number "
+				 "(%i should be %i)", mod->name, version, SPRITE_VERSION_GOLDSRC);
+	}
+	else if (version < SPRITE_VERSION)
+	{
 		Sys_Error ("%s has wrong version number "
 				 "(%i should be %i)", mod->name, version, SPRITE_VERSION);
+	}
 
-	numframes = LittleLong (pin->numframes);
-
-	size = sizeof (msprite_t) +	(numframes - 1) * sizeof (psprite->frames);
-
-	psprite = g_MemCache->Hunk_AllocName<msprite_t>(size, loadname);
-
-	mod->cache.data = (byte*)psprite;
-
-	psprite->type = LittleLong (pin->type);
-	psprite->maxwidth = LittleLong (pin->width);
-	psprite->maxheight = LittleLong (pin->height);
-	psprite->beamlength = LittleFloat (pin->beamlength);
-	mod->synctype = static_cast<synctype_t>(LittleLong (pin->synctype));
-	psprite->numframes = numframes;
-
-	mod->mins[0] = mod->mins[1] = -psprite->maxwidth/2;
-	mod->maxs[0] = mod->maxs[1] = psprite->maxwidth/2;
-	mod->mins[2] = -psprite->maxheight/2;
-	mod->maxs[2] = psprite->maxheight/2;
-	
-//
-// load the frames
-//
-	if (numframes < 1)
-		Sys_Error ("Mod_LoadSpriteModel: Invalid # of frames: %d\n", numframes);
-
-	mod->numframes = numframes;
-
-	pframetype = (dspriteframetype_t *)(pin + 1);
-
-	for (i=0 ; i<numframes ; i++)
+	if (version == SPRITE_VERSION)
 	{
-		spriteframetype_t	frametype;
+		numframes = LittleLong(pin->numframes);
+		size = sizeof(msprite_t) + (numframes - 1) * sizeof(psprite->frames);
+		psprite = g_MemCache->Hunk_AllocName<msprite_t>(size, loadname);
+	}
+	else if (version == SPRITE_VERSION_GOLDSRC)
+	{
+		numframes = LittleLong(pin_goldsrc->numframes);
+		size = sizeof(msprite_t_goldsrc) + (numframes - 1) * sizeof(psprite_goldsrc->frames);
+		psprite_goldsrc = g_MemCache->Hunk_AllocName<msprite_t_goldsrc>(size, loadname);
+	}
 
-		frametype = static_cast<spriteframetype_t>(LittleLong (pframetype->type));
-		psprite->frames[i].type = frametype;
+	if (version == SPRITE_VERSION)
+	{
+		mod->cache.data = (byte*)psprite;
 
-		if (frametype == SPR_SINGLE)
+		psprite->type = LittleLong(pin->type);
+		psprite->maxwidth = LittleLong(pin->width);
+		psprite->maxheight = LittleLong(pin->height);
+		psprite->beamlength = LittleFloat(pin->beamlength);
+		mod->synctype = static_cast<synctype_t>(LittleLong(pin->synctype));
+
+		psprite->numframes = numframes;
+
+		mod->mins[0] = mod->mins[1] = -psprite->maxwidth / 2;
+		mod->maxs[0] = mod->maxs[1] = psprite->maxwidth / 2;
+		mod->mins[2] = -psprite->maxheight / 2;
+		mod->maxs[2] = psprite->maxheight / 2;
+
+		//
+		// load the frames
+		//
+		if (numframes < 1)
+			Sys_Error("Mod_LoadSpriteModel: Invalid # of frames: %d\n", numframes);
+
+		mod->numframes = numframes;
+
+		pframetype = (dspriteframetype_t*)(pin + 1);
+
+		for (i = 0; i < numframes; i++)
 		{
-			pframetype = Mod_LoadSpriteFrame<dspriteframetype_t>(pframetype + 1,
-										 &psprite->frames[i].frameptr, i);
+			spriteframetype_t	frametype;
+
+			frametype = static_cast<spriteframetype_t>(LittleLong(pframetype->type));
+			psprite->frames[i].type = frametype;
+
+			if (frametype == SPR_SINGLE)
+			{
+				pframetype = Mod_LoadSpriteFrame<dspriteframetype_t>(pframetype + 1,
+					&psprite->frames[i].frameptr, i);
+			}
+			else
+			{
+				pframetype = Mod_LoadSpriteGroup<dspriteframetype_t>(pframetype + 1,
+					&psprite->frames[i].frameptr, i);
+			}
 		}
-		else
+	}
+	else if (version == SPRITE_VERSION_GOLDSRC)
+	{
+		mod->cache.data = (byte*)psprite_goldsrc;
+
+		psprite_goldsrc->type = LittleLong(pin_goldsrc->type);
+		psprite_goldsrc->maxwidth = LittleLong(pin_goldsrc->width);
+		psprite_goldsrc->maxheight = LittleLong(pin_goldsrc->height);
+		mod->synctype = static_cast<synctype_t>(LittleLong(pin_goldsrc->synctype));
+
+		psprite_goldsrc->numframes = numframes;
+
+		mod->mins[0] = mod->mins[1] = -psprite_goldsrc->maxwidth / 2;
+		mod->maxs[0] = mod->maxs[1] = psprite_goldsrc->maxwidth / 2;
+		mod->mins[2] = -psprite_goldsrc->maxheight / 2;
+		mod->maxs[2] = psprite_goldsrc->maxheight / 2;
+
+		//
+		// load the frames
+		//
+		if (numframes < 1)
+			Sys_Error("Mod_LoadSpriteModel: Invalid # of frames: %d\n", numframes);
+
+		mod->numframes = numframes;
+
+		pframetype_goldsrc = (dspriteframetype_goldsrc_t*)(pin_goldsrc + 1);
+
+		for (i = 0; i < numframes; i++)
 		{
-			pframetype = Mod_LoadSpriteGroup<dspriteframetype_t>(pframetype + 1,
-										 &psprite->frames[i].frameptr, i);
+			spriteframetype_t	frametype;
+
+			frametype = static_cast<spriteframetype_t>(LittleLong(pframetype_goldsrc->type));
+			psprite_goldsrc->frames[i].type = frametype;
+
+			if (frametype == SPR_SINGLE)
+			{
+				pframetype_goldsrc = Mod_LoadSpriteFrame_GoldSrc<dspriteframetype_goldsrc_t>(pframetype_goldsrc + 1,
+					&psprite_goldsrc->frames[i].frameptr, i);
+			}
+			else
+			{
+				pframetype_goldsrc = Mod_LoadSpriteGroup_GoldSrc<dspriteframetype_goldsrc_t>(pframetype_goldsrc + 1,
+					&psprite_goldsrc->frames[i].frameptr, i);
+			}
 		}
 	}
 
