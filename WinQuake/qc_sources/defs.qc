@@ -1,5 +1,14 @@
 float	IT_BULLET_TIME			= 4294967296;
 
+// Missi: Quake 2-centric stuff for entvars_t
+
+.float		pitch_speed;
+.float		air_finished;
+.float		pain_finished;
+.float		radsuit_finished;
+.float		dmg;
+.float		dmgtime;
+
 // Missi: put these in your defs.qc file to use the added functions in pr_builtins
 
 void(string v, float f) cxxvectoradd_flt	= #79;		// set parm1... to the
@@ -19,3 +28,6 @@ void(vector org, vector end, vector color) drawdebugline = #91;
 void(entity ent, string sentence) speak_sentence = #92;
 void(string sound) precache_sentence = #93;
 void(entity e1, string e2) adjusttrain = #94;
+vector(float v1, float v2, float v3) makeavector = #95;
+
+float M_PI = 3.141592653589793;
