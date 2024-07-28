@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 int CSoundDMA::paintedtime = 0;
+int CSoundDMA::paintedtime_voice = 0;
 float CSoundDMA::sound_nominal_clip_dist = 1000.0f;
 
 // =======================================================================
@@ -46,6 +47,8 @@ cvar_t ambient_fade = {"ambient_fade", "100"};
 cvar_t snd_noextraupdate = {"snd_noextraupdate", "0"};
 cvar_t snd_show = {"snd_show", "0"};
 cvar_t _snd_mixahead = {"_snd_mixahead", "0.1", true};
+
+cvar_t voice_loopback = {"voice_loopback", "0", false};
 
 #if defined(_WIN32)
 #define SND_FILTERQUALITY_DEFAULT "5"
@@ -69,6 +72,7 @@ vec3_t listener_up = {};
 sfx_t* CSoundDMA::known_sfx[MAX_SFX] = { (sfx_t*)calloc(1, sizeof(sfx_t)) };
 
 SDL_AudioDeviceID g_SoundDeviceID;
+SDL_AudioDeviceID g_SoundDeviceID_voice;
 
 // ====================================================================
 // User-setable variables
@@ -180,6 +184,7 @@ void CSoundDMA::S_Init (void)
 	Cvar_RegisterVariable(&snd_mixspeed);
 	Cvar_RegisterVariable(&snd_speed);
 	Cvar_RegisterVariable(&snd_filterquality);
+	Cvar_RegisterVariable(&voice_loopback);
 
 	if (host->host_parms.memsize < 0x800000)
 	{

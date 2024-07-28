@@ -702,6 +702,41 @@ void PF_checkpos (void)
 {
 }
 
+/*
+=================
+Missi: PF_makeavector
+
+returns a vector made from a set of predefined values
+vector makeavector(v1, v2, v3) (7/26/2024)
+=================
+*/
+void PF_makeavector()
+{
+	float v1 = G_FLOAT(OFS_PARM0);
+	float v2 = G_FLOAT(OFS_PARM1);
+	float v3 = G_FLOAT(OFS_PARM2);
+
+	if (IS_NAN(v1))
+	{
+		PR_RunError("PF_makeavector: parm 0 was NaN!\n");
+		return;
+	}
+	if (IS_NAN(v2))
+	{
+		PR_RunError("PF_makeavector: parm 1 was NaN!\n");
+		return;
+	}
+	if (IS_NAN(v3))
+	{
+		PR_RunError("PF_makeavector: parm 2 was NaN!\n");
+		return;
+	}
+
+	vec3_t vec = { v1, v2, v3 };
+
+	VectorCopy(vec, G_VECTOR(OFS_RETURN));
+}
+
 //============================================================================
 
 byte	checkpvs[MAX_MAP_LEAFS/8];
@@ -2499,7 +2534,8 @@ PF_setcontents,
 PF_drawdebugline,
 PF_speak_sentence,
 PF_precache_sentence,
-PF_adjusttrain
+PF_adjusttrain,
+PF_makeavector
 };
 
 builtin_t *pr_builtins = pr_builtin;

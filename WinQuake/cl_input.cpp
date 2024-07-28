@@ -51,6 +51,7 @@ kbutton_t	in_left, in_right, in_forward, in_back;
 kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed, in_use, in_jump, in_attack;
 kbutton_t	in_up, in_down;
+kbutton_t	in_voice;
 
 int			in_impulse;
 
@@ -154,6 +155,9 @@ void IN_UseDown (void) {KeyDown(&in_use);}
 void IN_UseUp (void) {KeyUp(&in_use);}
 void IN_JumpDown (void) {KeyDown(&in_jump);}
 void IN_JumpUp (void) {KeyUp(&in_jump);}
+
+void IN_VoiceDown() {KeyDown(&in_voice);}
+void IN_VoiceUp() {KeyUp(&in_voice);}
 
 void IN_Impulse (void) {in_impulse=Q_atoi(g_pCmds->Cmd_Argv(1));}
 
@@ -446,6 +450,8 @@ void CL_InitInput (void)
 	g_pCmds->Cmd_AddCommand ("-klook", IN_KLookUp);
 	g_pCmds->Cmd_AddCommand ("+mlook", IN_MLookDown);
 	g_pCmds->Cmd_AddCommand ("-mlook", IN_MLookUp);
+	g_pCmds->Cmd_AddCommand ("+voice", IN_VoiceDown);
+	g_pCmds->Cmd_AddCommand ("-voice", IN_VoiceUp);
 
 	in_mlook.state |= 1;	// Missi: default mlook to on as most people have mice (6/28/2024)
 

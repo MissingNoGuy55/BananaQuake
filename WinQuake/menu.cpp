@@ -1476,7 +1476,8 @@ static const char *bindnames[][2] =
 {"+klook", 			"keyboard look"},
 {"+moveup",			"swim up"},
 {"+movedown",		"swim down"},
-{"+use",			"use"}
+{"+use",			"use"},
+{"+voice",			"voice communication"}
 };
 
 #define	NUMCOMMANDS	(sizeof(bindnames)/sizeof(bindnames[0]))

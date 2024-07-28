@@ -48,6 +48,7 @@ CSoundDMA* g_SoundSystem;
 
 //dma_t CSoundInternal::sn = { NULL };
 dma_t* CSoundDMA::shm;
+dma_t* CSoundDMA::shm_voice;
 
 static int	buffersize;
 
@@ -98,6 +99,7 @@ Returns false if nothing is found.
 bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 {
 	SDL_AudioSpec desired;
+	SDL_AudioSpec desired_voice;
 	int		tmp, val;
 
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
@@ -122,6 +124,23 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 		desired.samples = 4096; /* for 96 kHz */
 	desired.callback = paint_audio;
 	desired.userdata = NULL;
+	
+	/* Set up the desired format */
+	desired_voice.freq = snd_mixspeed.value;
+	desired_voice.format = (loadas8bit.value) ? AUDIO_U8 : AUDIO_S16SYS;
+	desired_voice.channels = 2; /* = desired_channels; */
+	if (desired_voice.freq <= 11025)
+		desired_voice.samples = 256;
+	else if (desired_voice.freq <= 22050)
+		desired_voice.samples = 512;
+	else if (desired_voice.freq <= 44100)
+		desired_voice.samples = 1024;
+	else if (desired_voice.freq <= 56000)
+		desired_voice.samples = 2048; /* for 48 kHz */
+	else
+		desired_voice.samples = 4096; /* for 96 kHz */
+	desired_voice.callback = paint_audio_voice;
+	desired_voice.userdata = NULL;
 
 	/* Open the audio device */
 
@@ -132,6 +151,13 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 		Con_Printf("Couldn't open SDL audio: %s\n", SDL_GetError());
 		SDL_QuitSubSystem(SDL_INIT_AUDIO);
 		return false;
+	}
+
+	g_SoundDeviceID_voice = SDL_OpenAudioDevice(NULL, 1, &desired_voice, NULL, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+
+	if (g_SoundDeviceID_voice == -1)
+	{
+		Con_Printf("Couldn't open SDL audio for recording device: %s\n", SDL_GetError());
 	}
 
 	memset((void*)dma, 0, sizeof(dma_t));
@@ -253,6 +279,46 @@ void paint_audio(void* userdata, Uint8* stream, int len)
 		g_SoundSystem->shm->samplepos = 0;
 }
 
+void paint_audio_voice(void* userdata, Uint8* stream, int len)
+{
+	int	pos, tobufend;
+	int	len1, len2;
+
+	if (!g_SoundSystem->shm_voice)
+	{	/* shouldn't happen, but just in case */
+		memset(stream, 0, len);
+		return;
+	}
+
+	pos = (g_SoundSystem->shm_voice->samplepos * (g_SoundSystem->shm_voice->samplebits / 8));
+	if (pos >= buffersize)
+		g_SoundSystem->shm_voice->samplepos = pos = 0;
+
+	tobufend = buffersize - pos;  /* bytes to buffer's end. */
+	len1 = len;
+	len2 = 0;
+
+	if (len1 > tobufend)
+	{
+		len1 = tobufend;
+		len2 = len - len1;
+	}
+
+	memcpy(stream, g_SoundSystem->shm_voice->buffer + pos, len1);
+
+	if (len2 <= 0)
+	{
+		g_SoundSystem->shm_voice->samplepos += (len1 / (g_SoundSystem->shm_voice->samplebits / 8));
+	}
+	else
+	{	/* wraparound? */
+		memcpy(stream + len1, g_SoundSystem->shm_voice->buffer, len2);
+		g_SoundSystem->shm_voice->samplepos = (len2 / (g_SoundSystem->shm_voice->samplebits / 8));
+	}
+
+	if (g_SoundSystem->shm_voice->samplepos >= buffersize)
+		g_SoundSystem->shm_voice->samplepos = 0;
+}
 
 /*
 ==============

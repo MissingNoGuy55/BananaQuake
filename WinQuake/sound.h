@@ -215,11 +215,16 @@ public:
 
 	// pointer should go away
     static dma_t*           shm;
+    static dma_t*           shm_voice;
 	dma_t					sn;
 	static vec_t			sound_nominal_clip_dist;
 
 	int						soundtime;		// sample PAIRS
 	static int   			paintedtime; 	// sample PAIRS
+	
+	int						soundtime_voice;		// sample PAIRS
+	static int   			paintedtime_voice; 	// sample PAIRS
+
 	int						s_rawend;
 
 	static sfx_t*			known_sfx[MAX_SFX];		// hunk allocated [MAX_SFX]
@@ -294,6 +299,7 @@ public:
 };
 
 static void paint_audio(void* userdata, Uint8* stream, int len);
+static void paint_audio_voice(void* userdata, Uint8* stream, int len);
 
 /*
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -429,5 +435,6 @@ extern int		snd_blocked;
 extern CSoundDMA* g_SoundSystem;
 
 extern SDL_AudioDeviceID g_SoundDeviceID;
+extern SDL_AudioDeviceID g_SoundDeviceID_voice;
 
 #endif
