@@ -113,7 +113,7 @@ void SetQdirFromPath (const char *path)
 	Error ("SeetQdirFromPath: no 'quake' in %s", path);*/
 }
 
-char *ExpandPath (char *path)
+const char *ExpandPath (const char *path)
 {
 	static char full[1024];
 	if (!qdir)
@@ -124,9 +124,9 @@ char *ExpandPath (char *path)
 	return full;
 }
 
-char *ExpandPathAndArchive (char *path)
+const char *ExpandPathAndArchive (const char *path)
 {
-	char	*expanded;
+	const char	*expanded;
 	char	archivename[1024];
 
 	expanded = ExpandPath (path);
@@ -191,7 +191,7 @@ void Q_getwd (char *out)
 }
 
 
-void Q_mkdir (char *path)
+void Q_mkdir (const char *path)
 {
 #ifdef _WIN32
 	if (_mkdir (path) != -1)
@@ -459,7 +459,7 @@ void SafeWrite (FILE *f, void *buffer, int count)
 LoadFile
 ==============
 */
-int    LoadFile (char *filename, void **bufferptr)
+int    LoadFile (const char *filename, void **bufferptr)
 {
 	FILE	*f;
 	int    length;
@@ -482,7 +482,7 @@ int    LoadFile (char *filename, void **bufferptr)
 SaveFile
 ==============
 */
-void    SaveFile (char *filename, void *buffer, int count)
+void    SaveFile (const char *filename, void *buffer, int count)
 {
 	FILE	*f;
 
@@ -848,18 +848,23 @@ unsigned short CRC_Value(unsigned short crcvalue)
 CreatePath
 ============
 */
-void	CreatePath (char *path)
+void	CreatePath (const char *path)
 {
 	char	*ofs, c;
+
+	const char* p = nullptr;
 	
-	for (ofs = path+1 ; *ofs ; ofs++)
+	for (p = path+1 ; *p; p++)
 	{
-		c = *ofs;
+		if (!p)
+			break;
+
+		c = *p;
 		if (c == '/' || c == '\\')
 		{	// create the directory
-			*ofs = 0;
+			c = 0;
 			Q_mkdir (path);
-			*ofs = c;
+			c = c;
 		}
 	}
 }
@@ -872,7 +877,7 @@ CopyFile
   Used to archive source files
 ============
 */
-void CopyFile (char *from, char *to)
+void CopyFile (const char *from, const char *to)
 {
 	void	*buffer;
 	int		length;

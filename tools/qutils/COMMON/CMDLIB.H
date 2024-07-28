@@ -30,13 +30,13 @@ void Q_getwd (char *out);
 int filelength (FILE *f);
 int	FileTime (char *path);
 
-void	Q_mkdir (char *path);
+void	Q_mkdir (const char *path);
 
 extern	char		qdir[1024];
 extern	char		gamedir[1024];
 void SetQdirFromPath (const char *path);
-char *ExpandPath (char *path);
-char *ExpandPathAndArchive (char *path);
+const char *ExpandPath (const char *path);
+const char *ExpandPathAndArchive (const char *path);
 
 
 double I_FloatTime (void);
@@ -49,8 +49,8 @@ FILE	*SafeOpenRead (const char *filename);
 void	SafeRead (FILE *f, void *buffer, int count);
 void	SafeWrite (FILE *f, void *buffer, int count);
 
-int		LoadFile (char *filename, void **bufferptr);
-void	SaveFile (char *filename, void *buffer, int count);
+int		LoadFile (const char *filename, void **bufferptr);
+void	SaveFile (const char *filename, void *buffer, int count);
 
 void 	DefaultExtension (char *path, const char *extension);
 void 	DefaultPath (char *path, char *basepath);
@@ -83,8 +83,8 @@ void CRC_Init(unsigned short *crcvalue);
 void CRC_ProcessByte(unsigned short *crcvalue, byte data);
 unsigned short CRC_Value(unsigned short crcvalue);
 
-void	CreatePath (char *path);
-void CopyFile (char *from, char *to);
+void	CreatePath (const char *path);
+void CopyFile (const char *from, const char *to);
 
 extern	bool			archive;
 extern	char			archivedir[1024];

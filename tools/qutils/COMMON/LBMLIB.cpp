@@ -235,7 +235,7 @@ done:
 =================
 */
 
-void LoadLBM (char *filename, byte **picture, byte **palette)
+void LoadLBM (const char *filename, byte **picture, byte **palette)
 {
 	byte    *LBMbuffer, *picbuffer, *cmapbuffer;
 	int             y,p,planes;
@@ -400,7 +400,7 @@ void LoadLBM (char *filename, byte **picture, byte **palette)
 ==============
 */
 
-void WriteLBMfile (char *filename, byte *data, int width, int height, byte *palette)
+void WriteLBMfile (const char *filename, byte *data, int width, int height, byte *palette)
 {
 	byte    *lbm, *lbmptr;
 	int    *formlength, *bmhdlength, *cmaplength, *bodylength;

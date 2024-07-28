@@ -35,7 +35,7 @@ void GrabColormap2 (void);
 
 typedef struct
 {
-	char    *name;
+	const char    *name;
 	void    (*function) (void);
 } command_t;
 
@@ -59,9 +59,9 @@ command_t       commands[] =
 LoadScreen
 ==============
 */
-void LoadScreen (char *name)
+void LoadScreen (const char *name)
 {
-	char	*expanded;
+	const char	*expanded;
 
 	expanded = ExpandPathAndArchive (name);
 
@@ -125,7 +125,7 @@ Save as a seperate file instead of as a wadfile lump
 void WriteFile (void)
 {
 	char	filename[1024];
-	char	*exp;
+	const char	*exp;
 
 	sprintf (filename,"%s/%s.lmp", destfile, lumpname);
 	exp = ExpandPath(filename);
@@ -273,12 +273,12 @@ int main (int argc, char **argv)
 {
 	int		i;
 	
-	printf ("\nqlumpy "VERSION" by John Carmack, copyright (c) 1994 Id Software\n");
+	printf ("\nqlumpy %s by John Carmack, copyright(c) 1994 Id Software\n", VERSION);
 
 	if (argc == 1)
 		Error ("qlumpy [-archive directory] scriptfile [scriptfile ...]");
 
-	lumpbuffer = malloc (MAXLUMP);
+	lumpbuffer = (byte*)malloc (MAXLUMP);
 
 	if (!strcmp(argv[1], "-archive"))
 	{

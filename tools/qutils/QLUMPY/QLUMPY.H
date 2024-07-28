@@ -1,7 +1,7 @@
-#include "cmdlib.h"
-#include "scriplib.h"
-#include "lbmlib.h"
-#include "wadlib.h"
+#include "COMMON/cmdlib.h"
+#include "COMMON/scriplib.h"
+#include "COMMON/lbmlib.h"
+#include "COMMON/wadlib.h"
 
 
 extern  byte    *byteimage, *lbmpalette;

@@ -266,7 +266,7 @@ void WriteModelFile (FILE *modelouthandle)
 	modeltemp.numverts = LittleLong (model.numverts);
 	modeltemp.numtris = LittleLong (model.numtris - degeneratetris);
 	modeltemp.numframes = LittleLong (model.numframes);
-	modeltemp.synctype = LittleFloat (model.synctype);
+	modeltemp.synctype = (synctype_t)LittleFloat (model.synctype);
 	averagesize = totsize / model.numtris;
 	modeltemp.size = LittleFloat (averagesize);
 
@@ -683,7 +683,7 @@ void Cmd_Skin (void)
 	if (!skins[skincount].pdata)
 		Error ("couldn't get memory for skin texture");
 
-	ptemp1 = skins[skincount].pdata;
+	ptemp1 = (byte*)skins[skincount].pdata;
 	ptemp2 = pskinbitmap;
 
 	for (i=0 ; i<model.skinheight ; i++)

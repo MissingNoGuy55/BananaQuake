@@ -84,7 +84,7 @@ void WriteSprite (FILE *spriteouthandle)
 	spritetemp.height = LittleLong (framesmaxs[1]);
 	spritetemp.numframes = LittleLong (sprite.numframes);
 	spritetemp.beamlength = LittleFloat (sprite.beamlength);
-	spritetemp.synctype = LittleFloat (sprite.synctype);
+	spritetemp.synctype = (synctype_t)LittleFloat (sprite.synctype);
 	spritetemp.version = LittleLong (SPRITE_VERSION);
 	spritetemp.ident = LittleLong (IDSPRITEHEADER);
 
@@ -184,7 +184,7 @@ void ExecCommand (char *cmd, ...)
 LoadScreen
 ==============
 */
-void LoadScreen (char *name)
+void LoadScreen (const char *name)
 {
 	printf ("grabbing from %s...\n",name);
 	LoadLBM (name, &byteimage, &lbmpalette);
@@ -449,7 +449,7 @@ void Cmd_Spritename (void)
 	framesmaxs[0] = -9999999;
 	framesmaxs[1] = -9999999;
 
-	lumpbuffer = malloc (MAX_BUFFER_SIZE * 2);	// *2 for padding
+	lumpbuffer = (byte*)malloc (MAX_BUFFER_SIZE * 2);	// *2 for padding
 	if (!lumpbuffer)
 		Error ("Couldn't get buffer memory");
 

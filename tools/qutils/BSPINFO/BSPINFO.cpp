@@ -1,7 +1,7 @@
 
-#include "CMDLIB.H"
-#include "MATHLIB.H"
-#include "bspfile.h"
+#include "COMMON/CMDLIB.H"
+#include "COMMON/MATHLIB.H"
+#include "COMMON/bspfile.h"
 
 void main (int argc, char **argv)
 {

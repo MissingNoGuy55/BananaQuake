@@ -15,11 +15,11 @@
 #include <math.h>
 #include <string.h>
 
-#include "cmdlib.h"
-#include "scriplib.h"
-#include "mathlib.h"
-#include "trilib.h"
-#include "lbmlib.h"
+#include "COMMON/CMDLIB.H"
+#include "COMMON/scriplib.h"
+#include "COMMON/mathlib.h"
+#include "COMMON/trilib.h"
+#include "COMMON/lbmlib.h"
 
 #endif
 

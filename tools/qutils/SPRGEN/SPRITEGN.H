@@ -30,9 +30,9 @@
 #include <math.h>
 #include <string.h>
 
-#include "cmdlib.h"
-#include "scriplib.h"
-#include "lbmlib.h"
+#include "COMMON/cmdlib.h"
+#include "COMMON/scriplib.h"
+#include "COMMON/lbmlib.h"
 
 #endif
 
