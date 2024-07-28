@@ -6,11 +6,99 @@ BRUSH ENTITIES
 ==============================================================================
 */
 
+.float modifier;
+
+void() func_friction =
+{
+	self.solid = SOLID_TRIGGER;
+	self.movetype = MOVETYPE_NONE;
+	
+	setmodel(self, self.model);
+	
+	self.modifier = self.modifier;
+	
+	dprint("func_friction modifier is ");
+	dprint(ftos(self.modifier));
+	dprint("\n");
+};
+
+.float distance;
+.float movesnd, stopsnd;
+
+void() func_door_rotating_think =
+{	
+	local float t;
+	t = time - self.ltime;
+	self.ltime = time;
+	
+	if (self.angles == self.rotate)
+	{
+		dprint("Reached destination\n");
+		self.think = SUB_Null;
+		return;
+	}
+	
+	self.angles = self.angles + ( self.rotate * t );
+	
+	dprint("Rotation: ");
+	dprint(vtos(self.angles));
+	dprint("\n");
+	
+	self.nextthink = time + 0.01;
+};
+
+void() func_door_rotating_use =
+{	
+	self.think = func_door_rotating_think;
+	self.nextthink = time + 0.01;
+	self.use = SUB_Null;
+	
+	bprint("func_door_rotating dest is ");
+	bprint(vtos(self.dest2));
+	bprint("\n");
+};
+
+void() func_door_rotating =
+{
+	self.dest1 = self.angles;
+	self.dest2 = makeavector(self.angles_x, self.angles_y + self.distance, self.angles_z);
+	self.dest = self.dest2;
+	
+	self.mangle = self.angles;
+	self.angles = '0 0 0';
+	self.solid = SOLID_BSP;
+	self.movetype = MOVETYPE_PUSH;
+	self.distance = self.distance;
+	self.use = func_door_rotating_use;
+	self.rotate = ( self.dest - self.dest2 ) * ( 1 / self.speed );
+	
+	setmodel(self, self.model);
+	setsize(self, self.mins, self.maxs);
+	
+	if (self.sounds == 1)
+	{
+		precache_sound ("plats/plat1.wav");
+		precache_sound ("plats/plat2.wav");
+		self.noise = "plats/plat1.wav";
+		self.noise1 = "plats/plat2.wav";
+	}
+
+	if (self.sounds == 2)
+	{
+		precache_sound ("plats/medplat1.wav");
+		precache_sound ("plats/medplat2.wav");
+		self.noise = "plats/medplat1.wav";
+		self.noise1 = "plats/medplat2.wav";
+	}
+};
+
 void() func_monsterclip =
 {
 	self.solid = SOLID_NOT;
 	self.movetype = MOVETYPE_NONE;
+	self.effects = EF_NODRAW;
 	setmodel(self, self.model);
+	setsize(self, self.mins, self.maxs);
 };
 
 void() func_tracktrain_find =
@@ -21,8 +109,10 @@ void() func_tracktrain_find =
 	targ = find (world, targetname, self.target);
 	self.target = targ.target;
 	
+	adjusttrain (self, self.target);
 	setorigin (self, targ.origin);
-	adjusttrain(self, self.target);
+	self.mangle = self.angles;
+	self.angles = '0 0 0';
 	if (!self.targetname)
 	{	// not triggered, so start immediately
 		self.nextthink = self.ltime + 0.1;
@@ -89,6 +179,7 @@ void() func_ladder =
 {
 	self.solid = SOLID_BSP;
 	self.movetype = MOVETYPE_PUSH;
+	self.effects = EF_NODRAW;
 	
 	precache_sound("player/pl_ladder1.wav");
 	precache_sound("player/pl_ladder2.wav");
@@ -396,12 +487,39 @@ POINT ENTITIES
 ==============================================================================
 */
 
-void() env_glow =
+void() target_cdaudio_use =
 {
-	self.solid = SOLID_NOT;
-	self.movetype = MOVETYPE_NONE;
+
+	WriteByte (MSG_ALL, SVC_CDTRACK);
+	WriteByte (MSG_ALL, self.health);
+	WriteByte (MSG_ALL, 3);
+	
 };
 
+void() target_cdaudio =
+{
+	self.health = self.health;
+	self.model = string_null;
+	self.solid = SOLID_NOT;
+	self.movetype = MOVETYPE_NONE;
+	
+	self.use = target_cdaudio_use;
+};
+
+void() infodecal =
+{
+	
+};
+/*
+void() env_glow =
+{
+	precache_model(self.model);
+
+	self.solid = SOLID_NOT;
+	self.movetype = MOVETYPE_NONE;
+	setmodel(self, self.model);
+};
+*/
 .string netnamed;
 
 void() path_track = 
@@ -433,9 +551,12 @@ void() ambient_generic_use =
 
 void() ambient_generic =
 {
-	precache_sound (self.message);
+	precache_sound2(self.message);
 	
 	self.playing = 0;
+	self.model = string_null;
+	self.movetype = MOVETYPE_NONE;
+	self.solid = SOLID_NOT;
 	
 	if (!(self.spawnflags & 16))
 	{
@@ -451,6 +572,8 @@ void() ambient_generic =
 void() info_node =
 {
 	self.model = string_null;
+	self.movetype = MOVETYPE_NONE;
+	self.solid = SOLID_NOT;
 	self.nextnode = findradius(self.origin, 512.0);
 };
 
@@ -545,6 +668,7 @@ void() trigger_auto =
 	
 	bprint("Triggerstate is: ");
 	bprint(ftos(self.triggerstate));
+	bprint("\n");
 };
 
 .string sentence;
