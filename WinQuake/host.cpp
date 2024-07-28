@@ -867,9 +867,6 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	if (SDL_Init(0) < 0)
 		Sys_Error("Couldn't initialize SDL");
 
-    if (SDL_Init(SDL_INIT_TIMER) < 0)
-        Sys_Error("Couldn't initialize SDL timers");
-
     if (standard_quake)
         minimum_memory = MINIMUM_MEMORY;
 	else
