@@ -149,6 +149,7 @@ sys_win.cpp
 utils.cpp
 vid_win.cpp
 view.cpp
+vpkfile.cpp
 wad.cpp
 world.cpp
 zone.cpp
@@ -160,6 +161,8 @@ asm_draw.h
 asm_i386.h
 bgmusic.h
 bspfile.h
+bspfile_goldsrc.h
+bspfile_source.h
 cdaudio.h
 client.h
 cmd.h
@@ -214,6 +217,7 @@ utils.h
 vid.h
 vid_win.h
 view.h
+vpkfile.h
 wad.h
 winquake.h
 world.h
@@ -293,6 +297,7 @@ sv_user.cpp
 sys_win.cpp
 utils.cpp
 view.cpp
+vpkfile.cpp
 wad.cpp
 world.cpp
 zone.cpp
@@ -304,6 +309,8 @@ asm_draw.h
 asm_i386.h
 bgmusic.h
 bspfile.h
+bspfile_goldsrc.h
+bspfile_source.h
 cdaudio.h
 client.h
 cmd.h
@@ -370,6 +377,7 @@ utils.h
 vid.h
 vid_win.h
 view.h
+vpkfile.h
 wad.h
 winquake.h
 world.h
@@ -482,6 +490,7 @@ sys_linux.cpp
 utils.cpp
 view.cpp
 vid_sdl_software.cpp
+vpkfile.cpp
 wad.cpp
 world.cpp
 zone.cpp
@@ -493,6 +502,8 @@ asm_draw.h
 asm_i386.h
 bgmusic.h
 bspfile.h
+bspfile_goldsrc.h
+bspfile_source.h
 cdaudio.h
 client.h
 cmd.h
@@ -544,6 +555,7 @@ sys.h
 utils.h
 vid.h
 view.h
+vpkfile.h
 wad.h
 world.h
 zone.h
@@ -618,6 +630,7 @@ sv_user.cpp
 sys_linux.cpp
 utils.cpp
 view.cpp
+vpkfile.cpp
 wad.cpp
 world.cpp
 zone.cpp
@@ -629,6 +642,8 @@ asm_draw.h
 asm_i386.h
 bgmusic.h
 bspfile.h
+bspfile_goldsrc.h
+bspfile_source.h
 cdaudio.h
 client.h
 cmd.h
@@ -693,6 +708,7 @@ utils.h
 vid.h
 vid_win.h
 view.h
+vpkfile.h
 wad.h
 winquake.h
 world.h
@@ -804,6 +820,7 @@ sys_linux.cpp
 utils.cpp
 view.cpp
 vid_macos.cpp
+vpkfile.cpp
 wad.cpp
 world.cpp
 zone.cpp
@@ -815,6 +832,8 @@ asm_draw.h
 asm_i386.h
 bgmusic.h
 bspfile.h
+bspfile_goldsrc.h
+bspfile_source.h
 cdaudio.h
 client.h
 cmd.h
@@ -866,6 +885,7 @@ sys.h
 utils.h
 vid.h
 view.h
+vpkfile.h
 wad.h
 world.h
 zone.h
