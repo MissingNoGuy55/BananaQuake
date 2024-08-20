@@ -896,6 +896,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	Host_InitLocal ();
 	W_LoadWadFile (GFX_WAD);
     W_LoadGoldSrcWadFiles();
+	LoadAllVPKs();
 	if (cls.state != ca_dedicated)
 	{
 		Key_Init ();
@@ -929,7 +930,6 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 
 		IN_Init ();
 
-		VID_Init (host_basepal);
 		g_CoreRenderer = new CCoreRenderer;		// needed even for dedicated servers
 #ifndef GLQUAKE
 		g_CoreRenderer->R_Init();
@@ -937,6 +937,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 		g_SoftwareRenderer->Draw_Init ();
 #else
 		g_GLRenderer = new CGLRenderer;
+		VID_Init (host_basepal);
 		g_GLRenderer->Draw_Init();
         g_GLRenderer->R_Init();
 #endif
@@ -1028,6 +1029,14 @@ void CQuakeHost::Host_Shutdown(void)
 		{
 			pr_vectors[i].data->Clear();
 		}
+	}
+
+	for (int i = 1; i < MAX_LOADED_WADS; i++)
+	{
+		if (!wad_names[i])
+			break;
+
+		delete wad_names[i];
 	}
 
 	delete this;

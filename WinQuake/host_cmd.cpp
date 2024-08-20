@@ -44,6 +44,8 @@ void CQuakeHost::Host_Quit_f (void)
 	CL_Disconnect ();
 	host->Host_ShutdownServer(false);		
 
+	CloseAllVPKs();
+
 	Sys_Quit ();
 }
 
