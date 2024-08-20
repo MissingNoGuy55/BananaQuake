@@ -79,6 +79,7 @@ typedef unsigned char byte;
 #include <thread>
 #include <future>
 #include <functional>
+#include <filesystem>
 // #include <dsound.h>
 #if (_WIN32) || (WIN64)
 #include <windows.h>
@@ -89,6 +90,8 @@ using cxxstring = std::string;
 using cxxfstream = std::fstream;
 using cxxifstream = std::ifstream;
 using cxxofstream = std::ofstream;
+namespace fs = std::filesystem;
+using cxxpath = fs::path;
 
 #include <SDL.h>
 
@@ -272,8 +275,10 @@ constexpr int SOUND_CHANNELS		= 8;
 #include "mathlib.h"
 
 #include "common.h"
+#include "vpkfile.h"
 #include "bspfile.h"
 #include "bspfile_goldsrc.h"
+#include "bspfile_source.h"
 #include "vid.h"
 #include "sys.h"
 #include "zone.h"
@@ -329,6 +334,16 @@ typedef struct
 
 #ifdef GLQUAKE
 #include "glquake.h"
+#endif
+
+#ifdef DEBUG
+namespace QuakeDebugOverlay
+{
+	void DrawDebugOverlay(void* parm1, void* parm2, void* parm3);
+	void DrawDebugBox(GLfloat* vColor, Vector3* mins, Vector3* maxs, double fTime);
+
+	extern CQTimer m_DebugOverlayTimer;
+};
 #endif
 
 //=============================================================================
