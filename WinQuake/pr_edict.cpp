@@ -1131,7 +1131,7 @@ unsigned int ProgTimerCallback(unsigned int interval, void* data)
     return 0;
 }
 
-void TimerCallback(void* parm1)
+void TimerCallback(void* parm1, void* parm2, void* parm3)
 {
 	edict_t* ed = (edict_t*)parm1;
 
@@ -1244,7 +1244,7 @@ const char* _ED_ParseMultiManager (const char *data, edict_t* ed)
 
             int time = Q_atoi(g_Common->com_token);
 
-			CQTimer* timer = new CQTimer(time, TimerCallback, find);
+			CQTimer* timer = new CQTimer(time, TimerCallback, find, nullptr, nullptr);
         }
 
         // keynames with a leading underscore are used for utility comments,

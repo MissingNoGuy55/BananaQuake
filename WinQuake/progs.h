@@ -31,6 +31,19 @@ extern void Con_Warning(const char* fmt, ...);
 constexpr size_t MAX_PROG_VECTOR_ALLOC = 32768U;
 constexpr size_t MAX_PROG_VECTORS = 65535U;
 
+#define	CONTENT_WATER	-3
+#define CONTENT_SLIME	-4
+#define CONTENT_LAVA	-5
+
+#define FL_IMMUNE_WATER	131072
+#define	FL_IMMUNE_SLIME	262144
+#define FL_IMMUNE_LAVA	524288
+
+#define	CHAN_VOICE	2
+#define	CHAN_BODY	4
+
+#define	ATTN_NORM	1
+
 /*
 =============================================================================
 * Missi: prog vector
