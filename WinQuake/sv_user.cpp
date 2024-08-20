@@ -456,7 +456,6 @@ void CQuakeServer::SV_ClientThink (void)
 	SV_AirMove ();	
 }
 
-
 /*
 ===================
 SV_ReadClientMove
