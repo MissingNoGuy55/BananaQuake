@@ -7,6 +7,7 @@ BRUSH ENTITIES
 */
 
 .float modifier;
+.vector neworigin;
 
 void() func_friction =
 {

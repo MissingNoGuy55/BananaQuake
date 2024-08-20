@@ -29,5 +29,7 @@ void(entity ent, string sentence) speak_sentence = #92;
 void(string sound) precache_sentence = #93;
 void(entity e1, string e2) adjusttrain = #94;
 vector(float v1, float v2, float v3) makeavector = #95;
+vector(vector v1) deg2rad = #96;
+vector(vector v1) rad2deg = #97;
 
 float M_PI = 3.141592653589793;
