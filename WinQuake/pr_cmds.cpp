@@ -718,21 +718,59 @@ void PF_makeavector()
 
 	if (IS_NAN(v1))
 	{
-		PR_RunError("PF_makeavector: parm 0 was NaN!\n");
+		PR_RunError("PF_makeavector: parm 0 is NaN!\n");
 		return;
 	}
 	if (IS_NAN(v2))
 	{
-		PR_RunError("PF_makeavector: parm 1 was NaN!\n");
+		PR_RunError("PF_makeavector: parm 1 is NaN!\n");
 		return;
 	}
 	if (IS_NAN(v3))
 	{
-		PR_RunError("PF_makeavector: parm 2 was NaN!\n");
+		PR_RunError("PF_makeavector: parm 2 is NaN!\n");
 		return;
 	}
 
 	vec3_t vec = { v1, v2, v3 };
+
+	VectorCopy(vec, G_VECTOR(OFS_RETURN));
+}
+
+/*
+=================
+Missi: PF_deg2rad
+
+returns a vector with euler angles as radians
+vector deg2rad(v1) (8/1/2024)
+=================
+*/
+void PF_deg2rad()
+{
+	float* vec = G_VECTOR(OFS_PARM0);
+
+	vec[0] = DEG2RAD(vec[0]);
+	vec[1] = DEG2RAD(vec[1]);
+	vec[2] = DEG2RAD(vec[2]);
+
+	VectorCopy(vec, G_VECTOR(OFS_RETURN));
+}
+
+/*
+=================
+Missi: PF_rad2deg
+
+returns a vector with radians as euler angles
+vector rad2deg(v1) (8/1/2024)
+=================
+*/
+void PF_rad2deg()
+{
+	float* vec = G_VECTOR(OFS_PARM0);
+
+	vec[0] = RAD2DEG(vec[0]);
+	vec[1] = RAD2DEG(vec[1]);
+	vec[2] = RAD2DEG(vec[2]);
 
 	VectorCopy(vec, G_VECTOR(OFS_RETURN));
 }
@@ -1734,19 +1772,6 @@ void PF_changelevel (void)
 #endif
 }
 
-#define	CONTENT_WATER	-3
-#define CONTENT_SLIME	-4
-#define CONTENT_LAVA	-5
-
-#define FL_IMMUNE_WATER	131072
-#define	FL_IMMUNE_SLIME	262144
-#define FL_IMMUNE_LAVA	524288
-
-#define	CHAN_VOICE	2
-#define	CHAN_BODY	4
-
-#define	ATTN_NORM	1
-
 void PF_WaterMove (void)
 {
 	edict_t		*self;
@@ -2535,7 +2560,9 @@ PF_drawdebugline,
 PF_speak_sentence,
 PF_precache_sentence,
 PF_adjusttrain,
-PF_makeavector
+PF_makeavector,
+PF_deg2rad,
+PF_rad2deg
 };
 
 builtin_t *pr_builtins = pr_builtin;
