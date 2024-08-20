@@ -491,7 +491,7 @@ void CQVector<T>::ShiftMultipleRight(int num)
 
 extern CQVector<class CQTimer> g_pTimers;
 
-typedef void (*timercommand_t)(void*);
+typedef void (*timercommand_t)(void*, void*, void*);
 
 class CQTimer
 {
@@ -503,29 +503,38 @@ public:
 		m_bElapsed = false;
 		m_dElapsed = 0.0;
 		callbackParm = nullptr;
+		callbackParm2 = nullptr;
+		callbackParm3 = nullptr;
 		m_fCallback = nullptr;
+		m_bLooping = false;
 
 		g_pTimers.AddToEnd(this);
 	}
 
-	CQTimer(double dTime)
+	CQTimer(double dTime, bool bLooping = false)
 	{
 		m_dTime = dTime;
 		m_bElapsed = false;
 		m_dElapsed = 0.0;
 		callbackParm = nullptr;
+		callbackParm2 = nullptr;
+		callbackParm3 = nullptr;
 		m_fCallback = nullptr;
+		m_bLooping = bLooping;
 
 		g_pTimers.AddToEnd(this);
 	}
 
-	CQTimer(double dTime, timercommand_t command, void* parm1 = nullptr)
+	CQTimer(double dTime, timercommand_t command, void* parm1, void* parm2, void* parm3, bool bLooping = false)
 	{
 		m_dTime = dTime;
 		m_bElapsed = false;
 		m_dElapsed = 0.0;
 		callbackParm = parm1;
+		callbackParm2 = parm2;
+		callbackParm3 = parm3;
 		m_fCallback = command;
+		m_bLooping = bLooping;
 
 		g_pTimers.AddToEnd(this);
 	}
@@ -536,13 +545,14 @@ public:
 		m_bElapsed = false;
 		m_dElapsed = 0.0;
 		callbackParm = nullptr;
-		m_fCallback = nullptr;		
+		m_fCallback = nullptr;
+		m_bLooping = false;
 	}
 
 	void UpdateTimer();
 
 	void SetTime(double dTime) { m_dTime = dTime; }
-	void SetCallback(timercommand_t fCallback, void* parm = nullptr);
+	void SetCallback(timercommand_t fCallback, void* parm = nullptr, void* parm2 = nullptr, void* parm3 = nullptr);
 	void ResetTimer() { m_dTime = 1; m_bElapsed = false; }
 	const double GetElapsedTime() const { return m_dElapsed; }
 	const bool HasElapsed() const { return m_bElapsed; }
@@ -553,6 +563,9 @@ private:
 	double m_dElapsed;
 	bool m_bElapsed;
 	void* callbackParm;
+	void* callbackParm2;
+	void* callbackParm3;
+	bool m_bLooping;
 
 	timercommand_t m_fCallback;
 };
