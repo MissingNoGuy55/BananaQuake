@@ -23,6 +23,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+#ifdef DEBUG
+namespace QuakeDebugOverlay
+{
+	CQTimer m_DebugOverlayTimer;
+};
+#endif
+
 // Missi: already defined in GL.h in Windows and SDL_OpenGL_glext.h (4/29/2023)
 //#define GL_COLOR_INDEX8_EXT     0x80E5
 
@@ -65,6 +72,27 @@ cvar_t  level_fog_end               { "fog_end", "2048.0", false };
 cvar_t  level_fog_end_goal          { "fog_end_goal", "2048.0", false };
 cvar_t  level_fog_force             { "fog_force", "0.0", false };
 cvar_t  level_fog_lerp_time         { "fog_lerp_time", "0.0", false };
+
+#ifdef DEBUG
+
+void QuakeDebugOverlay::DrawDebugOverlay(void* parm1, void* parm2, void* parm3)
+{
+	GLfloat* vColor = (GLfloat*)parm1;
+	Vector3* vMins = (Vector3*)parm2;
+	Vector3* vMaxs = (Vector3*)parm3;
+
+	glBegin(GL_POLYGON);
+	glColor4fv(vColor);
+	glVertex3fv(vMins->ToVec3_t());
+	glVertex3fv(vMaxs->ToVec3_t());
+	glEnd();
+}
+
+void QuakeDebugOverlay::DrawDebugBox(GLfloat* vColor, Vector3* mins, Vector3* maxs, double fTime)
+{
+	CQTimer* timer = new CQTimer(fTime, DrawDebugOverlay, vColor, mins, maxs, true);
+}
+#endif
 
 CGLRenderer::CGLRenderer() : CCoreRenderer()
 {
@@ -272,7 +300,7 @@ void CGLRenderer::GL_Bind (CGLTexture* tex)
 		return;
 	currenttexture = tex;
 
-	glBindTexture(GL_TEXTURE_2D, (GLuint)tex->texnum);
+	glBindTexture(GL_TEXTURE_2D, tex->texnum);
 }
 
 CGLTexture* CGLRenderer::GL_NewTexture()

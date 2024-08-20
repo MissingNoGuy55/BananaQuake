@@ -224,8 +224,6 @@ public:
 	unsigned int		checksum;
 	unsigned int		flags;
 
-	byte				palette[256][3];
-
 private:
 	CGLTexture(const CGLTexture& obj);
 
