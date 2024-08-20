@@ -44,6 +44,12 @@
 #/tools/qcc/x64
 #/tools/.vs
 #/tools/qcc/.vs
+/build-WinQuake-Desktop-Debug
+/build-WinQuake-Desktop-MinSizeRel
+/WinQuake/ad
+/WinQuake/compilers
+/WinQuake/id1
+/WinQuake/7z
 /WinQuake/build/*
 /WinQuake/build
 /tools/qutils/build
