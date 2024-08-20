@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define COMMON_H
 
 #include "sys.h"
+#include "vpkfile.h"
 
 #if defined(__linux__) || defined(__CYGWIN__)
 #define _strdup strdup
@@ -105,7 +106,6 @@ enum HunkTypes_e
 	HUNK_TEMP = 2,
 	HUNK_CACHE = 3,
 	HUNK_TEMP_FILL = 4
-
 };
 
 //============================================================================
@@ -160,7 +160,6 @@ int Q_strcasecmp (const char *s1, const char *s2);
 int Q_strncasecmp (const char *s1, const char *s2, size_t n);
 int	Q_atoi (const char *str);
 float Q_atof (const char *str);
-int q_vsnprintf(char* str, size_t size, const char* format, va_list args);
 int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
 
 void Q_FixSlashes(char* str, size_t size, const char delimiter = '\\');
@@ -242,6 +241,7 @@ public:
 	int COM_OpenFile (const char *filename, int *handle, uintptr_t* path_id);
 	static int COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id);
     int COM_FOpenFile_FStream(const char* filename, cxxifstream* file, uintptr_t* path_id);
+    int COM_FOpenFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id);
 	void COM_CloseFile (int h);
 
 	byte* COM_LoadMallocFile_TextMode_OSPath(const char* path, long* len_out);
@@ -251,6 +251,7 @@ public:
 	void COM_InitFilesystem();
 	static int COM_FindFile(const char* filename, int* handle, FILE** file, uintptr_t* path_id);
     int COM_FindFile_FStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id);
+    int COM_FindFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id);
 	static long COM_filelength(FILE* f);
     size_t COM_filelength_FStream(cxxifstream* f);
 	pack_t* COM_LoadPackFile(char* packfile);
@@ -314,9 +315,10 @@ template<typename T>
 T* COM_LoadStackFile (const char *path, void* buffer, int bufsize, uintptr_t* path_id);
 
 template<typename T>
-T* COM_LoadTempFile (const char *path, uintptr_t* path_id);
+T* COM_LoadStackFile_VPK (const char *path, void* buffer, int bufsize, uintptr_t* path_id);
+
 template<typename T>
-T* COM_LoadHunkFile (const char *path, uintptr_t* path_id);
+T* COM_LoadTempFile (const char *path, uintptr_t* path_id);
 
 template<typename T>
 void COM_LoadCacheFile (const char *path, struct cache_user_s *cu, uintptr_t* path_id);
@@ -340,12 +342,15 @@ template<typename T>
 inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id);
 
 template<typename T>
+inline T* COM_LoadFile_VPK(const char* path, int usehunk, uintptr_t* path_id);
+
+template<typename T>
 inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 {
 	int	 h				= 0;
 	T* buf				= nullptr;
 	char base[32]		= {};
-	size_t	len				= 0;
+	int	len				= 0;
 
 	buf = nullptr;     // quiet compiler warning
 
@@ -413,6 +418,65 @@ inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 	g_GLRenderer->Draw_EndDisc();
 #endif
 #endif
+
+	return buf;
+}
+
+template<typename T>
+inline T* COM_LoadFile_VPK(const char* path, int usehunk, uintptr_t* path_id)
+{
+	cxxifstream f;
+	T* buf = nullptr;
+	char base[32] = {};
+	int	len = 0;
+
+	// look for it in the filesystem or VPK files
+	len = g_Common->COM_FOpenFile_VPK(path, &f, path_id);
+	
+	if (f.bad() || len < 0)
+		return nullptr;
+
+	// extract the filename base name for hunk tag
+	g_Common->COM_FileBase(path, base, len);
+
+	switch (usehunk)
+	{
+	case HUNK_FULL:
+		buf = static_cast<T*>(g_MemCache->Hunk_AllocName<T>(len + 1, base));
+		break;
+	case HUNK_TEMP:
+		buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
+		break;
+	case HUNK_ZONE:
+		buf = static_cast<T*>(mainzone->Z_Malloc<T>(len + 1));
+		break;
+	case HUNK_CACHE:
+		buf = static_cast<T*>(g_MemCache->Cache_Alloc<T>(loadcache, len + 1, base));
+		break;
+	case HUNK_TEMP_FILL:
+		if (len + 1 > loadsize<T>)
+		{
+			buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
+			break;
+		}
+		else
+		{
+			buf = loadbuf<T>;
+			break;
+		}
+
+	default:
+		Sys_Error("COM_LoadFile: bad usehunk");
+		break;
+	}
+
+	if (!buf)
+		Sys_Error("COM_LoadFile: not enough space for %s", path);
+	else
+		((byte*)buf)[len] = 0;
+
+	f.read(buf, len);
+	f.seekg(0, cxxifstream::beg);
 
 	return buf;
 }
@@ -510,6 +574,22 @@ T* COM_LoadStackFile(const char* path, void* buffer, int bufsize, uintptr_t* pat
 	loadbuf<T> = (T*)buffer;
 	loadsize<T> = bufsize;
 	buf = COM_LoadFile<T>(path, HUNK_TEMP_FILL, path_id);
+
+	return (T*)buf;
+}
+
+template<typename T>
+T* COM_LoadStackFile_VPK(const char* path, void* buffer, int bufsize, uintptr_t* path_id)
+{
+	T* buf;
+
+	loadbuf<T> = (T*)buffer;
+	loadsize<T> = bufsize;
+
+	buf = COM_LoadFile_VPK<T>(path, HUNK_TEMP_FILL, path_id);
+
+	if (!buf)
+		return nullptr;
 
 	return (T*)buf;
 }

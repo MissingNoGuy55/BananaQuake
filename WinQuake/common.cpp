@@ -1649,6 +1649,7 @@ int CCommon::COM_FindFile_FStream(const char* filename, int* handle, cxxifstream
 				{ /* open a new file on the pakfile */
                     file->open(pak->filename, cxxifstream::binary);
                     file->seekg(pak->files[i].filepos, std::ios_base::cur);
+					file->clear();
 					return com_filesize;
 				}
 				else /* for COM_FileExists() */
@@ -1679,8 +1680,9 @@ int CCommon::COM_FindFile_FStream(const char* filename, int* handle, cxxifstream
 			}
 			else if (file)
 			{
-                file->open(netpath);
+                file->open(netpath, cxxifstream::binary);
                 com_filesize = COM_filelength_FStream(file);
+				file->clear();
 				return com_filesize;
 			}
 			else
@@ -1700,6 +1702,44 @@ int CCommon::COM_FindFile_FStream(const char* filename, int* handle, cxxifstream
 	return com_filesize;
 }
 
+/*
+===========
+COM_FindFile_VPK
+
+Finds the file in the search path.
+Sets com_filesize and one of handle or file
+===========
+*/
+int CCommon::COM_FindFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id)
+{
+	const VPKDirectoryEntry*	entry = nullptr;
+
+	file_from_pak = 0;
+
+	//
+	// search through the path, one element at a time
+	//
+	const int idx = FindVPKIndexForFileAmongstLoadedVPKs(filename);
+	entry = FindVPKFileAmongstLoadedVPKs(filename);
+
+	if (idx != -1 && file)
+	{
+		char fpath[512] = {};
+		snprintf(fpath, sizeof(fpath), "%s/%s", com_gamedir, loaded_vpk_names[idx][entry->ArchiveIndex+1]->c_str());
+
+		file->open(fpath, cxxifstream::binary);
+		file->seekg(entry->EntryOffset, cxxifstream::beg);
+		file->clear();
+
+		com_filesize = entry->EntryLength;
+		return com_filesize;
+	}
+
+	Sys_Printf("FindFile: can't find %s\n", filename);
+
+	com_filesize = -1;
+	return com_filesize;
+}
 
 /*
 ================
@@ -1763,7 +1803,7 @@ int CCommon::COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_i
 
 /*
 ===========
-COM_FOpenFile
+COM_FOpenFile_FStream
 
 If the requested file is inside a packfile, a new FILE * will be opened
 into the file.
@@ -1772,6 +1812,19 @@ into the file.
 int CCommon::COM_FOpenFile_FStream(const char* filename, cxxifstream* file, uintptr_t* path_id)
 {
 	return COM_FindFile_FStream(filename, nullptr, file, path_id);
+}
+
+/*
+===========
+COM_FOpenFile
+
+If the requested file is inside a packfile, a new FILE * will be opened
+into the file.
+===========
+*/
+int CCommon::COM_FOpenFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id)
+{
+	return COM_FindFile_VPK(filename, file, path_id);
 }
 
 /*
