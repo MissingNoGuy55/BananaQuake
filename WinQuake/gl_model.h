@@ -460,6 +460,11 @@ typedef struct model_s
 //
 	cache_user_s	cache;		// only access through Mod_Extradata
 
+	texinfo_source2004_t* textures_source;
+	char**	texturenames_source;
+
+	dmodel_source2004_t* submodels_source;
+
 } model_t;
 
 extern model_t* loadmodel;
@@ -492,6 +497,7 @@ T*	Mod_Extradata (model_t *mod);	// handles caching
 void	Mod_TouchModel (const char *name);
 
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
+mleaf_t *Mod_PointInLeaf_Source (float *p, model_t *model);
 byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 
 /*
