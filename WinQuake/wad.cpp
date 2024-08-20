@@ -131,9 +131,7 @@ void W_LoadWadFile (const char *filename)
 
 void W_LoadGoldSrcWadFiles()
 {
-    W_LoadWadFile_GoldSrc("halflife.wad");
-    W_LoadWadFile_GoldSrc("liquids.wad");
-    W_LoadWadFile_GoldSrc("xeno.wad");
+    W_LoadWadFiles_GoldSrc();
 }
 
 /*
@@ -141,51 +139,74 @@ void W_LoadGoldSrcWadFiles()
 W_LoadWadFile_GoldSrc
 ====================
 */
-void W_LoadWadFile_GoldSrc (const char *filename)
+void W_LoadWadFiles_GoldSrc()
 {
-    lumpinfo_t  *lump_p = nullptr;
+    lumpinfo_t      *lump_p = nullptr;
     wadinfo_t		*header = nullptr;
     int             j = 0;
     unsigned		i = 0;
+    int             m = 0;
     int				infotableofs = 0;
+    char*           name[MAX_LOADED_WADS] = {};
 
-    for (j = 0; j < MAX_LOADED_WADS; j++)
+    for (const auto& entry : fs::directory_iterator(g_Common->com_gamedir))
+    {
+        if (!entry.is_regular_file())
+            continue;
+
+        if (entry.path().string().find(".wad") != cxxstring::npos)
+        {
+            size_t pos = entry.path().string().find_last_of("\\");
+            cxxstring sanitized = entry.path().string().erase(0, pos+1);
+
+            name[m] = new char[MAX_QPATH];
+
+            Q_strncpy(name[m], sanitized.c_str(), MAX_QPATH);
+            m++;
+        }
+    }
+
+    for (j = 0, m = 0; j < MAX_LOADED_WADS; j++)
     {
         if (wad_base[j])
             continue;
 
-        wad_base[j] = COM_LoadHunkFile<byte>(filename, NULL);
-        break;
-    }
+        if (!name[j])
+            break;
 
-    if (!wad_base[j])
-    {
-        Con_Warning ("W_LoadWadFile: couldn't load %s", filename);
-        return;
-    }
+        wad_base[j] = COM_LoadHunkFile<byte>(name[m], NULL);
 
-    header = (wadinfo_t *)wad_base[j];
-    wad_names[j] = filename;
+        if (!wad_base[j])
+        {
+            Con_Warning("W_LoadWadFile: couldn't load %s", name[m]);
+            return;
+        }
 
-    if (!header)
-        return;
+        header = (wadinfo_t*)wad_base[j];
+        wad_names[j] = name[m];
 
-    if (header->identification[0] != 'W'
-    || header->identification[1] != 'A'
-    || header->identification[2] != 'D'
-    || header->identification[3] != '3')
-        Sys_Error ("Wad file %s doesn't have WAD3 id\n",filename);
+        if (!header)
+            return;
 
-    wad_numlumps[j] = LittleLong(header->numlumps);
+        m++;
 
-    infotableofs = LittleLong(header->infotableofs);
-    wad_lumps[j] = (lumpinfo_t *)(wad_base[j] + infotableofs);
+        if (header->identification[0] != 'W'
+            || header->identification[1] != 'A'
+            || header->identification[2] != 'D'
+            || header->identification[3] != '3')
+            continue;
 
-    for (i=0, lump_p = wad_lumps[j] ; (int)i < wad_numlumps[j] ; i++,lump_p++)
-    {
-        lump_p->filepos = LittleLong(lump_p->filepos);
-        lump_p->size = LittleLong(lump_p->size);
-        W_CleanupName (lump_p->name, lump_p->name);
+        wad_numlumps[j] = LittleLong(header->numlumps);
+
+        infotableofs = LittleLong(header->infotableofs);
+        wad_lumps[j] = (lumpinfo_t*)(wad_base[j] + infotableofs);
+
+        for (i = 0, lump_p = wad_lumps[j]; (int)i < wad_numlumps[j]; i++, lump_p++)
+        {
+            lump_p->filepos = LittleLong(lump_p->filepos);
+            lump_p->size = LittleLong(lump_p->size);
+            W_CleanupName(lump_p->name, lump_p->name);
+        }
     }
 }
 

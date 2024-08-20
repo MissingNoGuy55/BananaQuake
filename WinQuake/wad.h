@@ -116,7 +116,7 @@ typedef struct goldsrc_qpic_s
     byte lbmpalette[256][3]; //8-bit RGB palette data
 } goldsrc_qpic_t;
 
-constexpr unsigned int      MAX_LOADED_WADS = 32;
+constexpr unsigned int      MAX_LOADED_WADS = 128;
 
 extern  wadinfo_t*          loaded_wads[MAX_LOADED_WADS];
 extern	int			        wad_numlumps[MAX_LOADED_WADS];
@@ -126,7 +126,7 @@ extern	const char*         wad_names[MAX_LOADED_WADS];
 
 int                 W_GetLoadedWadFile(const char* filename);
 void	            W_LoadWadFile (const char *filename);
-void                W_LoadWadFile_GoldSrc (const char *filename);
+void                W_LoadWadFiles_GoldSrc();
 void                W_LoadGoldSrcWadFiles();
 void	            W_CleanupName (const char *in, char *out);
 lumpinfo_t*         W_GetLumpinfo (const char *name, const char* wadname);
