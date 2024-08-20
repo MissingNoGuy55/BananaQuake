@@ -5,4 +5,6 @@
 
 bool VID_Is8bit();
 
+extern HWND mainwindow, dibwindow;
+
 #endif

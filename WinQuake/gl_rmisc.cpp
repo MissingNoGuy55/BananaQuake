@@ -78,8 +78,11 @@ void CGLRenderer::R_InitParticleTexture (void)
 	// particle texture
 	//
 	particletexture = g_MemCache->Hunk_Alloc<CGLTexture>(sizeof(CGLTexture));
+	Q_strncpy(particletexture->identifier, "particle_texture", sizeof(particletexture->identifier));
 	particletexture->texnum = texture_extension_number++;
-    g_GLRenderer->GL_Bind(particletexture);
+	
+	particletexture->width = 128;
+	particletexture->height = 128;
 
 	for (x=0 ; x<8 ; x++)
 	{
@@ -91,6 +94,13 @@ void CGLRenderer::R_InitParticleTexture (void)
 			data[y][x][3] = dottexture[x][y]*255;
 		}
 	}
+
+	byte datatest[256] = {};
+	memcpy(datatest, data, sizeof(datatest));
+
+	particletexture->pic.datavec.AddMultipleToEnd(sizeof(data), datatest);
+	g_GLRenderer->GL_Bind(particletexture);
+
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
