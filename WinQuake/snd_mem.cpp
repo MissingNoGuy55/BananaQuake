@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int			cache_full_cycle;
 
+static char* sound_data = nullptr;
+
 byte *S_Alloc (int size);
 
 /*
@@ -97,6 +99,7 @@ sfxcache_t * CSoundDMA::S_LoadSound (sfx_t *s)
 {
     char	namebuffer[256];
 	byte	*data;
+	char*	test;
 	wavinfo_t	info;
 	int		len;
 	float	stepscale;
@@ -119,8 +122,17 @@ sfxcache_t * CSoundDMA::S_LoadSound (sfx_t *s)
 
 	if (!data)
 	{
-		Con_Printf ("Couldn't load %s\n", namebuffer);
-		return NULL;
+		char* datatest = nullptr;
+
+		datatest = COM_LoadStackFile_VPK<char>(namebuffer, stackbuf, sizeof(stackbuf), NULL);
+
+		if (!datatest)
+		{
+			Con_Printf("Couldn't load %s\n", namebuffer);
+			return NULL;
+		}
+
+		data = (byte*)datatest;
 	}
 
 	info = g_SoundSystem->GetWavinfo (s->name, data, g_Common->com_filesize);
@@ -150,8 +162,6 @@ sfxcache_t * CSoundDMA::S_LoadSound (sfx_t *s)
 	return sc;
 }
 
-
-
 /*
 ===============================================================================
 
@@ -159,7 +169,6 @@ WAV loading
 
 ===============================================================================
 */
-
 
 byte	*data_p;
 byte 	*iff_end;

@@ -208,6 +208,7 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 	}
 
 	SDL_PauseAudioDevice(g_SoundDeviceID, 0);
+	SDL_PauseAudioDevice(g_SoundDeviceID_voice, 1);
 
 	return true;
 }

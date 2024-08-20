@@ -36,6 +36,7 @@ extern SDL_Window* main_window;
 extern SDL_Rect main_rect;
 extern SDL_Surface* main_surface;
 extern SDL_Texture* main_texture;
+extern SDL_Palette* main_palette;
 
 typedef struct vrect_s
 {
