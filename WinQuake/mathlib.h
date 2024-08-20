@@ -142,6 +142,8 @@ public:
 
 	Vector3 Rotation(vec3_t dist);
 
+	Vector3 Normalize();
+
 	Vector3 operator=(const Vector3& other);
 	Vector3 operator=(const vec3_t& other);
 

@@ -657,6 +657,24 @@ Vector3 Vector3::Rotation(vec3_t dist)
 	return Vector3( pitch, yaw + 180.0f, 0.0f );
 }
 
+Vector3 Vector3::Normalize()
+{
+	float	length, ilength;
+
+	length = x * x + y * y + z * z;
+	length = sqrt(length);		// FIXME
+
+	if (length)
+	{
+		ilength = 1 / length;
+		x *= ilength;
+		y *= ilength;
+		z *= ilength;
+	}
+
+	return Vector3(x, y, z);
+}
+
 Vector3 Vector3::operator=(const Vector3& other)
 {
 	return Vector3(other);
