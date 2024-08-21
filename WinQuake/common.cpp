@@ -1710,7 +1710,7 @@ Finds the file in the search path.
 Sets com_filesize and one of handle or file
 ===========
 */
-int CCommon::COM_FindFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id)
+cxxifstream* CCommon::COM_FindFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id)
 {
 	const VPKDirectoryEntry*	entry = nullptr;
 
@@ -1722,23 +1722,23 @@ int CCommon::COM_FindFile_VPK(const char* filename, cxxifstream* file, uintptr_t
 	const int idx = FindVPKIndexForFileAmongstLoadedVPKs(filename);
 	entry = FindVPKFileAmongstLoadedVPKs(filename);
 
-	if (idx != -1 && file)
+	if (idx != -1)
 	{
 		char fpath[512] = {};
 		snprintf(fpath, sizeof(fpath), "%s/%s", com_gamedir, loaded_vpk_names[idx][entry->ArchiveIndex+1]->c_str());
 
-		file->open(fpath, cxxifstream::binary);
+		file = loaded_vpks[idx][entry->ArchiveIndex+1];
 		file->seekg(entry->EntryOffset, cxxifstream::beg);
 		file->clear();
 
 		com_filesize = entry->EntryLength;
-		return com_filesize;
+		return file;
 	}
 
 	Sys_Printf("FindFile: can't find %s\n", filename);
 
 	com_filesize = -1;
-	return com_filesize;
+	return nullptr;
 }
 
 /*
@@ -1822,7 +1822,7 @@ If the requested file is inside a packfile, a new FILE * will be opened
 into the file.
 ===========
 */
-int CCommon::COM_FOpenFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id)
+cxxifstream* CCommon::COM_FOpenFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id)
 {
 	return COM_FindFile_VPK(filename, file, path_id);
 }
