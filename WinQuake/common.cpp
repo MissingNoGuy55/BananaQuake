@@ -1710,9 +1710,10 @@ Finds the file in the search path.
 Sets com_filesize and one of handle or file
 ===========
 */
-cxxifstream* CCommon::COM_FindFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id)
+cxxifstream* CCommon::COM_FindFile_VPK(const char* filename, uintptr_t* path_id)
 {
 	const VPKDirectoryEntry*	entry = nullptr;
+	cxxifstream* file = nullptr;
 
 	file_from_pak = 0;
 
@@ -1822,9 +1823,9 @@ If the requested file is inside a packfile, a new FILE * will be opened
 into the file.
 ===========
 */
-cxxifstream* CCommon::COM_FOpenFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id)
+cxxifstream* CCommon::COM_FOpenFile_VPK(const char* filename, uintptr_t* path_id)
 {
-	return COM_FindFile_VPK(filename, file, path_id);
+	return COM_FindFile_VPK(filename, path_id);
 }
 
 /*

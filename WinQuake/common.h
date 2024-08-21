@@ -241,7 +241,7 @@ public:
 	int COM_OpenFile (const char *filename, int *handle, uintptr_t* path_id);
 	static int COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id);
     int COM_FOpenFile_FStream(const char* filename, cxxifstream* file, uintptr_t* path_id);
-	cxxifstream* COM_FOpenFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id);
+	cxxifstream* COM_FOpenFile_VPK(const char* filename, uintptr_t* path_id);
 	void COM_CloseFile (int h);
 
 	byte* COM_LoadMallocFile_TextMode_OSPath(const char* path, long* len_out);
@@ -251,7 +251,7 @@ public:
 	void COM_InitFilesystem();
 	static int COM_FindFile(const char* filename, int* handle, FILE** file, uintptr_t* path_id);
     int COM_FindFile_FStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id);
-    cxxifstream* COM_FindFile_VPK(const char* filename, cxxifstream* file, uintptr_t* path_id);
+    cxxifstream* COM_FindFile_VPK(const char* filename, uintptr_t* path_id);
 	static long COM_filelength(FILE* f);
     size_t COM_filelength_FStream(cxxifstream* f);
 	pack_t* COM_LoadPackFile(char* packfile);
@@ -431,7 +431,7 @@ inline T* COM_LoadFile_VPK(const char* path, int usehunk, uintptr_t* path_id)
 	int	len = 0;
 
 	// look for it in the filesystem or VPK files
-	f = g_Common->COM_FOpenFile_VPK(path, f, path_id);
+	f = g_Common->COM_FOpenFile_VPK(path, path_id);
 	
 	if (!f || f->bad() || len < 0)
 		return nullptr;
