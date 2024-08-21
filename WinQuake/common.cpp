@@ -1712,23 +1712,17 @@ Sets com_filesize and one of handle or file
 */
 cxxifstream* CCommon::COM_FindFile_VPK(const char* filename, uintptr_t* path_id)
 {
-	const VPKDirectoryEntry*	entry = nullptr;
-	cxxifstream* file = nullptr;
-
 	file_from_pak = 0;
 
 	//
 	// search through the path, one element at a time
 	//
 	const int idx = FindVPKIndexForFileAmongstLoadedVPKs(filename);
-	entry = FindVPKFileAmongstLoadedVPKs(filename);
+	const VPKDirectoryEntry* entry = FindVPKFileAmongstLoadedVPKs(filename);
 
 	if (idx != -1)
 	{
-		char fpath[512] = {};
-		snprintf(fpath, sizeof(fpath), "%s/%s", com_gamedir, loaded_vpk_names[idx][entry->ArchiveIndex+1]->c_str());
-
-		file = loaded_vpks[idx][entry->ArchiveIndex+1];
+		cxxifstream* file = loaded_vpks[idx][entry->ArchiveIndex+1];
 		file->seekg(entry->EntryOffset, cxxifstream::beg);
 		file->clear();
 
