@@ -430,11 +430,15 @@ inline T* COM_LoadFile_VPK(const char* path, int usehunk, uintptr_t* path_id)
 	char base[32] = {};
 	int	len = 0;
 
-	// look for it in the filesystem or VPK files
+	// look for it in VPK files
 	f = g_Common->COM_FOpenFile_VPK(path, path_id);
 	
 	if (!f || f->bad() || len < 0)
+	{
+		delete f;
+		f = nullptr;
 		return nullptr;
+	}
 
 	len = g_Common->com_filesize;
 
@@ -486,7 +490,7 @@ inline T* COM_LoadFile_VPK(const char* path, int usehunk, uintptr_t* path_id)
 template<typename T>
 inline T* COM_LoadFile_FStream(const char* path, int usehunk, uintptr_t* path_id)
 {
-    cxxifstream         f;
+	cxxifstream         f = {};
     T* buf				= nullptr;
     char base[32]		= {};
     size_t	len			= 0;
