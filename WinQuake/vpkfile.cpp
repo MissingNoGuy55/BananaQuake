@@ -164,8 +164,6 @@ const VPKDirectoryEntry* FindVPKFileAmongstLoadedVPKs(const char* filename)
 		if (!loaded_vpk_names[i][0])
 			break;
 
-		// Con_DPrintf("Searching for \"%s\" in \"%s\"\n", filename, loaded_vpk_names[i][0]->c_str());
-
 		result = FindVPKFile(loaded_vpks[i][0], filename);
 			
 		if (result)
@@ -184,7 +182,7 @@ int FindVPKIndexForFileAmongstLoadedVPKs(const char* filename)
 		if (!loaded_vpk_names[i][0])
 			break;
 
-		// Con_DPrintf("Searching for \"%s\" in \"%s\"\n", filename, loaded_vpk_names[i][0]->c_str());
+		Con_DPrintf("Searching for \"%s\" in \"%s\"\n", filename, loaded_vpk_names[i][0]->c_str());
 
 		result = FindVPKFile(loaded_vpks[i][0], filename);
 
