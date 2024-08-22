@@ -129,7 +129,7 @@ sfxcache_t * CSoundDMA::S_LoadSound (sfx_t *s)
 		if (!datatest)
 		{
 			Con_Printf("Couldn't load %s\n", namebuffer);
-			return NULL;
+			return nullptr;
 		}
 
 		data = (byte*)datatest;
@@ -139,7 +139,7 @@ sfxcache_t * CSoundDMA::S_LoadSound (sfx_t *s)
 	if (info.channels != 1)
 	{
 		Con_Printf ("%s is a stereo sample\n",s->name);
-		return NULL;
+		return nullptr;
 	}
 
 	stepscale = (float)info.rate / shm->speed;	
@@ -149,7 +149,7 @@ sfxcache_t * CSoundDMA::S_LoadSound (sfx_t *s)
 
 	sc = g_MemCache->Cache_Alloc<sfxcache_t>( &s->cache, len + sizeof(sfxcache_t), s->name);
 	if (!sc)
-		return NULL;
+		return nullptr;
 	
 	sc->length = info.samples;
 	sc->loopstart = info.loopstart;
