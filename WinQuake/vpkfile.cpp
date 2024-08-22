@@ -133,12 +133,10 @@ const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 
 				file->clear();
 
-				char* filer = new char[512];
-				file->read(filer, sizeof(VPKDirectoryEntry) - sizeof(unsigned short));
+				char fileread[512];
+				file->read(fileread, sizeof(VPKDirectoryEntry) - sizeof(unsigned short));
 
-				const VPKDirectoryEntry* entry = (VPKDirectoryEntry*)filer;
-
-				delete[] filer;
+				const VPKDirectoryEntry* entry = (VPKDirectoryEntry*)fileread;
 
 				if (!Q_strcmp(c4.c_str(), filename))
 				{
