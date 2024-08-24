@@ -18,7 +18,7 @@ static void ReadVPKString(cxxifstream* file, char* out)
 	{
 		out[pos] = ReadVPKChar(file);
 
-		if (!out[pos] || out[pos] == 0xFF)
+		if (!out[pos])
 			break;
 
 		pos++;
@@ -32,10 +32,9 @@ static VPKHeader_v2* GetVPKHeader(cxxifstream* file)
 	char* str = new char[sizeof(VPKHeader_v2)];
 
 	file->read(str, sizeof(VPKHeader_v2));
+	file->seekg(0, file->beg);
 
 	header = (VPKHeader_v2*)str;
-
-	delete[] str;
 
 	return header;
 }
@@ -56,9 +55,9 @@ static int OpenAllVPKDependencies(cxxstring filename)
 
 	loaded_vpks[j][0] = new cxxifstream;
 	loaded_vpks[j][0]->close();
-	g_Common->COM_FOpenFile_IFStream(filename.c_str(), loaded_vpks[j][0], nullptr);
+	int size = g_Common->COM_FOpenFile_IFStream(filename.c_str(), loaded_vpks[j][0], nullptr);
 
-	Con_PrintColor(TEXT_COLOR_GREEN, "Added VPK file %s/%s\n", g_Common->com_gamedir, filename.c_str());
+	Con_PrintColor(TEXT_COLOR_GREEN, "Added VPK file %s/%s (%d bytes)\n", g_Common->com_gamedir, filename.c_str(), size);
 
 	loaded_vpk_names[j][0] = new cxxstring(filename);
 
@@ -95,8 +94,6 @@ const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 	char data[sizeof(VPKHeader_v2)] = {};
 	file->clear();
 	file->read(data, sizeof(data));
-
-	VPKHeader_v2* header = (VPKHeader_v2*)data;
 
 	while (1)
 	{
@@ -139,8 +136,6 @@ const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 				file->read(filer, sizeof(VPKDirectoryEntry) - sizeof(unsigned short));
 
 				const VPKDirectoryEntry* entry = (VPKDirectoryEntry*)filer;
-
-				delete[] filer;
 
 				if (!Q_strcmp(c4.c_str(), filename))
 				{
@@ -189,7 +184,10 @@ int FindVPKIndexForFileAmongstLoadedVPKs(const char* filename)
 		result = FindVPKFile(loaded_vpks[i][0], filename);
 
 		if (result)
+		{
+			delete[] result;
 			return i;
+		}
 	}
 
 	return -1;

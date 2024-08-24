@@ -51,6 +51,7 @@ dma_t* CSoundDMA::shm;
 dma_t* CSoundDMA::shm_voice;
 
 static int	buffersize;
+static int	buffersize_voice;
 
 /*
 ==================
@@ -100,7 +101,7 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 {
 	SDL_AudioSpec desired;
 	SDL_AudioSpec desired_voice;
-	int		tmp, val;
+	int		tmp, tmp2, val;
 
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
 	{
@@ -144,7 +145,7 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 
 	/* Open the audio device */
 
-	g_SoundDeviceID = SDL_OpenAudioDevice(NULL, 0, &desired, NULL, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+	g_SoundDeviceID = SDL_OpenAudioDevice(NULL, SDL_FALSE, &desired, NULL, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
 
 	if (g_SoundDeviceID == -1)
 	{
@@ -153,12 +154,8 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 		return false;
 	}
 
-	g_SoundDeviceID_voice = SDL_OpenAudioDevice(NULL, 1, &desired_voice, NULL, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
-
-	if (g_SoundDeviceID_voice == -1)
-	{
-		Con_Printf("Couldn't open SDL audio for recording device: %s\n", SDL_GetError());
-	}
+	const char* device = SDL_GetAudioDeviceName(g_SoundDeviceID_voice, SDL_TRUE);
+	g_SoundDeviceID_voice = SDL_OpenAudioDevice(device, SDL_TRUE, &desired_voice, NULL, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
 
 	memset((void*)dma, 0, sizeof(dma_t));
 	memset((void*)&sn_voice, 0, sizeof(dma_t));
@@ -192,11 +189,36 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 	shm->samplepos = 0;
 	shm->submission_chunk = 1;
 
+	/* Fill the audio DMA information block for SDL voice */
+	/* Since we passed NULL as the 'obtained' spec to SDL_OpenAudio(),
+	 * SDL will convert to hardware format for us if needed, hence we
+	 * directly use the desired values here. */
+	shm_voice->samplebits = (desired_voice.format & 0xFF); /* first byte of format is bits */
+	shm_voice->signed8 = (desired_voice.format == AUDIO_S8);
+	shm_voice->speed = desired_voice.freq;
+	shm_voice->channels = desired_voice.channels;
+	tmp2 = (desired_voice.samples * desired_voice.channels) * 10;
+	if (tmp2 & (tmp2 - 1))
+	{	/* make it a power of two */
+		val = 1;
+		while (val < tmp2)
+			val <<= 1;
+
+		tmp2 = val;
+	}
+	shm_voice->samples = tmp;
+	shm_voice->samplepos = 0;
+	shm_voice->submission_chunk = 1;
+
 	Con_Printf("SDL audio spec  : %d Hz, %d samples, %d channels\n",
 		desired.freq, desired.samples, desired.channels);
+	Con_Printf("SDL recording audio spec  : %d Hz, %d samples, %d channels\n\n",
+		desired_voice.freq, desired_voice.samples, desired_voice.channels);
 
 	buffersize = shm->samples * (shm->samplebits / 8);
+	buffersize_voice = shm_voice->samples * (shm_voice->samplebits / 8);
 	Con_Printf("SDL audio driver: %s, %d bytes buffer\n", SDL_GetCurrentAudioDriver(), buffersize);
+	Con_Printf("SDL recording audio driver: %s, %d bytes buffer\n\n", device, buffersize_voice);
 
 	snd_firsttime = false;
 
@@ -210,8 +232,18 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 		return false;
 	}
 
-	SDL_PauseAudioDevice(g_SoundDeviceID, 0);
-	SDL_PauseAudioDevice(g_SoundDeviceID_voice, 1);
+	shm_voice->buffer = (unsigned char*)calloc(1, buffersize_voice);
+	if (!shm_voice->buffer)
+	{
+		SDL_CloseAudio();
+		SDL_QuitSubSystem(SDL_INIT_AUDIO);
+		shm_voice = NULL;
+		Con_Printf("Failed allocating memory for SDL audio recording\n");
+		return false;
+	}
+
+	SDL_PauseAudioDevice(g_SoundDeviceID, SDL_FALSE);
+	SDL_PauseAudioDevice(g_SoundDeviceID_voice, SDL_TRUE);
 
 	return true;
 }
@@ -340,8 +372,12 @@ void CSoundDMA::SNDDMA_Shutdown(void)
 		SDL_QuitSubSystem(SDL_INIT_AUDIO);
 		if (shm->buffer)
 			free(shm->buffer);
+		if (shm_voice->buffer)
+			free(shm_voice->buffer);
 		shm->buffer = NULL;
 		shm = NULL;
+		shm_voice->buffer = NULL;
+		shm_voice = NULL;
 	}
 }
 

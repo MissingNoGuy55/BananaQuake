@@ -1666,9 +1666,8 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 				}
 				else if (file)
 				{ /* open a new file on the pakfile */
-                    file->open(pak->filename, cxxifstream::binary);
-                    file->seekg(pak->files[i].filepos, std::ios_base::cur);
-					file->clear();
+                    file->open(pak->filename, cxxifstream::binary | cxxifstream::in);
+                    file->seekg(pak->files[i].filepos, cxxifstream::beg);
 					return com_filesize;
 				}
 				else /* for COM_FileExists() */
@@ -1699,9 +1698,8 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 			}
 			else if (file)
 			{
-                file->open(netpath, cxxifstream::binary);
+                file->open(netpath, cxxifstream::binary | cxxifstream::in);
                 com_filesize = COM_filelength_FStream(file);
-				file->clear();
 				return com_filesize;
 			}
 			else
@@ -1766,8 +1764,11 @@ cxxifstream* CCommon::COM_FindFile_VPK(const char* filename, uintptr_t* path_id)
 		file->clear();
 
 		com_filesize = entry->EntryLength;
+        delete[] entry;
 		return file;
 	}
+
+    delete[] entry;
 
 	Sys_Printf("FindFile: can't find %s\n", filename);
 
@@ -2089,6 +2090,9 @@ void CCommon::COM_InitFilesystem (void)
 		Q_strcpy (basedir, com_argv[i+1]);
 	else
 		Q_strcpy (basedir, host->host_parms.basedir);
+
+    if (basedir[Q_strlen(basedir)-1] == '\\' || basedir[Q_strlen(basedir)-1] == '/')
+        basedir[Q_strlen(basedir)-1] = '\0';
 
 //
 // -cachedir <path>
