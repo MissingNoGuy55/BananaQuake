@@ -156,16 +156,12 @@ void IN_UseUp (void) {KeyUp(&in_use);}
 void IN_JumpDown (void) {KeyDown(&in_jump);}
 void IN_JumpUp (void) {KeyUp(&in_jump);}
 
-bool recording_voice = false;
-
 void IN_VoiceDown() {
-	recording_voice = true;
-	SDL_PauseAudioDevice(g_SoundDeviceID_voice, 0);
+	SDL_PauseAudioDevice(g_SoundDeviceID_voice, SDL_FALSE);
 	KeyDown(&in_voice);
 }
 void IN_VoiceUp() {
-	recording_voice = false;
-	SDL_PauseAudioDevice(g_SoundDeviceID_voice, 1);
+	SDL_PauseAudioDevice(g_SoundDeviceID_voice, SDL_TRUE);
 	KeyUp(&in_voice);
 }
 

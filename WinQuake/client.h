@@ -287,8 +287,6 @@ extern	dlight_t		cl_dlights[MAX_DLIGHTS];
 extern	entity_t		cl_temp_entities[MAX_TEMP_ENTITIES];
 extern	beam_t			cl_beams[MAX_BEAMS];
 
-extern bool recording_voice;
-
 //=============================================================================
 
 //
