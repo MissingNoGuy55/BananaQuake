@@ -76,8 +76,6 @@ static int OpenAllVPKDependencies(cxxstring filename)
 		if (!loaded_vpks[j][i]->is_open())
 			break;
 
-		VPKHeader_v2* header = GetVPKHeader(loaded_vpks[j][0]);
-
 		Con_PrintColor(TEXT_COLOR_GREEN, "Added sub VPK file %s/%s\n", g_Common->com_gamedir, append);
 
 		loaded_vpk_names[j][i] = new cxxstring(append);
@@ -88,6 +86,8 @@ static int OpenAllVPKDependencies(cxxstring filename)
 
 	return high;
 }
+
+static char fileread_data[512] = {};
 
 const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 {
@@ -131,11 +131,9 @@ const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 				c4.append(c1);
 
 				file->clear();
+				file->read(fileread_data, sizeof(VPKDirectoryEntry) - sizeof(unsigned short));
 
-				char* filer = new char[512];
-				file->read(filer, sizeof(VPKDirectoryEntry) - sizeof(unsigned short));
-
-				const VPKDirectoryEntry* entry = (VPKDirectoryEntry*)filer;
+				const VPKDirectoryEntry* entry = (VPKDirectoryEntry*)fileread_data;
 
 				if (!Q_strcmp(c4.c_str(), filename))
 				{
@@ -167,6 +165,8 @@ const VPKDirectoryEntry* FindVPKFileAmongstLoadedVPKs(const char* filename)
 			return result;
 	}
 
+	delete[] result;
+
 	return nullptr;
 }
 
@@ -185,7 +185,6 @@ int FindVPKIndexForFileAmongstLoadedVPKs(const char* filename)
 
 		if (result)
 		{
-			delete[] result;
 			return i;
 		}
 	}

@@ -1764,7 +1764,6 @@ cxxifstream* CCommon::COM_FindFile_VPK(const char* filename, uintptr_t* path_id)
 		file->clear();
 
 		com_filesize = entry->EntryLength;
-        delete[] entry;
 		return file;
 	}
 
