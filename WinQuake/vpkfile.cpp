@@ -95,6 +95,8 @@ const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 	file->clear();
 	file->read(data, sizeof(data));
 
+	memset(fileread_data, 0, sizeof(fileread_data));
+
 	while (1)
 	{
 		file->clear();
