@@ -145,7 +145,6 @@ void W_LoadWadFiles_GoldSrc()
     wadinfo_t		*header = nullptr;
     int             j = 0;
     unsigned		i = 0;
-    int             m = 0;
     int				infotableofs = 0;
     char*           name[MAX_LOADED_WADS] = {};
 
@@ -157,16 +156,22 @@ void W_LoadWadFiles_GoldSrc()
         if (entry.path().string().find(".wad") != cxxstring::npos)
         {
             size_t pos = entry.path().string().find_last_of("\\");
+
+            if (pos == cxxstring::npos)
+            {
+                pos = entry.path().string().find_last_of("/");
+            }
+
             cxxstring sanitized = entry.path().string().erase(0, pos+1);
 
-            name[m] = new char[MAX_QPATH];
+            name[j] = new char[256];
 
-            Q_strncpy(name[m], sanitized.c_str(), MAX_QPATH);
-            m++;
+            Q_strncpy(name[j], sanitized.c_str(), 256);
+            j++;
         }
     }
 
-    for (j = 0, m = 0; j < MAX_LOADED_WADS; j++)
+    for (j = 0; j < MAX_LOADED_WADS; j++)
     {
         if (wad_base[j])
             continue;
@@ -174,21 +179,13 @@ void W_LoadWadFiles_GoldSrc()
         if (!name[j])
             break;
 
-        wad_base[j] = COM_LoadHunkFile<byte>(name[m], NULL);
-
-        if (!wad_base[j])
-        {
-            Con_Warning("W_LoadWadFile: couldn't load %s", name[m]);
-            return;
-        }
+        wad_base[j] = COM_LoadHunkFile<byte>(name[j], NULL);
 
         header = (wadinfo_t*)wad_base[j];
-        wad_names[j] = name[m];
+        wad_names[j] = name[j];
 
         if (!header)
             return;
-
-        m++;
 
         if (header->identification[0] != 'W'
             || header->identification[1] != 'A'
@@ -201,7 +198,7 @@ void W_LoadWadFiles_GoldSrc()
         infotableofs = LittleLong(header->infotableofs);
         wad_lumps[j] = (lumpinfo_t*)(wad_base[j] + infotableofs);
 
-        Con_PrintColor(TEXT_COLOR_GREEN, "Added WAD3 file %s/%s\n", g_Common->com_gamedir, name[m]);
+        Con_PrintColor(TEXT_COLOR_GREEN, "Added WAD3 file %s/%s\n", g_Common->com_gamedir, name[j]);
 
         for (i = 0, lump_p = wad_lumps[j]; (int)i < wad_numlumps[j]; i++, lump_p++)
         {
@@ -210,6 +207,8 @@ void W_LoadWadFiles_GoldSrc()
             W_CleanupName(lump_p->name, lump_p->name);
         }
     }
+
+    delete[] *name;
 }
 
 int W_GetExternalTextureWadFile (const char* name)
