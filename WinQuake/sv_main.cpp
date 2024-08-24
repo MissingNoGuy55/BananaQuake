@@ -1271,7 +1271,6 @@ void CQuakeServer::SV_SpawnServer (char *server)
 #ifdef GLQUAKE
 
     const char* parse = lump;
-    ddef_t* def = nullptr;
 	edict_t* parse2 = nullptr;
 	bool fog_in_progs = false;
 

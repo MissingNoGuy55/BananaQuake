@@ -1375,6 +1375,27 @@ QUAKE FILESYSTEM
 
 =============================================================================
 */
+/*
+=============================================================================
+Missi: There are multiple ways to handle files in BananaQuake.
+
+* Using COM_FOpenFile for standard files within PAK files or game directory 
+files, that uses C's FILE struct. This tends to work for reading files, not
+so much for writing files that are already opened.
+
+* Using COM_FOpenFile_IFStream for reading, which takes advantage of C++'s 
+ifstream class. This tends to work better and play nicer with operating 
+systems that are strict about file's being opened when reading.
+
+* Using COM_FOpenFile_OFStream for writing, which takes advantage of C++'s
+ofstream class. This tends to work better and play nicer with operating
+systems that are strict about file's being opened when writing.
+
+* Using COM_FOpenFile_VPK for reading files out of Valve package files.
+This tends to work better and play nicer with operating systems that
+are strict about file's being opened when writing.
+=============================================================================
+*/
 
 int     com_filesize;
 
@@ -1509,7 +1530,6 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 {
 	searchpath_t	*search = NULL;
 	char			netpath[MAX_OSPATH] = {};
-	char			cachepath[MAX_OSPATH] = {};
 	pack_t			*pak = NULL;
 	int				i = 0;
 	int				findtime = 0, cachetime = 0;
@@ -1601,17 +1621,16 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 
 /*
 ===========
-COM_FindFile_IOStream
+COM_FindFile_IFStream
 
 Finds the file in the search path.
 Sets com_filesize and one of handle or file
 ===========
 */
-int CCommon::COM_FindFile_FStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id)
+int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id)
 {
 	searchpath_t*	search = NULL;
 	char			netpath[MAX_OSPATH] = {};
-	char			cachepath[MAX_OSPATH] = {};
 	pack_t*			pak = NULL;
 	int				i = 0;
 	int				findtime = 0, cachetime = 0;
@@ -1700,6 +1719,26 @@ int CCommon::COM_FindFile_FStream(const char* filename, int* handle, cxxifstream
 		file->close();
 	com_filesize = -1;
 	return com_filesize;
+}
+
+/*
+===========
+COM_FindFile_OFStream
+
+Like COM_FindFile_IFStream, but without support for pakfiles. Mainly used to write
+things to the game directory on disk.
+===========
+*/
+void CCommon::COM_FindFile_OFStream(const char* filename, cxxofstream* file, uintptr_t* path_id)
+{
+	file_from_pak = 0;
+
+	char fullpath[MAX_OSPATH];
+	snprintf(fullpath, sizeof(fullpath), "%s", filename);
+
+	Q_FixSlashes(fullpath, sizeof(fullpath));
+
+	file->open(fullpath, cxxofstream::binary | cxxofstream::out | cxxofstream::trunc);
 }
 
 /*
@@ -1798,22 +1837,35 @@ int CCommon::COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_i
 
 /*
 ===========
-COM_FOpenFile_FStream
+COM_FOpenFile_IFStream
 
-If the requested file is inside a packfile, a new FILE * will be opened
+If the requested file is inside a packfile, a new cxxifstream* will be opened
 into the file.
 ===========
 */
-int CCommon::COM_FOpenFile_FStream(const char* filename, cxxifstream* file, uintptr_t* path_id)
+int CCommon::COM_FOpenFile_IFStream(const char* filename, cxxifstream* file, uintptr_t* path_id)
 {
-	return COM_FindFile_FStream(filename, nullptr, file, path_id);
+	return COM_FindFile_IFStream(filename, nullptr, file, path_id);
 }
 
 /*
 ===========
-COM_FOpenFile
+COM_FOpenFile_OFStream
 
-If the requested file is inside a packfile, a new FILE * will be opened
+Like COM_FOpenFile_IFStream, but without support for pakfiles. Mainly used to write
+things to the game directory on disk.
+===========
+*/
+void CCommon::COM_FOpenFile_OFStream(const char* filename, cxxofstream* file, uintptr_t* path_id)
+{
+	return COM_FindFile_OFStream(filename, file, path_id);
+}
+
+/*
+===========
+COM_FOpenFile_VPK
+
+If the requested file is inside a VPK, a new cxxifstream* will be opened
 into the file.
 ===========
 */
@@ -1987,7 +2039,6 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 //
 // add the directory to the search path
 //
-_add_dir:
     search = mainzone->Z_Malloc<searchpath_t>(sizeof(searchpath_t));
     search->path_id = path_id;
     Q_strncpy (search->filename, dir, sizeof(search->filename));
@@ -2002,12 +2053,6 @@ _add_dir:
         snprintf (pakfile, sizeof(pakfile), "%s/PAK%i.PAK", dir, i);
         pak = COM_LoadPackFile (pakfile);
 
-		if (!pak)
-		{
-			snprintf (pakfile, sizeof(pakfile), "%s/pak%i.pak", dir, i);
-			pak = COM_LoadPackFile (pakfile);
-		}
-
         if (!pak)
             break;
 
@@ -2016,14 +2061,6 @@ _add_dir:
         search->pack = pak;
         search->next = com_searchpaths;
         com_searchpaths = search;
-    }
-
-    if (!been_here && host->host_parms.userdir != host->host_parms.basedir)
-    {
-        been_here = true;
-        //Q_strlcpy(com_gamedir, va("%s/%s", host->host_parms.basedir, dir), sizeof(com_gamedir));
-        //Sys_mkdir(com_gamedir);
-        goto _add_dir;
     }
 
 //

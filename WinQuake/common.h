@@ -240,7 +240,8 @@ public:
 	static void COM_CreatePath(const char* path);
 	int COM_OpenFile (const char *filename, int *handle, uintptr_t* path_id);
 	static int COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id);
-    int COM_FOpenFile_FStream(const char* filename, cxxifstream* file, uintptr_t* path_id);
+    int COM_FOpenFile_IFStream(const char* filename, cxxifstream* file, uintptr_t* path_id);
+    void COM_FOpenFile_OFStream(const char* filename, cxxofstream* file, uintptr_t* path_id);
 	cxxifstream* COM_FOpenFile_VPK(const char* filename, uintptr_t* path_id);
 	void COM_CloseFile (int h);
 
@@ -250,7 +251,8 @@ public:
 
 	void COM_InitFilesystem();
 	static int COM_FindFile(const char* filename, int* handle, FILE** file, uintptr_t* path_id);
-    int COM_FindFile_FStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id);
+    int COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id);
+    void COM_FindFile_OFStream(const char* filename, cxxofstream* file, uintptr_t* path_id);
     cxxifstream* COM_FindFile_VPK(const char* filename, uintptr_t* path_id);
 	static long COM_filelength(FILE* f);
     size_t COM_filelength_FStream(cxxifstream* f);
@@ -488,7 +490,7 @@ inline T* COM_LoadFile_VPK(const char* path, int usehunk, uintptr_t* path_id)
 }
 
 template<typename T>
-inline T* COM_LoadFile_FStream(const char* path, int usehunk, uintptr_t* path_id)
+inline T* COM_LoadFile_IFStream(const char* path, int usehunk, uintptr_t* path_id)
 {
 	cxxifstream         f = {};
     T* buf				= nullptr;
@@ -496,7 +498,7 @@ inline T* COM_LoadFile_FStream(const char* path, int usehunk, uintptr_t* path_id
     size_t	len			= 0;
 
     // look for it in the filesystem or pack files
-    len = g_Common->COM_FOpenFile_FStream(path, &f, path_id);
+    len = g_Common->COM_FOpenFile_IFStream(path, &f, path_id);
     if (f.bad())
         return nullptr;
 
@@ -553,9 +555,9 @@ T* COM_LoadHunkFile(const char* path, uintptr_t* path_id)
 }
 
 template<typename T>
-T* COM_LoadHunkFile_FStream(const char* path, uintptr_t* path_id)
+T* COM_LoadHunkFile_IFStream(const char* path, uintptr_t* path_id)
 {
-    return COM_LoadFile_FStream<T>(path, HUNK_FULL, path_id);
+    return COM_LoadFile_IFStream<T>(path, HUNK_FULL, path_id);
 }
 
 template<typename T>

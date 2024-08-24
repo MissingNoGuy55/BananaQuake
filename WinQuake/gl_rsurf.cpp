@@ -331,7 +331,7 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 	float		ss, ss2, length;
 	float		s1, t1;
 	texture_t	*t;
-	vec3_t		nv, dir;
+	vec3_t		nv;
 	glRect_t	*theRect;
 
 	//
@@ -1077,7 +1077,7 @@ void CGLRenderer::R_RecursiveWorldNode (mnode_t *node)
 	mplane_t	*plane;
 	msurface_t	*surf, **mark;
 	mleaf_t		*pleaf;
-	double		d, dot;
+	double		dot;
 	vec3_t		mins, maxs;
 
 	if (!node)
@@ -1295,7 +1295,6 @@ int CGLRenderer::AllocBlock (int w, int h, int *x, int *y)
 {
 	int		i, j;
 	int		best, best2;
-	int		bestx;
 	int		texnum;
 
 	for (texnum=0 ; texnum<MAX_LIGHTMAPS ; texnum++)
@@ -1347,7 +1346,7 @@ BuildSurfaceDisplayList
 void CGLRenderer::BuildSurfaceDisplayList (msurface_t *fa)
 {
 	int			i, lindex, lnumverts, s_axis, t_axis;
-	float		dist, lastdist, lzi, scale, u, v, frac;
+	float		lastdist, lzi, scale, u, v, frac;
 	unsigned	mask;
 	float		*vec;
 	vec3_t		local, transformed;

@@ -35,6 +35,8 @@ static VPKHeader_v2* GetVPKHeader(cxxifstream* file)
 
 	header = (VPKHeader_v2*)str;
 
+	delete[] str;
+
 	return header;
 }
 
@@ -54,9 +56,9 @@ static int OpenAllVPKDependencies(cxxstring filename)
 
 	loaded_vpks[j][0] = new cxxifstream;
 	loaded_vpks[j][0]->close();
-	g_Common->COM_FOpenFile_FStream(filename.c_str(), loaded_vpks[j][0], nullptr);
+	g_Common->COM_FOpenFile_IFStream(filename.c_str(), loaded_vpks[j][0], nullptr);
 
-	Con_PrintColor(TEXT_COLOR_GREEN, "Loading %s\n", filename.c_str());
+	Con_PrintColor(TEXT_COLOR_GREEN, "Added VPK file %s/%s\n", g_Common->com_gamedir, filename.c_str());
 
 	loaded_vpk_names[j][0] = new cxxstring(filename);
 
@@ -70,14 +72,14 @@ static int OpenAllVPKDependencies(cxxstring filename)
 
 		loaded_vpks[j][i] = new cxxifstream;
 		loaded_vpks[j][i]->close();
-		g_Common->COM_FOpenFile_FStream(append, loaded_vpks[j][i], nullptr);
+		g_Common->COM_FOpenFile_IFStream(append, loaded_vpks[j][i], nullptr);
 
 		if (!loaded_vpks[j][i]->is_open())
 			break;
 
 		VPKHeader_v2* header = GetVPKHeader(loaded_vpks[j][0]);
 
-		Con_PrintColor(TEXT_COLOR_GREEN, "Added VPK file %s (%d files)\n", append, (int)(header->TreeSize / sizeof(VPKHeader_v2)));
+		Con_PrintColor(TEXT_COLOR_GREEN, "Added sub VPK file %s/%s\n", g_Common->com_gamedir, append);
 
 		loaded_vpk_names[j][i] = new cxxstring(append);
 

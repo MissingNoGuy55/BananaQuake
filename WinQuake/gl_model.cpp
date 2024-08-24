@@ -252,7 +252,6 @@ void Mod_LoadTextures (lump_t *l)
     texture_t	*altanims[10];
     uintptr_t		offset;
 	dmiptexlump_t *m;
-    bool        external_texture = false;
 
 	if (!l->filelen)
 	{
@@ -509,11 +508,10 @@ void Mod_LoadTextures_Source(lump_source2004_t* l)
 	if (cls.state == ca_dedicated)
 		return;
 
-	int		i, j, pixels, num, max, altmax;
+	int		i, j, pixels, num, max;
 	miptex_t* mt;
 	dtexdata_source2004_t* texdata;
 	texinfo_source2004_t* m;
-	bool        external_texture = false;
 
 	static int test = 0;
 
@@ -642,8 +640,7 @@ Missi: some stuff from QuakeSpasm ported to here, mostly just for .lit support (
 void Mod_LoadLighting_Source(lump_source2004_t* l)
 {
 	int i, mark;
-	byte* in, * out, * data;
-	byte d;
+	byte* in, *out;
 	char litfilename[MAX_OSPATH];
 	uintptr_t path_id;
 
@@ -2100,7 +2097,6 @@ void Mod_LoadTexdataStringTable(lump_source2004_t* l)
 {
 	int			*in, *out;
 	int			count;
-	int			bits;
 
 	in = reinterpret_cast<int*>((mod_base + l->fileofs));
 	if (l->filelen % sizeof(*in))
@@ -2531,7 +2527,6 @@ T* Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 	int		i, j, k;
 	char	name[32];
 	int		s;
-	byte	*copy;
 	byte	*skin;
 	byte	*texels;
 	daliasskingroup_t		*pinskingroup;

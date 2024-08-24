@@ -47,9 +47,8 @@ void CL_StopPlayback (void)
 	if (!cls.demoplayback)
 		return;
 
-	fclose (cls.demofile);
+	cls.demofile_in.close();
 	cls.demoplayback = false;
-	cls.demofile = NULL;
 	cls.state = ca_disconnected;
 
 	if (cls.timedemo)
@@ -70,14 +69,31 @@ void CL_WriteDemoMessage (void)
 	float	f;
 
 	len = LittleLong (net_message.cursize);
-	fwrite (&len, 4, 1, cls.demofile);
+	
+	//fwrite (&len, 4, 1, cls.demofile);
+
+	char length[16] = {};
+	snprintf(length, sizeof(length), "%i", len);
+
+	cls.demofile_out.write(length, sizeof(int));
+	
 	for (i=0 ; i<3 ; i++)
 	{
 		f = LittleFloat (cl.viewangles[i]);
-		fwrite (&f, 4, 1, cls.demofile);
+
+		char viewang[16] = {};
+		snprintf(viewang, sizeof(viewang), "%f", f);
+
+		cls.demofile_out.write(viewang, sizeof(float));
+
+		//fwrite (&f, 4, 1, cls.demofile);
 	}
-	fwrite (net_message.data, net_message.cursize, 1, cls.demofile);
-	fflush (cls.demofile);
+
+	cls.demofile_out.write((char*)net_message.data, net_message.cursize);
+	cls.demofile_out.flush();
+
+	//fwrite (net_message.data, net_message.cursize, 1, cls.demofile);
+	//fflush (cls.demofile);
 }
 
 /*
@@ -114,29 +130,38 @@ int CL_GetMessage (void)
 		}
 		
 	// get the next message
-		fread (&net_message.cursize, 4, 1, cls.demofile);
+		//fread (&net_message.cursize, 4, 1, cls.demofile);
+		
+		char data[16] = {};
+
+		cls.demofile_in.read(data, sizeof(int));
+
+		net_message.cursize = atoi(data);
+
 		VectorCopy (cl.mviewangles[0], cl.mviewangles[1]);
 		for (i=0 ; i<3 ; i++)
 		{
-			r = fread (&f, 4, 1, cls.demofile);
+			//r = fread (&f, 4, 1, cls.demofile);
+			
+			char read[16] = {};
+
+			cls.demofile_in.read(read, sizeof(int));
+			
+			f = atof(read);
+
 			cl.mviewangles[0][i] = LittleFloat (f);
 		}
 
-		int size = 0;
+		//fread(net_message.data, size, 1, cls.demofile);
 
-		fread(net_message.data, size, 1, cls.demofile);
-
-		net_message.cursize = LittleLong (size);
-
+		net_message.cursize = LittleLong(net_message.cursize);
 		if (net_message.cursize > MAX_MSGLEN)
-			Sys_Error ("Demo message > MAX_MSGLEN");
-		
-		if (net_message.cursize < size)
-			r = fread (net_message.data, size, 1, cls.demofile);
+			Sys_Error("Demo message > MAX_MSGLEN");
 
-		if (r != 1)
+		cls.demofile_in.read((char*)net_message.data, net_message.cursize);
+		if (cls.demofile_in.bad())
 		{
-			CL_StopPlayback ();
+			CL_StopPlayback();
 			return 0;
 		}
 	
@@ -188,8 +213,7 @@ void CL_Stop_f (void)
 	CL_WriteDemoMessage ();
 
 // finish up
-	fclose (cls.demofile);
-	cls.demofile = NULL;
+	cls.demofile_out.close();
 	cls.demorecording = false;
 	Con_Printf ("Completed demo\n");
 }
@@ -257,15 +281,20 @@ void CL_Record_f (void)
 	g_Common->COM_DefaultExtension (name, ".dem");
 
 	Con_Printf ("recording to %s.\n", name);
-	cls.demofile = fopen (name, "wb");
-	if (!cls.demofile)
+	g_Common->COM_FOpenFile_OFStream(name, &cls.demofile_out, nullptr);
+	if (cls.demofile_out.bad())
 	{
 		Con_Printf ("ERROR: couldn't open.\n");
 		return;
 	}
 
 	cls.forcetrack = track;
-	fprintf (cls.demofile, "%i\n", cls.forcetrack);
+
+	char write[64] = {};
+
+	snprintf(write, sizeof(write), "%i\n", cls.forcetrack);
+
+	cls.demofile_out.write(write, sizeof(int));
 	
 	cls.demorecording = true;
 }
@@ -304,18 +333,23 @@ void CL_PlayDemo_f (void)
 
 	Con_Printf ("Playing demo from %s.\n", name);
 
-	int size = g_Common->COM_FOpenFile (name, &cls.demofile, nullptr);
-	if (!cls.demofile)
+	int size = g_Common->COM_FOpenFile_IFStream (name, &cls.demofile_in, nullptr);
+	if (cls.demofile_in.bad())
 	{
 		Con_Printf ("ERROR: couldn't open.\n");
 		cls.demonum = -1;		// stop demo loop
 		return;
 	}
 
-	if (fscanf(cls.demofile, "%i", &cls.forcetrack) != 1 || fgetc(cls.demofile) != '\n')
+	char test[16] = {};
+	cls.demofile_in.read(test, sizeof(int));
+
+	int val = atoi(test);
+
+	if (val == -1 || test[1] != '\n')
+		//fscanf(cls.demofile, "%i", &cls.forcetrack) != 1 || fgetc(cls.demofile) != '\n')
 	{
-		fclose(cls.demofile);
-		cls.demofile = nullptr;
+		cls.demofile_in.close();
 		cls.demonum = -1;	// stop demo loop
 		Con_Printf("ERROR: demo \"%s\" is invalid\n", name);
 		return;

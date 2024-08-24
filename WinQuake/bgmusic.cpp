@@ -47,7 +47,7 @@ static music_handler_t wanted_handlers[] =
 void CBackgroundMusic::GetSongArtistAndName(const char* filename, uintptr_t* path_id, const char* ext, artistinfo_t& artistinfo)
 {
     cxxifstream f;
-	int size = g_Common->COM_FOpenFile_FStream(filename, &f, path_id);
+	int size = g_Common->COM_FOpenFile_IFStream(filename, &f, path_id);
 
 	if (size == -1)
 	{

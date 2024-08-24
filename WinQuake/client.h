@@ -129,7 +129,8 @@ typedef struct client_static_s
 	bool	demoplayback;
 	bool	timedemo;
 	int			forcetrack;			// -1 = use normal cd track
-	FILE		*demofile;
+	cxxofstream	demofile_out;
+	cxxifstream	demofile_in;
 	int			td_lastframe;		// to meter out one message a frame
 	int			td_startframe;		// host_framecount at start
 	float		td_starttime;		// realtime at second frame of timedemo
@@ -285,6 +286,8 @@ extern	lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 extern	dlight_t		cl_dlights[MAX_DLIGHTS];
 extern	entity_t		cl_temp_entities[MAX_TEMP_ENTITIES];
 extern	beam_t			cl_beams[MAX_BEAMS];
+
+extern bool recording_voice;
 
 //=============================================================================
 

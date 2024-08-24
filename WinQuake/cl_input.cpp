@@ -156,8 +156,18 @@ void IN_UseUp (void) {KeyUp(&in_use);}
 void IN_JumpDown (void) {KeyDown(&in_jump);}
 void IN_JumpUp (void) {KeyUp(&in_jump);}
 
-void IN_VoiceDown() {KeyDown(&in_voice);}
-void IN_VoiceUp() {KeyUp(&in_voice);}
+bool recording_voice = false;
+
+void IN_VoiceDown() {
+	recording_voice = true;
+	SDL_PauseAudioDevice(g_SoundDeviceID_voice, 0);
+	KeyDown(&in_voice);
+}
+void IN_VoiceUp() {
+	recording_voice = false;
+	SDL_PauseAudioDevice(g_SoundDeviceID_voice, 1);
+	KeyUp(&in_voice);
+}
 
 void IN_Impulse (void) {in_impulse=Q_atoi(g_pCmds->Cmd_Argv(1));}
 

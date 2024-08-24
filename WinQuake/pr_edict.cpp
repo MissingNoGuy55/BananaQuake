@@ -1160,7 +1160,7 @@ listed in a GoldSrc multi_manager entity. Operates on map entity data (7/14/2024
 ====================
 */
 
-const char* _ED_ParseMultiManager (const char *data, edict_t* ed)
+const char* _ED_ParseMultiManager (const char *data)
 {
     ddef_t		*key;
     bool        anglehack;

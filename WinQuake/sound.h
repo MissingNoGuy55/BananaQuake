@@ -217,6 +217,7 @@ public:
     static dma_t*           shm;
     static dma_t*           shm_voice;
 	dma_t					sn;
+	dma_t					sn_voice;
 	static vec_t			sound_nominal_clip_dist;
 
 	int						soundtime;		// sample PAIRS

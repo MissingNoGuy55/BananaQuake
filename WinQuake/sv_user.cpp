@@ -497,14 +497,13 @@ void CQuakeServer::SV_ReadClientMove(usercmd_t* move)
 	{
 		trace_t trace = {};
 		vec3_t modified;
-		vec3_t view;
 		vec3_t view_modified;
-		vec3_t forward, right, up;
+		vec3_t fw, rt, u;
 
-		AngleVectors(host_client->edict->v.angles, forward, right, up);
+		AngleVectors(host_client->edict->v.angles, fw, rt, u);
 
 		VectorAdd(host_client->edict->v.origin, host_client->edict->v.view_ofs, view_modified);
-		VectorMA(view_modified, 16.0f, forward, modified);
+		VectorMA(view_modified, 16.0f, fw, modified);
 
 		trace = SV_Move(view_modified, host_client->edict->v.mins, host_client->edict->v.maxs, modified, MOVE_NOMONSTERS, host_client->edict);
 
@@ -512,8 +511,7 @@ void CQuakeServer::SV_ReadClientMove(usercmd_t* move)
 		{
 			if (trace.ent->v.use > 0)
 			{
-				int old_self = pr_global_struct->self;
-				int old_other = pr_global_struct->other;  
+				int old_self = pr_global_struct->self; 
 
 				pr_global_struct->self = EDICT_TO_PROG(trace.ent);
 				pr_global_struct->time = sv->GetServerTime();

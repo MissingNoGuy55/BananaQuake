@@ -148,6 +148,7 @@ public:
 	static void Host_God_f(void);
 	static void Host_Notarget_f(void);
 	static void Host_Noclip_f(void);
+	static void Host_VoiceChat_f(void);
 
 	jmp_buf 	host_abortserver;
 

@@ -161,7 +161,10 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 	}
 
 	memset((void*)dma, 0, sizeof(dma_t));
+	memset((void*)&sn_voice, 0, sizeof(dma_t));
+
 	shm = dma;
+	shm_voice = &sn_voice;
 
 	if (g_Common->COM_CheckParm ("-wavonly"))
 		wavonly = true;

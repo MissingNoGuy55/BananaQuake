@@ -2137,7 +2137,7 @@ static void _PF_RunMultiManager()
 
     const char* edict = ED_FindEdictTextBlock(PR_GetString(ed->v.targetname));
 
-    _ED_ParseMultiManager(edict, ed);
+    _ED_ParseMultiManager(edict);
 }
 
 /*
@@ -2238,7 +2238,7 @@ static void PF_precache_sentence(void)
 	uintptr_t path_id = 0;
 	cxxstring sound = {};
 
-	g_Common->COM_FOpenFile_FStream("sound/sentences.txt", &f, &path_id);
+	g_Common->COM_FOpenFile_IFStream("sound/sentences.txt", &f, &path_id);
 
 	if (f.bad())
 	{
@@ -2312,7 +2312,7 @@ static void PF_speak_sentence(void)
 	cxxifstream f;
 	uintptr_t path_id = 0;
 
-	g_Common->COM_FOpenFile_FStream("sound/sentences.txt", &f, &path_id);
+	g_Common->COM_FOpenFile_IFStream("sound/sentences.txt", &f, &path_id);
 
 	if (f.bad())
 	{

@@ -201,6 +201,8 @@ void W_LoadWadFiles_GoldSrc()
         infotableofs = LittleLong(header->infotableofs);
         wad_lumps[j] = (lumpinfo_t*)(wad_base[j] + infotableofs);
 
+        Con_PrintColor(TEXT_COLOR_GREEN, "Added WAD3 file %s/%s\n", g_Common->com_gamedir, name[m]);
+
         for (i = 0, lump_p = wad_lumps[j]; (int)i < wad_numlumps[j]; i++, lump_p++)
         {
             lump_p->filepos = LittleLong(lump_p->filepos);

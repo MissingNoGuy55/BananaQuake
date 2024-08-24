@@ -41,7 +41,7 @@ solid_edge items only clip against bsp models.
 
 cvar_t	sv_friction = {"sv_friction","4",false, CVAR_CHEAT | CVAR_SERVER | CVAR_NOTIFY };
 cvar_t	sv_stopspeed = {"sv_stopspeed","100"};
-cvar_t	sv_gravity = {"sv_gravity","800",false, CVAR_CHEAT | CVAR_SERVER | CVAR_NOTIFY };
+cvar_t	sv_gravity = {"sv_gravity","800",false, CVAR_SERVER | CVAR_NOTIFY };
 cvar_t	sv_maxvelocity = {"sv_maxvelocity","2000"};
 cvar_t	sv_nostep = {"sv_nostep","0"};
 

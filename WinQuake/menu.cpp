@@ -1831,7 +1831,6 @@ void M_Quit_Draw (void)
 #ifdef _WIN32
 
 	const char* bquake_string = "  BananaQuake version %4.2f by\n";
-	const int bquake_stringlen = strlen(bquake_string);
 	char	ver[32];
 
 	snprintf(ver, sizeof(ver), bquake_string, BANANAQUAKE_VERSION);

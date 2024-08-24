@@ -711,7 +711,6 @@ R_DrawViewModel
 */
 void CGLRenderer::R_DrawViewModel (void)
 {
-	float		ambient[4], diffuse[4];
 	int			j;
 	int			lnum;
 	vec3_t		dist;

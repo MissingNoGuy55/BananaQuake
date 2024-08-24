@@ -507,7 +507,7 @@ void PR_RunError (const char *error, ...);
 void ED_PrintEdicts (void);
 void ED_PrintNum (int ent);
 
-const char* _ED_ParseMultiManager(const char* data, edict_t* ed);
+const char* _ED_ParseMultiManager(const char* data);
 
 dfunction_t* ED_FindFunction(const char* name);
 extern progvector_t* ED_FindCPPVector(const char* name);
