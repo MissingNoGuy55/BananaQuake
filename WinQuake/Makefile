@@ -125,7 +125,7 @@ GLLIBLINK=-lSDL2 -lSDL2_image -lm -lGL -lX11 -lXext -lXxf86dga -lXxf86vm -ldl $(
 
 GLINCLUDES=-I./sdl2/include -I./SDL_image/include -I./codecs/include -I/QuakeCPP/WinQuake/mesa/3dfx/glide3/include/
 	
-GLOPTS:=-DGLQUAKE
+GLOPTS:=-DGLQUAKE -DBQUAKE
 	
 GLCPPFLAGS=$(GLINCLUDES)
 
@@ -650,7 +650,8 @@ GLQUAKE_OBJS= \
 	$(BUILDDIR)/bananaquakeopengl/math.o \
 	$(BUILDDIR)/bananaquakeopengl/worlda.o \
 	$(BUILDDIR)/bananaquakeopengl/snd_mixa.o \
-	$(BUILDDIR)/bananaquakeopengl/utils.o
+	$(BUILDDIR)/bananaquakeopengl/utils.o \
+	$(BUILDDIR)/bananaquakeopengl/vpkfile.o
 
 # GLSVGA_OBJS=$(BUILDDIR)/bananaquakeopengl/gl_vidlinux.o
 
@@ -852,6 +853,9 @@ $(BUILDDIR)/bananaquakeopengl/snd_linux.o :    ./snd_linux.cpp
 	$(DO_GL_CC)
 	
 $(BUILDDIR)/bananaquakeopengl/utils.o :    ./utils.cpp
+	$(DO_GL_CC)
+
+$(BUILDDIR)/bananaquakeopengl/vpkfile.o :    ./vpkfile.cpp
 	$(DO_GL_CC)
 
 $(BUILDDIR)/bananaquakeopengl/math.o :         ./math.s
