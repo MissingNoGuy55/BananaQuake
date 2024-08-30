@@ -101,6 +101,7 @@ host_cmd.cpp
 in_win.cpp
 keys.cpp
 mathlib.cpp
+md4.cpp
 menu.cpp
 model.cpp
 net_dgrm.cpp
@@ -110,6 +111,7 @@ net_vcr.cpp
 net_win.cpp
 net_wins.cpp
 net_wipx.cpp
+pakstuff.cpp
 pr_cmds.cpp
 pr_edict.cpp
 pr_exec.cpp
@@ -147,6 +149,8 @@ sv_phys.cpp
 sv_user.cpp
 sys_win.cpp
 utils.cpp
+unzip.cpp
+unzip_ifstream.cpp
 vid_win.cpp
 view.cpp
 vpkfile.cpp
@@ -189,6 +193,7 @@ net_loop.h
 net_ser.h
 net_vcr.h
 net_wins.h
+pakstuff.h
 pr_cmds.h
 pr_comp.h
 progdefs.h
@@ -211,9 +216,12 @@ snd_wave.h
 sound.h
 spritegn.h
 strl_fn.h
+str.h
 sys.h
 sys_win.h
 utils.h
+unzip.h
+unzip_ifstream.h
 vid.h
 vid_win.h
 view.h
@@ -265,6 +273,7 @@ host_cmd.cpp
 in_win.cpp
 keys.cpp
 mathlib.cpp
+md4.cpp
 menu.cpp
 net_dgrm.cpp
 net_loop.cpp
@@ -273,6 +282,7 @@ net_vcr.cpp
 net_win.cpp
 net_wins.cpp
 net_wipx.cpp
+pakstuff.cpp
 pr_cmds.cpp
 pr_edict.cpp
 pr_exec.cpp
@@ -296,6 +306,8 @@ sv_phys.cpp
 sv_user.cpp
 sys_win.cpp
 utils.cpp
+unzip.cpp
+unzip_ifstream.cpp
 view.cpp
 vpkfile.cpp
 wad.cpp
@@ -349,6 +361,7 @@ net_loop.h
 net_ser.h
 net_vcr.h
 net_wins.h
+pakstuff.h
 pr_cmds.h
 pr_comp.h
 progdefs.h
@@ -371,9 +384,12 @@ snd_wave.h
 sound.h
 spritegn.h
 strl_fn.h
+str.h
 sys.h
 sys_win.h
 utils.h
+unzip.h
+unzip_ifstream.h
 vid.h
 vid_win.h
 view.h
@@ -443,6 +459,7 @@ host.cpp
 host_cmd.cpp
 keys.cpp
 mathlib.cpp
+md4.cpp
 menu.cpp
 model.cpp
 net_dgrm.cpp
@@ -451,6 +468,7 @@ net_main.cpp
 net_vcr.cpp
 net_bsd.cpp
 net_udp.cpp
+pakstuff.cpp
 pr_cmds.cpp
 pr_edict.cpp
 pr_exec.cpp
@@ -488,6 +506,8 @@ sv_phys.cpp
 sv_user.cpp
 sys_linux.cpp
 utils.cpp
+unzip.cpp
+unzip_ifstream.cpp
 view.cpp
 vid_sdl_software.cpp
 vpkfile.cpp
@@ -529,6 +549,7 @@ net_loop.h
 net_ser.h
 net_vcr.h
 net_udp.h
+pakstuff.h
 pr_cmds.h
 pr_comp.h
 progdefs.h
@@ -551,8 +572,11 @@ snd_wave.h
 sound.h
 spritegn.h
 strl_fn.h
+str.h
 sys.h
 utils.h
+unzip.h
+unzip_ifstream.h
 vid.h
 view.h
 vpkfile.h
@@ -599,6 +623,7 @@ host.cpp
 host_cmd.cpp
 keys.cpp
 mathlib.cpp
+md4.cpp
 menu.cpp
 net_dgrm.cpp
 net_loop.cpp
@@ -606,6 +631,7 @@ net_main.cpp
 net_vcr.cpp
 net_bsd.cpp
 net_udp.cpp
+pakstuff.cpp
 pr_cmds.cpp
 pr_edict.cpp
 pr_exec.cpp
@@ -629,6 +655,8 @@ sv_phys.cpp
 sv_user.cpp
 sys_linux.cpp
 utils.cpp
+unzip.cpp
+unzip_ifstream.cpp
 view.cpp
 vpkfile.cpp
 wad.cpp
@@ -681,6 +709,7 @@ net_loop.h
 net_ser.h
 net_vcr.h
 net_wins.h
+pakstuff.h
 pr_cmds.h
 pr_comp.h
 progdefs.h
@@ -703,8 +732,11 @@ snd_wave.h
 sound.h
 spritegn.h
 strl_fn.h
+str.h
 sys.h
 utils.h
+unzip.h
+unzip_ifstream.h
 vid.h
 vid_win.h
 view.h
@@ -773,6 +805,7 @@ host.cpp
 host_cmd.cpp
 keys.cpp
 mathlib.cpp
+md4.cpp
 menu.cpp
 model.cpp
 net_dgrm.cpp
@@ -781,6 +814,7 @@ net_main.cpp
 net_vcr.cpp
 net_bsd.cpp
 net_udp.cpp
+pakstuff.cpp
 pr_cmds.cpp
 pr_edict.cpp
 pr_exec.cpp
@@ -817,6 +851,8 @@ sv_move.cpp
 sv_phys.cpp
 sv_user.cpp
 sys_linux.cpp
+unzip.cpp
+unzip_ifstream.cpp
 utils.cpp
 view.cpp
 vid_macos.cpp
@@ -859,6 +895,7 @@ net_loop.h
 net_ser.h
 net_vcr.h
 net_udp.h
+pakstuff.h
 pr_cmds.h
 pr_comp.h
 progdefs.h
@@ -881,8 +918,11 @@ snd_wave.h
 sound.h
 spritegn.h
 strl_fn.h
+str.h
 sys.h
 utils.h
+unzip.h
+unzip_ifstream.h
 vid.h
 view.h
 vpkfile.h

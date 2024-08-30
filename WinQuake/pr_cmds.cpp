@@ -627,34 +627,28 @@ if the tryents flag is set.
 traceline (vector1, vector2, tryents)
 =================
 */
-void PF_traceline (void)
+void PF_traceline(void)
 {
-	float	*v1, *v2;
+	float* v1, * v2;
 	trace_t	trace;
 	int		nomonsters;
-	edict_t	*ent;
+	edict_t* ent;
 
 	v1 = G_VECTOR(OFS_PARM0);
 	v2 = G_VECTOR(OFS_PARM1);
 	nomonsters = G_FLOAT(OFS_PARM2);
 	ent = G_EDICT(OFS_PARM3);
 
-	if (IS_NAN(v1[0]) || IS_NAN(v1[2]) || IS_NAN(v1[1]))
-		Con_Warning("PF_traceline: NaN in v1 variable!\n");
-
-	if (IS_NAN(v2[0]) || IS_NAN(v2[2]) || IS_NAN(v2[1]))
-		Con_Warning("PF_traceline: NaN in v1 variable!\n");
-
-	trace = sv->SV_Move (v1, vec3_origin, vec3_origin, v2, nomonsters, EDICT_NUM(0));
+	trace = sv->SV_Move(v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
 
 	pr_global_struct->trace_allsolid = trace.allsolid;
 	pr_global_struct->trace_startsolid = trace.startsolid;
 	pr_global_struct->trace_fraction = trace.fraction;
 	pr_global_struct->trace_inwater = trace.inwater;
 	pr_global_struct->trace_inopen = trace.inopen;
-	VectorCopy (trace.endpos, pr_global_struct->trace_endpos);
-	VectorCopy (trace.plane.normal, pr_global_struct->trace_plane_normal);
-	pr_global_struct->trace_plane_dist =  trace.plane.dist;	
+	VectorCopy(trace.endpos, pr_global_struct->trace_endpos);
+	VectorCopy(trace.plane.normal, pr_global_struct->trace_plane_normal);
+	pr_global_struct->trace_plane_dist = trace.plane.dist;
 	if (trace.ent)
 		pr_global_struct->trace_ent = EDICT_TO_PROG(trace.ent);
 	else
@@ -1435,41 +1429,41 @@ Pick a vector for the player to shoot along
 vector aim(entity, missilespeed)
 =============
 */
-cvar_t	sv_aim = {"sv_aim", "0.93"};
-void PF_aim (void)
+cvar_t	sv_aim = { "sv_aim", "0.93" };
+void PF_aim(void)
 {
-	edict_t	*ent, *check, *bestent;
+	edict_t* ent, * check, * bestent;
 	vec3_t	start, dir, end, bestdir;
 	int		i, j;
 	trace_t	tr;
 	float	dist, bestdist;
 	float	speed;
-	
+
 	ent = G_EDICT(OFS_PARM0);
 	speed = G_FLOAT(OFS_PARM1);
 
-	VectorCopy (ent->v.origin, start);
+	VectorCopy(ent->v.origin, start);
 	start[2] += 20;
 
-// try sending a trace straight
-	VectorCopy (pr_global_struct->v_forward, dir);
-	VectorMA (start, 2048, dir, end);
-	tr = sv->SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
+	// try sending a trace straight
+	VectorCopy(pr_global_struct->v_forward, dir);
+	VectorMA(start, 2048, dir, end);
+	tr = sv->SV_Move(start, vec3_origin, vec3_origin, end, false, ent);
 	if (tr.ent && tr.ent->v.takedamage == DAMAGE_AIM
-	&& (!host->teamplay.value || ent->v.team <=0 || ent->v.team != tr.ent->v.team) )
+		&& (!host->teamplay.value || ent->v.team <= 0 || ent->v.team != tr.ent->v.team))
 	{
-		VectorCopy (pr_global_struct->v_forward, G_VECTOR(OFS_RETURN));
+		VectorCopy(pr_global_struct->v_forward, G_VECTOR(OFS_RETURN));
 		return;
 	}
 
 
-// try all possible entities
-	VectorCopy (dir, bestdir);
+	// try all possible entities
+	VectorCopy(dir, bestdir);
 	bestdist = sv_aim.value;
 	bestent = NULL;
-	
+
 	check = NEXT_EDICT(sv->GetServerEdicts());
-	for (i=1 ; i<sv->GetNumEdicts() ; i++, check = NEXT_EDICT(check) )
+	for (i = 1; i < sv->GetNumEdicts(); i++, check = NEXT_EDICT(check))
 	{
 		if (check->v.takedamage != DAMAGE_AIM)
 			continue;
@@ -1477,34 +1471,34 @@ void PF_aim (void)
 			continue;
 		if (host->teamplay.value && ent->v.team > 0 && ent->v.team == check->v.team)
 			continue;	// don't aim at teammate
-		for (j=0 ; j<3 ; j++)
+		for (j = 0; j < 3; j++)
 			end[j] = check->v.origin[j]
-			+ 0.5*(check->v.mins[j] + check->v.maxs[j]);
-		VectorSubtract (end, start, dir);
-		VectorNormalize (dir);
-		dist = DotProduct (dir, pr_global_struct->v_forward);
+			+ 0.5 * (check->v.mins[j] + check->v.maxs[j]);
+		VectorSubtract(end, start, dir);
+		VectorNormalize(dir);
+		dist = DotProduct(dir, pr_global_struct->v_forward);
 		if (dist < bestdist)
 			continue;	// to far to turn
-		tr = sv->SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
+		tr = sv->SV_Move(start, vec3_origin, vec3_origin, end, false, ent);
 		if (tr.ent == check)
 		{	// can shoot at this one
 			bestdist = dist;
 			bestent = check;
 		}
 	}
-	
+
 	if (bestent)
 	{
-		VectorSubtract (bestent->v.origin, ent->v.origin, dir);
-		dist = DotProduct (dir, pr_global_struct->v_forward);
-		VectorScale (pr_global_struct->v_forward, dist, end);
+		VectorSubtract(bestent->v.origin, ent->v.origin, dir);
+		dist = DotProduct(dir, pr_global_struct->v_forward);
+		VectorScale(pr_global_struct->v_forward, dist, end);
 		end[2] = dir[2];
-		VectorNormalize (end);
-		VectorCopy (end, G_VECTOR(OFS_RETURN));	
+		VectorNormalize(end);
+		VectorCopy(end, G_VECTOR(OFS_RETURN));
 	}
 	else
 	{
-		VectorCopy (bestdir, G_VECTOR(OFS_RETURN));
+		VectorCopy(bestdir, G_VECTOR(OFS_RETURN));
 	}
 }
 
@@ -1552,6 +1546,7 @@ void PF_changeyaw (void)
 	ent->v.angles[1] = anglemod (current + move);
 }
 
+#ifdef QUAKE2
 /*
 ==============
 PF_changepitch
@@ -1593,6 +1588,7 @@ void PF_changepitch (void)
 	
 	ent->v.angles[0] = anglemod (current + move);
 }
+#endif
 
 /*
 ===============================================================================
@@ -1771,7 +1767,7 @@ void PF_changelevel (void)
 	g_pCmdBuf->Cbuf_AddText (g_Common->va("changelevel %s\n",s));
 #endif
 }
-
+#ifdef QUAKE2
 void PF_WaterMove (void)
 {
 	edict_t		*self;
@@ -1895,7 +1891,7 @@ void PF_WaterMove (void)
 
 	G_FLOAT(OFS_RETURN) = damage;
 }
-
+#endif
 void PF_sin (void)
 {
 	G_FLOAT(OFS_RETURN) = sin(G_FLOAT(OFS_PARM0));
@@ -2513,13 +2509,23 @@ PF_WriteAngle,
 PF_WriteString,
 PF_WriteEntity,
 
+#ifdef QUAKE2
 PF_sin,
 PF_cos,
 PF_sqrt,
 PF_changepitch,
-PF_Fixme,
+PF_TraceToss,
 PF_etos,
 PF_WaterMove,
+#else
+PF_Fixme,
+PF_Fixme,
+PF_Fixme,
+PF_Fixme,
+PF_Fixme,
+PF_Fixme,
+PF_Fixme,
+#endif
 
 PF_MoveToGoal,
 PF_precache_file,

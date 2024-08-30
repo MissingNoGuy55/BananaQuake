@@ -346,7 +346,9 @@ void CL_PlayDemo_f (void)
 
 	int val = atoi(test);
 
-	if (val == -1 || test[1] != '\n')
+    cls.forcetrack = val;
+
+    if (val == -1 || test[1] != '\n')
 		//fscanf(cls.demofile, "%i", &cls.forcetrack) != 1 || fgetc(cls.demofile) != '\n')
 	{
 		cls.demofile_in.close();

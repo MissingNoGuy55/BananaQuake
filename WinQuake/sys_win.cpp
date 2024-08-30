@@ -244,8 +244,13 @@ void Sys_FileSeek (int handle, int position)
 	int		t;
 	t = VID_ForceUnlockedAndReturnState ();
 
-	fseek (sys_handles[handle], position, SEEK_SET);
+	int ret = fseek (sys_handles[handle], position, SEEK_SET);
 
+	if (ret)
+	{
+		Sys_Error("Sys_FileSeek failed: %s\n", strerror(ret));
+		return;
+	}
 
 	VID_ForceLockState (t);
 

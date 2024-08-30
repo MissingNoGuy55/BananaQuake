@@ -272,6 +272,8 @@ constexpr int SOUND_CHANNELS		= 8;
 // Use for multiplayer testing only - VERY dangerous!!!
 // #define IDGODS
 
+#include "unzip.h"
+#include "unzip_ifstream.h"
 #include "mathlib.h"
 
 #include "common.h"

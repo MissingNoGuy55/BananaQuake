@@ -59,6 +59,8 @@ int		CCommon::com_filesize = 0;
 char    CCommon::com_cachedir[MAX_OSPATH] = {};
 char    CCommon::com_gamedir[MAX_OSPATH] = {};
 int		CCommon::file_from_pak = 0;
+int		CCommon::file_from_pk3 = 0;
+unzFile	CCommon::current_pk3 = nullptr;
 
 constexpr int CMDLINE_LENGTH = 256;
 char	com_cmdline[CMDLINE_LENGTH];
@@ -215,13 +217,35 @@ int Q_strlen (const char *str)
 	return count;
 }
 
+char* Q_strlwr(char* s1) {
+	char* s;
+
+	s = s1;
+	while (*s) {
+		*s = tolower(*s);
+		s++;
+	}
+	return s1;
+}
+
+char* Q_strupr(char* s1) {
+	char* s;
+
+	s = s1;
+	while (*s) {
+		*s = toupper(*s);
+		s++;
+	}
+	return s1;
+}
+
 char *Q_strrchr(const char *s, char c)
 {
-    int len = Q_strlen(s);
-    s += len;
-    while (len--)
+	int len = Q_strlen(s);
+	s += len;
+	while (len--)
 	if (*--s == c) return (char*)s;
-    return NULL;
+	return NULL;
 }
 
 void Q_strcat (char *dest, const char *src)
@@ -496,6 +520,49 @@ void Q_FixQuotes(char* dest, const char* src, size_t size)
 		src++; dest++;
 	}
 	*dest = '\0';
+}
+
+int Q_stricmp(const char* s1, const char* s2) {
+	return (s1 && s2) ? Q_stricmpn(s1, s2, 99999) : -1;
+}
+
+int Q_stricmpn(const char* s1, const char* s2, int n) {
+	int		c1, c2;
+
+	// bk001129 - moved in 1.17 fix not in id codebase
+	if (s1 == NULL) {
+		if (s2 == NULL)
+			return 0;
+		else
+			return -1;
+	}
+	else if (s2 == NULL)
+		return 1;
+
+
+
+	do {
+		c1 = *s1++;
+		c2 = *s2++;
+
+		if (!n--) {
+			return 0;		// strings are equal until end point
+		}
+
+		if (c1 != c2) {
+			if (c1 >= 'a' && c1 <= 'z') {
+				c1 -= ('a' - 'A');
+			}
+			if (c2 >= 'a' && c2 <= 'z') {
+				c2 -= ('a' - 'A');
+			}
+			if (c1 != c2) {
+				return c1 < c2 ? -1 : 1;
+			}
+		}
+	} while (c1);
+
+	return 0;		// strings are equal
 }
 
 /*
@@ -1135,17 +1202,17 @@ const char* CCommon::COM_ParseStringNewline(const char* buffer)
 
 const int CCommon::COM_ParseStringLength(const char* buffer, size_t len) const
 {
-    int pos = 0;
+	int pos = 0;
 
-    if (buffer[pos] != '\"')
-        return 0;
+	if (buffer[pos] != '\"')
+		return 0;
 
-    pos++;
+	pos++;
 
-    while ((buffer[pos]) && (pos < len) && (buffer[pos]) != '\"')
-        pos++;
+	while ((buffer[pos]) && (pos < len) && (buffer[pos]) != '\"')
+		pos++;
 
-    return pos;
+	return pos;
 }
 
 
@@ -1262,7 +1329,7 @@ void CCommon::COM_InitArgv (int argc, char **argv)
 	// case we need to add these, so we don't need an overflow check
 		for (i=0 ; i<NUM_SAFE_ARGVS ; i++)
 		{
-            Q_strlcpy(largv[com_argc], safeargvs[i], strlen(safeargvs[i]));
+			Q_strlcpy(largv[com_argc], safeargvs[i], strlen(safeargvs[i]));
 			// largv[com_argc] = safeargvs[i];
 			com_argc++;
 		}
@@ -1335,8 +1402,8 @@ Missi: made this buffer-size safe (4/30/2023)
 */
 const char* CCommon::va(const char *format, ...)
 {
-    va_list			argptr = {};
-    static char		string[1024] = {};
+	va_list			argptr = {};
+	static char		string[1024] = {};
 	
 	va_start (argptr, format);
 	vsnprintf (string, sizeof(string), format,argptr);
@@ -1406,10 +1473,32 @@ struct searchpath_t
 	uintptr_t path_id;
 	char    filename[MAX_OSPATH] = "";
 	pack_t  *pack = NULL;          // only one of filename / pack will be used
+	pack_pk3_t	*pk3 = NULL;
 	struct searchpath_t *next = NULL;
 };
 
 searchpath_t* com_searchpaths = nullptr;
+
+static	char		fs_gamedir[MAX_OSPATH];	// this will be a single file name with no separators
+static	cvar_t*		fs_debug;
+static	cvar_t*		fs_homepath;
+static	cvar_t*		fs_basepath;
+static	cvar_t*		fs_basegame;
+static	cvar_t*		fs_cdpath;
+static	cvar_t*		fs_copyfiles;
+static	cvar_t*		fs_gamedirvar;
+static	cvar_t*		fs_restrict;
+static	searchpath_t* fs_searchpaths;
+static	int			fs_readCount;			// total bytes read
+static	int			fs_loadCount;			// total files read
+static	int			fs_loadStack;			// total files in memory
+static	int			fs_packFiles;			// total number of files in packs
+
+static int			fs_fakeChkSum;
+static int			fs_checksumFeed;
+
+fileHandleData_t	fsh[MAX_FILE_HANDLES];
+fileHandleData_t	fsh_ifstream[MAX_FILE_HANDLES];
 
 /*
 ============
@@ -1528,11 +1617,16 @@ Sets com_filesize and one of handle or file
 */
 int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintptr_t* path_id)
 {
-	searchpath_t	*search = NULL;
+	searchpath_t	*search = nullptr;
 	char			netpath[MAX_OSPATH] = {};
-	pack_t			*pak = NULL;
+	pack_t			*pak = nullptr;
+	pack_pk3_t		*pk3 = nullptr;
 	int				i = 0;
 	int				findtime = 0, cachetime = 0;
+
+	fileInPack_t*	pakFile;
+	unz_s*	zfi;
+	FILE*	temp;
 
 	if (file && handle)
 		Sys_Error ("COM_FindFile: both handle and file set");
@@ -1543,97 +1637,200 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 // search through the path, one element at a time
 //
 	for (search = com_searchpaths; search; search = search->next)
-    {
-        // is the element a pak file?
-        if (search->pack)	/* look through all the pak file elements */
-        {
-            pak = search->pack;
-            for (i = 0; i < pak->numfiles; i++)
-            {
-                if (strcmp(pak->files[i].name, filename) != 0)
-                    continue;
-                // found it!
-                com_filesize = pak->files[i].filelen;
-                file_from_pak = 1;
-                if (path_id)
-                    *path_id = search->path_id;
-                if (handle)
-                {
-                    *handle = pak->handle;
-                    Sys_FileSeek (pak->handle, pak->files[i].filepos);
-                    return com_filesize;
-                }
-                else if (file)
-                { /* open a new file on the pakfile */
-                    *file = fopen (pak->filename, "rb");
-                    if (*file)
-                        fseek (*file, pak->files[i].filepos, SEEK_SET);
-                    return com_filesize;
-                }
-                else /* for COM_FileExists() */
-                {
-                    return com_filesize;
-                }
-            }
-        }
-        else
-        {
-            if (!registered.value)
-            { /* if not a registered version, don't ever go beyond base */
-                if ( strchr (filename, '/') || strchr (filename,'\\'))
-                    continue;
-            }
+	{
+		// is the element a pak file?
+		if (search->pack)	/* look through all the pak file elements */
+		{
+			pak = search->pack;
+			for (i = 0; i < pak->numfiles; i++)
+			{
+				if (strcmp(pak->files[i].name, filename) != 0)
+					continue;
+				// found it!
+				com_filesize = pak->files[i].filelen;
+				file_from_pak = 1;
+				if (path_id)
+					*path_id = search->path_id;
+				if (handle)
+				{
+					*handle = pak->handle;
+					Sys_FileSeek (pak->handle, pak->files[i].filepos);
+					return com_filesize;
+				}
+				else if (file)
+				{ /* open a new file on the pakfile */
+					*file = fopen (pak->filename, "rb");
+					if (*file)
+						fseek (*file, pak->files[i].filepos, SEEK_SET);
+					return com_filesize;
+				}
+				else /* for COM_FileExists() */
+				{
+					return com_filesize;
+				}
+			}
+		}
+		else if (search->pk3)
+		{
+			pk3 = search->pk3;
 
-            snprintf (netpath, sizeof(netpath), "%s/%s",search->filename, filename);
-            if (! (Sys_FileType(netpath) & FS_ENT_FILE))
-                continue;
+			long hash = g_FileSystem->FS_HashFileName(filename, pk3->hashSize);
 
-            if (path_id)
-                *path_id = search->path_id;
-            if (handle)
-            {
-                com_filesize = Sys_FileOpenRead (netpath, &i);
-                *handle = i;
-                return com_filesize;
-            }
-            else if (file)
-            {
-                *file = fopen (netpath, "rb");
-                com_filesize = (*file == NULL) ? -1 : COM_filelength (*file);
-                return com_filesize;
-            }
-            else
-            {
-                return 0; /* dummy valid value for COM_FileExists() */
-            }
-        }
-    }
+			if (search->pk3->hashTable[hash])
+			{
+				pakFile = pk3->hashTable[hash];
+
+				do
+				{
+					if (!strcmp(pakFile->name, filename))
+					{
+
+						// found it!
+						// com_filesize = pk3->buildBuffer[i].filelen;
+						file_from_pk3 = 1;
+						if (path_id)
+							*path_id = search->path_id;
+						if (handle)
+						{
+							Sys_FileOpenRead(pk3->pakFilename, handle);
+
+							fsh[*handle].handleFiles.file.z = unzReOpen(pk3->pakFilename, pk3->handle);
+							if (fsh[*handle].handleFiles.file.z == NULL)
+							{
+								Sys_Error("Couldn't reopen %s", pk3->pakFilename);
+							}
+							else
+							{
+								fsh[*handle].handleFiles.file.z = pk3->handle;
+							}
+
+							Q_strncpy(fsh[*handle].name, filename, sizeof(fsh[*handle].name));
+							fsh[*handle].zipFile = true;
+							zfi = (unz_s*)fsh[*handle].handleFiles.file.z;
+							// in case the file was new
+							temp = zfi->file;
+							// set the file position in the zip file (also sets the current file info)
+							unzSetCurrentFileInfoPosition(pk3->handle, pakFile->pos);
+							// copy the file info into the unzip structure
+							memcpy(zfi, pk3->handle, sizeof(unz_s));
+							// we copy this back into the structure
+							zfi->file = temp;
+							// open the file in the zip
+							unzOpenCurrentFile(fsh[*handle].handleFiles.file.z);
+							fsh[*handle].zipFilePos = pakFile->pos;
+
+							com_filesize = zfi->cur_file_info.uncompressed_size;
+
+							return zfi->cur_file_info.uncompressed_size;
+						}
+						else if (file)
+						{ /* open a new file on the pakfile */
+
+							*file = fopen(pk3->pakFilename, "rb");
+							if (*file)
+								fseek(*file, pakFile->pos, SEEK_SET);
+
+							int hndl = g_FileSystem->FS_HandleForFile();
+
+							fsh[hndl].handleFiles.file.z = file;
+							sys_handles[hndl] = *file;
+
+							Q_strncpy(fsh[hndl].name, filename, sizeof(fsh[hndl].name));
+							fsh[hndl].zipFile = true;
+							zfi = (unz_s*)fsh[hndl].handleFiles.file.z;
+							// in case the file was new
+							temp = zfi->file;
+							// set the file position in the zip file (also sets the current file info)
+							unzSetCurrentFileInfoPosition(pk3->handle, pakFile->pos);
+							// copy the file info into the unzip structure
+							memcpy(zfi, pk3->handle, sizeof(unz_s));
+							// we copy this back into the structure
+							zfi->file = temp;
+							// open the file in the zip
+							unzOpenCurrentFile(fsh[hndl].handleFiles.file.z);
+							fsh[hndl].zipFilePos = pakFile->pos;
+
+							com_filesize = zfi->cur_file_info.uncompressed_size;
+							
+							return com_filesize;
+						}
+						else /* for COM_FileExists() */
+						{
+							return com_filesize;
+						}
+					}
+
+					pakFile = pakFile->next;
+				} while (pakFile != nullptr);
+			}
+		}
+		else
+		{
+			if (!registered.value)
+			{ /* if not a registered version, don't ever go beyond base */
+				if ( strchr (filename, '/') || strchr (filename,'\\'))
+					continue;
+			}
+
+			snprintf (netpath, sizeof(netpath), "%s/%s",search->filename, filename);
+			if (! (Sys_FileType(netpath) & FS_ENT_FILE))
+				continue;
+
+			if (path_id)
+				*path_id = search->path_id;
+			if (handle)
+			{
+				com_filesize = Sys_FileOpenRead (netpath, &i);
+				*handle = i;
+				return com_filesize;
+			}
+			else if (file)
+			{
+				*file = fopen (netpath, "rb");
+				com_filesize = (*file == NULL) ? -1 : COM_filelength (*file);
+				return com_filesize;
+			}
+			else
+			{
+				return 0; /* dummy valid value for COM_FileExists() */
+			}
+		}
+	}
 	
-    Sys_Printf ("FindFile: can't find %s\n", filename);
+	Sys_Printf ("FindFile: can't find %s\n", filename);
 	
 	if (handle)
 		*handle = -1;
 	if (file)
 		*file = NULL;
 	com_filesize = -1;
-    return com_filesize;
+	return com_filesize;
 }
 
 /*
 ===========
-COM_FindFile_IFStream
+Missi: COM_FindFile_IFStream
 
 Finds the file in the search path.
-Sets com_filesize and one of handle or file
+Sets com_filesize and one of handle or std::ifstream.
+
+FIXME: This function does not work with PK3 files due to the zip library making
+heavy usage of the FILE struct from C. That is lame. Write a derivative later to take advantage
+of std::ifstream so PK3 files can be used. (8/29/2024)
 ===========
 */
-int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id)
+int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, unzFile* pk3_file, uintptr_t* path_id)
 {
 	searchpath_t*	search = NULL;
 	char			netpath[MAX_OSPATH] = {};
 	pack_t*			pak = NULL;
+	pack_pk3_t*		pk3 = NULL;
 	int				i = 0;
 	int				findtime = 0, cachetime = 0;
+
+	fileInPack_t* pakFile;
+	unz_ifstream_s* zfi;
+	cxxifstream* temp;
 
 	if (file && handle)
 		Sys_Error("COM_FindFile: both handle and file set");
@@ -1666,14 +1863,113 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 				}
 				else if (file)
 				{ /* open a new file on the pakfile */
-                    file->open(pak->filename, cxxifstream::binary | cxxifstream::in);
-                    file->seekg(pak->files[i].filepos, cxxifstream::beg);
+					file->open(pak->filename, cxxifstream::binary | cxxifstream::in);
+					file->seekg(pak->files[i].filepos, cxxifstream::beg);
 					return com_filesize;
 				}
 				else /* for COM_FileExists() */
 				{
 					return com_filesize;
 				}
+			}
+		}
+		else if (search->pk3)
+		{
+			pk3 = search->pk3;
+
+			long hash = g_FileSystem->FS_HashFileName(filename, pk3->hashSize);
+
+			if (search->pk3->hashTable[hash])
+			{
+				pakFile = pk3->hashTable[hash];
+
+				do
+				{
+					if (!strcmp(pakFile->name, filename))
+					{
+						// found it!
+						// com_filesize = pk3->buildBuffer[i].filelen;
+						file_from_pk3 = 1;
+						if (path_id)
+							*path_id = search->path_id;
+						if (handle)
+						{
+							Sys_FileOpenRead(pk3->pakFilename, handle);
+
+							fsh_ifstream[*handle].handleFiles.file.z = unzReOpen(pk3->pakFilename, pk3->handle);
+							if (fsh_ifstream[*handle].handleFiles.file.z == NULL)
+							{
+								Sys_Error("Couldn't reopen %s", pk3->pakFilename);
+							}
+							else
+							{
+								fsh_ifstream[*handle].handleFiles.file.z = pk3->handle;
+							}
+
+							Q_strncpy(fsh_ifstream[*handle].name, filename, sizeof(fsh_ifstream[*handle].name));
+							fsh_ifstream[*handle].zipFile = true;
+							zfi = (unz_ifstream_s*)fsh_ifstream[*handle].handleFiles.file.z;
+							// in case the file was new
+							temp = zfi->file;
+							// set the file position in the zip file (also sets the current file info)
+							unzSetCurrentFileInfoPosition_IFStream(file, pk3->handle, pakFile->pos);
+							// copy the file info into the unzip structure
+							memcpy(zfi, pk3->handle, sizeof(unz_s));
+							// we copy this back into the structure
+							zfi->file = temp;
+							// open the file in the zip
+							unzOpenCurrentFile_IFStream(fsh_ifstream[*handle].handleFiles.file.z);
+							fsh_ifstream[*handle].zipFilePos = pakFile->pos;
+
+							com_filesize = zfi->cur_file_info.uncompressed_size;
+
+							*pk3_file = fsh_ifstream[*handle].handleFiles.file.z;
+
+							return zfi->cur_file_info.uncompressed_size;
+						}
+						else if (file)
+						{ /* open a new file on the pakfile */
+
+							/**file = fopen(pk3->pakFilename, "rb");
+							if (*file)
+								fseek(*file, pakFile->pos, SEEK_SET);*/
+
+							int hndl = g_FileSystem->FS_HandleForFile();
+
+							file->open(pk3->pakFilename, cxxifstream::in | cxxifstream::binary);
+
+							fsh_ifstream[hndl].handleFiles.file.z = unzReOpen(pk3->pakFilename, pk3->handle);
+							fsh_ifstream[hndl].handleFiles.file.z = pk3->handle;
+
+							Q_strncpy(fsh_ifstream[hndl].name, filename, sizeof(fsh_ifstream[hndl].name));
+							fsh_ifstream[hndl].zipFile = true;
+							zfi = (unz_ifstream_s*)pk3->handle;
+							// in case the file was new
+							temp = zfi->file;
+							// set the file position in the zip file (also sets the current file info)
+							unzSetCurrentFileInfoPosition_IFStream(file, pk3->handle, pakFile->pos);
+							// copy the file info into the unzip structure
+							memcpy(zfi, pk3->handle, sizeof(unz_s));
+							// we copy this back into the structure
+							zfi->file = temp;
+							// open the file in the zip
+							unzOpenCurrentFile_IFStream(fsh_ifstream[hndl].handleFiles.file.z);
+							fsh_ifstream[hndl].zipFilePos = pakFile->pos;
+
+							com_filesize = zfi->cur_file_info.uncompressed_size;
+
+							*pk3_file = fsh_ifstream[hndl].handleFiles.file.z;
+
+							return com_filesize;
+						}
+						else /* for COM_FileExists() */
+						{
+							return com_filesize;
+						}
+					}
+
+					pakFile = pakFile->next;
+				} while (pakFile != nullptr);
 			}
 		}
 		else
@@ -1698,8 +1994,8 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 			}
 			else if (file)
 			{
-                file->open(netpath, cxxifstream::binary | cxxifstream::in);
-                com_filesize = COM_filelength_FStream(file);
+				file->open(netpath, cxxifstream::binary | cxxifstream::in);
+				com_filesize = COM_filelength_FStream(file);
 				return com_filesize;
 			}
 			else
@@ -1711,6 +2007,7 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 
 	Sys_Printf("FindFile: can't find %s\n", filename);
 
+_dead:
 	if (handle)
 		*handle = -1;
 	if (file)
@@ -1721,10 +2018,10 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 
 /*
 ===========
-COM_FindFile_OFStream
+Missi: COM_FindFile_OFStream
 
 Like COM_FindFile_IFStream, but without support for pakfiles. Mainly used to write
-things to the game directory on disk.
+things to the game directory on disk. (8/29/2024)
 ===========
 */
 void CCommon::COM_FindFile_OFStream(const char* filename, cxxofstream* file, uintptr_t* path_id)
@@ -1767,7 +2064,7 @@ cxxifstream* CCommon::COM_FindFile_VPK(const char* filename, uintptr_t* path_id)
 		return file;
 	}
 
-    delete[] entry;
+	delete[] entry;
 
 	Sys_Printf("FindFile: can't find %s\n", filename);
 
@@ -1799,11 +2096,11 @@ COM_filelength
 */
 size_t CCommon::COM_filelength_FStream(cxxifstream* f)
 {
-    size_t		end;
+	size_t		end;
 
 	f->seekg(0,	f->end);
 	end = f->tellg();
-    f->seekg(0, f->beg);
+	f->seekg(0, f->beg);
 
 	return end;
 }
@@ -1843,9 +2140,9 @@ If the requested file is inside a packfile, a new cxxifstream* will be opened
 into the file.
 ===========
 */
-int CCommon::COM_FOpenFile_IFStream(const char* filename, cxxifstream* file, uintptr_t* path_id)
+int CCommon::COM_FOpenFile_IFStream(const char* filename, cxxifstream* file, uintptr_t* path_id, unzFile* pk3_file)
 {
-	return COM_FindFile_IFStream(filename, nullptr, file, path_id);
+	return COM_FindFile_IFStream(filename, nullptr, file, pk3_file, path_id);
 }
 
 /*
@@ -1959,7 +2256,7 @@ pack_t* CCommon::COM_LoadPackFile (char *packfile)
 
 	if (Sys_FileOpenRead (packfile, &packhandle) == -1)
 	{
-        Con_Printf ("Couldn't open %s\n", packfile);
+		Con_Printf ("Couldn't open %s\n", packfile);
 		return NULL;
 	}
 	Sys_FileRead (packhandle, &header, sizeof(header));
@@ -2003,7 +2300,7 @@ pack_t* CCommon::COM_LoadPackFile (char *packfile)
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;
 	
-    Con_PrintColor (TEXT_COLOR_GREEN, "Added packfile %s (%i files)\n", packfile, numpackfiles);
+	Con_PrintColor (TEXT_COLOR_GREEN, "Added packfile %s (%i files)\n", packfile, numpackfiles);
 	return pack;
 }
 
@@ -2020,48 +2317,79 @@ Missi: copied from QuakeSpasm (1/4/2023)
 */
 void CCommon::COM_AddGameDirectory (const char *dir)
 {
-    int                     i = 0;
-    searchpath_t			*search = nullptr;
-    pack_t                  *pak = nullptr;
-    char                    pakfile[1024] = {};
-    uintptr_t				path_id = 0;
-    bool                    been_here = false;
+	int                     i = 0;
+	searchpath_t			*search = nullptr;
+	pack_t                  *pak = nullptr;
+	pack_pk3_t				*pk3 = nullptr;
+	char                    pakfile[1024] = {};
+	uintptr_t				path_id = 0;
+	bool                    been_here = false;
 
-    Q_strncpy (com_gamedir, dir, sizeof(com_gamedir));
+	Q_strncpy (com_gamedir, dir, sizeof(com_gamedir));
 
-    memset(pakfile, 0, sizeof(pakfile));
+	memset(pakfile, 0, sizeof(pakfile));
 
-    // assign a path_id to this game directory
-    if (com_searchpaths)
-        path_id = com_searchpaths->path_id << 1;
-    else	path_id = 1U;
+	// assign a path_id to this game directory
+	if (com_searchpaths)
+		path_id = com_searchpaths->path_id << 1;
+	else	path_id = 1U;
 
 //
 // add the directory to the search path
 //
-    search = mainzone->Z_Malloc<searchpath_t>(sizeof(searchpath_t));
-    search->path_id = path_id;
-    Q_strncpy (search->filename, dir, sizeof(search->filename));
-    search->next = com_searchpaths;
-    com_searchpaths = search;
+	search = mainzone->Z_Malloc<searchpath_t>(sizeof(searchpath_t));
+	search->path_id = path_id;
+	Q_strncpy (search->filename, dir, sizeof(search->filename));
+	search->next = com_searchpaths;
+	com_searchpaths = search;
 
 //
 // add any pak files in the format pak0.pak pak1.pak, ...
 //
-    for (i=0 ; ; i++)
-    {
-        snprintf (pakfile, sizeof(pakfile), "%s/PAK%i.PAK", dir, i);
-        pak = COM_LoadPackFile (pakfile);
+	for (i=0 ; ; i++)
+	{
+		snprintf (pakfile, sizeof(pakfile), "%s/PAK%i.PAK", dir, i);
+		pak = COM_LoadPackFile (pakfile);
 
-        if (!pak)
-            break;
+		if (!pak)
+			break;
 
-        search = mainzone->Z_Malloc<searchpath_t>(sizeof(searchpath_t));
-        search->path_id = path_id;
-        search->pack = pak;
-        search->next = com_searchpaths;
-        com_searchpaths = search;
-    }
+		search = mainzone->Z_Malloc<searchpath_t>(sizeof(searchpath_t));
+		search->path_id = path_id;
+		search->pack = pak;
+		search->next = com_searchpaths;
+		com_searchpaths = search;
+	}
+
+	char pk3_folder[MAX_OSPATH] = {};
+	snprintf(pk3_folder, sizeof(pk3_folder), "%s/pk3", dir);
+
+	if (!fs::exists(pk3_folder))
+		return;
+
+	for (const auto& file : fs::directory_iterator(pk3_folder))
+	{
+		if (!file.is_regular_file() || file.is_directory())
+			continue;
+
+		size_t ext = file.path().string().find(".pk3");
+
+		if (ext == cxxstring::npos)
+			continue;
+
+		cxxstring noext = file.path().string().erase(ext, 4);
+
+		pk3 = g_FileSystem->FS_LoadZipFile(file.path().string().c_str(), noext.c_str());
+		Q_strncpy(pk3->pakGamename, GAMENAME, sizeof(pk3->pakGamename));
+
+		search = mainzone->Z_Malloc<searchpath_t>(sizeof(searchpath_t));
+		search->path_id = path_id;
+		search->pk3 = pk3;
+		search->next = com_searchpaths;
+		com_searchpaths = search;
+
+		Con_PrintColor(TEXT_COLOR_GREEN, "Added PK3 file %s\n", file.path().string().c_str());
+	}
 
 //
 // add the contents of the parms.txt file to the end of the command line
@@ -2090,8 +2418,8 @@ void CCommon::COM_InitFilesystem (void)
 	else
 		Q_strcpy (basedir, host->host_parms.basedir);
 
-    if (basedir[Q_strlen(basedir)-1] == '\\' || basedir[Q_strlen(basedir)-1] == '/')
-        basedir[Q_strlen(basedir)-1] = '\0';
+	if (basedir[Q_strlen(basedir)-1] == '\\' || basedir[Q_strlen(basedir)-1] == '/')
+		basedir[Q_strlen(basedir)-1] = '\0';
 
 //
 // -cachedir <path>
@@ -2144,9 +2472,9 @@ void CCommon::COM_InitFilesystem (void)
 			Q_FixQuotes(path, absPath, sizeof(path));
 			Q_FixSlashes(path, sizeof(path));
 
-            COM_AddGameDirectory(va("%s", path));
+			COM_AddGameDirectory(va("%s", path));
 #else
-            COM_AddGameDirectory(va("%s", absPath));
+			COM_AddGameDirectory(va("%s", absPath));
 #endif
 		}
 	}
@@ -2303,6 +2631,44 @@ void CFileSystem::FS_rewind(fshandle_t* fh)
 	fh->pos = 0;
 }
 
+/*
+================
+return a hash value for the filename
+================
+*/
+long CFileSystem::FS_HashFileName(const char* fname, int hashSize) {
+	int		i;
+	long	hash;
+	char	letter;
+
+	hash = 0;
+	i = 0;
+	while (fname[i] != '\0') {
+		letter = tolower(fname[i]);
+		if (letter == '.') break;				// don't include extension
+		if (letter == '\\') letter = '/';		// damn path names
+		if (letter == PATH_SEP) letter = '/';		// damn path names
+		hash += (long)(letter) * (i + 119);
+		i++;
+	}
+	hash = (hash ^ (hash >> 10) ^ (hash >> 20));
+	hash &= (hashSize - 1);
+	return hash;
+}
+
+int CFileSystem::FS_HandleForFile()
+{
+	for (int i = 0; i < MAX_HANDLES; i++)
+	{
+		if (!sys_handles[i])
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 int CFileSystem::FS_feof(fshandle_t* fh)
 {
 	if (!fh) {
@@ -2360,3 +2726,113 @@ long CFileSystem::FS_filelength(fshandle_t* fh)
 	return fh->length;
 }
 
+/*
+=================
+FS_LoadZipFile
+
+Creates a new pak_t in the search chain for the contents
+of a zip file.
+=================
+*/
+pack_pk3_t* CFileSystem::FS_LoadZipFile(const char* zipfile, const char* basename)
+{
+	fileInPack_t*	buildBuffer;
+	pack_pk3_t*		pack;
+	unzFile			uf;
+	int				err;
+	unz_global_info gi;
+	char			filename_inzip[MAX_ZPATH];
+	unz_file_info	file_info;
+	int				i, len;
+	long			hash;
+	int				fs_numHeaderLongs;
+	int*			fs_headerLongs;
+	char*			namePtr;
+
+	fs_numHeaderLongs = 0;
+
+	uf = unzOpen(zipfile);
+	err = unzGetGlobalInfo(uf, &gi);
+
+	if (err != UNZ_OK)
+		return NULL;
+
+	fs_packFiles += gi.number_entry;
+
+	len = 0;
+
+	unzGoToFirstFile(uf);
+	for (i = 0; i < gi.number_entry; i++)
+	{
+
+		err = unzGetCurrentFileInfo(uf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
+		if (err != UNZ_OK) {
+			break;
+		}
+		len += strlen(filename_inzip) + 1;
+		unzGoToNextFile(uf);
+	}
+
+	buildBuffer = mainzone->Z_Malloc<fileInPack_t>((gi.number_entry * sizeof(fileInPack_t)) + len);
+	namePtr = ((char*)buildBuffer) + gi.number_entry * sizeof(fileInPack_t);
+	fs_headerLongs = mainzone->Z_Malloc<int>(gi.number_entry * sizeof(int));
+
+	// get the hash table size from the number of files in the zip
+	// because lots of custom pk3 files have less than 32 or 64 files
+	for (i = 1; i <= MAX_FILEHASH_SIZE; i <<= 1) {
+		if (i > gi.number_entry) {
+			break;
+		}
+	}
+
+	pack = mainzone->Z_Malloc<pack_pk3_t>(sizeof(pack_pk3_t) + i * sizeof(fileInPack_t*));
+	pack->hashSize = i;
+	pack->hashTable = (fileInPack_t**)(((char*)pack) + sizeof(pack_pk3_t));
+	for (i = 0; i < pack->hashSize; i++) {
+		pack->hashTable[i] = NULL;
+	}
+
+	Q_strncpy(pack->pakFilename, zipfile, sizeof(pack->pakFilename));
+	Q_strncpy(pack->pakBasename, basename, sizeof(pack->pakBasename));
+
+	// strip .pk3 if needed
+	if (strlen(pack->pakBasename) > 4 && !Q_stricmp(pack->pakBasename + strlen(pack->pakBasename) - 4, ".pk3")) {
+		pack->pakBasename[strlen(pack->pakBasename) - 4] = 0;
+	}
+
+	pack->handle = uf;
+	pack->numfiles = gi.number_entry;
+	unzGoToFirstFile(uf);
+
+	for (i = 0; i < gi.number_entry; i++)
+	{
+		err = unzGetCurrentFileInfo(uf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
+		if (err != UNZ_OK) {
+			break;
+		}
+		if (file_info.uncompressed_size > 0) {
+			fs_headerLongs[fs_numHeaderLongs++] = LittleLong(file_info.crc);
+		}
+		Q_strlwr(filename_inzip);
+		hash = FS_HashFileName(filename_inzip, pack->hashSize);
+		buildBuffer[i].name = namePtr;
+		strcpy(buildBuffer[i].name, filename_inzip);
+		namePtr += strlen(filename_inzip) + 1;
+		// store the file position in the zip
+		unzGetCurrentFileInfoPosition(uf, &buildBuffer[i].pos);
+		//
+		buildBuffer[i].next = pack->hashTable[hash];
+		pack->hashTable[hash] = &buildBuffer[i];
+		unzGoToNextFile(uf);
+	}
+
+	pack->checksum = Com_BlockChecksum(fs_headerLongs, 4 * fs_numHeaderLongs);
+	pack->pure_checksum = Com_BlockChecksumKey(fs_headerLongs, 4 * fs_numHeaderLongs, LittleLong(fs_checksumFeed));
+	pack->checksum = LittleLong(pack->checksum);
+	pack->pure_checksum = LittleLong(pack->pure_checksum);
+
+	mainzone->Z_Free(fs_headerLongs);
+
+	pack->buildBuffer = buildBuffer;
+	return pack;
+}

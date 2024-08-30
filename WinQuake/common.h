@@ -152,6 +152,10 @@ int Q_memcmp (void *m1, void *m2, size_t count);
 void Q_strcpy (char *dest, const char *src);
 void Q_strncpy (char *dest, const char *src, size_t count);
 int Q_strlen (const char *str);
+
+char* Q_strlwr(char* s1);
+char* Q_strupr(char* s1);
+
 char *Q_strrchr (const char *s, char c);
 void Q_strcat (char *dest, const char *src);
 int Q_strcmp (const char *s1, const char *s2);
@@ -164,6 +168,9 @@ int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_lis
 
 void Q_FixSlashes(char* str, size_t size, const char delimiter = '\\');
 void Q_FixQuotes(char* dest, const char* src, size_t size);
+
+int Q_stricmp(const char* s1, const char* s2);
+int Q_stricmpn(const char* s1, const char* s2, int n);
 //============================================================================
 
 //
@@ -211,6 +218,8 @@ typedef struct _fshandle_t
 	long pos;	/* current position relative to start */
 } fshandle_t;
 
+#define	MAX_FILE_HANDLES	64
+
 class CCommon
 {
 public:
@@ -240,7 +249,7 @@ public:
 	static void COM_CreatePath(const char* path);
 	int COM_OpenFile (const char *filename, int *handle, uintptr_t* path_id);
 	static int COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id);
-    int COM_FOpenFile_IFStream(const char* filename, cxxifstream* file, uintptr_t* path_id);
+    int COM_FOpenFile_IFStream(const char* filename, cxxifstream* file, uintptr_t* path_id, unzFile* pk3_file = nullptr);
     void COM_FOpenFile_OFStream(const char* filename, cxxofstream* file, uintptr_t* path_id);
 	cxxifstream* COM_FOpenFile_VPK(const char* filename, uintptr_t* path_id);
 	void COM_CloseFile (int h);
@@ -251,7 +260,7 @@ public:
 
 	void COM_InitFilesystem();
 	static int COM_FindFile(const char* filename, int* handle, FILE** file, uintptr_t* path_id);
-    int COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id);
+    int COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, unzFile* pk3_file, uintptr_t* path_id);
     void COM_FindFile_OFStream(const char* filename, cxxofstream* file, uintptr_t* path_id);
     cxxifstream* COM_FindFile_VPK(const char* filename, uintptr_t* path_id);
 	static long COM_filelength(FILE* f);
@@ -277,16 +286,80 @@ public:
 	static	char	com_gamedir[MAX_OSPATH];
 	static	char	com_cachedir[MAX_OSPATH];
 	static	int		file_from_pak;
+	static	int		file_from_pk3;
+	static	unzFile	current_pk3;
 
 };
 
+unsigned	Com_BlockChecksum(const void* buffer, int length);
+unsigned	Com_BlockChecksumKey(void* buffer, int length, int key);
+
+#define MAX_ZPATH			256
+#define	MAX_SEARCH_PATHS	4096
+#define MAX_FILEHASH_SIZE	1024
+
+typedef union qfile_gus {
+	FILE* o;
+	unzFile		z;
+} qfile_gut;
+
+typedef struct qfile_us {
+	qfile_gut	file;
+	bool		unique;
+} qfile_ut;
+
+typedef struct {
+	qfile_ut	handleFiles;
+	bool		handleSync;
+	int			baseOffset;
+	int			fileSize;
+	int			zipFilePos;
+	bool		zipFile;
+	bool		streamed;
+	char		name[MAX_ZPATH];
+} fileHandleData_t;
+
+extern fileHandleData_t	fsh[MAX_FILE_HANDLES];
+extern fileHandleData_t	fsh_ifstream[MAX_FILE_HANDLES];
+
 extern CCommon* g_Common;
+
+//============================================================================
+// Missi: PK3 support (8/28/2024)
+
+typedef struct fileInPack_s {
+	char* name;		// name of the file
+	unsigned long			pos;		// file info position in zip
+	struct	fileInPack_s* next;		// next file in the hash
+} fileInPack_t;
+
+typedef struct {
+	char			pakFilename[MAX_OSPATH];	// c:\quake3\baseq3\pak0.pk3
+	char			pakBasename[MAX_OSPATH];	// pak0
+	char			pakGamename[MAX_OSPATH];	// baseq3
+	unzFile			handle;						// handle to zip file
+	int				checksum;					// regular checksum
+	int				pure_checksum;				// checksum for pure
+	int				numfiles;					// number of files in pk3
+	int				referenced;					// referenced file flags
+	int				hashSize;					// hash table size (power of 2)
+	fileInPack_t** hashTable;					// hash table
+	fileInPack_t* buildBuffer;				// buffer with the filenames etc.
+} pack_pk3_t;
+
+typedef struct {
+	char		path[MAX_OSPATH];		// c:\quake3
+	char		gamedir[MAX_OSPATH];	// baseq3
+} directory_t;
+
+//============================================================================
+// Missi: Repurposed QuakeSpasm filesystem stuff with Quake III
+// additions (1/1/2023)
 
 #define	FS_ENT_NONE			(0)
 #define	FS_ENT_FILE			(1 << 0)
 #define	FS_ENT_DIRECTORY	(1 << 1)
 
-// Missi: Repurposed QuakeSpasm filesystem stuff (1/1/2023)
 class CFileSystem
 {
 public:
@@ -300,12 +373,23 @@ public:
 	int FS_fgetc(fshandle_t* fh);
 	char* FS_fgets(char* s, int size, fshandle_t* fh);
 	long FS_filelength(fshandle_t* fh);
+
+	pack_pk3_t* FS_LoadZipFile(const char* zipfile, const char* basename);
+	long FS_HashFileName(const char* fname, int hashSize);
+
+	int FS_HandleForFile();
+
+private:
+#if (__linux__) || (__apple__)
+	static constexpr char PATH_SEP = '/';
+#else
+	static constexpr char PATH_SEP = '\\';
+#endif
 };
 
 extern CFileSystem* g_FileSystem;
 
 //============================================================================
-
 
 template<typename T>
 int loadsize;
@@ -400,7 +484,19 @@ inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 	if (!buf)
 		Sys_Error("COM_LoadFile: not enough space for %s", path);
 	else
-		((byte*)buf)[len] = 0;
+	{
+		if (g_Common->file_from_pk3)
+		{
+			g_Common->file_from_pk3 = 0;
+			unzReadCurrentFile(fsh[h].handleFiles.file.z, buf, len);
+
+			unzCloseCurrentFile(fsh[h].handleFiles.file.z);
+
+			g_Common->COM_CloseFile(h);
+
+			return buf;
+		}
+	}
 
 #if 0
 #ifndef GLQUAKE
@@ -412,6 +508,8 @@ inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 
 	Sys_FileRead(h, buf, len);
 	g_Common->COM_CloseFile(h);
+
+	((byte*)buf)[len] = 0;
 
 #if 0
 #ifndef GLQUAKE
@@ -496,9 +594,10 @@ inline T* COM_LoadFile_IFStream(const char* path, int usehunk, uintptr_t* path_i
     T* buf				= nullptr;
     char base[32]		= {};
     size_t	len			= 0;
+	unzFile	unzf = {};
 
     // look for it in the filesystem or pack files
-    len = g_Common->COM_FOpenFile_IFStream(path, &f, path_id);
+    len = g_Common->COM_FOpenFile_IFStream(path, &f, path_id, &unzf);
     if (f.bad())
         return nullptr;
 
@@ -540,10 +639,23 @@ inline T* COM_LoadFile_IFStream(const char* path, int usehunk, uintptr_t* path_i
 
     if (!buf)
         Sys_Error("COM_LoadFile: not enough space for %s", path);
-    else
+	else
+	{
+		if (g_Common->file_from_pk3)
+		{
+			g_Common->file_from_pk3 = 0;
+
+			unzReadCurrentFile_IFStream(unzf, &f, buf, len);
+
+			f.close();
+			unzCloseCurrentFile(unzf);
+			return buf;
+		}
+	}
         ((byte*)buf)[len] = 0;
 
     f.read(buf, len);
+	f.close();
 
     return buf;
 }
