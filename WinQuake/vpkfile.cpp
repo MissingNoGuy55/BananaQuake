@@ -198,7 +198,7 @@ void LoadAllVPKs()
 {
 	char combined[256] = {};
 
-	snprintf(combined, sizeof(combined), "%s/vpks", g_Common->com_gamedir);
+	snprintf(combined, sizeof(combined), "%s/vpk", g_Common->com_gamedir);
 
 	cxxpath p = combined;
 	
@@ -217,10 +217,10 @@ void LoadAllVPKs()
 
 		if (str.find("_dir.vpk") != cxxstring::npos)
 		{
-			if (str.find("vpks") == cxxstring::npos)
+			if (str.find("vpk") == cxxstring::npos)
 				continue;
 
-			str.erase(0, str.find("vpks"));
+			str.erase(0, str.find("vpk"));
 
 			if (str.find("\\") != cxxstring::npos)
 				str.replace(str.find("\\"), 1, "/");
