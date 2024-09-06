@@ -155,28 +155,28 @@ public:
 
 	CCoreRenderer();
 
-	void R_Init(void);
-	void R_InitTextures(void);
-	void R_InitTurb(void);
-	// void R_InitEfrags(void);
-	void R_DrawEntitiesOnList(void);
-	void R_DrawViewModel(void);
-	void R_DrawBEntitiesOnList(void);
-	void R_EdgeDrawing(void);
-	void R_RenderView_(void);
-	void R_RenderView(void);		// must set r_refdef first
+	void R_Init();
+	void R_InitTextures();
+	void R_InitTurb();
+	// void R_InitEfrags();
+	void R_DrawEntitiesOnList();
+	void R_DrawViewModel();
+	void R_DrawBEntitiesOnList();
+	void R_EdgeDrawing();
+	void R_RenderView_();
+	void R_RenderView();		// must set r_refdef first
 	void R_ViewChanged(vrect_t* pvrect, int lineadj, float aspect);
-	void R_MarkLeaves(void);
+	void R_MarkLeaves();
 	// called whenever r_refdef or vid change
 	// void R_InitSky(struct texture_s* mt);	// called at level load
 
 	void R_AddEfrags(entity_t* ent);
 	void R_RemoveEfrags(entity_t* ent);
 
-	void R_NewMap(void);
+	void R_NewMap();
 
 
-	void R_ParseParticleEffect(void);
+	void R_ParseParticleEffect();
 	void R_RunParticleEffect(vec3_t org, vec3_t dir, int color, int count);
 	void R_RocketTrail(vec3_t start, vec3_t end, int type);
 
@@ -190,14 +190,14 @@ public:
 	void R_LavaSplash(vec3_t org);
 	void R_TeleportSplash(vec3_t org);
 
-	// void R_PushDlights(void);
+	// void R_PushDlights();
 	void R_SetVrect(vrect_t* pvrect, vrect_t* pvrectin, int lineadj);
 
-	static void R_ReadPointFile_f(void);
-	void R_DrawParticles(void);
-	void R_InitParticles(void);
-	void R_ClearParticles(void);
-	void R_PushDlights(void);
+	static void R_ReadPointFile_f();
+	void R_DrawParticles();
+	void R_InitParticles();
+	void R_ClearParticles();
+	void R_PushDlights();
 #ifdef GLQUAKE
 	CGLTexture* solidskytexture;
 	CGLTexture* alphaskytexture;
@@ -210,20 +210,20 @@ public:
 	void R_StoreEfrags(efrag_t** ppefrag);
 
 #ifndef GLQUAKE
-	static void R_TimeRefresh_f(void);
-	void R_TimeGraph(void);
-	void R_PrintAliasStats(void);
-	void R_PrintTimes(void);
-	void R_PrintDSpeeds(void);
-	void R_AnimateLight(void);
+	static void R_TimeRefresh_f();
+	void R_TimeGraph();
+	void R_PrintAliasStats();
+	void R_PrintTimes();
+	void R_PrintDSpeeds();
+	void R_AnimateLight();
 	int R_LightPoint(vec3_t p);
-	void R_SetupFrame(void);
-	void R_cshift_f(void);
+	void R_SetupFrame();
+	void R_cshift_f();
 	struct msurface_s* warpface;
 
-	void R_AddDynamicLights(void);
+	void R_AddDynamicLights();
 
-	void R_BuildLightMap(void);
+	void R_BuildLightMap();
 	void R_EmitEdge(struct msurface_s* pv0, struct msurface_s* pv1);
 	void R_ClipEdge(struct msurface_s* pv0, struct msurface_s* pv1, struct clipplane_s* clip);
 	void R_SplitEntityOnNode2(struct mnode_s* node);
@@ -236,7 +236,7 @@ public:
 	void R_SplitEntityOnNode(mnode_s* node);
 #endif
 
-	void R_DrawSurface(void);
+	void R_DrawSurface();
 
 	static unsigned		blocklights[BLOCK_WIDTH * BLOCK_HEIGHT * 3];
 
@@ -257,8 +257,8 @@ extern	int		reinit_surfcache;	// if 1, surface cache is currently empty and
 extern bool	r_cache_thrash;	// set if thrashing the surface cache
 
 int	D_SurfaceCacheForRes (int width, int height);
-void D_FlushCaches (void);
-void D_DeleteSurfaceCache (void);
+void D_FlushCaches ();
+void D_DeleteSurfaceCache ();
 void D_InitCaches (void *buffer, int size);
 
 //extern ERenderContext R_ResolveRenderer();		// Missi: nasty! gross! horrid! i hate myself! (3/15/2022)

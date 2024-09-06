@@ -47,23 +47,23 @@ public:
 
     int			minimum_memory;
 
-	void Host_ClearMemory(void);
+	void Host_ClearMemory();
 	bool Host_FilterTime(float time);
-	void Host_GetConsoleCommands(void);
-	void Host_ServerFrame(void);
+	void Host_GetConsoleCommands();
+	void Host_ServerFrame();
 
-	void Host_InitCommands(void);
+	void Host_InitCommands();
 	//void Host_InitVCR(quakeparms_t<byte*> parms);
 	void Host_Init(quakeparms_t<byte*> parms);
-	void Host_Shutdown(void);
+	void Host_Shutdown();
 	void Host_Error(const char* error, ...);
 	void Host_EndGame(const char* message, ...);
 	void Host_Frame(float time);
 	void Host_ClientCommands(const char* fmt, ...);
 	void Host_ShutdownServer(bool crash);
 
-	void Host_InitLocal(void);
-	void Host_WriteConfiguration(void);
+	void Host_InitLocal();
+	void Host_WriteConfiguration();
 	void _Host_Frame(float time);
 
 //	quakeparms_t host_parms;
@@ -85,7 +85,7 @@ public:
 	cvar_t	host_framerate = { "host_framerate","0" };	// set for slow motion
 	cvar_t	host_speeds = { "host_speeds","0" };			// set for running times
 
-	cvar_t host_timescale { "host_timescale", "1.0", false, CVAR_SERVER | CVAR_CHEAT };
+	cvar_t host_timescale { "host_timescale", "1.0", false, CVAR_SERVER };
 
 	cvar_t	sys_ticrate = { "sys_ticrate","0.05" };
 	cvar_t	serverprofile = { "serverprofile","0" };
@@ -109,46 +109,47 @@ public:
 
 	cvar_t	pausable = { "pausable","1" };
 
-	void Host_FindMaxClients(void);
+	void Host_FindMaxClients();
 
 	// Missi: console commands (6/21/2024)
 	static void Host_SavegameComment(char* text);
-	static void Host_Color_f(void);
-	static void Host_Kill_f(void);
-	static void Host_Pause_f(void);
-	static void Host_PreSpawn_f(void);
-	static void Host_Spawn_f(void);
-	static void Host_Begin_f(void);
-	static void Host_Kick_f(void);
-	static void Host_Give_f(void);
-	static void Host_Viewmodel_f(void);
-	static void Host_Viewframe_f(void);
-	static void Host_Viewnext_f(void);
-	static void Host_Viewprev_f(void);
-	static void Host_Demos_f(void);
-	static void Host_Startdemos_f(void);
-	static void Host_Stopdemo_f(void);
-	static void Host_Fly_f(void);
-	static void Host_Ping_f(void);
-	static void Host_Map_f(void);
-	static void Host_Changelevel_f(void);
-	static void Host_Restart_f(void);
-	static void Host_Reconnect_f(void);
-	static void Host_Connect_f(void);
-	static void Host_Savegame_f(void);
-	static void Host_Loadgame_f(void);
-	static void Host_Name_f(void);
-	static void Host_Version_f(void);
+	static void Host_Color_f();
+	static void Host_Kill_f();
+	static void Host_Pause_f();
+	static void Host_PreSpawn_f();
+	static void Host_Spawn_f();
+	static void Host_Begin_f();
+	static void Host_Kick_f();
+	static void Host_Give_f();
+	static void Host_Viewmodel_f();
+	static void Host_Viewframe_f();
+	static void Host_Viewnext_f();
+	static void Host_Viewprev_f();
+	static void Host_Demos_f();
+	static void Host_Startdemos_f();
+	static void Host_Stopdemo_f();
+	static void Host_Fly_f();
+	static void Host_Ping_f();
+	static void Host_Map_f();
+	static void Host_Changelevel_f();
+	static void Host_Restart_f();
+	static void Host_Reconnect_f();
+	static void Host_Connect_f();
+	static void Host_Savegame_f();
+	static void Host_Loadgame_f();
+	static void Host_Name_f();
+	static void Host_Version_f();
 	static void Host_Say(bool teamonly);
-	static void Host_Say_f(void);
-	static void Host_Say_Team_f(void);
-	static void Host_Tell_f(void);
-	static void Host_Quit_f(void);
-	static void Host_Status_f(void);
-	static void Host_God_f(void);
-	static void Host_Notarget_f(void);
-	static void Host_Noclip_f(void);
-	static void Host_VoiceChat_f(void);
+	static void Host_Say_f();
+	static void Host_Say_Team_f();
+	static void Host_Tell_f();
+	static void Host_Quit_f();
+	static void Host_Status_f();
+	static void Host_God_f();
+	static void Host_Notarget_f();
+	static void Host_Noclip_f();
+	static void Host_VoiceChat_f();
+	static void Host_Bot_f();
 
 	jmp_buf 	host_abortserver;
 

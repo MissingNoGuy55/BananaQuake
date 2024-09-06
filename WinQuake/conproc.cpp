@@ -88,7 +88,7 @@ void CConProc::InitConProc (HANDLE hFile, HANDLE heventParent, HANDLE heventChil
 }
 
 
-void CConProc::DeinitConProc (void)
+void CConProc::DeinitConProc ()
 {
 	if (heventDone)
 		SetEvent (heventDone);

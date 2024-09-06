@@ -58,8 +58,8 @@ typedef struct snd_stream_s
 	void* priv;		/* data private to the codec. */
 } snd_stream_t;
 
-void S_CodecInit(void);
-void S_CodecShutdown(void);
+void S_CodecInit();
+void S_CodecShutdown();
 
 /* Callers of the following S_CodecOpenStream* functions
  * are reponsible for attaching any path to the filename */

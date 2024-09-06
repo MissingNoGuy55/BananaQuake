@@ -36,34 +36,32 @@ static const char*     safeargvs[NUM_SAFE_ARGVS] =
 	{"-stdvid", "-nolan", "-nosound", "-nocdaudio", "-nojoy", "-nomouse", "-dibonly"};
 
 
-cvar_t  registered = {"registered","1"};	// Missi: (6/15/2022)
-cvar_t  cmdline = {"cmdline","0", false, true};
+cvar_t  registered = {"registered","0"};
+static cvar_t  cmdline = {"cmdline","0", false, true};
 
-bool	com_modified;   // set true if using non-id files
-
-bool	proghack;
-
-int		static_registered = 1;  // only for startup check, then set
-
-bool	msg_suppress_1 = 0;
+static bool	com_modified;   // set true if using non-id files
+static bool	proghack;
+static int	static_registered = 1;  // only for startup check, then set
+static bool	msg_suppress_1 = 0;
 
 // if a packfile directory differs from this, it is assumed to be hacked
-constexpr int PAK0_COUNT	= 339;
-constexpr int PAK0_CRC		= 32981;
+static constexpr int PAK0_COUNT	= 339;
+static constexpr int PAK0_CRC	= 32981;
 
-char	CCommon::com_token[1024] = {};
+char	CCommon::com_token[1024];
 int		CCommon::com_argc = 0;
-char**	CCommon::com_argv = NULL;
+char**	CCommon::com_argv = nullptr;
 bool	CCommon::com_eof = false;
 int		CCommon::com_filesize = 0;
-char    CCommon::com_cachedir[MAX_OSPATH] = {};
-char    CCommon::com_gamedir[MAX_OSPATH] = {};
+char    CCommon::com_cachedir[MAX_OSPATH];
+char    CCommon::com_gamedir[MAX_OSPATH];
 int		CCommon::file_from_pak = 0;
 int		CCommon::file_from_pk3 = 0;
+int		CCommon::file_from_vpk = 0;
 unzFile	CCommon::current_pk3 = nullptr;
 
 constexpr int CMDLINE_LENGTH = 256;
-char	com_cmdline[CMDLINE_LENGTH];
+static char	com_cmdline[CMDLINE_LENGTH];
 
 bool		standard_quake = true, rogue, hipnotic;
 
@@ -739,14 +737,14 @@ void MSG_WriteAngle (sizebuf_t *sb, float f)
 int                     msg_readcount;
 bool        msg_badread;
 
-void MSG_BeginReading (void)
+void MSG_BeginReading ()
 {
 	msg_readcount = 0;
 	msg_badread = false;
 }
 
 // returns -1 and sets msg_badread if no more characters are available
-int MSG_ReadChar (void)
+int MSG_ReadChar ()
 {
 	int     c;
 	
@@ -762,7 +760,7 @@ int MSG_ReadChar (void)
 	return c;
 }
 
-int MSG_ReadByte (void)
+int MSG_ReadByte ()
 {
 	int     c;
 	
@@ -778,7 +776,7 @@ int MSG_ReadByte (void)
 	return c;
 }
 
-int MSG_ReadShort (void)
+int MSG_ReadShort ()
 {
 	int     c;
 	
@@ -796,7 +794,7 @@ int MSG_ReadShort (void)
 	return c;
 }
 
-int MSG_ReadLong (void)
+int MSG_ReadLong ()
 {
 	int     c;
 	
@@ -816,7 +814,7 @@ int MSG_ReadLong (void)
 	return c;
 }
 
-float MSG_ReadFloat (void)
+float MSG_ReadFloat ()
 {
 	union
 	{
@@ -836,7 +834,7 @@ float MSG_ReadFloat (void)
 	return dat.f;   
 }
 
-const char *MSG_ReadString (void)
+const char *MSG_ReadString ()
 {
 	static char     string[2048];
 	int             l,c;
@@ -856,12 +854,12 @@ const char *MSG_ReadString (void)
 	return string;
 }
 
-float MSG_ReadCoord (void)
+float MSG_ReadCoord ()
 {
 	return MSG_ReadFloat();
 }
 
-float MSG_ReadAngle (void)
+float MSG_ReadAngle ()
 {
 	return MSG_ReadChar() * (360.0/256);
 }
@@ -1249,13 +1247,13 @@ Immediately exits out if an alternate game was attempted to be started without
 being registered.
 ================
 */
-void CCommon::COM_CheckRegistered (void)
+void CCommon::COM_CheckRegistered ()
 {
 	int             h;
 	unsigned short  check[128];
 	int                     i;
 
-	g_Common->COM_OpenFile("gfx/pop.lmp", &h, NULL);
+	COM_OpenFile("gfx/pop.lmp", &h, NULL);
 	static_registered = 0;
 
 	if (h == -1)
@@ -1337,13 +1335,13 @@ void CCommon::COM_InitArgv (int argc, char **argv)
 
 	com_argv = largv;
 
-	if (g_Common->COM_CheckParm ("-rogue"))
+	if (COM_CheckParm ("-rogue"))
 	{
 		rogue = true;
 		standard_quake = false;
 	}
 
-	if (g_Common->COM_CheckParm ("-hipnotic"))
+	if (COM_CheckParm ("-hipnotic"))
 	{
 		hipnotic = true;
 		standard_quake = false;
@@ -1387,7 +1385,7 @@ void CCommon::COM_Init (const char *basedir)
 	g_pCmds->Cmd_AddCommand ("path", CCommon::COM_Path_f);
 
 	COM_InitFilesystem ();
-	//COM_CheckRegistered ();
+	COM_CheckRegistered ();
 }
 
 
@@ -1402,8 +1400,8 @@ Missi: made this buffer-size safe (4/30/2023)
 */
 const char* CCommon::va(const char *format, ...)
 {
-	va_list			argptr = {};
-	static char		string[1024] = {};
+	va_list			argptr;
+	static char		string[1024];
 	
 	va_start (argptr, format);
 	vsnprintf (string, sizeof(string), format,argptr);
@@ -1464,9 +1462,9 @@ are strict about file's being opened when writing.
 =============================================================================
 */
 
-int     com_filesize;
+static int     com_filesize;
 
-#define MAX_FILES_IN_PACK       8192    // Missi: was 2048 (7/12/2024)
+static constexpr unsigned int MAX_FILES_IN_PACK = 8192;    // Missi: was 2048 (7/12/2024)
 
 struct searchpath_t
 {
@@ -1506,7 +1504,7 @@ COM_Path_f
 
 ============
 */
-void CCommon::COM_Path_f (void)
+void CCommon::COM_Path_f ()
 {
 	searchpath_t    *s;
 	
@@ -1618,7 +1616,7 @@ Sets com_filesize and one of handle or file
 int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintptr_t* path_id)
 {
 	searchpath_t	*search = nullptr;
-	char			netpath[MAX_OSPATH] = {};
+	char			netpath[MAX_OSPATH];
 	pack_t			*pak = nullptr;
 	pack_pk3_t		*pk3 = nullptr;
 	int				i = 0;
@@ -1632,6 +1630,7 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 		Sys_Error ("COM_FindFile: both handle and file set");
 	
 	file_from_pak = 0;
+	file_from_pk3 = 0;
 
 //
 // search through the path, one element at a time
@@ -1819,10 +1818,10 @@ heavy usage of the FILE struct from C. That is lame. Write a derivative later to
 of std::ifstream so PK3 files can be used. (8/29/2024)
 ===========
 */
-int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, unzFile* pk3_file, uintptr_t* path_id)
+int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id, unzFile* pk3_file)
 {
 	searchpath_t*	search = NULL;
-	char			netpath[MAX_OSPATH] = {};
+	char			netpath[MAX_OSPATH];
 	pack_t*			pak = NULL;
 	pack_pk3_t*		pk3 = NULL;
 	int				i = 0;
@@ -1836,6 +1835,7 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 		Sys_Error("COM_FindFile: both handle and file set");
 
 	file_from_pak = 0;
+	file_from_pk3 = 0;
 
 	//
 	// search through the path, one element at a time
@@ -2027,6 +2027,7 @@ things to the game directory on disk. (8/29/2024)
 void CCommon::COM_FindFile_OFStream(const char* filename, cxxofstream* file, uintptr_t* path_id)
 {
 	file_from_pak = 0;
+	file_from_pk3 = 0;
 
 	char fullpath[MAX_OSPATH];
 	snprintf(fullpath, sizeof(fullpath), "%s", filename);
@@ -2047,6 +2048,7 @@ Sets com_filesize and one of handle or file
 cxxifstream* CCommon::COM_FindFile_VPK(const char* filename, uintptr_t* path_id)
 {
 	file_from_pak = 0;
+	file_from_pk3 = 0;
 
 	//
 	// search through the path, one element at a time
@@ -2142,7 +2144,7 @@ into the file.
 */
 int CCommon::COM_FOpenFile_IFStream(const char* filename, cxxifstream* file, uintptr_t* path_id, unzFile* pk3_file)
 {
-	return COM_FindFile_IFStream(filename, nullptr, file, pk3_file, path_id);
+	return COM_FindFile_IFStream(filename, nullptr, file, path_id, pk3_file);
 }
 
 /*
@@ -2245,13 +2247,13 @@ of the list so they override previous pack files.
 */
 pack_t* CCommon::COM_LoadPackFile (char *packfile)
 {
-	dpackheader_t			header = {};
+	dpackheader_t			header;
 	int                     i = 0;
 	packfile_t              *newfiles = NULL;
 	int                     numpackfiles = 0;
 	pack_t                  *pack = NULL;
 	int                     packhandle = 0;
-	static dpackfile_t      info[MAX_FILES_IN_PACK] = {};
+	static dpackfile_t      info[MAX_FILES_IN_PACK];
 	unsigned short          crc = 0;
 
 	if (Sys_FileOpenRead (packfile, &packhandle) == -1)
@@ -2321,7 +2323,7 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 	searchpath_t			*search = nullptr;
 	pack_t                  *pak = nullptr;
 	pack_pk3_t				*pk3 = nullptr;
-	char                    pakfile[1024] = {};
+	char                    pakfile[1024];
 	uintptr_t				path_id = 0;
 	bool                    been_here = false;
 
@@ -2361,7 +2363,7 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 		com_searchpaths = search;
 	}
 
-	char pk3_folder[MAX_OSPATH] = {};
+	char pk3_folder[MAX_OSPATH];
 	snprintf(pk3_folder, sizeof(pk3_folder), "%s/pk3", dir);
 
 	if (!fs::exists(pk3_folder))
@@ -2388,7 +2390,7 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 		search->next = com_searchpaths;
 		com_searchpaths = search;
 
-		Con_PrintColor(TEXT_COLOR_GREEN, "Added PK3 file %s\n", file.path().string().c_str());
+		Con_PrintColor(TEXT_COLOR_GREEN, "Added PK3 file %s (%d files)\n", file.path().string().c_str(), pk3->numfiles);
 	}
 
 //
@@ -2402,11 +2404,14 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 COM_InitFilesystem
 ================
 */
-void CCommon::COM_InitFilesystem (void)
+void CCommon::COM_InitFilesystem ()
 {
 	int				i, j;
 	char			basedir[MAX_OSPATH] = "";
 	searchpath_t	*search = NULL;
+
+	memset(com_gamedir, 0, sizeof(com_gamedir));
+	memset(com_cachedir, 0, sizeof(com_cachedir));
 
 //
 // -basedir <path>
@@ -2444,9 +2449,9 @@ void CCommon::COM_InitFilesystem (void)
 //
 	COM_AddGameDirectory (va("%s/" GAMENAME, basedir) );
 
-	if (g_Common->COM_CheckParm ("-rogue"))
+	if (COM_CheckParm ("-rogue"))
 		COM_AddGameDirectory (va("%s/rogue", basedir) );
-	if (g_Common->COM_CheckParm ("-hipnotic"))
+	if (COM_CheckParm ("-hipnotic"))
 		COM_AddGameDirectory (va("%s/hipnotic", basedir) );
 
 //
@@ -2466,7 +2471,7 @@ void CCommon::COM_InitFilesystem (void)
 		else
 		{
 			const char* absPath = com_argv[i + 1];
-			char path[MAX_QPATH] = {};
+			char path[MAX_QPATH];
 
 #ifndef __linux__
 			Q_FixQuotes(path, absPath, sizeof(path));
@@ -2514,7 +2519,7 @@ void CCommon::COM_InitFilesystem (void)
 	}
 #endif
 
-	if (g_Common->COM_CheckParm ("-proghack"))
+	if (COM_CheckParm ("-proghack"))
 		proghack = true;
 }
 

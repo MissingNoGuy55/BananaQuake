@@ -337,7 +337,7 @@ R_LoadSkys
 ==================
 */
 const char	*suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
-void CGLRenderer::R_LoadSkys (void)
+void CGLRenderer::R_LoadSkys ()
 {
 	int		i;
 	FILE	*f;
@@ -623,7 +623,7 @@ void CGLRenderer::R_DrawSkyChain_Q2 (msurface_t *s)
 R_ClearSkyBox
 ==============
 */
-void CGLRenderer::R_ClearSkyBox (void)
+void CGLRenderer::R_ClearSkyBox ()
 {
 	int		i;
 
@@ -678,7 +678,7 @@ R_DrawSkyBox
 ==============
 */
 int	skytexorder[6] = {0,2,1,3,4,5};
-void CGLRenderer::R_DrawSkyBox (void)
+void CGLRenderer::R_DrawSkyBox ()
 {
 	int		i, j, k;
 	vec3_t	v;

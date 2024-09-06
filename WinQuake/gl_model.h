@@ -480,8 +480,8 @@ extern cvar_t gl_subdivide_size;
 
 //============================================================================
 
-void	Mod_Init (void);
-void	Mod_ClearAll (void);
+void	Mod_Init ();
+void	Mod_ClearAll ();
 model_t *Mod_ForName (const char *name, bool crash);
 
 template<typename T>

@@ -67,6 +67,38 @@ static const char *svc_strings[] =
 	"svc_cutscene"
 };
 
+unsigned long long cl_items_global[] =
+{
+	IT_SHOTGUN,
+	IT_SUPER_SHOTGUN,
+	IT_NAILGUN,
+	IT_SUPER_NAILGUN,
+	IT_GRENADE_LAUNCHER,
+	IT_ROCKET_LAUNCHER,
+	IT_LIGHTNING,
+	IT_SUPER_LIGHTNING,
+	IT_SHELLS,
+	IT_NAILS,
+	IT_ROCKETS,
+	IT_CELLS,
+	IT_AXE,
+	IT_ARMOR1,
+	IT_ARMOR2,
+	IT_ARMOR3,
+	IT_SUPERHEALTH,
+	IT_KEY1,
+	IT_KEY2,
+	IT_INVISIBILITY,
+	IT_INVULNERABILITY,
+	IT_SUIT,
+	IT_QUAD,
+	IT_SIGIL1,
+	IT_SIGIL2,
+	IT_SIGIL3,
+	IT_SIGIL4,
+	IT_BULLET_TIME
+};
+
 //=============================================================================
 
 /*
@@ -98,7 +130,7 @@ entity_t	*CL_EntityNum (int num)
 CL_ParseStartSoundPacket
 ==================
 */
-void CL_ParseStartSoundPacket(void)
+void CL_ParseStartSoundPacket()
 {
     vec3_t  pos;
     int 	channel, ent;
@@ -143,7 +175,7 @@ When the client is taking a long time to load stuff, send keepalive messages
 so the server doesn't disconnect.
 ==================
 */
-void CL_KeepaliveMessage (void)
+void CL_KeepaliveMessage ()
 {
 	float	time;
 	static float lastmsg;
@@ -202,7 +234,7 @@ void CL_KeepaliveMessage (void)
 CL_ParseServerInfo
 ==================
 */
-void CL_ParseServerInfo (void)
+void CL_ParseServerInfo ()
 {
 	const char	*str = NULL;
 	int		i = 0;
@@ -516,9 +548,9 @@ CL_ParseClientdata
 Server information pertaining to this client only
 ==================
 */
-void CL_ParseClientdata (int bits)
+void CL_ParseClientdata (long long bits)
 {
-	int		i, j;
+	unsigned long long		i, j;
 	
 	if (bits & SU_VIEWHEIGHT)
 		cl.viewheight = MSG_ReadChar ();
@@ -533,11 +565,11 @@ void CL_ParseClientdata (int bits)
 	VectorCopy (cl.mvelocity[0], cl.mvelocity[1]);
 	for (i=0 ; i<3 ; i++)
 	{
-		if (bits & (SU_PUNCH1<<i) )
+		if (bits & (static_cast<long long>(SU_PUNCH1) << i) )
 			cl.punchangle[i] = MSG_ReadChar();
 		else
 			cl.punchangle[i] = 0;
-		if (bits & (SU_VELOCITY1<<i) )
+		if (bits & (static_cast<long long>(SU_VELOCITY1) << i) )
 			cl.mvelocity[0][i] = MSG_ReadChar()*16;
 		else
 			cl.mvelocity[0][i] = 0;
@@ -550,7 +582,7 @@ void CL_ParseClientdata (int bits)
 	{	// set flash times
 		Sbar_Changed ();
 		for (j=0 ; j<32 ; j++)
-			if ( (i & (1<<j)) && !(cl.items & (1<<j)))
+			if ( (i & (static_cast<long long>(1) << j)) && !(cl.items & (static_cast<long long>(1) << j)))
 				cl.item_gettime[j] = cl.time;
 		cl.items = i;
 	}
@@ -670,7 +702,7 @@ void CL_NewTranslation (int slot)
 CL_ParseStatic
 =====================
 */
-void CL_ParseStatic (void)
+void CL_ParseStatic ()
 {
 	entity_t *ent;
 	int		i;
@@ -703,7 +735,7 @@ void CL_ParseStatic (void)
 CL_ParseStaticSound
 ===================
 */
-void CL_ParseStaticSound (void)
+void CL_ParseStaticSound ()
 {
 	vec3_t		org;
 	int			sound_num, vol, atten;
@@ -726,7 +758,7 @@ void CL_ParseStaticSound (void)
 CL_ParseServerMessage
 =====================
 */
-void CL_ParseServerMessage (void)
+void CL_ParseServerMessage ()
 {
 	int			cmd;
 	int			i;

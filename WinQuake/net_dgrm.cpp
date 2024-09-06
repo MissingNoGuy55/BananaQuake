@@ -103,7 +103,7 @@ char *StrAddr (struct qsockaddr *addr)
 unsigned long banAddr = 0x00000000;
 unsigned long banMask = 0xffffffff;
 
-void NET_Ban_f (void)
+void NET_Ban_f ()
 {
 	char	addrStr [32];
 	char	maskStr [32];
@@ -472,7 +472,7 @@ void PrintStats(qsocket_t *s)
 	Con_Printf("\n");
 }
 
-void NET_Stats_f (void)
+void NET_Stats_f ()
 {
 	qsocket_t	*s;
 
@@ -517,10 +517,10 @@ static int		testPollCount;
 static int		testDriver;
 static int		testSocket;
 
-static void Test_Poll(void);
+static void Test_Poll();
 PollProcedure	testPollProcedure = {NULL, 0.0, Test_Poll};
 
-static void Test_Poll(void)
+static void Test_Poll()
 {
 	struct qsockaddr clientaddr;
 	int		control;
@@ -577,7 +577,7 @@ static void Test_Poll(void)
 	}
 }
 
-static void Test_f (void)
+static void Test_f ()
 {
 	char	host[256];
 	int		n;
@@ -645,10 +645,10 @@ static bool test2InProgress = false;
 static int		test2Driver;
 static int		test2Socket;
 
-static void Test2_Poll(void);
+static void Test2_Poll();
 PollProcedure	test2PollProcedure = {NULL, 0.0, Test2_Poll};
 
-static void Test2_Poll(void)
+static void Test2_Poll()
 {
 	struct qsockaddr clientaddr;
 	int		control;
@@ -706,7 +706,7 @@ Done:
 	return;
 }
 
-static void Test2_f (void)
+static void Test2_f ()
 {
 	char		host[256];
 	int		n;
@@ -764,7 +764,7 @@ JustDoIt:
 }
 
 
-int Datagram_Init (void)
+int Datagram_Init ()
 {
 	int i;
 	int csock;
@@ -794,7 +794,7 @@ int Datagram_Init (void)
 }
 
 
-void Datagram_Shutdown (void)
+void Datagram_Shutdown ()
 {
 	int i;
 
@@ -828,7 +828,7 @@ void Datagram_Listen (bool state)
 }
 
 
-static qsocket_t *_Datagram_CheckNewConnections (void)
+static qsocket_t *_Datagram_CheckNewConnections ()
 {
 	struct qsockaddr clientaddr;
 	struct qsockaddr newaddr;
@@ -939,6 +939,9 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 		}
 		else
 			var = cvar_vars;	// Missi: might be broke
+
+		if (var->flags & CVAR_READONLY)
+			Con_Warning("Attempted to change read-only cvar %s!\n", var->name);
 
 		// search for the next server cvar
 		while (var)
@@ -1089,7 +1092,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 	return sock;
 }
 
-qsocket_t *Datagram_CheckNewConnections (void)
+qsocket_t *Datagram_CheckNewConnections ()
 {
 	qsocket_t *ret = NULL;
 

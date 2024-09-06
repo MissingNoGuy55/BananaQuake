@@ -88,18 +88,18 @@ bool fakedma = false;
 int fakedma_updates = 15;
 
 
-void CSoundDMA::S_AmbientOff (void)
+void CSoundDMA::S_AmbientOff ()
 {
 	g_SoundSystem->snd_ambient = false;
 }
 
 
-void CSoundDMA::S_AmbientOn (void)
+void CSoundDMA::S_AmbientOn ()
 {
 	snd_ambient = true;
 }
 
-void CSoundDMA::S_SoundInfo_f(void)
+void CSoundDMA::S_SoundInfo_f()
 {
 	g_SoundSystem->S_SoundInfo();
 }
@@ -128,7 +128,7 @@ S_Startup
 ================
 */
 
-void CSoundDMA::S_Startup (void)
+void CSoundDMA::S_Startup ()
 {
 	if (!snd_initialized)
 		return;
@@ -151,7 +151,7 @@ void CSoundDMA::S_Startup (void)
 S_Init
 ================
 */
-void CSoundDMA::S_Init (void)
+void CSoundDMA::S_Init ()
 {
 
 	Con_Printf("\nSound Initialization\n");
@@ -234,7 +234,7 @@ void CSoundDMA::S_Init (void)
 // Shutdown sound engine
 // =======================================================================
 
-void CSoundDMA::S_Shutdown(void)
+void CSoundDMA::S_Shutdown()
 {
 
 	if (!sound_started)
@@ -547,12 +547,12 @@ void CSoundDMA::S_StopAllSounds(bool clear)
 		g_SoundSystem->S_ClearBuffer ();
 }
 
-void CSoundDMA::S_StopAllSoundsC (void)
+void CSoundDMA::S_StopAllSoundsC ()
 {
 	S_StopAllSounds (true);
 }
 
-void CSoundDMA::S_ClearBuffer (void)
+void CSoundDMA::S_ClearBuffer ()
 {
 	int		clear;
 
@@ -624,7 +624,7 @@ void CSoundDMA::S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float atten
 S_UpdateAmbientSounds
 ===================
 */
-void CSoundDMA::S_UpdateAmbientSounds (void)
+void CSoundDMA::S_UpdateAmbientSounds ()
 {
 	mleaf_t		*l = NULL;
 	float		vol;
@@ -877,7 +877,7 @@ void CSoundDMA::S_CheckMDMAMusic()
 	}
 }
 
-void CSoundDMA::GetSoundtime(void)
+void CSoundDMA::GetSoundtime()
 {
 	int		samplepos;
 	static	int		buffers;
@@ -908,7 +908,7 @@ void CSoundDMA::GetSoundtime(void)
 
 }
 
-void CSoundDMA::S_ExtraUpdate (void)
+void CSoundDMA::S_ExtraUpdate ()
 {
 
 #ifdef _WIN32
@@ -920,7 +920,7 @@ void CSoundDMA::S_ExtraUpdate (void)
 	S_Update_();
 }
 
-void CSoundDMA::S_Update_(void)
+void CSoundDMA::S_Update_()
 {
 	unsigned int	endtime;
 	int				samps;
@@ -954,12 +954,12 @@ void CSoundDMA::S_Update_(void)
 
 }
 
-void CSoundDMA::SNDDMA_LockBuffer(void)
+void CSoundDMA::SNDDMA_LockBuffer()
 {
 	SDL_LockAudioDevice(g_SoundDeviceID);
 }
 
-void CSoundDMA::SNDDMA_UnlockBuffer(void)
+void CSoundDMA::SNDDMA_UnlockBuffer()
 {
 	SDL_UnlockAudioDevice(g_SoundDeviceID);
 }
@@ -1036,7 +1036,7 @@ CSoundDMA::~CSoundDMA()
 	unused = 0;
 }
 
-void CSoundDMA::S_Play(void)
+void CSoundDMA::S_Play()
 {
 	static int hash = 345;
 	int 	i;
@@ -1059,7 +1059,7 @@ void CSoundDMA::S_Play(void)
 	}
 }
 
-void CSoundDMA::S_PlayVol(void)
+void CSoundDMA::S_PlayVol()
 {
 	static int hash=543;
 	int i;
@@ -1084,7 +1084,7 @@ void CSoundDMA::S_PlayVol(void)
 	}
 }
 
-void CSoundDMA::S_SoundList(void)
+void CSoundDMA::S_SoundList()
 {
 	int		i;
 	sfx_t	*sfx;
@@ -1138,17 +1138,17 @@ void CSoundDMA::S_UnblockSound()
     SDL_PauseAudio(0);
 }
 
-void CSoundDMA::S_ClearPrecache (void)
+void CSoundDMA::S_ClearPrecache ()
 {
 }
 
 
-void CSoundDMA::S_BeginPrecaching (void)
+void CSoundDMA::S_BeginPrecaching ()
 {
 }
 
 
-void CSoundDMA::S_EndPrecaching (void)
+void CSoundDMA::S_EndPrecaching ()
 {
 }
 

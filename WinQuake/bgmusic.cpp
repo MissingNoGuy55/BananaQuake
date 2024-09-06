@@ -102,7 +102,7 @@ void CBackgroundMusic::GetSongArtistAndName(const char* filename, uintptr_t* pat
     f.close();
 }
 
-void CBackgroundMusic::BGM_Play_f(void)
+void CBackgroundMusic::BGM_Play_f()
 {
 	if (g_pCmds->Cmd_Argc() == 2) {
 		BGM_Play(g_pCmds->Cmd_Argv(1));
@@ -112,17 +112,17 @@ void CBackgroundMusic::BGM_Play_f(void)
 	}
 }
 
-void CBackgroundMusic::BGM_Pause_f(void)
+void CBackgroundMusic::BGM_Pause_f()
 {
 	BGM_Pause();
 }
 
-void CBackgroundMusic::BGM_Resume_f(void)
+void CBackgroundMusic::BGM_Resume_f()
 {
 	BGM_Resume();
 }
 
-void CBackgroundMusic::BGM_Loop_f(void)
+void CBackgroundMusic::BGM_Loop_f()
 {
 	if (g_pCmds->Cmd_Argc() == 2) {
 		if (Q_strcasecmp(g_pCmds->Cmd_Argv(1), "0") == 0 ||
@@ -143,12 +143,12 @@ void CBackgroundMusic::BGM_Loop_f(void)
 		Con_Printf("Music will not be looped\n");
 }
 
-void CBackgroundMusic::BGM_Stop_f(void)
+void CBackgroundMusic::BGM_Stop_f()
 {
 	BGM_Stop();
 }
 
-void CBackgroundMusic::BGM_Jump_f(void)
+void CBackgroundMusic::BGM_Jump_f()
 {
 	if (g_pCmds->Cmd_Argc() != 2) {
 		Con_Printf("music_jump <ordernum>\n");
@@ -220,7 +220,7 @@ bool CBackgroundMusic::BGM_Init()
 	return true;
 }
 
-void CBackgroundMusic::BGM_Shutdown(void)
+void CBackgroundMusic::BGM_Shutdown()
 {
 	BGM_Stop();
 	/* sever our connections to
@@ -395,7 +395,7 @@ void CBackgroundMusic::BGM_PlayCDtrack(byte track, bool looping)
 	}
 }
 
-void CBackgroundMusic::BGM_Stop(void)
+void CBackgroundMusic::BGM_Stop()
 {
 	if (bgmstream)
 	{
@@ -406,7 +406,7 @@ void CBackgroundMusic::BGM_Stop(void)
 	}
 }
 
-void CBackgroundMusic::BGM_Pause(void)
+void CBackgroundMusic::BGM_Pause()
 {
 	if (bgmstream)
 	{
@@ -415,7 +415,7 @@ void CBackgroundMusic::BGM_Pause(void)
 	}
 }
 
-void CBackgroundMusic::BGM_Resume(void)
+void CBackgroundMusic::BGM_Resume()
 {
 	if (bgmstream)
 	{
@@ -426,7 +426,7 @@ void CBackgroundMusic::BGM_Resume(void)
 
 byte	raw[16384] = {};
 
-void CBackgroundMusic::BGM_UpdateStream(void)
+void CBackgroundMusic::BGM_UpdateStream()
 {
 	bool did_rewind = false;
 	int	res = 0;	/* Number of bytes read. */
@@ -514,7 +514,7 @@ void CBackgroundMusic::BGM_UpdateStream(void)
 	}
 }
 
-void CBackgroundMusic::BGM_Update(void)
+void CBackgroundMusic::BGM_Update()
 {
 	if (old_volume != bgmvolume.value)
 	{

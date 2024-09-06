@@ -218,7 +218,7 @@ M CMemCacheSystem::mem = {};
 
 // CMemCache* g_MemCache;
 
-typedef void (*flush_cache_callback)(void);
+typedef void (*flush_cache_callback)();
 
 class CMemZone
 {
@@ -243,12 +243,12 @@ public:
 	template<typename T>
 	T* Z_TagMalloc(int size, int tag);
 
-	void Z_DumpHeap(void);
+	void Z_DumpHeap();
 
 	template<typename T>
-	void Z_CheckHeap(void);
+	void Z_CheckHeap();
 
-	int Z_FreeMemory(void);
+	int Z_FreeMemory();
 
 	template<typename T>
 	void Z_ClearZone(CMemZone* zone, int size);
@@ -321,7 +321,7 @@ Z_CheckHeap
 ========================
 */
 template<typename T>
-void CMemZone::Z_CheckHeap(void)
+void CMemZone::Z_CheckHeap()
 {
 	CMemBlock<T>* block;
 
@@ -521,10 +521,10 @@ public:
 	template<typename T>
 	T* Hunk_HighAllocName(size_t size, const char* name);
 
-	int	Hunk_LowMark(void);
+	int	Hunk_LowMark();
 	void Hunk_FreeToLowMark(int mark);
 
-	int	Hunk_HighMark(void);
+	int	Hunk_HighMark();
 	void Hunk_FreeToHighMark(int mark);
 
 	template<typename T>
@@ -535,7 +535,7 @@ public:
 
 	char* Hunk_Strdup(const char* s, const char* name);
 
-	void Hunk_Check(void);
+	void Hunk_Check();
 
 	template<typename T>
 	void Cache_FreeHigh(int new_high_hunk);
@@ -549,13 +549,13 @@ public:
 	static void Cache_UnlinkLRU(CMemCacheSystem* cs);
 
 	template<typename T>
-	static void Cache_Flush(void);
+	static void Cache_Flush();
 
 	template<typename T>
 	static flush_cache_callback Cache_Flush_Callback();
 
 	template<typename T>
-	void Cache_Print(void);
+	void Cache_Print();
 
 	template<typename T>
 	T* Cache_Check(cache_user_s* c);
@@ -563,7 +563,7 @@ public:
 	// if present, otherwise returns NULL
 
 	template<typename T = flush_cache_callback>
-	void Cache_Init(void);
+	void Cache_Init();
 
 	template<typename T>
 	static void Cache_Free(cache_user_s* c);
@@ -576,8 +576,8 @@ public:
 	template<typename T>
 	CMemCacheSystem* Cache_TryAlloc(int size, bool nobottom);
 
-	void Cache_Report(void);
-	void Cache_Compact(void);
+	void Cache_Report();
+	void Cache_Compact();
 
 private:
 
@@ -606,7 +606,7 @@ Cache_Init
 ============
 */
 template<typename T>
-void CMemCache::Cache_Init(void)
+void CMemCache::Cache_Init()
 {
 
 	cache_head.next = cache_head.prev = &cache_head;
@@ -622,7 +622,7 @@ Cache_Print
 ============
 */
 template<typename T>
-void CMemCache::Cache_Print(void)
+void CMemCache::Cache_Print()
 {
 #ifdef QUAKE_GAME
 	CMemCacheSystem* cd;
@@ -912,7 +912,7 @@ Throw everything out, so new data will be demand cached
 ============
 */
 template<typename T>
-void CMemCache::Cache_Flush(void)
+void CMemCache::Cache_Flush()
 {
 	while (cache_head.next != &cache_head)
 		Cache_Free<T>(cache_head.next->user);	// reclaim the space

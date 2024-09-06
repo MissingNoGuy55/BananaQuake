@@ -20,10 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // long CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-int CDAudio_Init(void);
+int CDAudio_Init();
 int CDAudio_Play(byte track, bool looping);
-void CDAudio_Stop(void);
-void CDAudio_Pause(void);
-void CDAudio_Resume(void);
-void CDAudio_Shutdown(void);
-void CDAudio_Update(void);
+void CDAudio_Stop();
+void CDAudio_Pause();
+void CDAudio_Resume();
+void CDAudio_Shutdown();
+void CDAudio_Update();

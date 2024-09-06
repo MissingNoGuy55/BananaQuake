@@ -25,13 +25,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define VCR_OP_CANSENDMESSAGE			4
 #define VCR_MAX_MESSAGE					4
 
-int			VCR_Init (void);
+int			VCR_Init ();
 void		VCR_Listen (bool state);
 void		VCR_SearchForHosts (bool xmit);
 qsocket_t 	*VCR_Connect (char *host);
-qsocket_t 	*VCR_CheckNewConnections (void);
+qsocket_t 	*VCR_CheckNewConnections ();
 int			VCR_GetMessage (qsocket_t *sock);
 int			VCR_SendMessage (qsocket_t *sock, sizebuf_t *data);
 bool	VCR_CanSendMessage (qsocket_t *sock);
 void		VCR_Close (qsocket_t *sock);
-void		VCR_Shutdown (void);
+void		VCR_Shutdown ();

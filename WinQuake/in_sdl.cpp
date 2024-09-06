@@ -17,231 +17,1196 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-// in_sun.c -- SUN/X mouse input handler
+// in_win.c -- windows 95 mouse and joystick code
+// 02/21/97 JCB Added extended DirectInput code to support external controllers.
 
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xatom.h>
-#include <X11/keysym.h>
 
+
+#include <dinput.h>
 #include "quakedef.h"
+#include "winquake.h"
+#include "dosisms.h"
+#include "in_win.h"
 
+#define DINPUT_BUFFERSIZE           16
+#define iDirectInput8Create(a,b,c,d)	pDirectInput8Create(a,b,c,d)
 
-//
-// typedefs and defines
-//
+typedef HRESULT (CALLBACK *PDIRECTINPUT8CREATE)(HINSTANCE hinst, DWORD dwVersion,
+	LPDIRECTINPUT * lplpDirectInput, LPUNKNOWN punkOuter);
 
-#define MOUSE_SCALE		4
+PDIRECTINPUT8CREATE pDirectInput8Create;
 
-//
-// externs
-//
+// mouse variables
+cvar_t	m_filter = {"m_filter","0"};
 
-Display			*x_disp;
-int				x_screen, x_screen_width, x_screen_height;
-int			x_center_height, x_center_width;
-int				x_std_event_mask;
-Window			x_win, x_root_win;
-bool             x_fullscreen;
-bool             x_focus;
-int			      global_dx, global_dy;
-//
-// globals
-//
+int			mouse_buttons;
+int			mouse_oldbuttonstate;
+POINT		current_pos;
+int			mouse_x, mouse_y, old_mouse_x, old_mouse_y, mx_accum, my_accum;
 
-cvar_t					_windowed_mouse = {"_windowed_mouse","1", true};
-int					x_root, y_root;
-int					x_root_old, y_root_old;
-//
-// locals
-//
+static bool	restore_spi;
+static int		originalmouseparms[3], newmouseparms[3] = {0, 0, 1};
 
-static int				x_mouse_num, x_mouse_denom, x_mouse_thresh;
+unsigned int uiWheelMessage;
+bool	mouseactive;
+bool		mouseinitialized;
+static bool	mouseparmsvalid, mouseactivatetoggle;
+static bool	mouseshowtoggle = 1;
+static bool	dinput_acquired;
 
+static SDL_JoystickID joy_active_instaceid = -1; // Missi: copied from QuakeSpasm (4/11/2022)
+static SDL_GameController* joy_active_controller = NULL; // Missi: copied from QuakeSpasm (4/11/2022)
 
-static bool x_grabbed = false;
+static unsigned int		mstate_di;
 
-//
-// IN_CenterMouse - center the mouse in the screen
-//
+static SDL_Cursor*		sdl_cursor;
 
-static void CheckMouseState(void);
+// joystick defines and variables
+// where should defines be moved?
+#define JOY_ABSOLUTE_AXIS	0x00000000		// control like a joystick
+#define JOY_RELATIVE_AXIS	0x00000010		// control like a mouse, spinner, trackball
+#define	JOY_MAX_AXES		6				// X, Y, Z, R, U, V
+#define JOY_AXIS_X			0
+#define JOY_AXIS_Y			1
+#define JOY_AXIS_Z			2
+#define JOY_AXIS_R			3
+#define JOY_AXIS_U			4
+#define JOY_AXIS_V			5
 
-void IN_CenterMouse( void )
+enum _ControlList
 {
-	CheckMouseState();
+	AxisNada = 0, AxisForward, AxisLook, AxisSide, AxisTurn
+};
 
-	if (!x_grabbed)
-		return;
+DWORD	dwAxisFlags[JOY_MAX_AXES] =
+{
+	JOY_RETURNX, JOY_RETURNY, JOY_RETURNZ, JOY_RETURNR, JOY_RETURNU, JOY_RETURNV
+};
 
-	XSelectInput( x_disp, x_win, x_std_event_mask & ~PointerMotionMask );
-	XWarpPointer( x_disp, None, x_root_win, 0, 0, 0, 0, x_center_width,
-		      x_center_height );
-	XSelectInput( x_disp, x_win, x_std_event_mask );
+DWORD	dwAxisMap[JOY_MAX_AXES];
+DWORD	dwControlMap[JOY_MAX_AXES];
+PDWORD	pdwRawValue[JOY_MAX_AXES];
+
+// none of these cvars are saved over a session
+// this means that advanced controller configuration needs to be executed
+// each time.  this avoids any problems with getting back to a default usage
+// or when changing from one controller to another.  this way at least something
+// works.
+cvar_t	in_joystick = {"joystick","0", true};
+cvar_t	joy_name = {"joyname", "joystick"};
+cvar_t	joy_advanced = {"joyadvanced", "0"};
+cvar_t	joy_advaxisx = {"joyadvaxisx", "0"};
+cvar_t	joy_advaxisy = {"joyadvaxisy", "0"};
+cvar_t	joy_advaxisz = {"joyadvaxisz", "0"};
+cvar_t	joy_advaxisr = {"joyadvaxisr", "0"};
+cvar_t	joy_advaxisu = {"joyadvaxisu", "0"};
+cvar_t	joy_advaxisv = {"joyadvaxisv", "0"};
+cvar_t	joy_forwardthreshold = {"joyforwardthreshold", "0.15"};
+cvar_t	joy_sidethreshold = {"joysidethreshold", "0.15"};
+cvar_t	joy_pitchthreshold = {"joypitchthreshold", "0.15"};
+cvar_t	joy_yawthreshold = {"joyyawthreshold", "0.15"};
+cvar_t	joy_forwardsensitivity = {"joyforwardsensitivity", "-1.0"};
+cvar_t	joy_sidesensitivity = {"joysidesensitivity", "-1.0"};
+cvar_t	joy_pitchsensitivity = {"joypitchsensitivity", "1.0"};
+cvar_t	joy_yawsensitivity = {"joyyawsensitivity", "-1.0"};
+cvar_t	joy_wwhack1 = {"joywwhack1", "0.0"};
+cvar_t	joy_wwhack2 = {"joywwhack2", "0.0"};
+
+bool	joy_avail, joy_advancedinit, joy_haspov;
+DWORD		joy_oldbuttonstate, joy_oldpovstate;
+
+int			joy_id;
+DWORD		joy_flags;
+DWORD		joy_numbuttons;
+
+static LPDIRECTINPUT		g_pdi;
+static LPDIRECTINPUTDEVICE	g_pMouse;
+
+static JOYINFOEX	ji;
+
+static HINSTANCE hInstDI;
+
+static bool	dinput;
+
+const GUID GUID_XAxis = {};
+const GUID GUID_YAxis = {};
+const GUID GUID_ZAxis = {};
+const GUID GUID_SysMouse = {};
+
+typedef struct MYDATA {
+	LONG  lX;                   // X axis goes here
+	LONG  lY;                   // Y axis goes here
+	LONG  lZ;                   // Z axis goes here
+	BYTE  bButtonA;             // One button goes here
+	BYTE  bButtonB;             // Another button goes here
+	BYTE  bButtonC;             // Another button goes here
+	BYTE  bButtonD;             // Another button goes here
+} MYDATA;
+
+static DIOBJECTDATAFORMAT rgodf[] = {
+  { &GUID_XAxis,    FIELD_OFFSET(MYDATA, lX),       DIDFT_AXIS | DIDFT_ANYINSTANCE,   0,},
+  { &GUID_YAxis,    FIELD_OFFSET(MYDATA, lY),       DIDFT_AXIS | DIDFT_ANYINSTANCE,   0,},
+  { &GUID_ZAxis,    FIELD_OFFSET(MYDATA, lZ),       0x80000000 | DIDFT_AXIS | DIDFT_ANYINSTANCE,   0,},
+  { 0,              FIELD_OFFSET(MYDATA, bButtonA), DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0,},
+  { 0,              FIELD_OFFSET(MYDATA, bButtonB), DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0,},
+  { 0,              FIELD_OFFSET(MYDATA, bButtonC), 0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0,},
+  { 0,              FIELD_OFFSET(MYDATA, bButtonD), 0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0,},
+};
+
+#define NUM_OBJECTS (sizeof(rgodf) / sizeof(rgodf[0]))
+
+static DIDATAFORMAT	df = {
+	sizeof(DIDATAFORMAT),       // this structure
+	sizeof(DIOBJECTDATAFORMAT), // size of object data format
+	DIDF_RELAXIS,               // absolute axis coordinates
+	sizeof(MYDATA),             // device data size
+	NUM_OBJECTS,                // number of objects
+	rgodf,                      // and here they are
+};
+
+// forward-referenced functions
+void IN_StartupJoystick (void);
+void Joy_AdvancedUpdate_f (void);
+void IN_JoyMove (usercmd_t *cmd);
+
+
+/*
+===========
+Force_CenterView_f
+===========
+*/
+void Force_CenterView_f (void)
+{
+	cl.viewangles[PITCH] = 0;
 }
 
-//
-// Check to see if we have grabbed the mouse or not and deal with it
-// appropriately
-//
-static void CheckMouseState(void)
+
+/*
+===========
+IN_UpdateClipCursor
+===========
+*/
+void IN_UpdateClipCursor (void)
 {
-    if (x_focus && _windowed_mouse.value && !x_grabbed) {
-        x_grabbed = true;
-        printf("fooling with mouse!\n");
-        if (XGetPointerControl( x_disp, &x_mouse_num, &x_mouse_denom, &x_mouse_thresh ))
-            printf( "XGetPointerControl failed!\n" );
-        //printf( "mouse %d/%d thresh %d\n", x_mouse_num, x_mouse_denom, x_mouse_thresh );
 
-        // make input rawer
-        XAutoRepeatOff(x_disp);
-        XGrabKeyboard(x_disp, x_win, True, GrabModeAsync, GrabModeAsync, CurrentTime);
-        XGrabPointer(x_disp, x_win, True,
-                 PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
-                 GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
-
-//		if (XChangePointerControl( x_disp, True, True, 1, MOUSE_SCALE, x_mouse_thresh ))
-//			printf( "XChangePointerControl failed!\n" );
-
-        IN_CenterMouse();
-
-        // safe initial values
-        x_root = x_root_old = vid.width >> 1;
-        y_root = y_root_old = vid.height >> 1;
-    } else if (x_grabbed && (!_windowed_mouse.value || !x_focus)) {
-        printf("fooling with mouse!\n");
-        x_grabbed = false;
-        // undo mouse warp
-        if (XChangePointerControl( x_disp, True, True, x_mouse_num, x_mouse_denom, x_mouse_thresh ))
-            printf( "XChangePointerControl failed!\n" );
-
-        XUngrabPointer( x_disp, CurrentTime );
-        XUngrabKeyboard( x_disp, CurrentTime );
-        XAutoRepeatOn( x_disp );
-    }
+	if (mouseinitialized && mouseactive && !dinput)
+	{
+		ClipCursor (&window_rect);
+	}
 }
 
 
-//
-// IN_Init - setup mouse input
-//
+/*
+===========
+IN_ShowMouse
+===========
+*/
+void IN_ShowMouse (void)
+{
 
+	if (!mouseshowtoggle)
+	{
+		ShowCursor (TRUE);
+		mouseshowtoggle = 1;
+	}
+}
+
+
+/*
+===========
+IN_HideMouse
+===========
+*/
+void IN_HideMouse (void)
+{
+
+	if (mouseshowtoggle)
+	{
+		ShowCursor (FALSE);
+		mouseshowtoggle = 0;
+	}
+}
+
+
+/*
+===========
+IN_ActivateMouse
+===========
+*/
+void IN_ActivateMouse (void)
+{
+
+	mouseactivatetoggle = true;
+
+	if (mouseinitialized)
+	{
+		if (dinput)
+		{
+			if (g_pMouse)
+			{
+				if (!dinput_acquired)
+				{
+					//IDirectInputDevice_Acquire(g_pMouse);
+					sdl_cursor = SDL_CreateSystemCursor(SDL_SystemCursor::SDL_SYSTEM_CURSOR_ARROW);
+					dinput_acquired = true;
+				}
+			}
+			else
+			{
+				return;
+			}
+		}
+		else
+		{
+			SDL_WarpMouseGlobal(window_center_x, window_center_y);
+			SDL_CaptureMouse(SDL_TRUE);
+			//SetCapture ((HWND)mainwindow);
+			SDL_SetWindowInputFocus(main_window);
+			ClipCursor (&window_rect);
+		}
+
+		mouseactive = true;
+	}
+}
+
+
+/*
+===========
+IN_SetQuakeMouseState
+===========
+*/
+void IN_SetQuakeMouseState (void)
+{
+	if (mouseactivatetoggle)
+		IN_ActivateMouse ();
+}
+
+
+/*
+===========
+IN_DeactivateMouse
+===========
+*/
+void IN_DeactivateMouse (void)
+{
+
+	mouseactivatetoggle = false;
+
+	if (mouseinitialized)
+	{
+		if (dinput)
+		{
+			if (g_pMouse)
+			{
+				if (dinput_acquired)
+				{
+					SDL_FreeCursor(sdl_cursor);
+					dinput_acquired = false;
+				}
+			}
+		}
+		else
+		{
+			if (restore_spi)
+				SystemParametersInfo (SPI_SETMOUSE, 0, originalmouseparms, 0);
+
+			ClipCursor (NULL);
+			ReleaseCapture ();
+		}
+
+		mouseactive = false;
+	}
+}
+
+
+/*
+===========
+IN_RestoreOriginalMouseState
+===========
+*/
+void IN_RestoreOriginalMouseState (void)
+{
+	if (mouseactivatetoggle)
+	{
+		IN_DeactivateMouse ();
+		mouseactivatetoggle = true;
+	}
+
+// try to redraw the cursor so it gets reinitialized, because sometimes it
+// has garbage after the mode switch
+	SDL_ShowCursor(SDL_FALSE);
+	SDL_ShowCursor(SDL_TRUE);
+}
+
+
+/*
+===========
+IN_InitDInput
+===========
+*/
+bool IN_InitDInput (void)
+{
+	/*if (!pDirectInput8Create)
+	{
+		pDirectInput8Create = (PDIRECTINPUT8CREATE)GetProcAddress(hInstDI,"DirectInputCreateA");
+
+		if (!pDirectInput8Create)
+		{
+			Con_SafePrintf ("Couldn't get DI proc addr\n");
+			return false;
+		}
+	}*/
+
+	// register with DirectInput and get an IDirectInput to play with.
+	/*hr = iDirectInput8Create(global_hInstance, DIRECTINPUT_VERSION, &g_pdi, NULL);
+
+	if (FAILED(hr))
+	{
+		return false;
+	}*/
+
+// obtain an interface to the system mouse device.
+	/*hr = IDirectInput_CreateDevice(g_pdi, GUID_SysMouse, &g_pMouse, NULL);
+
+	if (FAILED(hr))
+	{
+		Con_SafePrintf ("Couldn't open DI mouse device\n");
+		return false;
+	}*/
+
+// set the data format to "mouse format".
+	/*hr = IDirectInputDevice_SetDataFormat(g_pMouse, &df);
+
+	if (FAILED(hr))
+	{
+		Con_SafePrintf ("Couldn't set DI mouse format\n");
+		return false;
+	}*/
+
+// set the cooperativity level.
+	/*hr = IDirectInputDevice_SetCooperativeLevel(g_pMouse, (HWND)mainwindow,
+			DISCL_EXCLUSIVE | DISCL_FOREGROUND);
+
+	if (FAILED(hr))
+	{
+		Con_SafePrintf ("Couldn't set DI coop level\n");
+		return false;
+	}*/
+
+
+// set the buffer size to DINPUT_BUFFERSIZE elements.
+// the buffer size is a DWORD property associated with the device
+	/*hr = IDirectInputDevice_SetProperty(g_pMouse, DIPROP_BUFFERSIZE, &dipdw.diph);
+
+	if (FAILED(hr))
+	{
+		Con_SafePrintf ("Couldn't set DI buffersize\n");
+		return false;
+	}*/
+
+	return true;
+}
+
+
+/*
+===========
+IN_StartupMouse
+===========
+*/
+void IN_StartupMouse (void)
+{
+	HDC			hdc;
+
+	if ( g_Common->COM_CheckParm ("-nomouse") ) 
+		return; 
+
+	mouseinitialized = true;
+
+	if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0)
+	{
+		Con_Printf("WARNING: SDL_SetRelativeMouseMode(SDL_TRUE) failed.\n");
+	}
+
+	mouse_buttons = 3;
+
+// if a fullscreen video mode was set before the mouse was initialized,
+// set the mouse state appropriately
+	if (mouseactivatetoggle)
+	{
+		SDL_EventFilter currentFilter;
+		void* currentUserdata;
+		if (SDL_GetEventFilter(&currentFilter, &currentUserdata) == SDL_TRUE)
+			SDL_SetEventFilter(NULL, NULL);
+	}
+}
+
+
+/*
+===========
+IN_Init
+===========
+*/
 void IN_Init (void)
 {
-    if (!x_disp) Sys_Error( "X display not open!\n" );
+	// mouse variables
+	Cvar_RegisterVariable (&m_filter);
 
-    Cvar_RegisterVariable (&_windowed_mouse);
+	// joystick variables
+	Cvar_RegisterVariable (&in_joystick);
+	Cvar_RegisterVariable (&joy_name);
+	Cvar_RegisterVariable (&joy_advanced);
+	Cvar_RegisterVariable (&joy_advaxisx);
+	Cvar_RegisterVariable (&joy_advaxisy);
+	Cvar_RegisterVariable (&joy_advaxisz);
+	Cvar_RegisterVariable (&joy_advaxisr);
+	Cvar_RegisterVariable (&joy_advaxisu);
+	Cvar_RegisterVariable (&joy_advaxisv);
+	Cvar_RegisterVariable (&joy_forwardthreshold);
+	Cvar_RegisterVariable (&joy_sidethreshold);
+	Cvar_RegisterVariable (&joy_pitchthreshold);
+	Cvar_RegisterVariable (&joy_yawthreshold);
+	Cvar_RegisterVariable (&joy_forwardsensitivity);
+	Cvar_RegisterVariable (&joy_sidesensitivity);
+	Cvar_RegisterVariable (&joy_pitchsensitivity);
+	Cvar_RegisterVariable (&joy_yawsensitivity);
+	Cvar_RegisterVariable (&joy_wwhack1);
+	Cvar_RegisterVariable (&joy_wwhack2);
 
-	// we really really want to clean these up...
-    atexit( IN_Shutdown );
+	g_pCmds->Cmd_AddCommand ("force_centerview", Force_CenterView_f);
+	g_pCmds->Cmd_AddCommand ("joyadvancedupdate", Joy_AdvancedUpdate_f);
+
+	uiWheelMessage = RegisterWindowMessage ( "MSWHEEL_ROLLMSG" );
+
+	IN_StartupMouse ();
+	IN_StartupJoystick ();
 }
 
-//
-// IN_Shutdown - clean up mouse settings (must be done from signal handler too!)
-//
-
+/*
+===========
+IN_Shutdown
+===========
+*/
 void IN_Shutdown (void)
 {
-    if (!x_disp) return;
 
-	// undo mouse warp
-	if (XChangePointerControl( x_disp, True, True, x_mouse_num, x_mouse_denom, x_mouse_thresh ))
-		printf( "XChangePointerControl failed!\n" );
+	IN_DeactivateMouse ();
+	IN_ShowMouse ();
 
-	XUngrabPointer( x_disp, CurrentTime );
-	XUngrabKeyboard( x_disp, CurrentTime );
-	XAutoRepeatOn( x_disp );
-}
-
-//
-// IN_Commands - process buttons
-//
-
-void IN_Commands (void)
-{
-	// done in X event handler
-}
-
-//
-// IN_Move - process mouse moves
-//
-
-void
-IN_Move (usercmd_t *cmd)
-{
-	static int last_dx, last_dy;
-	static long long last_movement;
-	long long now = SDL_GetTicks();
-
-	int dx, dy;
-
-	CheckMouseState();
-
-
-	if (!x_grabbed)
-		return; // no mouse movement
-	
-
-	now = SDL_GetTicks();
-
-	dx = global_dx;
-	global_dx = 0;
-
-	dy = global_dy;
-	global_dy = 0;
-	
-//	printf("GOT: dx %d dy %d\n", dx, dy);
-
-	dx *= sensitivity.value;
-	dy *= sensitivity.value;
-
-//
-//	implement low pass filter to smooth motion a bit
-//	
-	if (now - last_movement > 100000000) {
-		dx = .6 * dx;
-		dy = .6 * dy;
+    if (g_pMouse)
+	{
+		IDirectInputDevice_Release(g_pMouse);
+		g_pMouse = NULL;
 	}
-	last_movement = now;
 
-	dx = .6 * dx + .4 * last_dx;
-	dy = .6 * dy + .4 * last_dy;
+    if (g_pdi)
+	{
+		IDirectInput_Release(g_pdi);
+		g_pdi = NULL;
+	}
+}
 
 
-	last_dx = dx;
-	last_dy = dy;
+/*
+===========
+IN_MouseEvent
+===========
+*/
+void IN_MouseEvent (int mstate)
+{
+	int	i;
 
-	if (!dx && !dy) {
-		if (in_mlook.state & 1) 
-			V_StopPitchDrift ();
+	if (mouseactive && !dinput)
+	{
+	// perform button actions
+		for (i=0 ; i<mouse_buttons ; i++)
+		{
+			if ( (mstate & (1<<i)) &&
+				!(mouse_oldbuttonstate & (1<<i)) )
+			{
+				Key_Event (K_MOUSE1 + i, true);
+			}
+
+			if ( !(mstate & (1<<i)) &&
+				(mouse_oldbuttonstate & (1<<i)) )
+			{
+				Key_Event (K_MOUSE1 + i, false);
+			}
+		}	
+			
+		mouse_oldbuttonstate = mstate;
+	}
+}
+
+
+/*
+===========
+IN_MouseMove
+===========
+*/
+void IN_MouseMove (usercmd_t *cmd)
+{
+	int					mx, my;
+	HDC					hdc;
+	int					i;
+	DIDEVICEOBJECTDATA	od;
+	DWORD				dwElements;
+	HRESULT				hr;
+
+	if (!mouseactive)
+		return;
+
+	if (dinput)
+	{
+		mx = 0;
+		my = 0;
+
+		for (;;)
+		{
+			dwElements = 1;
+
+			hr = IDirectInputDevice_GetDeviceData(g_pMouse,
+					sizeof(DIDEVICEOBJECTDATA), &od, &dwElements, 0);
+
+			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
+			{
+				dinput_acquired = true;
+				IDirectInputDevice_Acquire(g_pMouse);
+				break;
+			}
+
+			/* Unable to read data or no data available */
+			if (FAILED(hr) || dwElements == 0)
+			{
+				break;
+			}
+
+			/* Look at the element to see what happened */
+
+			switch (od.dwOfs)
+			{
+				case DIMOFS_X:
+					mx += od.dwData;
+					break;
+
+				case DIMOFS_Y:
+					my += od.dwData;
+					break;
+
+				case DIMOFS_BUTTON0:
+					if (od.dwData & 0x80)
+						mstate_di |= 1;
+					else
+						mstate_di &= ~1;
+					break;
+
+				case DIMOFS_BUTTON1:
+					if (od.dwData & 0x80)
+						mstate_di |= (1<<1);
+					else
+						mstate_di &= ~(1<<1);
+					break;
+					
+				case DIMOFS_BUTTON2:
+					if (od.dwData & 0x80)
+						mstate_di |= (1<<2);
+					else
+						mstate_di &= ~(1<<2);
+					break;
+			}
+		}
+
+	// perform button actions
+		for (i=0 ; i<mouse_buttons ; i++)
+		{
+			if ( (mstate_di & (1<<i)) &&
+				!(mouse_oldbuttonstate & (1<<i)) )
+			{
+				Key_Event (K_MOUSE1 + i, true);
+			}
+
+			if ( !(mstate_di & (1<<i)) &&
+				(mouse_oldbuttonstate & (1<<i)) )
+			{
+				Key_Event (K_MOUSE1 + i, false);
+			}
+		}	
+			
+		mouse_oldbuttonstate = mstate_di;
+	}
+	else
+	{
+		GetCursorPos (&current_pos);
+		mx = current_pos.x - window_center_x + mx_accum;
+		my = current_pos.y - window_center_y + my_accum;
+		mx_accum = 0;
+		my_accum = 0;
+	}
+
+//if (mx ||  my)
+//	Con_DPrintf("mx=%d, my=%d\n", mx, my);
+
+	if (m_filter.value)
+	{
+		mouse_x = (mx + old_mouse_x) * 0.5;
+		mouse_y = (my + old_mouse_y) * 0.5;
+	}
+	else
+	{
+		mouse_x = mx;
+		mouse_y = my;
+	}
+
+	old_mouse_x = mx;
+	old_mouse_y = my;
+
+	mouse_x *= sensitivity.value;
+	mouse_y *= sensitivity.value;
+
+// add mouse X/Y movement to cmd
+	if ( (in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1) ))
+		cmd->sidemove += m_side.value * mouse_x;
+	else
+		cl.viewangles[YAW] -= m_yaw.value * mouse_x;
+
+	if (in_mlook.state & 1)
+		V_StopPitchDrift ();
+		
+	if ( (in_mlook.state & 1) && !(in_strafe.state & 1))
+	{
+		cl.viewangles[PITCH] += m_pitch.value * mouse_y;
+		if (cl.viewangles[PITCH] > 80)
+			cl.viewangles[PITCH] = 80;
+		if (cl.viewangles[PITCH] < -70)
+			cl.viewangles[PITCH] = -70;
+	}
+	else
+	{
+		if ((in_strafe.state & 1) && noclip_anglehack)
+			cmd->upmove -= m_forward.value * mouse_y;
+		else
+			cmd->forwardmove -= m_forward.value * mouse_y;
+	}
+
+// if the mouse has moved, force it to the center, so there's room to move
+	if (mx || my)
+	{
+		SetCursorPos (window_center_x, window_center_y);
+	}
+}
+
+
+/*
+===========
+IN_Move
+===========
+*/
+void IN_Move (usercmd_t *cmd)
+{
+
+	if (ActiveApp && !Minimized)
+	{
+		IN_MouseMove (cmd);
+		IN_JoyMove (cmd);
+	}
+}
+
+
+/*
+===========
+IN_Accumulate
+===========
+*/
+void IN_Accumulate (void)
+{
+	int		mx, my;
+	HDC	hdc;
+
+	if (mouseactive)
+	{
+		if (!dinput)
+		{
+			GetCursorPos (&current_pos);
+
+			mx_accum += current_pos.x - window_center_x;
+			my_accum += current_pos.y - window_center_y;
+
+		// force the mouse to the center, so there's room to move
+			SetCursorPos (window_center_x, window_center_y);
+		}
+	}
+}
+
+
+/*
+===================
+IN_ClearStates
+===================
+*/
+void IN_ClearStates (void)
+{
+
+	if (mouseactive)
+	{
+		mx_accum = 0;
+		my_accum = 0;
+		mouse_oldbuttonstate = 0;
+	}
+}
+
+
+/* 
+=============== 
+IN_StartupJoystick 
+
+Missi: completely revised. Copied from QuakeSpasm (4/11/2022)
+=============== 
+*/  
+void IN_StartupJoystick (void) 
+{ 
+	int i;
+	int nummappings;
+	char controllerdb[MAX_OSPATH];
+	SDL_GameController* gamecontroller;
+ 
+ 	// assume no joystick
+	joy_avail = false; 
+
+	// abort startup if user requests no joystick
+	if ( g_Common->COM_CheckParm ("-nojoy") ) 
+		return; 
+ 
+	if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) == -1)
+	{
+		Con_Printf("could not initialize SDL Game Controller\n");
 		return;
 	}
-	
-	// add mouse X/Y movement to cmd
-	if ((in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1)))
-		cmd->sidemove += m_side.value * dx;
-	else 
-		cl.viewangles[YAW] -= m_yaw.value * dx;
 
-	if (in_mlook.state & 1) 
-		V_StopPitchDrift ();
-	    
-	if ((in_mlook.state & 1) && !(in_strafe.state & 1)) {
-		cl.viewangles[PITCH] += m_pitch.value * dy;
-		if (cl.viewangles[PITCH] > 80) cl.viewangles[PITCH] = 80;
-		if (cl.viewangles[PITCH] < -70) cl.viewangles[PITCH] = -70;
+	// Load additional SDL2 controller definitions from gamecontrollerdb.txt
+	snprintf(controllerdb, sizeof(controllerdb), "%s/gamecontrollerdb.txt", g_Common->com_gamedir);
+	nummappings = SDL_GameControllerAddMappingsFromFile(controllerdb);
+	if (nummappings > 0)
+		Con_Printf("%d mappings loaded from gamecontrollerdb.txt\n", nummappings);
+
+	// Also try host_parms->userdir
+	if (host->host_parms.cachedir != host->host_parms.basedir)
+	{
+		snprintf(controllerdb, sizeof(controllerdb), "%s/gamecontrollerdb.txt", host->host_parms.cachedir);
+		nummappings = SDL_GameControllerAddMappingsFromFile(controllerdb);
+		if (nummappings > 0)
+			Con_Printf("%d mappings loaded from gamecontrollerdb.txt\n", nummappings);
 	}
-	else {
-		if ((in_strafe.state & 1) && noclip_anglehack) cmd->upmove -= m_forward.value * dy;
-		else cmd->forwardmove -= m_forward.value * dy;
+
+	for (i = 0; i < SDL_NumJoysticks(); i++)
+	{
+		const char* joyname = SDL_JoystickNameForIndex(i);
+		if (SDL_IsGameController(i))
+		{
+			const char* controllername = SDL_GameControllerNameForIndex(i);
+			gamecontroller = SDL_GameControllerOpen(i);
+			if (gamecontroller)
+			{
+				Con_Printf("detected controller: %s\n", controllername != NULL ? controllername : "NULL");
+
+				joy_active_instaceid = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamecontroller));
+				joy_active_controller = gamecontroller;
+				break;
+			}
+			else
+			{
+				Con_Printf("failed to open controller: %s\n", controllername != NULL ? controllername : "NULL");
+			}
+		}
+		else
+		{
+			Con_Printf("joystick missing controller mappings: %s\n", joyname != NULL ? joyname : "NULL");
+		}
+	}
+
+	Con_Printf ("\njoystick detected\n\n"); 
+}
+
+
+/*
+===========
+RawValuePointer
+===========
+*/
+PDWORD RawValuePointer (int axis)
+{
+	switch (axis)
+	{
+	case JOY_AXIS_X:
+		return &ji.dwXpos;
+	case JOY_AXIS_Y:
+		return &ji.dwYpos;
+	case JOY_AXIS_Z:
+		return &ji.dwZpos;
+	case JOY_AXIS_R:
+		return &ji.dwRpos;
+	case JOY_AXIS_U:
+		return &ji.dwUpos;
+	case JOY_AXIS_V:
+		return &ji.dwVpos;
+	default:
+		Con_Printf("RawValuePointer returned no axis!");
+		return (PDWORD)0;	// Missi: shut up compiler (2/14/22)
 	}
 }
+
+
+/*
+===========
+Joy_AdvancedUpdate_f
+===========
+*/
+void Joy_AdvancedUpdate_f (void)
+{
+
+	// called once by IN_ReadJoystick and by user whenever an update is needed
+	// cvars are now available
+	int	i;
+	DWORD dwTemp;
+
+	// initialize all the maps
+	for (i = 0; i < JOY_MAX_AXES; i++)
+	{
+		dwAxisMap[i] = AxisNada;
+		dwControlMap[i] = JOY_ABSOLUTE_AXIS;
+		pdwRawValue[i] = RawValuePointer(i);
+	}
+
+	if( joy_advanced.value == 0.0)
+	{
+		// default joystick initialization
+		// 2 axes only with joystick control
+		dwAxisMap[JOY_AXIS_X] = AxisTurn;
+		// dwControlMap[JOY_AXIS_X] = JOY_ABSOLUTE_AXIS;
+		dwAxisMap[JOY_AXIS_Y] = AxisForward;
+		// dwControlMap[JOY_AXIS_Y] = JOY_ABSOLUTE_AXIS;
+	}
+	else
+	{
+		if (Q_strcmp (joy_name.string, "joystick") != 0)
+		{
+			// notify user of advanced controller
+			Con_Printf ("\n%s configured\n\n", joy_name.string);
+		}
+
+		// advanced initialization here
+		// data supplied by user via joy_axisn cvars
+		dwTemp = (DWORD) joy_advaxisx.value;
+		dwAxisMap[JOY_AXIS_X] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_X] = dwTemp & JOY_RELATIVE_AXIS;
+		dwTemp = (DWORD) joy_advaxisy.value;
+		dwAxisMap[JOY_AXIS_Y] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_Y] = dwTemp & JOY_RELATIVE_AXIS;
+		dwTemp = (DWORD) joy_advaxisz.value;
+		dwAxisMap[JOY_AXIS_Z] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_Z] = dwTemp & JOY_RELATIVE_AXIS;
+		dwTemp = (DWORD) joy_advaxisr.value;
+		dwAxisMap[JOY_AXIS_R] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_R] = dwTemp & JOY_RELATIVE_AXIS;
+		dwTemp = (DWORD) joy_advaxisu.value;
+		dwAxisMap[JOY_AXIS_U] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_U] = dwTemp & JOY_RELATIVE_AXIS;
+		dwTemp = (DWORD) joy_advaxisv.value;
+		dwAxisMap[JOY_AXIS_V] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_V] = dwTemp & JOY_RELATIVE_AXIS;
+	}
+
+	// compute the axes to collect from DirectInput
+	joy_flags = JOY_RETURNCENTERED | JOY_RETURNBUTTONS | JOY_RETURNPOV;
+	for (i = 0; i < JOY_MAX_AXES; i++)
+	{
+		if (dwAxisMap[i] != AxisNada)
+		{
+			joy_flags |= dwAxisFlags[i];
+		}
+	}
+}
+
+
+/*
+===========
+IN_Commands
+===========
+*/
+void IN_Commands (void)
+{
+	unsigned	i;
+	int		key_index;
+	DWORD	buttonstate, povstate;
+
+	if (!joy_avail)
+	{
+		return;
+	}
+
+	
+	// loop through the joystick buttons
+	// key a joystick event or auxillary event for higher number buttons for each state change
+	buttonstate = ji.dwButtons;
+	for (i=0 ; i < joy_numbuttons ; i++)
+	{
+		if ( (buttonstate & (1<<i)) && !(joy_oldbuttonstate & (1<<i)) )
+		{
+			key_index = (i < 4) ? K_JOY1 : K_AUX1;
+			Key_Event (key_index + i, true);
+		}
+
+		if ( !(buttonstate & (1<<i)) && (joy_oldbuttonstate & (1<<i)) )
+		{
+			key_index = (i < 4) ? K_JOY1 : K_AUX1;
+			Key_Event (key_index + i, false);
+		}
+	}
+	joy_oldbuttonstate = buttonstate;
+
+	if (joy_haspov)
+	{
+		// convert POV information into 4 bits of state information
+		// this avoids any potential problems related to moving from one
+		// direction to another without going through the center position
+		povstate = 0;
+		if(ji.dwPOV != JOY_POVCENTERED)
+		{
+			if (ji.dwPOV == JOY_POVFORWARD)
+				povstate |= 0x01;
+			if (ji.dwPOV == JOY_POVRIGHT)
+				povstate |= 0x02;
+			if (ji.dwPOV == JOY_POVBACKWARD)
+				povstate |= 0x04;
+			if (ji.dwPOV == JOY_POVLEFT)
+				povstate |= 0x08;
+		}
+		// determine which bits have changed and key an auxillary event for each change
+		for (i=0 ; i < 4 ; i++)
+		{
+			if ( (povstate & (1<<i)) && !(joy_oldpovstate & (1<<i)) )
+			{
+				Key_Event (K_AUX29 + i, true);
+			}
+
+			if ( !(povstate & (1<<i)) && (joy_oldpovstate & (1<<i)) )
+			{
+				Key_Event (K_AUX29 + i, false);
+			}
+		}
+		joy_oldpovstate = povstate;
+	}
+}
+
+
+/* 
+=============== 
+IN_ReadJoystick
+=============== 
+*/  
+bool IN_ReadJoystick (void)
+{
+
+	memset (&ji, 0, sizeof(ji));
+	ji.dwSize = sizeof(ji);
+	ji.dwFlags = joy_flags;
+
+	if (joyGetPosEx (joy_id, &ji) == JOYERR_NOERROR)
+	{
+		// this is a hack -- there is a bug in the Logitech WingMan Warrior DirectInput Driver
+		// rather than having 32768 be the zero point, they have the zero point at 32668
+		// go figure -- anyway, now we get the full resolution out of the device
+		if (joy_wwhack1.value != 0.0)
+		{
+			ji.dwUpos += 100;
+		}
+		return true;
+	}
+	else
+	{
+		// read error occurred
+		// turning off the joystick seems too harsh for 1 read error,\
+		// but what should be done?
+		// Con_Printf ("IN_ReadJoystick: no response\n");
+		// joy_avail = false;
+		return false;
+	}
+}
+
+
+/*
+===========
+IN_JoyMove
+===========
+*/
+void IN_JoyMove (usercmd_t *cmd)
+{
+	float	speed, aspeed;
+	float	fAxisValue, fTemp;
+	int		i;
+
+	// complete initialization if first time in
+	// this is needed as cvars are not available at initialization time
+	if( joy_advancedinit != true )
+	{
+		Joy_AdvancedUpdate_f();
+		joy_advancedinit = true;
+	}
+
+	// verify joystick is available and that the user wants to use it
+	if (!joy_avail || !in_joystick.value)
+	{
+		return; 
+	}
+ 
+	// collect the joystick data, if possible
+	if (IN_ReadJoystick () != true)
+	{
+		return;
+	}
+
+	if (in_speed.state & 1)
+		speed = cl_movespeedkey.value;
+	else
+		speed = 1;
+	aspeed = speed * host->host_frametime;
+
+	// loop through the axes
+	for (i = 0; i < JOY_MAX_AXES; i++)
+	{
+		// get the floating point zero-centered, potentially-inverted data for the current axis
+		fAxisValue = (float) *pdwRawValue[i];
+		// move centerpoint to zero
+		fAxisValue -= 32768.0;
+
+		if (joy_wwhack2.value != 0.0)
+		{
+			if (dwAxisMap[i] == AxisTurn)
+			{
+				// this is a special formula for the Logitech WingMan Warrior
+				// y=ax^b; where a = 300 and b = 1.3
+				// also x values are in increments of 800 (so this is factored out)
+				// then bounds check result to level out excessively high spin rates
+				fTemp = 300.0 * pow(abs((long)fAxisValue) / 800.0, 1.3);	// Missi: idk
+				if (fTemp > 14000.0)
+					fTemp = 14000.0;
+				// restore direction information
+				fAxisValue = (fAxisValue > 0.0) ? fTemp : -fTemp;
+			}
+		}
+
+		// convert range from -32768..32767 to -1..1 
+		fAxisValue /= 32768.0;
+
+		switch (dwAxisMap[i])
+		{
+		case AxisForward:
+			if ((joy_advanced.value == 0.0) && (in_mlook.state & 1))
+			{
+				// user wants forward control to become look control
+				if (fabs(fAxisValue) > joy_pitchthreshold.value)
+				{		
+					// if mouse invert is on, invert the joystick pitch value
+					// only absolute control support here (joy_advanced is false)
+					if (m_pitch.value < 0.0)
+					{
+						cl.viewangles[PITCH] -= (fAxisValue * joy_pitchsensitivity.value) * aspeed * cl_pitchspeed.value;
+					}
+					else
+					{
+						cl.viewangles[PITCH] += (fAxisValue * joy_pitchsensitivity.value) * aspeed * cl_pitchspeed.value;
+					}
+					V_StopPitchDrift();
+				}
+				else
+				{
+					// no pitch movement
+					// disable pitch return-to-center unless requested by user
+					// *** this code can be removed when the lookspring bug is fixed
+					// *** the bug always has the lookspring feature on
+					if(lookspring.value == 0.0)
+						V_StopPitchDrift();
+				}
+			}
+			else
+			{
+				// user wants forward control to be forward control
+				if (fabs(fAxisValue) > joy_forwardthreshold.value)
+				{
+					cmd->forwardmove += (fAxisValue * joy_forwardsensitivity.value) * speed * cl_forwardspeed.value;
+				}
+			}
+			break;
+
+		case AxisSide:
+			if (fabs(fAxisValue) > joy_sidethreshold.value)
+			{
+				cmd->sidemove += (fAxisValue * joy_sidesensitivity.value) * speed * cl_sidespeed.value;
+			}
+			break;
+
+		case AxisTurn:
+			if ((in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1)))
+			{
+				// user wants turn control to become side control
+				if (fabs(fAxisValue) > joy_sidethreshold.value)
+				{
+					cmd->sidemove -= (fAxisValue * joy_sidesensitivity.value) * speed * cl_sidespeed.value;
+				}
+			}
+			else
+			{
+				// user wants turn control to be turn control
+				if (fabs(fAxisValue) > joy_yawthreshold.value)
+				{
+					if(dwControlMap[i] == JOY_ABSOLUTE_AXIS)
+					{
+						cl.viewangles[YAW] += (fAxisValue * joy_yawsensitivity.value) * aspeed * cl_yawspeed.value;
+					}
+					else
+					{
+						cl.viewangles[YAW] += (fAxisValue * joy_yawsensitivity.value) * speed * 180.0;
+					}
+
+				}
+			}
+			break;
+
+		case AxisLook:
+			if (in_mlook.state & 1)
+			{
+				if (fabs(fAxisValue) > joy_pitchthreshold.value)
+				{
+					// pitch movement detected and pitch movement desired by user
+					if(dwControlMap[i] == JOY_ABSOLUTE_AXIS)
+					{
+						cl.viewangles[PITCH] += (fAxisValue * joy_pitchsensitivity.value) * aspeed * cl_pitchspeed.value;
+					}
+					else
+					{
+						cl.viewangles[PITCH] += (fAxisValue * joy_pitchsensitivity.value) * speed * 180.0;
+					}
+					V_StopPitchDrift();
+				}
+				else
+				{
+					// no pitch movement
+					// disable pitch return-to-center unless requested by user
+					// *** this code can be removed when the lookspring bug is fixed
+					// *** the bug always has the lookspring feature on
+					if(lookspring.value == 0.0)
+						V_StopPitchDrift();
+				}
+			}
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	// bounds check pitch
+	if (cl.viewangles[PITCH] > 80.0)
+		cl.viewangles[PITCH] = 80.0;
+	if (cl.viewangles[PITCH] < -70.0)
+		cl.viewangles[PITCH] = -70.0;
+}
+

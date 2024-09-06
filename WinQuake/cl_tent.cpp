@@ -42,7 +42,7 @@ sfx_t			*cl_sfx_rail;
 CL_ParseTEnt
 =================
 */
-void CL_InitTEnts (void)
+void CL_InitTEnts ()
 {
 	cl_sfx_wizhit = g_SoundSystem->S_PrecacheSound ("wizard/hit.wav");
 	cl_sfx_knighthit = g_SoundSystem->S_PrecacheSound ("hknight/hit.wav");
@@ -112,7 +112,7 @@ void CL_ParseBeam (model_t *m)
 CL_ParseTEnt
 =================
 */
-void CL_ParseTEnt (void)
+void CL_ParseTEnt ()
 {
 	int		type;
 	vec3_t	pos;
@@ -298,7 +298,7 @@ void CL_ParseTEnt (void)
 CL_NewTempEntity
 =================
 */
-entity_t *CL_NewTempEntity (void)
+entity_t *CL_NewTempEntity ()
 {
 	entity_t	*ent;
 
@@ -322,7 +322,7 @@ entity_t *CL_NewTempEntity (void)
 CL_UpdateTEnts
 =================
 */
-void CL_UpdateTEnts (void)
+void CL_UpdateTEnts ()
 {
 	int			i, j;	// Missi: QuakeSpasm memory corruption fix (11/19/2022)
 	beam_t		*b;

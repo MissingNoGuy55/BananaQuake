@@ -42,7 +42,7 @@ vec3_t			r_pright, r_pup, r_ppn;
 R_InitParticles
 ===============
 */
-void CCoreRenderer::R_InitParticles (void)
+void CCoreRenderer::R_InitParticles ()
 {
 	int		i;
 
@@ -183,7 +183,7 @@ void CCoreRenderer::R_EntityParticles (entity_t *ent)
 R_ClearParticles
 ===============
 */
-void CCoreRenderer::R_ClearParticles (void)
+void CCoreRenderer::R_ClearParticles ()
 {
 	int		i;
 	
@@ -196,7 +196,7 @@ void CCoreRenderer::R_ClearParticles (void)
 }
 
 
-void CCoreRenderer::R_ReadPointFile_f (void)
+void CCoreRenderer::R_ReadPointFile_f ()
 {
 	FILE	*f;
 	vec3_t	org;
@@ -251,7 +251,7 @@ R_ParseParticleEffect
 Parse an effect out of the server message
 ===============
 */
-void CCoreRenderer::R_ParseParticleEffect (void)
+void CCoreRenderer::R_ParseParticleEffect ()
 {
 	vec3_t		org, dir;
 	int			i, count, msgcount, color;
@@ -649,7 +649,7 @@ R_DrawParticles
 */
 extern	cvar_t	sv_gravity;
 
-void CCoreRenderer::R_DrawParticles (void)
+void CCoreRenderer::R_DrawParticles ()
 {
 	particle_t		*p, *kill;
 	float			grav;

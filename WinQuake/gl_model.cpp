@@ -36,7 +36,7 @@ int		mod_numknown = 0;
 Mod_Init
 ===============
 */
-void Mod_Init (void)
+void Mod_Init ()
 {
 	Cvar_RegisterVariable (&gl_subdivide_size);
 	memset (mod_novis, 0xff, sizeof(mod_novis));
@@ -134,7 +134,7 @@ byte *Mod_LeafPVS (mleaf_t *leaf, model_t *model)
 Mod_ClearAll
 ===================
 */
-void Mod_ClearAll (void)
+void Mod_ClearAll ()
 {
 	int			i = 0;
 	model_t		*mod = nullptr;
@@ -1868,7 +1868,7 @@ Mod_MakeHull0
 Deplicate the drawing hull structure as a clipping hull
 =================
 */
-void Mod_MakeHull0 (void)
+void Mod_MakeHull0 ()
 {
 	mnode_t		*in, *child;
 	mclipnode_t *out;
@@ -3121,7 +3121,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 Mod_Print
 ================
 */
-void Mod_Print (void)
+void Mod_Print ()
 {
 	int		i;
 	model_t	*mod;

@@ -1,8 +1,10 @@
 #include "quakedef.h"
 #include "vpkfile.h"
 
-cxxifstream* loaded_vpks[512][256] = {};
-cxxstring* loaded_vpk_names[512][256] = {};
+cxxifstream* loaded_vpks[512][256];
+cxxstring* loaded_vpk_names[512][256];
+
+static constexpr int VPK_VERSION = 2;
 
 static byte ReadVPKChar(cxxifstream* file)
 {
@@ -29,7 +31,7 @@ static VPKHeader_v2* GetVPKHeader(cxxifstream* file)
 {
 	VPKHeader_v2* header = nullptr;
 
-	char* str = new char[sizeof(VPKHeader_v2)];
+	char str[sizeof(VPKHeader_v2)];
 
 	file->read(str, sizeof(VPKHeader_v2));
 	file->seekg(0, file->beg);
@@ -45,10 +47,11 @@ static int OpenAllVPKDependencies(cxxstring filename)
 
 	if (filename.find("_dir") == cxxstring::npos)
 	{
-		Sys_Error("OpenAllVPKDependencies: no _dir in filename parameter!\n");
+		Sys_Error("OpenAllVPKDependencies: file %s has no _dir in filename!\n", filename.c_str());
+		return -1;
 	}
 
-	char append[512] = {};
+	char append[512];
 
 	int vpk_assignment = 0;
 	static int j = 0;
@@ -57,7 +60,15 @@ static int OpenAllVPKDependencies(cxxstring filename)
 	loaded_vpks[j][0]->close();
 	int size = g_Common->COM_FOpenFile_IFStream(filename.c_str(), loaded_vpks[j][0], nullptr);
 
-	Con_PrintColor(TEXT_COLOR_GREEN, "Added VPK file %s/%s (%d bytes)\n", g_Common->com_gamedir, filename.c_str(), size);
+	VPKHeader_v2* header = GetVPKHeader(loaded_vpks[j][0]);
+
+	if (header->Version != VPK_VERSION)
+	{
+		Sys_Error("VPK version of %s is not version %d!\n", filename.c_str(), VPK_VERSION);
+		return -1;
+	}
+
+	Con_PrintColor(TEXT_COLOR_GREEN, "Added VPK file %s/%s\n", g_Common->com_gamedir, filename.c_str());
 
 	loaded_vpk_names[j][0] = new cxxstring(filename);
 
@@ -87,11 +98,11 @@ static int OpenAllVPKDependencies(cxxstring filename)
 	return high;
 }
 
-static char fileread_data[512] = {};
+static char fileread_data[512];
 
 const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 {
-	char data[sizeof(VPKHeader_v2)] = {};
+	char data[sizeof(VPKHeader_v2)];
 	file->clear();
 	file->read(data, sizeof(data));
 
@@ -100,7 +111,7 @@ const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 	while (1)
 	{
 		file->clear();
-		char c1[512] = {};
+		char c1[512];
 
 		ReadVPKString(file, c1);
 
@@ -110,7 +121,7 @@ const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 		while (1)
 		{
 			file->clear();
-			char c2[512] = {};
+			char c2[512];
 
 			ReadVPKString(file, c2);
 
@@ -120,7 +131,7 @@ const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 			while (1)
 			{
 				file->clear();
-				char c3[512] = {};
+				char c3[512];
 				ReadVPKString(file, c3);
 
 				if (!c3[0])
@@ -196,7 +207,7 @@ int FindVPKIndexForFileAmongstLoadedVPKs(const char* filename)
 
 void LoadAllVPKs()
 {
-	char combined[256] = {};
+	char combined[256];
 
 	snprintf(combined, sizeof(combined), "%s/vpk", g_Common->com_gamedir);
 
@@ -244,14 +255,15 @@ void CloseAllVPKs()
 		if (!loaded_vpks[i][0])
 			break;
 
+		loaded_vpks[i][0]->close();
+
 		for (int j = 0; j < SUB_VPKS_SIZE; j++)
 		{
 			if (!loaded_vpks[i][j])
 				break;
 
 			loaded_vpks[i][j]->close();
+			delete[] loaded_vpks[i][j];
 		}
-
-		loaded_vpks[i][0]->close();
 	}
 }

@@ -74,7 +74,7 @@ static gefv_cache	gefvCache[GEFV_CACHESIZE] = {{NULL, ""}, {NULL, ""}};
 #define	PR_STRING_ALLOCSLOTS	256
 
 
-static void PR_AllocStringSlots(void)
+static void PR_AllocStringSlots()
 {
 
 	pr_maxknownstrings += PR_STRING_ALLOCSLOTS;
@@ -184,7 +184,7 @@ instead of being removed and recreated, which can cause interpolated
 angles and bad trails.
 =================
 */
-edict_t *ED_Alloc (void)
+edict_t *ED_Alloc ()
 {
 	int			i;
 	edict_t		*e;
@@ -697,7 +697,7 @@ ED_PrintEdicts
 For debugging, prints all the entities in the current server
 =============
 */
-void ED_PrintEdicts (void)
+void ED_PrintEdicts ()
 {
 	int		i;
 	
@@ -713,7 +713,7 @@ ED_PrintEdict_f
 For debugging, prints a single edict
 =============
 */
-void ED_PrintEdict_f (void)
+void ED_PrintEdict_f ()
 {
 	int		i;
 	
@@ -733,7 +733,7 @@ ED_Count
 For debugging
 =============
 */
-void ED_Count (void)
+void ED_Count ()
 {
 	int		i;
 	edict_t	*ent;
@@ -1348,7 +1348,7 @@ void ED_LoadFromFile (const char *data)
 PR_LoadProgs
 ===============
 */
-void PR_LoadProgs (void)
+void PR_LoadProgs ()
 {
 	int		i;
 	uintptr_t	path_id;
@@ -1538,7 +1538,7 @@ static void ED_EntFire_f()
 PR_Init
 ===============
 */
-void PR_Init (void)
+void PR_Init ()
 {
 	g_pCmds->Cmd_AddCommand ("edict", ED_PrintEdict_f);
 	g_pCmds->Cmd_AddCommand ("edicts", ED_PrintEdicts);

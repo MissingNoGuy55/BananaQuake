@@ -130,7 +130,7 @@ boolean	AddToDirListAlphabetized	(DIRLIST **, char *, int);
 boolean	AddToFileListAlphabetized	(FILELIST **t, char *, UInt32, UInt32, boolean);
 boolean	PakLoadFile					(const char *, void **);
 void	OpenPakFile					(const char *);
-void	ClosePakFile				(void);
+void	ClosePakFile				();
 int PakLoadAnyFile(const char *filename, void **bufferptr);
 void WINAPI InitPakFile(const char * pBasePath, const char *pName);
 

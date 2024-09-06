@@ -196,7 +196,7 @@ Generate a list of trifans or strips
 for the model, which holds for all frames
 ================
 */
-static void BuildTris(void)
+static void BuildTris()
 {
 	int		i = 0, j = 0, k = 0;
 	int		startv = 0;

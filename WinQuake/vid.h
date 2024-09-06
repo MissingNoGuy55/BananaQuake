@@ -69,7 +69,7 @@ typedef struct
 extern	viddef_t	vid;				// global video state
 extern	unsigned short	d_8to16table[256];
 extern	unsigned int	d_8to24table[256];
-extern void (*vid_menudrawfn)(void);
+extern void (*vid_menudrawfn)();
 extern void (*vid_menukeyfn)(int key);
 
 void	VID_SetPalette (unsigned char *palette);
@@ -83,7 +83,7 @@ void	VID_Init (unsigned char *palette);
 // the palette data will go away after the call, so it must be copied off if
 // the video driver will need it again
 
-void	VID_Shutdown (void);
+void	VID_Shutdown ();
 // Called at shutdown
 
 void	VID_Update (vrect_t *rects);

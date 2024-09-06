@@ -133,16 +133,16 @@ void MSG_WriteAngle (sizebuf_t *sb, float f);
 extern	int			msg_readcount;
 extern	bool	msg_badread;		// set if a read goes beyond end of message
 
-void MSG_BeginReading (void);
-int MSG_ReadChar (void);
-int MSG_ReadByte (void);
-int MSG_ReadShort (void);
-int MSG_ReadLong (void);
-float MSG_ReadFloat (void);
-const char *MSG_ReadString (void);
+void MSG_BeginReading ();
+int MSG_ReadChar ();
+int MSG_ReadByte ();
+int MSG_ReadShort ();
+int MSG_ReadLong ();
+float MSG_ReadFloat ();
+const char *MSG_ReadString ();
 
-float MSG_ReadCoord (void);
-float MSG_ReadAngle (void);
+float MSG_ReadCoord ();
+float MSG_ReadAngle ();
 
 //============================================================================
 
@@ -232,7 +232,7 @@ public:
 
 	int COM_CheckParm (const char *parm);
 	void COM_Init (const char *path);
-	void COM_CheckRegistered(void);
+	void COM_CheckRegistered();
 	void COM_InitArgv (int argc, char **argv);
 
 	void COM_AddExtension(char* path, const char* extension, size_t len);	// Missi: copied from QuakeSpasm (1/10/2023)
@@ -260,14 +260,14 @@ public:
 
 	void COM_InitFilesystem();
 	static int COM_FindFile(const char* filename, int* handle, FILE** file, uintptr_t* path_id);
-    int COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, unzFile* pk3_file, uintptr_t* path_id);
+    int COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id, unzFile* pk3_file);
     void COM_FindFile_OFStream(const char* filename, cxxofstream* file, uintptr_t* path_id);
     cxxifstream* COM_FindFile_VPK(const char* filename, uintptr_t* path_id);
 	static long COM_filelength(FILE* f);
     size_t COM_filelength_FStream(cxxifstream* f);
 	pack_t* COM_LoadPackFile(char* packfile);
 
-	static void COM_Path_f(void);
+	static void COM_Path_f();
 
 	// Missi: buffer-safe varargs (4/30/2023)
 	const char	*va(const char *format, ...);
@@ -287,6 +287,7 @@ public:
 	static	char	com_cachedir[MAX_OSPATH];
 	static	int		file_from_pak;
 	static	int		file_from_pk3;
+	static	int		file_from_vpk;
 	static	unzFile	current_pk3;
 
 };
@@ -344,7 +345,7 @@ typedef struct {
 	int				referenced;					// referenced file flags
 	int				hashSize;					// hash table size (power of 2)
 	fileInPack_t** hashTable;					// hash table
-	fileInPack_t* buildBuffer;				// buffer with the filenames etc.
+	fileInPack_t* buildBuffer;					// buffer with the filenames etc.
 } pack_pk3_t;
 
 typedef struct {

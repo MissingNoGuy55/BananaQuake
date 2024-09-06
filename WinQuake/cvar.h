@@ -60,6 +60,14 @@ constexpr unsigned int CVAR_NOTIFY 		= 0x00000002;
 constexpr unsigned int CVAR_CHEAT 		= 0x00000004;
 constexpr unsigned int CVAR_READONLY 	= 0x00000008;	// Missi: cannot be changed under any circumstance EXCEPT through progs; used for things like fog values (7/3/2024)
 
+enum class cvar_source : unsigned char
+{
+	SRC_CVAR_NONE,
+	SRC_CVAR_CLIENT,
+	SRC_CVAR_SERVER,
+	SRC_CVAR_PROGS
+};
+
 typedef struct cvar_s
 {
 	const char	*name;
@@ -67,6 +75,7 @@ typedef struct cvar_s
 	bool archive;		// set to true to cause it to be saved to vars.rc
     unsigned int flags;		// Missi: Source-styled cvar flags (7/3/2024)
 	float	value;
+	cvar_source src;
 	struct cvar_s *next;
 } cvar_t;
 
@@ -74,7 +83,7 @@ void 	Cvar_RegisterVariable (cvar_t *variable);
 // registers a cvar that allready has the name, string, and optionally the
 // archive elements set.
 
-void 	Cvar_Set (const char *var_name, const char *value);
+void 	Cvar_Set (const char *var_name, const char *value, bool progs = false);
 // equivelant to "<name> <variable>" typed at the console
 
 void	Cvar_SetValue (const char *var_name, float value);
@@ -90,7 +99,7 @@ const char 	*Cvar_CompleteVariable (const char *partial);
 // attempts to match a partial variable name for command line completion
 // returns NULL if nothing fits
 
-bool Cvar_Command (void);
+bool Cvar_Command ();
 // called by Cmd_ExecuteString when Cmd_Argv(0) doesn't match a known
 // command.  Returns true if the command was a variable reference that
 // was handled. (print or change)

@@ -55,13 +55,13 @@ template<typename T>
 CMemCacheSystem		cache_head = *test_head<T>;
 */
 
-byte* hunk_base;
+byte*		hunk_base;
 size_t		hunk_size;
 
 size_t		hunk_low_used;
 size_t		hunk_high_used;
 
-bool	hunk_tempactive;
+bool		hunk_tempactive;
 size_t		hunk_tempmark;
 
 
@@ -95,7 +95,7 @@ char* CMemCache::Hunk_Strdup(const char* s, const char* name)
 	return ptr;
 }
 
-void CMemCache::Hunk_Check (void)
+void CMemCache::Hunk_Check ()
 {
 	hunk_t	*h;
 	
@@ -196,7 +196,7 @@ void CMemCache::Hunk_Print (bool all)
 	
 }
 
-int	CMemCache::Hunk_LowMark (void)
+int	CMemCache::Hunk_LowMark ()
 {
 	return hunk_low_used;
 }
@@ -209,7 +209,7 @@ void CMemCache::Hunk_FreeToLowMark (int mark)
 	hunk_low_used = mark;
 }
 
-int	CMemCache::Hunk_HighMark (void)
+int	CMemCache::Hunk_HighMark ()
 {
 	if (hunk_tempactive)
 	{
@@ -247,7 +247,7 @@ Cache_Report
 
 ============
 */
-void CMemCache::Cache_Report (void)
+void CMemCache::Cache_Report ()
 {
 	Con_DPrintf ("%4.1f megabyte data cache\n", (hunk_size - hunk_high_used - hunk_low_used) / (float)(1024*1024) );
 }
@@ -258,11 +258,11 @@ Cache_Compact
 
 ============
 */
-void CMemCache::Cache_Compact (void)
+void CMemCache::Cache_Compact ()
 {
 }
 
-CMemZone::CMemZone() : size(0)
+CMemZone::CMemZone() : size(0), rover(nullptr)
 {
 }
 

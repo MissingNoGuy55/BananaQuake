@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-void CL_FinishTimeDemo (void);
+void CL_FinishTimeDemo ();
 
 /*
 ==============================================================================
@@ -42,7 +42,7 @@ CL_StopPlayback
 Called when a demo file runs out, or the user starts a game
 ==============
 */
-void CL_StopPlayback (void)
+void CL_StopPlayback ()
 {
 	if (!cls.demoplayback)
 		return;
@@ -62,7 +62,7 @@ CL_WriteDemoMessage
 Dumps the current net message, prefixed by the length and view angles
 ====================
 */
-void CL_WriteDemoMessage (void)
+void CL_WriteDemoMessage ()
 {
 	int		len;
 	int		i;
@@ -72,7 +72,7 @@ void CL_WriteDemoMessage (void)
 	
 	//fwrite (&len, 4, 1, cls.demofile);
 
-	char length[16] = {};
+	char length[16];
 	snprintf(length, sizeof(length), "%i", len);
 
 	cls.demofile_out.write(length, sizeof(int));
@@ -81,7 +81,7 @@ void CL_WriteDemoMessage (void)
 	{
 		f = LittleFloat (cl.viewangles[i]);
 
-		char viewang[16] = {};
+		char viewang[16];
 		snprintf(viewang, sizeof(viewang), "%f", f);
 
 		cls.demofile_out.write(viewang, sizeof(float));
@@ -103,7 +103,7 @@ CL_GetMessage
 Handles recording and playback of demos, on top of NET_ code
 ====================
 */
-int CL_GetMessage (void)
+int CL_GetMessage ()
 {
 	int		r, i;
 	float	f;
@@ -132,7 +132,7 @@ int CL_GetMessage (void)
 	// get the next message
 		//fread (&net_message.cursize, 4, 1, cls.demofile);
 		
-		char data[16] = {};
+		char data[16];
 
 		cls.demofile_in.read(data, sizeof(int));
 
@@ -143,7 +143,7 @@ int CL_GetMessage (void)
 		{
 			//r = fread (&f, 4, 1, cls.demofile);
 			
-			char read[16] = {};
+			char read[16];
 
 			cls.demofile_in.read(read, sizeof(int));
 			
@@ -196,7 +196,7 @@ CL_Stop_f
 stop recording a demo
 ====================
 */
-void CL_Stop_f (void)
+void CL_Stop_f ()
 {
 	if (cmd_source != src_command)
 		return;
@@ -225,7 +225,7 @@ CL_Record_f
 record <demoname> <map> [cd track]
 ====================
 */
-void CL_Record_f (void)
+void CL_Record_f ()
 {
 	int		c;
 	char	name[MAX_OSPATH];
@@ -290,7 +290,7 @@ void CL_Record_f (void)
 
 	cls.forcetrack = track;
 
-	char write[64] = {};
+	char write[64];
 
 	snprintf(write, sizeof(write), "%i\n", cls.forcetrack);
 
@@ -307,7 +307,7 @@ CL_PlayDemo_f
 play [demoname]
 ====================
 */
-void CL_PlayDemo_f (void)
+void CL_PlayDemo_f ()
 {
 	char	name[256];
 
@@ -341,7 +341,7 @@ void CL_PlayDemo_f (void)
 		return;
 	}
 
-	char test[16] = {};
+	char test[16];
 	cls.demofile_in.read(test, sizeof(int));
 
 	int val = atoi(test);
@@ -371,7 +371,7 @@ CL_FinishTimeDemo
 
 ====================
 */
-void CL_FinishTimeDemo (void)
+void CL_FinishTimeDemo ()
 {
 	int		frames;
 	float	time;
@@ -393,7 +393,7 @@ CL_TimeDemo_f
 timedemo [demoname]
 ====================
 */
-void CL_TimeDemo_f (void)
+void CL_TimeDemo_f ()
 {
 	if (cmd_source != src_command)
 		return;

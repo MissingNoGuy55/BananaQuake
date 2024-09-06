@@ -50,7 +50,7 @@ SV_SetIdealPitch
 ===============
 */
 #define	MAX_FORWARD	6
-void CQuakeServer::SV_SetIdealPitch (void)
+void CQuakeServer::SV_SetIdealPitch ()
 {
 	float	angleval, sinval, cosval;
 	trace_t	tr;
@@ -119,7 +119,7 @@ SV_UserFriction
 
 ==================
 */
-void CQuakeServer::SV_UserFriction (void)
+void CQuakeServer::SV_UserFriction ()
 {
 	float	*vel;
 	float	speed, newspeed, control;
@@ -214,7 +214,7 @@ void CQuakeServer::SV_Accelerate (vec3_t wishvel)
 		velocity[i] += accelspeed*pushvec[i];	
 }
 #endif
-void CQuakeServer::SV_Accelerate (void)
+void CQuakeServer::SV_Accelerate ()
 {
 	int			i;
 	float		addspeed, accelspeed, currentspeed;
@@ -253,7 +253,7 @@ void CQuakeServer::SV_AirAccelerate (vec3_t wishveloc)
 }
 
 
-void DropPunchAngle (void)
+void DropPunchAngle ()
 {
 	float	len;
 	
@@ -271,7 +271,7 @@ SV_WaterMove
 
 ===================
 */
-void CQuakeServer::SV_WaterMove (void)
+void CQuakeServer::SV_WaterMove ()
 {
 	int		i;
 	vec3_t	wishvel;
@@ -331,9 +331,9 @@ void CQuakeServer::SV_WaterMove (void)
 		velocity[i] += accelspeed * wishvel[i];
 }
 
-void CQuakeServer::SV_WaterJump (void)
+void CQuakeServer::SV_WaterJump ()
 {
-	if (sv->time > sv_player->v.teleport_time
+	if (time > sv_player->v.teleport_time
 	|| !sv_player->v.waterlevel)
 	{
 		sv_player->v.flags = (int)sv_player->v.flags & ~FL_WATERJUMP;
@@ -350,7 +350,7 @@ SV_AirMove
 
 ===================
 */
-void CQuakeServer::SV_AirMove (void)
+void CQuakeServer::SV_AirMove ()
 {
 	int			i;
 	vec3_t		wishvel;
@@ -362,7 +362,7 @@ void CQuakeServer::SV_AirMove (void)
 	smove = cmd.sidemove;
 	
 // hack to not let you back into teleporter
-	if (sv->time < sv_player->v.teleport_time && fmove < 0)
+	if (time < sv_player->v.teleport_time && fmove < 0)
 		fmove = 0;
 		
 	for (i=0 ; i<3 ; i++)
@@ -404,7 +404,7 @@ the move fields specify an intended velocity in pix/sec
 the angle fields specify an exact angular motion in degrees
 ===================
 */
-void CQuakeServer::SV_ClientThink (void)
+void CQuakeServer::SV_ClientThink ()
 {
 	vec3_t		v_angle;
 
@@ -469,7 +469,7 @@ void CQuakeServer::SV_ReadClientMove(usercmd_t* move)
 
 	// read ping time
 	host_client->ping_times[host_client->num_pings % NUM_PING_TIMES]
-		= sv->time - MSG_ReadFloat();
+		= time - MSG_ReadFloat();
 	host_client->num_pings++;
 
 	// read current angles	
@@ -514,7 +514,7 @@ void CQuakeServer::SV_ReadClientMove(usercmd_t* move)
 				int old_self = pr_global_struct->self; 
 
 				pr_global_struct->self = EDICT_TO_PROG(trace.ent);
-				pr_global_struct->time = sv->GetServerTime();
+				pr_global_struct->time = GetServerTime();
 				PR_ExecuteProgram(trace.ent->v.use);
 
  				pr_global_struct->self = old_self;
@@ -535,7 +535,7 @@ SV_ReadClientMessage
 Returns false if the client should be killed
 ===================
 */
-bool CQuakeServer::SV_ReadClientMessage (void)
+bool CQuakeServer::SV_ReadClientMessage ()
 {
 	int		ret;
 	int		command;
@@ -653,7 +653,7 @@ nextmsg:
 SV_RunClients
 ==================
 */
-void CQuakeServer::SV_RunClients (void)
+void CQuakeServer::SV_RunClients ()
 {
 	int				i;
 	
@@ -678,7 +678,7 @@ void CQuakeServer::SV_RunClients (void)
 		}
 
 // always pause in single player if in console or menus
-		if (!sv->paused && (svs.maxclients > 1 || key_dest == key_game) )
+		if (!paused && (svs.maxclients > 1 || key_dest == key_game) )
 			SV_ClientThink ();
 	}
 }

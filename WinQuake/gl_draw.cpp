@@ -58,20 +58,20 @@ GLint		gl_hardware_maxsize;
 static byte	conback_buffer[sizeof(CQuakePic)];
 CQuakePic	*conback = (CQuakePic*)&conback_buffer;
 
-cvar_t	level_fog_color_r           { "fog_r", "0.5", false };
-cvar_t	level_fog_color_g           { "fog_g", "0.5", false };
-cvar_t	level_fog_color_b           { "fog_b", "0.5", false };
-cvar_t	level_fog_color_goal_r      { "fog_goal_r", "0.5", false };
-cvar_t	level_fog_color_goal_g      { "fog_goal_g", "0.5", false };
-cvar_t	level_fog_color_goal_b      { "fog_goal_b", "0.5", false };
-cvar_t	level_fog_density           { "fog_density", "1.0", false };
-cvar_t	level_fog_density_goal      { "fog_density_goal", "1.0", false };
-cvar_t  level_fog_start             { "fog_start", "64.0", false };
-cvar_t  level_fog_start_goal        { "fog_start_goal", "64.0", false };
-cvar_t  level_fog_end               { "fog_end", "2048.0", false };
-cvar_t  level_fog_end_goal          { "fog_end_goal", "2048.0", false };
-cvar_t  level_fog_force             { "fog_force", "0.0", false };
-cvar_t  level_fog_lerp_time         { "fog_lerp_time", "0.0", false };
+cvar_t	level_fog_color_r           { "fog_r", "0.5", false, CVAR_READONLY };
+cvar_t	level_fog_color_g           { "fog_g", "0.5", false, CVAR_READONLY };
+cvar_t	level_fog_color_b           { "fog_b", "0.5", false, CVAR_READONLY };
+cvar_t	level_fog_color_goal_r      { "fog_goal_r", "0.5", false, CVAR_READONLY };
+cvar_t	level_fog_color_goal_g      { "fog_goal_g", "0.5", false, CVAR_READONLY };
+cvar_t	level_fog_color_goal_b      { "fog_goal_b", "0.5", false, CVAR_READONLY };
+cvar_t	level_fog_density           { "fog_density", "1.0", false, CVAR_READONLY };
+cvar_t	level_fog_density_goal      { "fog_density_goal", "1.0", false, CVAR_READONLY };
+cvar_t  level_fog_start             { "fog_start", "64.0", false, CVAR_READONLY };
+cvar_t  level_fog_start_goal        { "fog_start_goal", "64.0", false, CVAR_READONLY };
+cvar_t  level_fog_end               { "fog_end", "2048.0", false, CVAR_READONLY };
+cvar_t  level_fog_end_goal          { "fog_end_goal", "2048.0", false, CVAR_READONLY };
+cvar_t  level_fog_force             { "fog_force", "0.0", false, CVAR_READONLY };
+cvar_t  level_fog_lerp_time         { "fog_lerp_time", "0.0", false, CVAR_READONLY };
 
 #ifdef DEBUG
 
@@ -387,7 +387,7 @@ int CGLRenderer::Scrap_AllocBlock (int w, int h, int *x, int *y)
 
 static int	scrap_uploads;
 
-void CGLRenderer::Scrap_Upload (void)
+void CGLRenderer::Scrap_Upload ()
 {
 	char	name[8];
 	int		i;
@@ -608,7 +608,7 @@ void CGLRenderer::Draw_CharToConback (int num, byte *dest)
 CGLRenderer::Draw_TextureMode_f
 ===============
 */
-void CGLRenderer::Draw_TextureMode_f (void)
+void CGLRenderer::Draw_TextureMode_f ()
 {
 	int		i;
 	CGLTexture	*glt = NULL;
@@ -680,7 +680,7 @@ void CGLRenderer::Draw_TextureMode_f (void)
 CGLRenderer::Draw_Init
 ===============
 */
-void CGLRenderer::Draw_Init (void)
+void CGLRenderer::Draw_Init ()
 {
 	char	ver[40];
 	int		start = 0;
@@ -773,7 +773,7 @@ It can be clipped to the top of the screen to allow the console to be
 smoothly scrolled off.
 ================
 */
-void CGLRenderer::Draw_Character (int x, int y, int num)
+void CGLRenderer::Draw_Character(int x, int y, int num)
 {
 	int				row, col;
 	float			frow, fcol, size;
@@ -809,6 +809,52 @@ void CGLRenderer::Draw_Character (int x, int y, int num)
 
 /*
 ================
+CGLRenderer::Draw_Character
+
+Draws one 8*8 graphics character with 0 being transparent.
+It can be clipped to the top of the screen to allow the console to be
+smoothly scrolled off.
+================
+*/
+void CGLRenderer::Draw_Character3D(float x, float y, float z, int num)
+{
+	int				row, col;
+	float			frow, fcol, fz, size;
+
+	if (num == 32)
+		return;		// space
+
+	num &= 255;
+
+	if (y <= -8)
+		return;			// totally off screen
+
+	row = num >> 4;
+	col = num & 15;
+
+	frow = row * 0.0625f;
+	fcol = col * 0.0625f;
+	size = 0.0625f;
+	fz = z * 0.0625f;
+
+	GL_Bind(char_texture);
+
+	glEnable(GL_ALPHA_TEST);
+	glBegin(GL_QUADS);
+	glTexCoord3f(fcol, frow, fz);
+	glVertex3f(x, y, z);
+	glTexCoord3f(fcol + size, frow, fz);
+	glVertex3f(x + 8, y, z);
+	glTexCoord3f(fcol + size, frow + size, fz);
+	glVertex3f(x + 8, y + 2, z - 8);	// Missi: add something to y to debug this (9/5/2024)
+	glTexCoord3f(fcol, frow + size, fz);
+	glVertex3f(x, y + 2, z - 8);		// Missi: add something to y to debug this (9/5/2024)
+	glEnd();
+	glDisable(GL_ALPHA_TEST);
+}
+
+/*
+================
 CGLRenderer::Draw_String
 ================
 */
@@ -817,6 +863,21 @@ void CGLRenderer::Draw_String (int x, int y, const char *str)
 	while (*str)
 	{
 		Draw_Character (x, y, *str);
+		str++;
+		x += 8;
+	}
+}
+
+/*
+================
+CGLRenderer::Draw_String
+================
+*/
+void CGLRenderer::Draw_String3D(int x, int y, int z, const char* str)
+{
+	while (*str)
+	{
+		Draw_Character3D(x, y, z, *str);
 		str++;
 		x += 8;
 	}
@@ -852,7 +913,7 @@ void CGLRenderer::Draw_AlphaPic (int x, int y, CQuakePic *pic, float alpha)
 //	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //	glCullFace(GL_FRONT);
 	glColor4f (1,1,1,alpha);
-	g_GLRenderer->GL_Bind (gl->tex);
+	GL_Bind (gl->tex);
 	glBegin (GL_QUADS);
 	glTexCoord2f (gl->sl, gl->tl);
 	glVertex2f (x, y);
@@ -949,7 +1010,7 @@ void CGLRenderer::Draw_TransPicTranslate (int x, int y, CQuakePic *pic, byte *tr
 	byte			*src;
 	int				p;
 
-	g_GLRenderer->GL_Bind (translate_texture);
+	GL_Bind (translate_texture);
 
 	c = pic->width * pic->height;
 
@@ -1020,7 +1081,7 @@ void CGLRenderer::Draw_TileClear (int x, int y, int w, int h)
 		gl = (COpenGLPic*)draw_backtile->datavec.GetBase();
 
 		glColor3f(1, 1, 1);
-		g_GLRenderer->GL_Bind(gl->tex); // *(int*)draw_backtile->data;
+		GL_Bind(gl->tex); // *(int*)draw_backtile->data;
 		glBegin(GL_QUADS);
 		glTexCoord2f(x / 64.0f, y / 64.0f);
 		glVertex2f(x, y);
@@ -1068,7 +1129,7 @@ CGLRenderer::Draw_FadeScreen
 
 ================
 */
-void CGLRenderer::Draw_FadeScreen (void)
+void CGLRenderer::Draw_FadeScreen ()
 {
 	glEnable (GL_BLEND);
 	glDisable (GL_TEXTURE_2D);
@@ -1098,7 +1159,7 @@ Draws the little blue disc in the corner of the screen.
 Call before beginning any disc IO.
 ================
 */
-void CGLRenderer::Draw_BeginDisc (void)
+void CGLRenderer::Draw_BeginDisc ()
 {
 	if (!draw_disc)
 		return;
@@ -1116,8 +1177,17 @@ Erases the disc icon.
 Call after completing any disc IO
 ================
 */
-void CGLRenderer::Draw_EndDisc (void)
+void CGLRenderer::Draw_EndDisc ()
 {
+}
+
+void CGLRenderer::Draw_PrintPlayerName(client_t* client, int num, const char* name)
+{
+	edict_t* ed_client = client->edict;
+
+	float* pos = ed_client->v.origin;
+
+	Draw_String3D(pos[0], pos[1], pos[2] + 32.0f, name);
 }
 
 /*
@@ -1127,7 +1197,7 @@ CGLRenderer::GL_Set2D
 Setup as if the screen was 320*200
 ================
 */
-void CGLRenderer::GL_Set2D (void)
+void CGLRenderer::GL_Set2D ()
 {
 	glViewport (glx, gly, glwidth, glheight);
 

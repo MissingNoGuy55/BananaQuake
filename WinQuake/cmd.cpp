@@ -51,7 +51,7 @@ next frame.  This allows commands like:
 bind g "impulse 5 ; +attack ; wait ; -attack ; impulse 2"
 ============
 */
-void CCommand::Cmd_Wait_f (void)
+void CCommand::Cmd_Wait_f ()
 {
 	cmd_wait = true;
 }
@@ -71,7 +71,7 @@ sizebuf_t	cmd_text;
 Cbuf_Init
 ============
 */
-void CCommandBuffer::Cbuf_Init (void)
+void CCommandBuffer::Cbuf_Init ()
 {
 	SZ_Alloc (&cmd_text, 524288);		// space for commands and script files
 }
@@ -142,7 +142,7 @@ void CCommandBuffer::Cbuf_InsertText (const char *text)
 Cbuf_Execute
 ============
 */
-void CCommandBuffer::Cbuf_Execute (void)
+void CCommandBuffer::Cbuf_Execute ()
 {
 	int		i;
 	char	*text;
@@ -212,7 +212,7 @@ quake +prog jctest.qp +cmd amlev1
 quake -nosound +cmd amlev1
 ===============
 */
-void CCommand::Cmd_StuffCmds_f (void)
+void CCommand::Cmd_StuffCmds_f ()
 {
 	int		i, j;
 	int		s;
@@ -282,7 +282,7 @@ void CCommand::Cmd_StuffCmds_f (void)
 Cmd_Exec_f
 ===============
 */
-void CCommand::Cmd_Exec_f (void)
+void CCommand::Cmd_Exec_f ()
 {
     char *f = nullptr;
 	int		mark = 0;
@@ -314,7 +314,7 @@ Cmd_Echo_f
 Just prints the rest of the line to the console
 ===============
 */
-void CCommand::Cmd_Echo_f (void)
+void CCommand::Cmd_Echo_f ()
 {
 	int		i;
 	
@@ -340,7 +340,7 @@ char* CCommand::CopyString (char *in)
 	return out;
 }
 
-void CCommand::Cmd_Alias_f (void)
+void CCommand::Cmd_Alias_f ()
 {
 	cmdalias_t	*a;
 	char		cmd[1024];
@@ -433,7 +433,7 @@ CCommand::CCommand()
 Cmd_Init
 ============
 */
-void CCommand::Cmd_Init(void)
+void CCommand::Cmd_Init()
 {
 //
 // register our commands
@@ -454,7 +454,7 @@ void CCommand::Cmd_Init(void)
 Cmd_Argc
 ============
 */
-int CCommand::Cmd_Argc (void)
+int CCommand::Cmd_Argc ()
 {
 	return cmd_argc;
 }
@@ -476,7 +476,7 @@ const char* CCommand::Cmd_Argv (int arg)
 Cmd_Args
 ============
 */
-const char* CCommand::Cmd_Args (void)
+const char* CCommand::Cmd_Args ()
 {
 	return cmd_args;
 }
@@ -641,7 +641,7 @@ void CCommand::Cmd_ExecuteString (const char *text, cmd_source_t src)
 		{
             if ((cmd->flags & CVAR_CHEAT) && sv_cheats.value == 0)
             {
-                Con_Printf("Attempted to run cheat command \"%s\" without cheats enabled!\n", cmd->name);
+                Con_Printf("Player %s attempted to run cheat command \"%s\" without cheats enabled!\n", cl_name.string, cmd->name);
                 return;
             }
 
@@ -674,7 +674,7 @@ Cmd_ForwardToServer
 Sends the entire command line over to the server
 ===================
 */
-void CCommand::Cmd_ForwardToServer (void)
+void CCommand::Cmd_ForwardToServer ()
 {
 	if (cls.state != ca_connected)
 	{

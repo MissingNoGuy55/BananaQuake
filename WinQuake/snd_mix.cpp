@@ -43,10 +43,10 @@ int paintedtime;
 int s_rawend;
 portable_samplepair_t	s_rawsamples[MAX_RAW_SAMPLES];
 
-// void Snd_WriteLinearBlastStereo16 (void);
+// void Snd_WriteLinearBlastStereo16 ();
 
 // #if	!id386
-void CSoundDMA::Snd_WriteLinearBlastStereo16 (void)
+void CSoundDMA::Snd_WriteLinearBlastStereo16 ()
 {
 	int		i;
 	int		val;
@@ -474,7 +474,7 @@ void CSoundDMA::S_PaintChannels(int endtime)
 	}
 }
 
-void CSoundDMA::SND_InitScaletable (void)
+void CSoundDMA::SND_InitScaletable ()
 {
 	int		i, j;
 	int		scale;

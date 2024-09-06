@@ -664,7 +664,7 @@ void CGLRenderer::R_DrawAliasModel (entity_t *e)
 R_DrawEntitiesOnList
 =============
 */
-void CGLRenderer::R_DrawEntitiesOnList (void)
+void CGLRenderer::R_DrawEntitiesOnList ()
 {
 	int		i;
 
@@ -709,7 +709,7 @@ void CGLRenderer::R_DrawEntitiesOnList (void)
 R_DrawViewModel
 =============
 */
-void CGLRenderer::R_DrawViewModel (void)
+void CGLRenderer::R_DrawViewModel ()
 {
 	int			j;
 	int			lnum;
@@ -785,7 +785,7 @@ void CGLRenderer::R_DrawViewModel (void)
 R_PolyBlend
 ============
 */
-void CGLRenderer::R_PolyBlend (void)
+void CGLRenderer::R_PolyBlend ()
 {
 	if (!gl_polyblend.value)
 		return;
@@ -835,7 +835,7 @@ int CGLRenderer::SignbitsForPlane (mplane_t *out)
 }
 
 
-void CGLRenderer::R_SetFrustum (void)
+void CGLRenderer::R_SetFrustum ()
 {
 	int		i;
 
@@ -876,7 +876,7 @@ void CGLRenderer::R_SetFrustum (void)
 R_SetupFrame
 ===============
 */
-void CGLRenderer::R_SetupFrame (void)
+void CGLRenderer::R_SetupFrame ()
 {
 // don't allow cheats in multiplayer
 	if (cl.maxclients > 1)
@@ -926,7 +926,7 @@ void CGLRenderer::MYgluPerspective( GLdouble fovy, GLdouble aspect,
 R_SetupGL
 =============
 */
-void CGLRenderer::R_SetupGL (void)
+void CGLRenderer::R_SetupGL ()
 {
 	float	screenaspect;
 	extern	int glwidth, glheight;
@@ -1009,7 +1009,7 @@ R_RenderScene
 r_refdef must be set before the first call
 ================
 */
-void CGLRenderer::R_RenderScene (void)
+void CGLRenderer::R_RenderScene ()
 {
 	R_SetupFrame ();
 
@@ -1031,6 +1031,18 @@ void CGLRenderer::R_RenderScene (void)
 
 	g_CoreRenderer->R_DrawParticles ();
 
+	
+	for (int i = 0; i < svs.maxclients; i++)
+	{
+		client_t* pPlayer = &svs.clients[i];
+
+		if (!pPlayer)
+			break;
+
+		if (pPlayer)
+			Draw_PrintPlayerName(pPlayer, i, pPlayer->name);
+	}
+
 #ifdef GLTEST
 	Test_Draw ();
 #endif
@@ -1043,7 +1055,7 @@ void CGLRenderer::R_RenderScene (void)
 R_Clear
 =============
 */
-void CGLRenderer::R_Clear (void)
+void CGLRenderer::R_Clear ()
 {
 	if (r_mirroralpha.value != 1.0)
 	{
@@ -1095,7 +1107,7 @@ void CGLRenderer::R_Clear (void)
 R_Mirror
 =============
 */
-void CGLRenderer::R_Mirror (void)
+void CGLRenderer::R_Mirror ()
 {
 	float		d;
 	msurface_t	*s;
@@ -1169,7 +1181,7 @@ R_RenderView
 r_refdef must be set before the first call
 ================
 */
-void CGLRenderer::R_RenderView (void)
+void CGLRenderer::R_RenderView ()
 {
 	double	time1, time2;
 	GLfloat colors[4] = {(GLfloat) 0.0, (GLfloat) 0.0, (GLfloat) 1, (GLfloat) 0.20};

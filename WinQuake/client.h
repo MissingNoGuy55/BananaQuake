@@ -159,8 +159,8 @@ typedef struct
 
 // information for local display
 	int			stats[MAX_CL_STATS];	// health, etc
-	int			items;			// inventory bit flags
-	float	item_gettime[32];	// cl.time of aquiring item, for blinking
+	unsigned long long	items;			// inventory bit flags
+	float		item_gettime[64];	// cl.time of aquiring item, for blinking
 	float		faceanimtime;	// use anim frame if cl.time < this
 
 	cshift_t	cshifts[NUM_CSHIFTS];	// color shifts for damage, powerups
@@ -238,6 +238,7 @@ typedef struct
 #endif
 } client_state_t;
 
+extern unsigned long long cl_items_global[];
 
 //
 // cvars
@@ -293,19 +294,19 @@ extern	beam_t			cl_beams[MAX_BEAMS];
 // cl_main
 //
 dlight_t *CL_AllocDlight (int key);
-void	CL_DecayLights (void);
+void	CL_DecayLights ();
 
-void CL_Init (void);
+void CL_Init ();
 
 void CL_EstablishConnection (const char *inhost);
-void CL_Signon1 (void);
-void CL_Signon2 (void);
-void CL_Signon3 (void);
-void CL_Signon4 (void);
+void CL_Signon1 ();
+void CL_Signon2 ();
+void CL_Signon3 ();
+void CL_Signon4 ();
 
-void CL_Disconnect (void);
-void CL_Disconnect_f (void);
-void CL_NextDemo (void);
+void CL_Disconnect ();
+void CL_Disconnect_f ();
+void CL_NextDemo ();
 
 #define			MAX_VISEDICTS	4096	// Missi: was 256 (6/10/2024)
 extern	int				cl_numvisedicts;
@@ -324,17 +325,17 @@ extern	kbutton_t	in_mlook, in_klook;
 extern 	kbutton_t 	in_strafe;
 extern 	kbutton_t 	in_speed;
 
-void CL_InitInput (void);
-void CL_SendCmd (void);
+void CL_InitInput ();
+void CL_SendCmd ();
 void CL_SendMove (usercmd_t *cmd);
 
-void CL_ParseTEnt (void);
-void CL_UpdateTEnts (void);
+void CL_ParseTEnt ();
+void CL_UpdateTEnts ();
 
-void CL_ClearState (void);
+void CL_ClearState ();
 
 
-int  CL_ReadFromServer (void);
+int  CL_ReadFromServer ();
 void CL_WriteToServer (usercmd_t *cmd);
 void CL_BaseMove (usercmd_t *cmd);
 
@@ -345,35 +346,35 @@ const char *Key_KeynumToString (int keynum);
 //
 // cl_demo.c
 //
-void CL_StopPlayback (void);
-int CL_GetMessage (void);
+void CL_StopPlayback ();
+int CL_GetMessage ();
 
-void CL_Stop_f (void);
-void CL_Record_f (void);
-void CL_PlayDemo_f (void);
-void CL_TimeDemo_f (void);
+void CL_Stop_f ();
+void CL_Record_f ();
+void CL_PlayDemo_f ();
+void CL_TimeDemo_f ();
 
 //
 // cl_parse.c
 //
-void CL_ParseServerMessage (void);
+void CL_ParseServerMessage ();
 void CL_NewTranslation (int slot);
 
 //
 // view
 //
-void V_StartPitchDrift (void);
-void V_StopPitchDrift (void);
+void V_StartPitchDrift ();
+void V_StopPitchDrift ();
 
-void V_RenderView (void);
-void V_UpdatePalette (void);
-void V_Register (void);
-void V_ParseDamage (void);
+void V_RenderView ();
+void V_UpdatePalette ();
+void V_Register ();
+void V_ParseDamage ();
 void V_SetContentsColor (int contents);
 
 
 //
 // cl_tent
 //
-void CL_InitTEnts (void);
-void CL_SignonReply (void);
+void CL_InitTEnts ();
+void CL_SignonReply ();

@@ -80,9 +80,9 @@ int	dos_inportw(int port);
 void dos_outportb(int port, int val);
 void dos_outportw(int port, int val);
 
-void dos_irqenable(void);
-void dos_irqdisable(void);
-void dos_registerintr(int intr, void (*handler)(void));
+void dos_irqenable();
+void dos_irqdisable();
+void dos_registerintr(int intr, void (*handler)());
 void dos_restoreintr(int intr);
 
 int	dos_int86(int vec);
@@ -92,7 +92,7 @@ void dos_freememory(void *ptr);
 
 void	dos_usleep(int usecs);
 
-int dos_getheapsize(void);
+int dos_getheapsize();
 
 extern regs_t regs;
 

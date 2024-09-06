@@ -41,7 +41,7 @@ public:
 	CConProc();
 
 	void InitConProc(HANDLE hFile, HANDLE heventParent, HANDLE heventChild);
-	void DeinitConProc(void);
+	void DeinitConProc();
 };
 
 extern CConProc* g_ConProc;

@@ -119,13 +119,13 @@ public:
 	bool		snd_ambient;
 	bool		snd_initialized;
 
-	static void			S_Play(void);
-	static void			S_PlayVol(void);
-	static void			S_SoundList(void);
-	static void			S_StopAllSoundsC(void);
+	static void			S_Play();
+	static void			S_PlayVol();
+	static void			S_SoundList();
+	static void			S_StopAllSoundsC();
 	void				S_Update_();
 	static void			S_StopAllSounds(bool clear);
-	static void			S_SoundInfo_f(void);
+	static void			S_SoundInfo_f();
     void				S_SoundInfo();
 
 	sfx_t*				S_PrecacheSound(const char* sample);
@@ -179,7 +179,7 @@ public:
 	bool		snd_ambient;
 	bool		snd_initialized;
 
-	typedef void (*snd_callback)(void);
+	typedef void (*snd_callback)();
 
 	unsigned long		gSndBufSize;
 
@@ -187,23 +187,23 @@ public:
 	bool SNDDMA_Init(dma_t* dma);
 
 	// gets the current DMA position
-	int SNDDMA_GetDMAPos(void);
+	int SNDDMA_GetDMAPos();
 
 	// shutdown the DMA xfer.
-	void SNDDMA_Shutdown(void);
+	void SNDDMA_Shutdown();
 
-	void SNDDMA_Submit(void);
+	void SNDDMA_Submit();
 
-	void S_BlockSound(void);
-	void S_UnblockSound(void);
+	void S_BlockSound();
+	void S_UnblockSound();
 
-	static void			S_Play(void);
-	static void			S_PlayVol(void);
-	static void			S_SoundList(void);
-	static void			S_StopAllSoundsC(void);
+	static void			S_Play();
+	static void			S_PlayVol();
+	static void			S_SoundList();
+	static void			S_StopAllSoundsC();
 	void			S_Update_();
 	static void		S_StopAllSounds(bool clear);
-	static void		S_SoundInfo_f(void);
+	static void		S_SoundInfo_f();
 	void			S_SoundInfo();
 
 	static sfx_t* S_PrecacheSound(const char* sample);
@@ -240,28 +240,28 @@ public:
 
 	float					mmstarttime;
 
-    virtual void S_Init(void);
-    virtual void S_Startup(void);
-    virtual void S_Shutdown(void);
+    virtual void S_Init();
+    virtual void S_Startup();
+    virtual void S_Shutdown();
     static void S_StartSound(int entnum, int entchannel, sfx_t* sfx, vec3_t origin, float fvol, float attenuation);
     virtual void S_StaticSound(sfx_t* sfx, vec3_t origin, float vol, float attenuation);
-    virtual void S_UpdateAmbientSounds(void);
+    virtual void S_UpdateAmbientSounds();
     virtual void S_StopSound(int entnum, int entchannel);
 	//void S_StopAllSounds(bool clear);
-	//void S_StopAllSoundsC(void);
-    virtual void S_ClearBuffer(void);
+	//void S_StopAllSoundsC();
+    virtual void S_ClearBuffer();
     virtual void S_RawSamples(int samples, int rate, int width, int channels, byte* data, float volume);
     virtual void S_Update(vec3_t origin, vec3_t v_forward, vec3_t v_right, vec3_t v_up);
-    virtual void GetSoundtime(void);
-    virtual void S_ExtraUpdate(void);
+    virtual void GetSoundtime();
+    virtual void S_ExtraUpdate();
     
 	/*sfx_t* S_PrecacheSound(const char* sample);
 	sfx_t* S_FindName(const char* name);*/
     virtual void S_TouchSound(const char* sample);
-    virtual void S_ClearPrecache(void);
-    virtual void S_BeginPrecaching(void);
-    virtual void S_EndPrecaching(void);
-    virtual void Snd_WriteLinearBlastStereo16(void);
+    virtual void S_ClearPrecache();
+    virtual void S_BeginPrecaching();
+    virtual void S_EndPrecaching();
+    virtual void Snd_WriteLinearBlastStereo16();
     virtual void S_TransferStereo16(int endtime);
     virtual void S_TransferPaintBuffer(int endtime);
     virtual void S_PaintChannels(int endtime);
@@ -277,13 +277,13 @@ public:
 
     virtual void S_LocalSound(const char* s);
 
-    virtual void SND_InitScaletable(void);
+    virtual void SND_InitScaletable();
 
-    virtual void S_AmbientOff(void);
-    virtual void S_AmbientOn(void);
+    virtual void S_AmbientOff();
+    virtual void S_AmbientOn();
 
-    virtual void SNDDMA_LockBuffer(void);
-    virtual void SNDDMA_UnlockBuffer(void);
+    virtual void SNDDMA_LockBuffer();
+    virtual void SNDDMA_UnlockBuffer();
 
     virtual void S_CheckMDMAMusic();
     
@@ -308,7 +308,7 @@ class CSoundSystemWin : public CSoundDMA
 {
 public:
 
-	typedef void (*snd_callback)(void);
+	typedef void (*snd_callback)();
 
 	CSoundSystemWin() : CSoundDMA() {};
 
@@ -318,17 +318,17 @@ public:
 	bool SNDDMA_Init(dma_t* dma);
 
 	// gets the current DMA position
-	int SNDDMA_GetDMAPos(void);
+	int SNDDMA_GetDMAPos();
 
 	// shutdown the DMA xfer.
-	void SNDDMA_Shutdown(void);
+	void SNDDMA_Shutdown();
 
-	void SNDDMA_Submit(void);
+	void SNDDMA_Submit();
 
 	static void paint_audio(void* unused, Uint8* stream, int len);
 
-	void S_BlockSound(void);
-	void S_UnblockSound(void);
+	void S_BlockSound();
+	void S_UnblockSound();
 };
 #endif
 */
@@ -337,7 +337,7 @@ class CSoundSystemMac : public CSoundDMA
 {
 public:
 
-	typedef void (*snd_callback)(void);
+	typedef void (*snd_callback)();
 
 	CSoundSystemMac() {};
 
@@ -358,10 +358,10 @@ public:
 	bool SNDDMA_Init(dma_t* dma);
 
 	// gets the current DMA position
-	int SNDDMA_GetDMAPos(void);
+	int SNDDMA_GetDMAPos();
 
 	// shutdown the DMA xfer.
-	void SNDDMA_Shutdown(void);
+	void SNDDMA_Shutdown();
 
 	//void S_LocalSound(const char* s);
 	void ResampleSfx(sfx_t* sfx, int inrate, int inwidth, byte* data);
@@ -369,22 +369,22 @@ public:
 
 	//wavinfo_t GetWavinfo(char* name, byte* wav, int wavlength);
 
-	void SND_InitScaletable(void);
-	void SNDDMA_Submit(void);
+	void SND_InitScaletable();
+	void SNDDMA_Submit();
 
 #ifdef QUAKE_GAME
 	static void paint_audio(void* unused, Uint8* stream, int len);
 #else
 	static void paint_audio(void* unused, byte* stream, int len);
 #endif
-	void S_AmbientOff(void);
-	void S_AmbientOn(void);
+	void S_AmbientOff();
+	void S_AmbientOn();
 
-	/*void SNDDMA_LockBuffer(void);
-	void SNDDMA_UnlockBuffer(void);*/
+	/*void SNDDMA_LockBuffer();
+	void SNDDMA_UnlockBuffer();*/
 
-	void S_BlockSound(void);
-	void S_UnblockSound(void);
+	void S_BlockSound();
+	void S_UnblockSound();
 
 	void S_CheckMDMAMusic();
 
@@ -393,7 +393,7 @@ public:
 	*  so it can unlock and free the data block after it has been played.
 	*/
 
-// void GetCaps(void) { this->GetCaps(); };
+// void GetCaps() { this->GetCaps(); };
 
 };
 #endif

@@ -148,6 +148,9 @@ void W_LoadWadFiles_GoldSrc()
     int				infotableofs = 0;
     char*           name[MAX_LOADED_WADS] = {};
 
+    if (!fs::exists(g_Common->com_gamedir) || fs::is_empty(g_Common->com_gamedir))
+        return;
+
     for (const auto& entry : fs::directory_iterator(g_Common->com_gamedir))
     {
         if (!entry.is_regular_file())
@@ -198,7 +201,7 @@ void W_LoadWadFiles_GoldSrc()
         infotableofs = LittleLong(header->infotableofs);
         wad_lumps[j] = (lumpinfo_t*)(wad_base[j] + infotableofs);
 
-        Con_PrintColor(TEXT_COLOR_GREEN, "Added WAD3 file %s/%s\n", g_Common->com_gamedir, name[j]);
+        Con_PrintColor(TEXT_COLOR_GREEN, "Added WAD3 file %s/%s (%d files)\n", g_Common->com_gamedir, name[j], wad_numlumps[j]);
 
         for (i = 0, lump_p = wad_lumps[j]; (int)i < wad_numlumps[j]; i++, lump_p++)
         {

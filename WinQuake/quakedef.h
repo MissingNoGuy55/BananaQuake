@@ -27,13 +27,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define	QUAKE_GAME			// as opposed to utilities
 
-#define	VERSION				1.09
-#define	GLQUAKE_VERSION		1.00
-#define	BANANAQUAKE_VERSION	0.13
-#define	D3DQUAKE_VERSION	0.01
-#define	WINQUAKE_VERSION	0.996
-#define	LINUX_VERSION		1.30
-#define	X11_VERSION			1.10
+constexpr double VERSION				= 1.09;
+constexpr double GLQUAKE_VERSION		= 1.00;
+constexpr double BANANAQUAKE_VERSION	= 0.13;
+constexpr double D3DQUAKE_VERSION		= 0.01;
+constexpr double WINQUAKE_VERSION		= 0.996;
+constexpr double LINUX_VERSION			= 1.30;
+constexpr double X11_VERSION			= 1.10;
 
 //define	PARANOID			// speed sapping error checking
 
@@ -86,8 +86,6 @@ typedef unsigned char byte;
 #endif
 
 using cxxstring = std::string;
-
-using cxxfstream = std::fstream;
 using cxxifstream = std::ifstream;
 using cxxofstream = std::ofstream;
 namespace fs = std::filesystem;
@@ -111,8 +109,8 @@ using cxxpath = fs::path;
 #define __i386__	1
 #endif
 
-void	VID_LockBuffer (void);
-void	VID_UnlockBuffer (void);
+void	VID_LockBuffer ();
+void	VID_UnlockBuffer ();
 
 #else
 
@@ -140,6 +138,7 @@ constexpr int CACHE_SIZE = 32;		// used to align key data structures
 
 constexpr int MAX_NUM_ARGVS = 50;
 
+/*
 // up / down
 #define	PITCH	0
 
@@ -148,7 +147,14 @@ constexpr int MAX_NUM_ARGVS = 50;
 
 // fall over
 #define	ROLL	2
+*/
 
+enum EOrientation
+{
+	PITCH,
+	YAW,
+	ROLL
+};
 
 constexpr int MAX_QPATH		=	64;			// max length of a quake game pathname
 constexpr int MAX_OSPATH	=	128;	// max length of a filesystem pathname
@@ -194,70 +200,72 @@ constexpr int STAT_MONSTERS				= 14;		// bumped by svc_killedmonster
 
 // stock defines
 
-constexpr long long IT_SHOTGUN				= 1;
-constexpr long long IT_SUPER_SHOTGUN		= 2;
-constexpr long long IT_NAILGUN				= 4;
-constexpr long long IT_SUPER_NAILGUN		= 8;
-constexpr long long IT_GRENADE_LAUNCHER		= 16;
-constexpr long long IT_ROCKET_LAUNCHER		= 32;
-constexpr long long IT_LIGHTNING			= 64;
-constexpr long long IT_SUPER_LIGHTNING		= 128;
-constexpr long long IT_SHELLS				= 256;
-constexpr long long IT_NAILS				= 512;
-constexpr long long IT_ROCKETS				= 1024;
-constexpr long long IT_CELLS				= 2048;
-constexpr long long IT_AXE					= 4096;
-constexpr long long IT_ARMOR1				= 8192;
-constexpr long long IT_ARMOR2				= 16384;
-constexpr long long IT_ARMOR3				= 32768;
-constexpr long long IT_SUPERHEALTH			= 65536;
-constexpr long long IT_KEY1					= 131072;
-constexpr long long IT_KEY2					= 262144;
-constexpr long long IT_INVISIBILITY			= 524288;
-constexpr long long IT_INVULNERABILITY		= 1048576;
-constexpr long long IT_SUIT					= 2097152;
-constexpr long long IT_QUAD					= 4194304;
-constexpr long long IT_SIGIL1				= 268435456;
-constexpr long long IT_SIGIL2				= 536870912;
-constexpr long long IT_SIGIL3				= 1073741824;
-constexpr long long IT_SIGIL4				= (1<<31);
+typedef unsigned long long itemdef_t;
 
-constexpr long long IT_BULLET_TIME			= 4294967296;
+constexpr uint64_t IT_SHOTGUN				= 0x00000001;
+constexpr uint64_t IT_SUPER_SHOTGUN		= 0x00000002;
+constexpr uint64_t IT_NAILGUN				= 0x00000004;
+constexpr uint64_t IT_SUPER_NAILGUN		= 0x00000008;
+constexpr uint64_t IT_GRENADE_LAUNCHER	= 0x00000010;
+constexpr uint64_t IT_ROCKET_LAUNCHER		= 0x00000020;
+constexpr uint64_t IT_LIGHTNING			= 0x00000040;
+constexpr uint64_t IT_SUPER_LIGHTNING		= 0x00000080;
+constexpr uint64_t IT_SHELLS				= 0x00000100;
+constexpr uint64_t IT_NAILS				= 0x00000200;
+constexpr uint64_t IT_ROCKETS				= 0x00000400;
+constexpr uint64_t IT_CELLS				= 0x00000800;
+constexpr uint64_t IT_AXE					= 0x00001000;
+constexpr uint64_t IT_ARMOR1				= 0x00002000;
+constexpr uint64_t IT_ARMOR2				= 0x00004000;
+constexpr uint64_t IT_ARMOR3				= 0x00008000;
+constexpr uint64_t IT_SUPERHEALTH			= 0x00010000;
+constexpr uint64_t IT_KEY1				= 0x00020000;
+constexpr uint64_t IT_KEY2				= 0x00040000;
+constexpr uint64_t IT_INVISIBILITY		= 0x00080000;
+constexpr uint64_t IT_INVULNERABILITY		= 0x00100000;
+constexpr uint64_t IT_SUIT				= 0x00200000;
+constexpr uint64_t IT_QUAD				= 0x00400000;
+constexpr uint64_t IT_SIGIL1				= 0x10000000;
+constexpr uint64_t IT_SIGIL2				= 0x20000000;
+constexpr uint64_t IT_SIGIL3				= 0x40000000;
+constexpr uint64_t IT_SIGIL4				= 0x80000000;
+
+constexpr uint64_t IT_BULLET_TIME			= 0x100000000;
 
 //===========================================
 //rogue changed and added defines
 
-constexpr long long RIT_SHELLS				= 128;
-constexpr long long RIT_NAILS				= 256;
-constexpr long long RIT_ROCKETS				= 512;
-constexpr long long RIT_CELLS				= 1024;
-constexpr long long RIT_AXE					= 2048;
-constexpr long long RIT_LAVA_NAILGUN		= 4096;
-constexpr long long RIT_LAVA_SUPER_NAILGUN	= 8192;
-constexpr long long RIT_MULTI_GRENADE		= 16384;
-constexpr long long RIT_MULTI_ROCKET		= 32768;
-constexpr long long RIT_PLASMA_GUN			= 65536;
-constexpr long long RIT_ARMOR1				= 8388608;
-constexpr long long RIT_ARMOR2				= 16777216;
-constexpr long long RIT_ARMOR3				= 33554432;
-constexpr long long RIT_LAVA_NAILS			= 67108864;
-constexpr long long RIT_PLASMA_AMMO			= 134217728;
-constexpr long long RIT_MULTI_ROCKETS		= 268435456;
-constexpr long long RIT_SHIELD				= 536870912;
-constexpr long long RIT_ANTIGRAV			= 1073741824;
-constexpr long long RIT_SUPERHEALTH			= 2147483648;
+constexpr uint64_t RIT_SHELLS				= 0x00000080;
+constexpr uint64_t RIT_NAILS				= 0x00000100;
+constexpr uint64_t RIT_ROCKETS			= 0x00000200;
+constexpr uint64_t RIT_CELLS				= 0x00000400;
+constexpr uint64_t RIT_AXE				= 0x00000800;
+constexpr uint64_t RIT_LAVA_NAILGUN		= 0x00001000;
+constexpr uint64_t RIT_LAVA_SUPER_NAILGUN	= 0x00002000;
+constexpr uint64_t RIT_MULTI_GRENADE		= 0x00004000;
+constexpr uint64_t RIT_MULTI_ROCKET		= 0x00008000;
+constexpr uint64_t RIT_PLASMA_GUN			= 0x00010000;
+constexpr uint64_t RIT_ARMOR1				= 0x00800000;
+constexpr uint64_t RIT_ARMOR2				= 0x01000000;
+constexpr uint64_t RIT_ARMOR3				= 0x02000000;
+constexpr uint64_t RIT_LAVA_NAILS			= 0x04000000;
+constexpr uint64_t RIT_PLASMA_AMMO		= 0x08000000;
+constexpr uint64_t RIT_MULTI_ROCKETS		= 0x10000000;
+constexpr uint64_t RIT_SHIELD				= 0x20000000;
+constexpr uint64_t RIT_ANTIGRAV			= 0x40000000;
+constexpr uint64_t RIT_SUPERHEALTH		= 0x80000000;
 
 //MED 01/04/97 added hipnotic defines
 //===========================================
 //hipnotic added defines
-constexpr long long HIT_PROXIMITY_GUN_BIT	= 16;
-constexpr long long HIT_MJOLNIR_BIT			= 7;
-constexpr long long HIT_LASER_CANNON_BIT	= 23;
-constexpr long long HIT_PROXIMITY_GUN		= (1<<HIT_PROXIMITY_GUN_BIT);
-constexpr long long HIT_MJOLNIR				= (1<<HIT_MJOLNIR_BIT);
-constexpr long long HIT_LASER_CANNON		= (1<<HIT_LASER_CANNON_BIT);
-constexpr long long HIT_WETSUIT				= (1<<(23+2));
-constexpr long long HIT_EMPATHY_SHIELDS		= (1<<(23+3));
+constexpr uint64_t HIT_PROXIMITY_GUN_BIT	= 16;
+constexpr uint64_t HIT_MJOLNIR_BIT			= 7;
+constexpr uint64_t HIT_LASER_CANNON_BIT	= 23;
+constexpr uint64_t HIT_PROXIMITY_GUN		= (1<<HIT_PROXIMITY_GUN_BIT);
+constexpr uint64_t HIT_MJOLNIR				= (1<<HIT_MJOLNIR_BIT);
+constexpr uint64_t HIT_LASER_CANNON		= (1<<HIT_LASER_CANNON_BIT);
+constexpr uint64_t HIT_WETSUIT				= (1<<(23+2));
+constexpr uint64_t HIT_EMPATHY_SHIELDS		= (1<<(23+3));
 
 //===========================================
 
@@ -354,7 +362,6 @@ namespace QuakeDebugOverlay
 // command line parms passed to the program, and the amount of memory
 // available for the program to use
 
-
 //=============================================================================
 
 extern bool noclip_anglehack;
@@ -366,9 +373,9 @@ extern	cvar_t	chase_active;
 
 double Sys_DoubleTime();
 
-void Chase_Init (void);
-void Chase_Reset (void);
-void Chase_Update (void);
+void Chase_Init ();
+void Chase_Reset ();
+void Chase_Update ();
 
 //=============================================================================
 // Missi: this is gross, but it's better than doing #ifdef to everything that these rely on... (4/24/2023)

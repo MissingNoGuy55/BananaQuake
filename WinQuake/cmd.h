@@ -45,7 +45,7 @@ public:
 
 	CCommandBuffer(const CCommandBuffer& src);
 
-	void Cbuf_Init(void);
+	void Cbuf_Init();
 	// allocates an initial text buffer that will grow as needed
 
 	void Cbuf_AddText(const char* text);
@@ -57,7 +57,7 @@ public:
 	// inserted at the beginning of the buffer, before any remaining unexecuted
 	// commands.
 
-	void Cbuf_Execute(void);
+	void Cbuf_Execute();
 	// Pulls off \n terminated lines of text from the command buffer and sends
 	// them through Cmd_ExecuteString.  Stops when the buffer is empty.
 	// Normally called once per frame, but may be explicitly invoked.
@@ -88,7 +88,7 @@ typedef enum
 
 extern	cmd_source_t	cmd_source;
 
-typedef void (*xcommand_t)(void);
+typedef void (*xcommand_t)();
 
 class CCommand
 {
@@ -96,7 +96,7 @@ public:
 
 	CCommand();
 
-	void	Cmd_Init (void);
+	void	Cmd_Init ();
 
     void	Cmd_AddCommand (const char *cmd_name, xcommand_t function, unsigned int flags = 0);
 	// called by the init functions of other parts of the program to
@@ -110,9 +110,9 @@ public:
 	// attempts to match a partial command for automatic command line completion
 	// returns NULL if nothing fits
 
-	int		Cmd_Argc (void);
+	int		Cmd_Argc ();
 	const char	*Cmd_Argv (int arg);
-	const char	*Cmd_Args (void);
+	const char	*Cmd_Args ();
 	// The functions that execute commands get their parameters with these
 	// functions. Cmd_Argv () will return an empty string, not a NULL
 	// if arg > argc, so string operations are allways safe.
@@ -129,7 +129,7 @@ public:
 	// Parses a single line of text into arguments and tries to execute it.
 	// The text can come from the command buffer, a remote client, or stdin.
 
-	static void	Cmd_ForwardToServer (void);
+	static void	Cmd_ForwardToServer ();
 	// adds the current command line as a clc_stringcmd to the client message.
 	// things like godmode, noclip, etc, are commands directed to the server,
 	// so when they are typed in at the console, they will need to be forwarded.

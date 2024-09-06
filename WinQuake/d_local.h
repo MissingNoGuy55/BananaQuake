@@ -79,8 +79,8 @@ void D_SpriteDrawSpans(sspan_t* pspan);
 //void D_DrawSkyScans8(espan_t* pspan);
 //void D_DrawSkyScans16(espan_t* pspan);
 
-void R_ShowSubDiv(void);
-// void (*prealspandrawer)(void);
+void R_ShowSubDiv();
+// void (*prealspandrawer)();
 surfcache_t* D_CacheSurface(msurface_t* surface, int miplevel);
 
 int D_MipLevelForScale(float scale);

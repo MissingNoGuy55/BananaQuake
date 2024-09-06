@@ -297,19 +297,19 @@ bool mtexenabled = false;
 
 //void GL_SelectTexture (GLenum target);
 
-void CGLRenderer::GL_DisableMultitexture(void) 
+void CGLRenderer::GL_DisableMultitexture() 
 {
 	if (mtexenabled) {
 		glDisable(GL_TEXTURE_2D);
-		g_GLRenderer->GL_SelectTexture(TEXTURE0_SGIS);
+		GL_SelectTexture(TEXTURE0_SGIS);
 		mtexenabled = false;
 	}
 }
 
-void CGLRenderer::GL_EnableMultitexture(void)
+void CGLRenderer::GL_EnableMultitexture()
 {
 	if (gl_mtexable) {
-		g_GLRenderer->GL_SelectTexture(TEXTURE1_SGIS);
+		GL_SelectTexture(TEXTURE1_SGIS);
 		glEnable(GL_TEXTURE_2D);
 		mtexenabled = true;
 	}
@@ -578,7 +578,7 @@ void CGLRenderer::DrawGLPoly (glpoly_t *p)
 R_BlendLightmaps
 ================
 */
-void CGLRenderer::R_BlendLightmaps (void)
+void CGLRenderer::R_BlendLightmaps ()
 {
 	int			i, j;
 	glpoly_t	*p;
@@ -615,7 +615,7 @@ void CGLRenderer::R_BlendLightmaps (void)
 		p = lightmap_polys[i];
 		if (!p)
 			continue;
-		g_GLRenderer->GL_Bind(lightmap_textures[i]);
+		GL_Bind(lightmap_textures[i]);
 		if (lightmap_modified[i])
 		{
 			lightmap_modified[i] = false;
@@ -680,7 +680,7 @@ void CGLRenderer::R_RenderBrushPoly (msurface_t *fa)
 	}
 		
 	t = R_TextureAnimation (fa->texinfo->texture);
-	g_GLRenderer->GL_Bind (t->gltexture);
+	GL_Bind (t->gltexture);
 
 	if (fa->flags & SURF_DRAWTURB)
 	{	// warp texture, no lightmaps
@@ -828,7 +828,7 @@ void CGLRenderer::R_MirrorChain (msurface_t *s)
 R_DrawWaterSurfaces
 ================
 */
-void CGLRenderer::R_DrawWaterSurfaces (void)
+void CGLRenderer::R_DrawWaterSurfaces ()
 {
 	int			i;
 	msurface_t	*s;
@@ -854,7 +854,7 @@ void CGLRenderer::R_DrawWaterSurfaces (void)
 			return;
 
 		for ( s = waterchain ; s ; s=s->texturechain) {
-			g_GLRenderer->GL_Bind (s->texinfo->texture->gltexture);
+			GL_Bind (s->texinfo->texture->gltexture);
 			EmitWaterPolys (s);
 		}
 		
@@ -874,7 +874,7 @@ void CGLRenderer::R_DrawWaterSurfaces (void)
 
 			// set modulate mode explicitly
 			
-			g_GLRenderer->GL_Bind (t->gltexture);
+			GL_Bind (t->gltexture);
 
 			for ( ; s ; s=s->texturechain)
 				EmitWaterPolys (s);
@@ -898,7 +898,7 @@ void CGLRenderer::R_DrawWaterSurfaces (void)
 DrawTextureChains
 ================
 */
-void CGLRenderer::DrawTextureChains (void)
+void CGLRenderer::DrawTextureChains ()
 {
 	int		i;
 	msurface_t	*s;
@@ -1205,7 +1205,7 @@ void CGLRenderer::R_RecursiveWorldNode (mnode_t *node)
 R_DrawWorld
 =============
 */
-void CGLRenderer::R_DrawWorld (void)
+void CGLRenderer::R_DrawWorld ()
 {
 	entity_t	ent;
 	int			i;
@@ -1221,7 +1221,7 @@ void CGLRenderer::R_DrawWorld (void)
 	glColor3f (1,1,1);
 	memset (lightmap_polys, 0, sizeof(lightmap_polys));
 
-	if (UsesQuake2Skybox())
+	if (usesQ2Sky)
 		R_ClearSkyBox ();
 
 	R_RecursiveWorldNode (cl.worldmodel->nodes);
@@ -1230,7 +1230,7 @@ void CGLRenderer::R_DrawWorld (void)
 
 	R_BlendLightmaps ();
 
-	if (UsesQuake2Skybox())
+	if (usesQ2Sky)
 		R_DrawSkyBox ();
 }
 
@@ -1240,7 +1240,7 @@ void CGLRenderer::R_DrawWorld (void)
 R_MarkLeaves
 ===============
 */
-void CGLRenderer::R_MarkLeaves (void)
+void CGLRenderer::R_MarkLeaves ()
 {
 	byte	*vis;
 	mnode_t	*node;
@@ -1493,7 +1493,7 @@ Builds the lightmap texture
 with all the surfaces from all brush models
 ==================
 */
-void CGLRenderer::GL_BuildLightmaps (void)
+void CGLRenderer::GL_BuildLightmaps ()
 {
 	int		i = 0, j = 0;
 	model_t	*m = NULL;
@@ -1573,7 +1573,7 @@ void CGLRenderer::GL_BuildLightmaps (void)
 	}
 
  	if (!gl_texsort.value)
-		g_GLRenderer->GL_SelectTexture(TEXTURE1_SGIS);
+		GL_SelectTexture(TEXTURE1_SGIS);
 
 	//
 	// upload all lightmaps that were filled
@@ -1595,6 +1595,6 @@ void CGLRenderer::GL_BuildLightmaps (void)
 	}
 
  	if (!gl_texsort.value)
-		g_GLRenderer->GL_SelectTexture(TEXTURE0_SGIS);
+		GL_SelectTexture(TEXTURE0_SGIS);
 
 }

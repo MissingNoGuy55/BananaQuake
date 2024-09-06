@@ -64,12 +64,12 @@ static ov_callbacks ovc_qfs =
 	(long (*)(void *))				g_FileSystem->FS_ftell
 };
 
-static bool S_VORBIS_CodecInitialize (void)
+static bool S_VORBIS_CodecInitialize ()
 {
 	return true;
 }
 
-static void S_VORBIS_CodecShutdown (void)
+static void S_VORBIS_CodecShutdown ()
 {
 }
 

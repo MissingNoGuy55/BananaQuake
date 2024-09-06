@@ -199,7 +199,7 @@ BOPS_Error
 Split out like this for ASM to call.
 ==================
 */
-void BOPS_Error (void)
+void BOPS_Error ()
 {
 	Sys_Error ("BoxOnPlaneSide:  Bad signbits");
 }

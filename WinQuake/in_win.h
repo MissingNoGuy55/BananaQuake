@@ -1,4 +1,4 @@
 #pragma once
 
-void IN_Accumulate(void);
-void IN_Shutdown(void);
+void IN_Accumulate();
+void IN_Shutdown();

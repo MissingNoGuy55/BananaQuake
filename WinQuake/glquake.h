@@ -198,8 +198,8 @@ extern double s_dFogLerpEndTime;			// Missi: current fog density, is the result 
 
 // Missi: BananaQuake stuff (2/17/22)
 
-void IN_ActivateMouse (void);
-void IN_DeactivateMouse (void);
+void IN_ActivateMouse ();
+void IN_DeactivateMouse ();
 
 class CGLTexture
 {
@@ -249,7 +249,7 @@ public:
 
 	int Scrap_AllocBlock(int w, int h, int* x, int* y);
 
-	void Scrap_Upload(void);
+	void Scrap_Upload();
 
 	int GL_Pad(int s);
 
@@ -265,21 +265,21 @@ public:
 
     CQuakePic* Draw_PicFromWad(const char* name, const char* wadname);
 
-	CQuakePic* Draw_PicFromWad_GoldSrc(const char* name, const char* wadname);
-
 	CQuakePic* Draw_CachePic(const char* path);
 
 	void Draw_CharToConback(int num, byte* dest);
 
-	static void Draw_TextureMode_f(void);
+	static void Draw_TextureMode_f();
 
 	void R_SplitEntityOnNode(mnode_t* node);
 
 	int AllocBlock(int w, int h, int* x, int* y);
 
-	virtual void Draw_Init(void);
+	virtual void Draw_Init();
 	virtual void Draw_Character(int x, int y, int num);
+	virtual void Draw_Character3D(float x, float y, float z, int num);
 	virtual void Draw_String(int x, int y, const char* str);
+	virtual void Draw_String3D(int x, int y, int z, const char* str);
 	virtual void Draw_DebugChar(char num);
 	virtual void Draw_AlphaPic(int x, int y, CQuakePic* pic, float alpha);
 	virtual void Draw_Pic(int x, int y, CQuakePic* pic);
@@ -289,16 +289,18 @@ public:
 	virtual void Draw_ConsoleBackground(int lines);
 	virtual void Draw_TileClear(int x, int y, int w, int h);
 	virtual void Draw_Fill(int x, int y, int w, int h, int c);
-	virtual void Draw_FadeScreen(void);
-	virtual void Draw_BeginDisc(void);
-	virtual void Draw_EndDisc(void);
+	virtual void Draw_FadeScreen();
+	virtual void Draw_BeginDisc();
+	virtual void Draw_EndDisc();
 
-	void GL_Init(void);
+	virtual void Draw_PrintPlayerName(client_t* client, int num, const char* name);
+
+	void GL_Init();
 
 	void GL_BeginRendering (int *x, int *y, int *width, int *height);
-    void GL_EndRendering (void);
+    void GL_EndRendering ();
     
-	void GL_Set2D(void);
+	void GL_Set2D();
 
 	CGLTexture* GL_FindTexture(model_t* model, const char* identifier);
 	void GL_FreeTextureForModel(model_t* mod);
@@ -336,7 +338,7 @@ public:
 	void GL_Upload8(byte* data, int width, int height, bool alpha);
 
 	void GL_Upload32(CGLTexture* tex, unsigned* data);
-	void GL_BuildLightmaps(void);
+	void GL_BuildLightmaps();
 	void GL_CreateSurfaceLightmap(msurface_t* surf);
 	void GL_SubdivideSurface(msurface_t* fa);
 
@@ -351,43 +353,43 @@ public:
 
 	int RecursiveLightPoint(vec3_t color, mnode_t* node, vec3_t rayorg, vec3_t start, vec3_t end, float* maxdist);
 
-	void R_Init(void);
-	void R_InitParticleTexture(void);
-	void R_InitTextures(void);
+	void R_Init();
+	void R_InitParticleTexture();
+	void R_InitTextures();
 	void R_DrawBrushModel(entity_t* e);
 	void R_DrawSkyChain_Q1(msurface_t* s);
 	void R_DrawSkyChain_Q2(msurface_t* s);
-	void R_ClearSkyBox(void);
+	void R_ClearSkyBox();
 	void MakeSkyVec(float s, float t, int axis);
-	void R_DrawSkyBox(void);
+	void R_DrawSkyBox();
 	void R_LoadSkys();
 	void DrawSkyPolygon(int nump, vec3_t vecs);
 	void ClipSkyPolygon(int nump, vec3_t vecs, int stage);
-	void R_DrawWorld(void);
-	void R_DrawViewModel(void);
+	void R_DrawWorld();
+	void R_DrawViewModel();
 	void R_RecursiveWorldNode(mnode_t* node);
 	void R_RenderBrushPoly(msurface_t* fa);
     void R_InitSky(texture_t* mt, const char* wadName);
 	void R_AddDynamicLights(msurface_t* surf);
 	void R_BuildLightMap(msurface_t* surf, byte* dest, int stride);
-	void R_BlendLightmaps(void);
+	void R_BlendLightmaps();
 	void R_DrawAliasModel(entity_t* e);
-	void R_DrawWaterSurfaces(void);
-	void R_RenderScene(void);
-	void R_PushDlights(void);
-	void R_RenderView(void);
-	void R_SetupFrame(void);
-	void R_NewMap(void);
+	void R_DrawWaterSurfaces();
+	void R_RenderScene();
+	void R_PushDlights();
+	void R_RenderView();
+	void R_SetupFrame();
+	void R_NewMap();
 	void R_AddEfrags(entity_t* ent);
 
 	int R_LightPoint(vec3_t p);
 	void R_MarkLights(dlight_t* light, int bit, mnode_t* node);
-	void R_AnimateLight(void);
-	void R_RenderDlights(void);
+	void R_AnimateLight();
+	void R_RenderDlights();
 
-	void R_Envmap_f(void);
+	static void R_Envmap_f();
 
-	void DrawTextureChains(void);
+	void DrawTextureChains();
     void DrawGLWaterPoly(glpoly_t* p);
     void DrawGLWaterPolyLightmap(glpoly_t* p);
 
@@ -396,19 +398,19 @@ public:
 	CGLTexture gltextures[MAX_GLTEXTURES];
 
 	void R_RenderDynamicLightmaps(msurface_t* fa);
-	void R_TimeRefresh_f(void);
-	void R_MarkLeaves(void);
+	static void R_TimeRefresh_f();
+	void R_MarkLeaves();
 	void R_TranslatePlayerSkin(int playernum);
 	void R_DrawSequentialPoly(msurface_t* s);
-	void R_Mirror(void);
+	void R_Mirror();
 	void R_RenderDlight(dlight_t* light);
 	void R_StoreEfrags(efrag_t** ppefrag);
 
 	void AddLightBlend(float r, float g, float b, float a2);
 	void DrawGLPoly(glpoly_t* p);
 
-	void GL_DisableMultitexture(void);
-	void GL_EnableMultitexture(void);
+	void GL_DisableMultitexture();
+	void GL_EnableMultitexture();
 	void GL_SetFrustum(float fovx, float fovy);
 
 	void R_MirrorChain(msurface_t* s);
@@ -424,18 +426,18 @@ public:
 	void GL_DrawAliasShadow(aliashdr_t* paliashdr, int posenum);
 
 	void R_SetupAliasFrame(int frame, aliashdr_t* paliashdr);
-	void R_DrawEntitiesOnList(void);
-	void R_PolyBlend(void);
+	void R_DrawEntitiesOnList();
+	void R_PolyBlend();
 	int SignbitsForPlane(mplane_t* out);
-	void R_SetFrustum(void);
+	void R_SetFrustum();
 
     void R_UpdateWarpTextures();
 
 	void MYgluPerspective(GLdouble fovy, GLdouble aspect,
 		GLdouble zNear, GLdouble zFar);
 
-	void R_SetupGL(void);
-	void R_Clear(void);
+	void R_SetupGL();
+	void R_Clear();
 
 	virtual CGLRenderer* GetRenderer() { return dynamic_cast<CGLRenderer*>(g_CoreRenderer); }
     virtual const bool UsesQuake2Skybox() const { return usesQ2Sky; }

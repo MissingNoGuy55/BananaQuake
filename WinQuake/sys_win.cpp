@@ -64,10 +64,10 @@ static HANDLE	heventChild;
 static unsigned int ceil_cw, single_cw, full_cw, cw, pushed_cw;
 static unsigned int fpenv[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-//void MaskExceptions (void);
-void Sys_InitFloatTime (void);
-//void Sys_PushFPCW_SetHigh (void);
-//void Sys_PopFPCW (void);
+//void MaskExceptions ();
+void Sys_InitFloatTime ();
+//void Sys_PushFPCW_SetHigh ();
+//void Sys_PopFPCW ();
 
 volatile int					sys_checksum;
 
@@ -112,7 +112,7 @@ FILE IO
 
 FILE* sys_handles[MAX_HANDLES];
 
-int		findhandle (void)
+int		findhandle ()
 {
 	int		i;
 	
@@ -307,19 +307,19 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
 
 // #ifndef _M_IX86
 /*
-void Sys_LowFPPrecision(void)
+void Sys_LowFPPrecision()
 {
 	__asm fldcw single_cw
 	__asm ret
 }
 
-void Sys_HighFPPrecision(void)
+void Sys_HighFPPrecision()
 {
 	__asm fldcw full_cw
 	__asm ret
 }
 
-void Sys_SetFPCW (void)
+void Sys_SetFPCW ()
 {
 
 	int testint = 0;
@@ -351,7 +351,7 @@ void Sys_SetFPCW (void)
 
 }
 
-void Sys_PushFPCW_SetHigh (void)
+void Sys_PushFPCW_SetHigh ()
 {
 	__asm
 	{
@@ -360,7 +360,7 @@ void Sys_PushFPCW_SetHigh (void)
 	}
 }
 
-void Sys_PopFPCW (void)
+void Sys_PopFPCW ()
 {
 	__asm
 	{
@@ -368,7 +368,7 @@ void Sys_PopFPCW (void)
 	}
 }
 
-void MaskExceptions (void)
+void MaskExceptions ()
 {
 	__asm
 	{
@@ -379,7 +379,7 @@ void MaskExceptions (void)
 }
 */
 #if 0
-void UnmaskExceptions(void)
+void UnmaskExceptions()
 {
 	__asm fnstenv	fpenv
 	__asm andl		$0xFFFFFFE0, fpenv
@@ -393,7 +393,7 @@ void UnmaskExceptions(void)
 
 // #endif
 
-static void Sys_SetTimerResolution(void)
+static void Sys_SetTimerResolution()
 {
 	/* Set OS timer resolution to 1ms.
 	   Works around buffer underruns with directsound and SDL2, but also
@@ -409,7 +409,7 @@ static void Sys_SetTimerResolution(void)
 Sys_Init
 ================
 */
-void Sys_Init (void)
+void Sys_Init ()
 {
 	OSVERSIONINFO	vinfo = {};
 
@@ -547,7 +547,7 @@ void Sys_Warning(const char* fmt, ...)
 	}
 }
 
-void Sys_Quit (void)
+void Sys_Quit ()
 {
 
 	VID_ForceUnlockedAndReturnState ();
@@ -595,7 +595,7 @@ int	Sys_FileTime(const char* path)
 ================
 Sys_FloatTime
 ================
-double Sys_FloatTime (void)
+double Sys_FloatTime ()
 {
 	static int			sametimecount;
 	static unsigned int	oldtime;
@@ -676,7 +676,7 @@ double Sys_DoubleTime()
 Sys_InitFloatTime
 ================
 */
-void Sys_InitFloatTime (void)
+void Sys_InitFloatTime ()
 {
 	int		j;
 
@@ -697,7 +697,7 @@ void Sys_InitFloatTime (void)
 }
 
 
-char *Sys_ConsoleInput (void)
+char *Sys_ConsoleInput ()
 {
 	static char	text[256];
 	static int		len = 0;
@@ -776,13 +776,13 @@ char *Sys_ConsoleInput (void)
 	return NULL;
 }
 
-void Sys_Sleep (void)
+void Sys_Sleep ()
 {
 	Sleep (1);
 }
 
 
-void Sys_SendKeyEvents (void)
+void Sys_SendKeyEvents ()
 {
     MSG        msg;
 

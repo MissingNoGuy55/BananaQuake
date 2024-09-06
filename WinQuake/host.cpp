@@ -123,7 +123,7 @@ void CQuakeHost::Host_Error (const char *error, ...)
 Host_FindMaxClients
 ================
 */
-void CQuakeHost::Host_FindMaxClients (void)
+void CQuakeHost::Host_FindMaxClients ()
 {
 	int		i;
 
@@ -175,7 +175,7 @@ void CQuakeHost::Host_FindMaxClients (void)
 Host_InitLocal
 ======================
 */
-void CQuakeHost::Host_InitLocal (void)
+void CQuakeHost::Host_InitLocal ()
 {
 	Host_InitCommands ();
 	
@@ -198,6 +198,8 @@ void CQuakeHost::Host_InitLocal (void)
 
 	Cvar_RegisterVariable (&pausable);
 
+	g_pCmds->Cmd_AddCommand("bot", CQuakeHost::Host_Bot_f, CVAR_CHEAT);
+
 	Host_FindMaxClients ();
 	
 	host_time = 1.0;		// so a think at time 0 won't get called
@@ -211,7 +213,7 @@ Host_WriteConfiguration
 Writes key bindings and archived cvars to config.cfg
 ===============
 */
-void CQuakeHost::Host_WriteConfiguration (void)
+void CQuakeHost::Host_WriteConfiguration ()
 {
 // dedicated servers initialize the host but don't parse and set the
 // config.cfg cvars
@@ -489,7 +491,7 @@ This clears all the memory used by both the client and server, but does
 not reinitialize anything.
 ================
 */
-void CQuakeHost::Host_ClearMemory (void)
+void CQuakeHost::Host_ClearMemory ()
 {
 	Con_DPrintf ("Clearing memory\n");
 	D_FlushCaches ();
@@ -545,7 +547,7 @@ Host_GetConsoleCommands
 Add them exactly as if they had been typed at the console
 ===================
 */
-void CQuakeHost::Host_GetConsoleCommands (void)
+void CQuakeHost::Host_GetConsoleCommands ()
 {
 	char	*cmd = nullptr;
 
@@ -570,7 +572,7 @@ Host_ServerFrame
 */
 #ifdef FPS_20
 
-void _Host_ServerFrame (void)
+void _Host_ServerFrame ()
 {
 // run the world state	
 	pr_global_struct->frametime = host_frametime;
@@ -584,7 +586,7 @@ void _Host_ServerFrame (void)
 		SV_Physics ();
 }
 
-void Host_ServerFrame (void)
+void Host_ServerFrame ()
 {
 	float	save_host_frametime;
 	float	temp_host_frametime;
@@ -616,7 +618,7 @@ void Host_ServerFrame (void)
 
 #else
 
-void CQuakeHost::Host_ServerFrame (void)
+void CQuakeHost::Host_ServerFrame ()
 {
 // run the world state	
 	pr_global_struct->frametime = host_frametime;
@@ -989,7 +991,7 @@ FIXME: this is a callback from Sys_Quit and Sys_Error.  It would be better
 to run quit through here before the final handoff to the sys code.
 ===============
 */
-void CQuakeHost::Host_Shutdown(void)
+void CQuakeHost::Host_Shutdown()
 {
 	static bool isdown = false;
 	

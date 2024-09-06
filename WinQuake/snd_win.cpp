@@ -58,7 +58,7 @@ static int	buffersize_voice;
 S_BlockSound
 ==================
 */
-//void CSoundDMA::S_BlockSound (void)
+//void CSoundDMA::S_BlockSound ()
 //{
 //
 //	if (sound_started && snd_blocked == 0)	/* ++snd_blocked == 1 */
@@ -76,7 +76,7 @@ S_BlockSound
 S_UnblockSound
 ==================
 */
-//void CSoundDMA::S_UnblockSound (void)
+//void CSoundDMA::S_UnblockSound ()
 //{
 //	if (!sound_started || !snd_blocked)
 //		return;
@@ -257,7 +257,7 @@ inside the recirculating dma buffer, so the mixing code will know
 how many sample are required to fill it up.
 ===============
 */
-int CSoundDMA::SNDDMA_GetDMAPos(void)
+int CSoundDMA::SNDDMA_GetDMAPos()
 {
 	return shm->samplepos;
 }
@@ -269,7 +269,7 @@ SNDDMA_Submit
 Send sound to device if buffer isn't really the dma buffer
 ===============
 */
-void CSoundDMA::SNDDMA_Submit(void)
+void CSoundDMA::SNDDMA_Submit()
 {
 	SDL_UnlockAudioDevice(g_SoundDeviceID);
 }
@@ -363,7 +363,7 @@ SNDDMA_Shutdown
 Reset the sound device for exiting
 ===============
 */
-void CSoundDMA::SNDDMA_Shutdown(void)
+void CSoundDMA::SNDDMA_Shutdown()
 {
 	if (shm)
 	{

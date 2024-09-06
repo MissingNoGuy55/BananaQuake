@@ -42,6 +42,7 @@ CQuakePic	*sb_face_invis;
 CQuakePic	*sb_face_quad;
 CQuakePic	*sb_face_invuln;
 CQuakePic	*sb_face_invis_invuln;
+CQuakePic	*sb_face_invis_quad;
 
 bool	sb_showscores;
 
@@ -56,12 +57,12 @@ CQuakePic      *rsb_teambord;		// PGM 01/19/97 - team color border
 //MED 01/04/97 added two more weapons + 3 alternates for grenade launcher
 CQuakePic      *hsb_weapons[7][5];   // 0 is active, 1 is owned, 2-5 are flashes
 //MED 01/04/97 added array to simplify weapon parsing
-int         hipweapons[4] = {HIT_LASER_CANNON_BIT,HIT_MJOLNIR_BIT,4,HIT_PROXIMITY_GUN_BIT};
+long long         hipweapons[4] = {HIT_LASER_CANNON_BIT,HIT_MJOLNIR_BIT,4,HIT_PROXIMITY_GUN_BIT};
 //MED 01/04/97 added hipnotic items array
 CQuakePic      *hsb_items[2];
 
-void Sbar_MiniDeathmatchOverlay (void);
-void Sbar_DeathmatchOverlay (void);
+void Sbar_MiniDeathmatchOverlay ();
+void Sbar_DeathmatchOverlay ();
 void M_DrawPic (int x, int y, CQuakePic *pic);
 
 #ifdef __linux__
@@ -75,7 +76,7 @@ Sbar_ShowScores
 Tab key down
 ===============
 */
-void Sbar_ShowScores (void)
+void Sbar_ShowScores ()
 {
 	if (sb_showscores)
 		return;
@@ -90,7 +91,7 @@ Sbar_DontShowScores
 Tab key up
 ===============
 */
-void Sbar_DontShowScores (void)
+void Sbar_DontShowScores ()
 {
 	sb_showscores = false;
 	sb_updates = 0;
@@ -101,7 +102,7 @@ void Sbar_DontShowScores (void)
 Sbar_Changed
 ===============
 */
-void Sbar_Changed (void)
+void Sbar_Changed ()
 {
 	sb_updates = 0;	// update next frame
 }
@@ -111,7 +112,7 @@ void Sbar_Changed (void)
 Sbar_Init
 ===============
 */
-void Sbar_Init (void)
+void Sbar_Init ()
 {
 	int		i;
 
@@ -189,6 +190,7 @@ void Sbar_Init (void)
     sb_face_invis = ResolveRenderer()->Draw_PicFromWad ("face_invis", GFX_WAD);
     sb_face_invuln = ResolveRenderer()->Draw_PicFromWad ("face_invul2", GFX_WAD);
     sb_face_invis_invuln = ResolveRenderer()->Draw_PicFromWad ("face_inv2", GFX_WAD);
+	sb_face_invis_quad = ResolveRenderer()->Draw_PicFromWad("face_inv3", GFX_WAD);
     sb_face_quad = ResolveRenderer()->Draw_PicFromWad ("face_quad", GFX_WAD);
 
 	g_pCmds->Cmd_AddCommand ("+showscores", Sbar_ShowScores);
@@ -391,7 +393,7 @@ int		scoreboardlines;
 Sbar_SortFrags
 ===============
 */
-void Sbar_SortFrags (void)
+void Sbar_SortFrags ()
 {
 	int		i, j, k;
 
@@ -426,7 +428,7 @@ int	Sbar_ColorForMap (int m)
 Sbar_UpdateScoreboard
 ===============
 */
-void Sbar_UpdateScoreboard (void)
+void Sbar_UpdateScoreboard ()
 {
 	int		i, k;
 	int		top, bottom;
@@ -457,7 +459,7 @@ void Sbar_UpdateScoreboard (void)
 Sbar_SoloScoreboard
 ===============
 */
-void Sbar_SoloScoreboard (void)
+void Sbar_SoloScoreboard ()
 {
 	char	str[80];
 	int		minutes, seconds, tens, units;
@@ -487,7 +489,7 @@ void Sbar_SoloScoreboard (void)
 Sbar_DrawScoreboard
 ===============
 */
-void Sbar_DrawScoreboard (void)
+void Sbar_DrawScoreboard ()
 {
 	Sbar_SoloScoreboard ();
 	if (cl.gametype == GAME_DEATHMATCH)
@@ -544,11 +546,14 @@ void Sbar_DrawScoreboard (void)
 /*
 ===============
 Sbar_DrawInventory
+
+Missi: modified to take raw item values as opposed to bit-shifting, for supporting
+64-bit item identifiers (9/5/2024)
 ===============
 */
-void Sbar_DrawInventory (void)
+void Sbar_DrawInventory ()
 {
-	int		i;
+	unsigned long long	i;
 	char	num[6];
 	float	time;
 	int		flashon;
@@ -566,23 +571,23 @@ void Sbar_DrawInventory (void)
 	}
 
 // weapons
-	for (i=0 ; i<7 ; i++)
+	for (int i = 0; i < 7; i++)
 	{
-		if (cl.items & (IT_SHOTGUN<<i) )
+		if (cl.items & (1 << i))
 		{
 			time = cl.item_gettime[i];
-			flashon = (int)((cl.time - time)*10);
+			flashon = (int)((cl.time - time) * 10);
 			if (flashon >= 10)
 			{
-				if ( cl.stats[STAT_ACTIVEWEAPON] == (IT_SHOTGUN<<i)  )
+				if (cl.stats[STAT_ACTIVEWEAPON] == (IT_SHOTGUN << i))
 					flashon = 1;
 				else
 					flashon = 0;
 			}
 			else
-				flashon = (flashon%5) + 2;
+				flashon = (flashon % 5) + 2;
 
-		Sbar_DrawTransPic (i*24, -16, sb_weapons[flashon][i]);
+			Sbar_DrawTransPic(i * 24, -16, sb_weapons[flashon][i]);
 
 			if (flashon > 1)
 				sb_updates = 0;		// force update to remove flash
@@ -596,13 +601,13 @@ void Sbar_DrawInventory (void)
       int grenadeflashing=0;
       for (i=0 ; i<4 ; i++)
       {
-         if (cl.items & (1<<hipweapons[i]) )
+         if (cl.items & (static_cast<long long>(1) << hipweapons[i]) )
          {
             time = cl.item_gettime[hipweapons[i]];
             flashon = (int)((cl.time - time)*10);
             if (flashon >= 10)
             {
-               if ( cl.stats[STAT_ACTIVEWEAPON] == (1<<hipweapons[i])  )
+               if ( cl.stats[STAT_ACTIVEWEAPON] == (static_cast<long long>(1) << hipweapons[i])  )
                   flashon = 1;
                else
                   flashon = 0;
@@ -676,7 +681,7 @@ void Sbar_DrawInventory (void)
 	flashon = 0;
    // items
    for (i=0 ; i<6 ; i++)
-      if (cl.items & (1<<(17+i)))
+      if (cl.items & (static_cast<long long>(1) << (17+i)))
       {
          time = cl.item_gettime[17+i];
          if (time && time > cl.time - 2 && flashon )
@@ -699,7 +704,7 @@ void Sbar_DrawInventory (void)
    if (hipnotic)
    {
       for (i=0 ; i<2 ; i++)
-         if (cl.items & (1<<(24+i)))
+         if (cl.items & (static_cast<long long>(1) << (24+i)))
          {
             time = cl.item_gettime[24+i];
             if (time && time > cl.time - 2 && flashon )
@@ -720,7 +725,7 @@ void Sbar_DrawInventory (void)
 	// new rogue items
 		for (i=0 ; i<2 ; i++)
 		{
-			if (cl.items & (1<<(29+i)))
+			if (cl.items & (static_cast<long long>(1) << (29+i)))
 			{
 				time = cl.item_gettime[29+i];
 
@@ -743,7 +748,7 @@ void Sbar_DrawInventory (void)
 	// sigils
 		for (i=0 ; i<4 ; i++)
 		{
-			if (cl.items & (1<<(28+i)))
+			if (cl.items >= IT_SIGIL1 && cl.items <= IT_SIGIL4)		// Missi: used to be 1 << (28+i) (9/5/2024)
 			{
 				time = cl.item_gettime[28+i];
 				if (time &&	time > cl.time - 2 && flashon )
@@ -766,7 +771,7 @@ void Sbar_DrawInventory (void)
 Sbar_DrawFrags
 ===============
 */
-void Sbar_DrawFrags (void)
+void Sbar_DrawFrags ()
 {
 	int				i, k, l;
 	int				top, bottom;
@@ -832,7 +837,7 @@ void Sbar_DrawFrags (void)
 Sbar_DrawFace
 ===============
 */
-void Sbar_DrawFace (void)
+void Sbar_DrawFace ()
 {
 	int		f, anim;
 
@@ -900,6 +905,12 @@ void Sbar_DrawFace (void)
 		Sbar_DrawPic (112, 0, sb_face_invis_invuln);
 		return;
 	}
+	if ((cl.items & (IT_INVISIBILITY | IT_QUAD))
+		== (IT_INVISIBILITY | IT_QUAD))
+	{
+		Sbar_DrawPic(112, 0, sb_face_invis_quad);
+		return;
+	}
 	if (cl.items & IT_QUAD)
 	{
 		Sbar_DrawPic (112, 0, sb_face_quad );
@@ -936,7 +947,7 @@ void Sbar_DrawFace (void)
 Sbar_Draw
 ===============
 */
-void Sbar_Draw (void)
+void Sbar_Draw ()
 {
 	if (scr_con_current == vid.height)
 		return;		// console is full screen
@@ -1105,7 +1116,7 @@ Sbar_DeathmatchOverlay
 
 ==================
 */
-void Sbar_DeathmatchOverlay (void)
+void Sbar_DeathmatchOverlay ()
 {
 	CQuakePic			*pic;
 	int				i, k, l;
@@ -1206,7 +1217,7 @@ Sbar_DeathmatchOverlay
 
 ==================
 */
-void Sbar_MiniDeathmatchOverlay (void)
+void Sbar_MiniDeathmatchOverlay ()
 {
 	int				i, k, l;
 	int				top, bottom;
@@ -1327,7 +1338,7 @@ Sbar_IntermissionOverlay
 
 ==================
 */
-void Sbar_IntermissionOverlay (void)
+void Sbar_IntermissionOverlay ()
 {
 	CQuakePic	*pic;
 	int		dig;
@@ -1395,7 +1406,7 @@ Sbar_FinaleOverlay
 
 ==================
 */
-void Sbar_FinaleOverlay (void)
+void Sbar_FinaleOverlay ()
 {
 	CQuakePic	*pic;
 

@@ -30,7 +30,7 @@ int	r_dlightframecount;
 R_AnimateLight
 ==================
 */
-void CGLRenderer::R_AnimateLight (void)
+void CGLRenderer::R_AnimateLight ()
 {
 	int			i,j,k;
 	
@@ -111,7 +111,7 @@ void CGLRenderer::R_RenderDlight (dlight_t *light)
 R_RenderDlights
 =============
 */
-void CGLRenderer::R_RenderDlights (void)
+void CGLRenderer::R_RenderDlights ()
 {
 	int		i;
 	dlight_t	*l;
@@ -219,7 +219,7 @@ void CGLRenderer::R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 R_PushDlights
 =============
 */
-void CGLRenderer::R_PushDlights (void)
+void CGLRenderer::R_PushDlights ()
 {
 	int		i;
 	dlight_t	*l;

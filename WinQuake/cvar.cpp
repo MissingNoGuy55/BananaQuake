@@ -101,7 +101,7 @@ const char *Cvar_CompleteVariable (const char *partial)
 Cvar_Set
 ============
 */
-void Cvar_Set (const char *var_name, const char *value)
+void Cvar_Set (const char *var_name, const char *value, bool progs)
 {
 	cvar_t	*var;
 	bool changed;
@@ -115,18 +115,30 @@ void Cvar_Set (const char *var_name, const char *value)
 
 	changed = Q_strcmp(var->string, value);
 
+	if (var->flags & CVAR_SERVER)
+		var->src = cvar_source::SRC_CVAR_SERVER;
+	else if (progs)
+		var->src = cvar_source::SRC_CVAR_PROGS;
+	else
+		var->src = cvar_source::SRC_CVAR_CLIENT;
+
+	if ((var->flags & CVAR_READONLY) && var->src != cvar_source::SRC_CVAR_PROGS)
+	{
+		Con_Warning("Player %s attempted to change read-only cvar %s!\n", cl_name.string, var->name);
+	}
+
     if ((var->flags & CVAR_CHEAT) && sv_cheats.value == 0)
     {
-        Con_Printf("Player attempted to set cheat value without sv_cheats enabled!\n");
+        Con_Printf("Player %s attempted to set cheat value on %s without sv_cheats enabled!\n", cl_name.string, var->name);
         return;
     }
 
 	var->string = "";	// free the old value string
 	
-	char str[64];
+	char str[256];
 	memset(str, 0, sizeof(str));
 
-	Q_strcpy (str, value);
+	Q_strncpy (str, value, sizeof(str));
 #ifdef _WIN32
 	var->string = _strdup(str);
 #else
@@ -208,7 +220,7 @@ Cvar_Command
 Handles variable inspection and changing from the console
 ============
 */
-bool	Cvar_Command (void)
+bool	Cvar_Command ()
 {
 	cvar_t			*v;
 

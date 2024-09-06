@@ -30,7 +30,7 @@ public:
 
 	CSoftwareRenderer();
 
-	void Draw_Init(void);
+	void Draw_Init();
 	void Draw_Character(int x, int y, int num);
 	void Draw_DebugChar(char num);
 	void Draw_Pic(int x, int y, CQuakePic* tex);
@@ -40,11 +40,11 @@ public:
 	void Draw_ConsoleBackground(int lines);
 	void R_DrawRect8(vrect_t* prect, int rowbytes, byte* psrc, int transparent);
 	void R_DrawRect16(vrect_t* prect, int rowbytes, byte* psrc, int transparent);
-	void Draw_BeginDisc(void);
-	void Draw_EndDisc(void);
+	void Draw_BeginDisc();
+	void Draw_EndDisc();
 	void Draw_TileClear(int x, int y, int w, int h);
 	void Draw_Fill(int x, int y, int w, int h, int c);
-	void Draw_FadeScreen(void);
+	void Draw_FadeScreen();
 	void Draw_String(int x, int y, const char* str);
 	CQuakePic* Draw_PicFromWad(const char* name);
 	CQuakePic* Draw_CachePic(const char* path);
@@ -54,7 +54,7 @@ public:
 	void Turbulent8(struct espan_s* pspan);
 	void D_DrawZSpans(struct espan_s* pspan);
 
-	void R_MakeSky(void);
+	void R_MakeSky();
 
 	byte* draw_chars;				// 8*8 graphic characters
 	CQuakePic* draw_disc;

@@ -38,7 +38,7 @@ public:
 
 	bool BGM_Init();
 
-	void BGM_Shutdown(void);
+	void BGM_Shutdown();
 
 	static void BGM_Play_noext(const char* filename, unsigned int allowed_types);
 
@@ -46,24 +46,24 @@ public:
 	void BGM_PlayCDtrack(byte track, bool looping);
 	static void BGM_Play_f();
 
-	static void BGM_Stop(void);
+	static void BGM_Stop();
 
 	static void BGM_Pause();
 
-	static void BGM_Resume(void);
+	static void BGM_Resume();
 
-	void BGM_UpdateStream(void);
+	void BGM_UpdateStream();
 
-	void BGM_Update(void);
+	void BGM_Update();
 
-	static void BGM_Pause_f(void);
+	static void BGM_Pause_f();
 
-	static void BGM_Resume_f(void);
+	static void BGM_Resume_f();
 
-	static void BGM_Loop_f(void);
+	static void BGM_Loop_f();
 
-	static void BGM_Stop_f(void);
-	static void BGM_Jump_f(void);
+	static void BGM_Stop_f();
+	static void BGM_Jump_f();
 
     void GetSongArtistAndName(const char* filename, uintptr_t* path_id, const char* ext, artistinfo_t& artistinfo);
 

@@ -430,17 +430,17 @@ extern	int				pr_edict_size;	// in bytes
 
 //============================================================================
 
-void PR_Init (void);
+void PR_Init ();
 
 void PR_ExecuteProgram (func_t fnum);
-void PR_LoadProgs (void);
+void PR_LoadProgs ();
 
 extern progvector_t* PR_GetCPPVector(int num);
 extern int PR_SetEngineString(const char* s);
 
-void PR_Profile_f (void);
+void PR_Profile_f ();
 
-edict_t *ED_Alloc (void);
+edict_t *ED_Alloc ();
 void ED_Free (edict_t *ed);
 
 string_t	ED_NewString (const char *string);
@@ -490,7 +490,7 @@ int NUM_FOR_EDICT(edict_t *e);
 
 extern	int		type_size[9];
 
-typedef void (*builtin_t) (void);
+typedef void (*builtin_t) ();
 extern	builtin_t *pr_builtins;
 extern int pr_numbuiltins;
 
@@ -504,7 +504,7 @@ extern	unsigned short		pr_crc;
 
 void PR_RunError (const char *error, ...);
 
-void ED_PrintEdicts (void);
+void ED_PrintEdicts ();
 void ED_PrintNum (int ent);
 
 const char* _ED_ParseMultiManager(const char* data);

@@ -131,6 +131,7 @@ typedef struct client_s
 #define	FL_WATERJUMP			2048	// player jumping out of water
 #define	FL_JUMPRELEASED			4096	// for jump debouncing
 #define FL_ONLADDER				8192
+#define FL_FAKECLIENT			16384
 #ifdef QUAKE2
 #define FL_FLASHLIGHT			8192
 #define FL_ARCHIVE_OVERRIDE		1048576
@@ -174,7 +175,7 @@ public:
 	CQuakeServer();
 	~CQuakeServer();
 
-	void SV_Init(void);
+	void SV_Init();
 
 	void SV_StartParticle(vec3_t org, vec3_t dir, int color, int count);
 	void SV_StartSound(edict_t* entity, int channel, const char* sample, int vol,
@@ -186,32 +187,32 @@ public:
 
 	void SV_SendNop(client_t* client);
 
-	void SV_SendClientMessages(void);
-	void SV_ClearDatagram(void);
+	void SV_SendClientMessages();
+	void SV_ClearDatagram();
 
 	int SV_ModelIndex(const char* modname);
 
-	void SV_CreateBaseline(void);
+	void SV_CreateBaseline();
 
-	void SV_SendReconnect(void);
+	void SV_SendReconnect();
 
-	void SV_SetIdealPitch(void);
+	void SV_SetIdealPitch();
 
-	void SV_UserFriction(void);
+	void SV_UserFriction();
 
-	void SV_Accelerate(void);
+	void SV_Accelerate();
 
 	void SV_AirAccelerate(vec3_t wishveloc);
 
-	void SV_AddUpdates(void);
+	void SV_AddUpdates();
 
-	void SV_WaterMove(void);
+	void SV_WaterMove();
 
-	void SV_WaterJump(void);
+	void SV_WaterJump();
 
-	void SV_AirMove(void);
+	void SV_AirMove();
 
-	void SV_ClientThink(void);
+	void SV_ClientThink();
 	void SV_ReadClientMove(usercmd_t* move);
 	void SV_AddClientToServer(struct qsocket_s* ret);
 
@@ -222,7 +223,7 @@ public:
 
 	void SV_Physics_Ladder(edict_t* ent);
 
-	void SV_Physics(void);
+	void SV_Physics();
 
 	bool SV_CheckBottom(edict_t* ent);
 	bool SV_movestep(edict_t* ent, vec3_t move, bool relink);
@@ -243,21 +244,21 @@ public:
 
 	void SV_WriteEntitiesToClient(edict_t* clent, sizebuf_t* msg);
 
-	void SV_CleanupEnts(void);
+	void SV_CleanupEnts();
 
 	void SV_WriteClientdataToMessage(edict_t* ent, sizebuf_t* msg);
 
 	bool SV_SendClientDatagram(client_t* client);
 
-	void SV_UpdateToReliableMessages(void);
+	void SV_UpdateToReliableMessages();
 
-	void SV_MoveToGoal(void);
+	void SV_MoveToGoal();
 
-	void SV_ConnectClient(int clientnum);
+	void SV_ConnectClient(int clientnum, bool bot = false);
 
-	void SV_CheckForNewClients(void);
-	bool SV_ReadClientMessage(void);
-	void SV_RunClients(void);
+	void SV_CheckForNewClients();
+	bool SV_ReadClientMessage();
+	void SV_RunClients();
 	void SV_SaveSpawnparms();
 #ifdef QUAKE2
 	void SV_SpawnServer(char* server, char* startspot);
@@ -265,7 +266,7 @@ public:
 	void SV_SpawnServer(char* server);
 #endif
 
-	void SV_CheckAllEnts(void);
+	void SV_CheckAllEnts();
 
 	void SV_CheckVelocity(edict_t* ent);
 
@@ -303,7 +304,7 @@ public:
 
 	void SV_Physics_Toss(edict_t* ent);
 
-	void SV_ClearWorld(void);
+	void SV_ClearWorld();
 	// called after the world model has been loaded, before linking any entities
 
 	void SV_UnlinkEdict(edict_t* ent);
@@ -314,7 +315,7 @@ public:
 	// so it doesn't clip against itself
     // flags ent->v.modified
 
-	void SV_InitBoxHull(void);
+	void SV_InitBoxHull();
     void SV_CheckFogVolumes(edict_t *ent);
 
 	hull_t* SV_HullForBox(vec3_t mins, vec3_t maxs);

@@ -49,8 +49,8 @@ bool	slistLocal = true;
 static double	slistStartTime;
 static int		slistLastShown;
 
-static void Slist_Send(void);
-static void Slist_Poll(void);
+static void Slist_Send();
+static void Slist_Poll();
 PollProcedure	slistSendProcedure = {NULL, 0.0, Slist_Send};
 PollProcedure	slistPollProcedure = {NULL, 0.0, Slist_Poll};
 
@@ -92,7 +92,7 @@ int	net_driverlevel;
 
 double			net_time;
 
-double SetNetTime(void)
+double SetNetTime()
 {
 	net_time = Sys_DoubleTime();
 	return net_time;
@@ -107,7 +107,7 @@ Called by drivers when a new communications endpoint is required
 The sequence and buffer fields will be filled in properly
 ===================
 */
-qsocket_t *NET_NewQSocket (void)
+qsocket_t *NET_NewQSocket ()
 {
 	qsocket_t	*sock;
 
@@ -172,7 +172,7 @@ void NET_FreeQSocket(qsocket_t *sock)
 }
 
 
-static void NET_Listen_f (void)
+static void NET_Listen_f ()
 {
 	if (g_pCmds->Cmd_Argc () != 2)
 	{
@@ -191,7 +191,7 @@ static void NET_Listen_f (void)
 }
 
 
-static void MaxPlayers_f (void)
+static void MaxPlayers_f ()
 {
 	int 	n;
 
@@ -230,7 +230,7 @@ static void MaxPlayers_f (void)
 }
 
 
-static void NET_Port_f (void)
+static void NET_Port_f ()
 {
 	int 	n;
 
@@ -259,7 +259,7 @@ static void NET_Port_f (void)
 }
 
 
-static void PrintSlistHeader(void)
+static void PrintSlistHeader()
 {
 	Con_Printf("Server          Map             Users\n");
 	Con_Printf("--------------- --------------- -----\n");
@@ -267,7 +267,7 @@ static void PrintSlistHeader(void)
 }
 
 
-static void PrintSlist(void)
+static void PrintSlist()
 {
 	int n;
 
@@ -282,7 +282,7 @@ static void PrintSlist(void)
 }
 
 
-static void PrintSlistTrailer(void)
+static void PrintSlistTrailer()
 {
 	if (hostCacheCount)
 		Con_Printf("== end list ==\n\n");
@@ -291,7 +291,7 @@ static void PrintSlistTrailer(void)
 }
 
 
-void NET_Slist_f (void)
+void NET_Slist_f ()
 {
 	if (slistInProgress)
 		return;
@@ -312,7 +312,7 @@ void NET_Slist_f (void)
 }
 
 
-static void Slist_Send(void)
+static void Slist_Send()
 {
 	for (net_driverlevel=0; net_driverlevel < net_numdrivers; net_driverlevel++)
 	{
@@ -328,7 +328,7 @@ static void Slist_Send(void)
 }
 
 
-static void Slist_Poll(void)
+static void Slist_Poll()
 {
 	for (net_driverlevel=0; net_driverlevel < net_numdrivers; net_driverlevel++)
 	{
@@ -454,7 +454,7 @@ struct
 	long	session;
 } vcrConnect;
 
-qsocket_t *NET_CheckNewConnections (void)
+qsocket_t *NET_CheckNewConnections ()
 {
 	qsocket_t	*ret;
 
@@ -802,7 +802,7 @@ NET_Init
 ====================
 */
 
-void NET_Init (void)
+void NET_Init ()
 {
 	int			i;
 	int			controlSocket;
@@ -903,7 +903,7 @@ NET_Shutdown
 ====================
 */
 
-void		NET_Shutdown (void)
+void		NET_Shutdown ()
 {
 	qsocket_t	*sock;
 
@@ -934,7 +934,7 @@ void		NET_Shutdown (void)
 
 static PollProcedure *pollProcedureList = NULL;
 
-void NET_Poll(void)
+void NET_Poll()
 {
 	PollProcedure *pp;
 

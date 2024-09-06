@@ -1152,7 +1152,7 @@ void CleanUpPakDirs()
   g_PK3Files.RemoveAll();
 }
 
-void ClosePakFile(void)
+void ClosePakFile()
 {
 	if(pakopen)
   {

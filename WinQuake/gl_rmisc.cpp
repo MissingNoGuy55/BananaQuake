@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 R_InitTextures
 ==================
 */
-void	CGLRenderer::R_InitTextures (void)
+void	CGLRenderer::R_InitTextures ()
 {
 	int		x,y, m;
 	byte	*dest;
@@ -69,7 +69,7 @@ byte	dottexture[8][8] =
 	{0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,0,0},
 };
-void CGLRenderer::R_InitParticleTexture (void)
+void CGLRenderer::R_InitParticleTexture ()
 {
 	int		x,y;
 	byte	data[8][8][4];
@@ -99,7 +99,7 @@ void CGLRenderer::R_InitParticleTexture (void)
 	memcpy(datatest, data, sizeof(datatest));
 
 	particletexture->pic.datavec.AddMultipleToEnd(sizeof(data), datatest);
-	g_GLRenderer->GL_Bind(particletexture);
+	GL_Bind(particletexture);
 
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
@@ -116,7 +116,7 @@ R_Envmap_f
 Grab six views for environment mapping tests
 ===============
 */
-void CGLRenderer::R_Envmap_f (void)
+void CGLRenderer::R_Envmap_f ()
 {
 	byte*	buffer = g_MemCache->Hunk_Alloc<byte>(256*256*4);	// Missi (3/8/2022)
 	char	name[1024];
@@ -135,47 +135,47 @@ void CGLRenderer::R_Envmap_f (void)
 	r_refdef.viewangles[0] = 0;
 	r_refdef.viewangles[1] = 0;
 	r_refdef.viewangles[2] = 0;
-	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
-	R_RenderView ();
+	g_GLRenderer->GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
+	g_GLRenderer->R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	g_Common->COM_WriteFile ("env0.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[1] = 90;
-	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
-	R_RenderView ();
+	g_GLRenderer->GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
+	g_GLRenderer->R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	g_Common->COM_WriteFile ("env1.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[1] = 180;
-	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
-	R_RenderView ();
+	g_GLRenderer->GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
+	g_GLRenderer->R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	g_Common->COM_WriteFile ("env2.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[1] = 270;
-	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
-	R_RenderView ();
+	g_GLRenderer->GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
+	g_GLRenderer->R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	g_Common->COM_WriteFile ("env3.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[0] = -90;
 	r_refdef.viewangles[1] = 0;
-	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
-	R_RenderView ();
+	g_GLRenderer->GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
+	g_GLRenderer->R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	g_Common->COM_WriteFile ("env4.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[0] = 90;
 	r_refdef.viewangles[1] = 0;
-	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
-	R_RenderView ();
+	g_GLRenderer->GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
+	g_GLRenderer->R_RenderView ();
 	glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	g_Common->COM_WriteFile ("env5.rgb", buffer, sizeof(buffer));
 
 	envmap = false;
 	glDrawBuffer  (GL_BACK);
 	glReadBuffer  (GL_BACK);
-	GL_EndRendering ();
+	g_GLRenderer->GL_EndRendering ();
 }
 
 /*
@@ -183,13 +183,13 @@ void CGLRenderer::R_Envmap_f (void)
 R_Init
 ===============
 */
-void CGLRenderer::R_Init (void)
+void CGLRenderer::R_Init ()
 {	
 	//extern byte *hunk_base;
 	extern cvar_t gl_finish;
 
-	//Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);	
-	//Cmd_AddCommand ("envmap", R_Envmap_f);
+	g_pCmds->Cmd_AddCommand ("timerefresh", CGLRenderer::R_TimeRefresh_f);
+	g_pCmds->Cmd_AddCommand ("envmap", CGLRenderer::R_Envmap_f);
 	g_pCmds->Cmd_AddCommand ("pointfile", CCoreRenderer::R_ReadPointFile_f);
 
 	Cvar_RegisterVariable (&r_norefresh);
@@ -323,7 +323,7 @@ void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 	inheight = paliashdr->skinheight;
 
 	snprintf(name, sizeof(name), "player_%i", playernum);
-	playertextures[playernum] = g_GLRenderer->GL_LoadTexture(currententity->model, name, paliashdr->skinwidth, paliashdr->skinheight,
+	playertextures[playernum] = GL_LoadTexture(currententity->model, name, paliashdr->skinwidth, paliashdr->skinheight,
 		SRC_INDEXED, pixels, paliashdr->gltextures[skinnum][0]->source_offset, TEXPREF_PAD | TEXPREF_OVERWRITE);
 
 	// because this happens during gameplay, do it fast
@@ -390,7 +390,7 @@ void CGLRenderer::R_TranslatePlayerSkin (int playernum)
 R_NewMap
 ===============
 */
-void CGLRenderer::R_NewMap (void)
+void CGLRenderer::R_NewMap ()
 {
 	int		i;
 
@@ -472,7 +472,7 @@ R_TimeRefresh_f
 For program optimization
 ====================
 */
-void CGLRenderer::R_TimeRefresh_f (void)
+void CGLRenderer::R_TimeRefresh_f ()
 {
 	int			i;
 	float		start, stop, time;
@@ -484,7 +484,7 @@ void CGLRenderer::R_TimeRefresh_f (void)
 	for (i=0 ; i<128 ; i++)
 	{
 		r_refdef.viewangles[1] = i/128.0*360.0;
-		R_RenderView ();
+		g_GLRenderer->R_RenderView ();
 	}
 
 	glFinish ();
@@ -493,10 +493,10 @@ void CGLRenderer::R_TimeRefresh_f (void)
 	Con_Printf ("%f seconds (%f fps)\n", time, 128/time);
 
 	glDrawBuffer  (GL_BACK);
-	GL_EndRendering ();
+	g_GLRenderer->GL_EndRendering ();
 }
 
-void D_FlushCaches (void)
+void D_FlushCaches ()
 {
 }
 

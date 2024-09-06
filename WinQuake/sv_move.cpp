@@ -229,7 +229,7 @@ facing it.
 
 ======================
 */
-void PF_changeyaw (void);
+void PF_changeyaw ();
 bool CQuakeServer::SV_StepDirection (edict_t *ent, float yaw, float dist)
 {
 	vec3_t		move, oldorigin;
@@ -419,7 +419,7 @@ SV_MoveToGoal
 
 ======================
 */
-void CQuakeServer::SV_MoveToGoal (void)
+void CQuakeServer::SV_MoveToGoal ()
 {
 	edict_t		*ent, *goal;
 	float		dist;
