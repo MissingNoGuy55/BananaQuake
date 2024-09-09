@@ -22,7 +22,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _PAKSTUFF_H_
 #define _PAKSTUFF_H_
 
+#ifdef _WIN32
 #include <windows.h>
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -119,20 +122,20 @@ typedef struct DirStruct
 
 extern int m_nPAKIndex;
 extern FILE* pakfile[16];
-extern boolean pakopen;
+extern bool pakopen;
 extern DIRECTORY	*paktextures;
 
 void	ClearFileList				(FILELIST **);
 void	ClearDirList				(DIRLIST **);
-boolean		GetPackFileList				(FILELIST **, char *);
-boolean		GetPackTextureDirs			(DIRLIST **);
-boolean	AddToDirListAlphabetized	(DIRLIST **, char *, int);
-boolean	AddToFileListAlphabetized	(FILELIST **t, char *, UInt32, UInt32, boolean);
-boolean	PakLoadFile					(const char *, void **);
+bool		GetPackFileList				(FILELIST **, char *);
+bool		GetPackTextureDirs			(DIRLIST **);
+bool	AddToDirListAlphabetized	(DIRLIST **, char *, int);
+bool	AddToFileListAlphabetized	(FILELIST **t, char *, UInt32, UInt32, bool);
+bool	PakLoadFile					(const char *, void **);
 void	OpenPakFile					(const char *);
 void	ClosePakFile				();
 int PakLoadAnyFile(const char *filename, void **bufferptr);
-void WINAPI InitPakFile(const char * pBasePath, const char *pName);
+void InitPakFile(const char * pBasePath, const char *pName);
 
 #ifdef __cplusplus
 }

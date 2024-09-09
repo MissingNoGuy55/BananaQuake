@@ -99,8 +99,8 @@ Returns false if nothing is found.
 
 bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 {
-	SDL_AudioSpec desired;
-	SDL_AudioSpec desired_voice;
+	SDL_AudioSpec desired = {};
+	SDL_AudioSpec desired_voice = {};
 	int		tmp, tmp2, val;
 
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
@@ -210,14 +210,17 @@ bool CSoundDMA::SNDDMA_Init(dma_t* dma)
 	shm_voice->samplepos = 0;
 	shm_voice->submission_chunk = 1;
 
-	Con_Printf("SDL audio spec  : %d Hz, %d samples, %d channels\n",
+	Con_Printf("SDL audio spec : %d Hz, %d samples, %d channels\n",
 		desired.freq, desired.samples, desired.channels);
-	Con_Printf("SDL recording audio spec  : %d Hz, %d samples, %d channels\n\n",
+	Con_Printf("SDL recording audio spec : %d Hz, %d samples, %d channels\n\n",
 		desired_voice.freq, desired_voice.samples, desired_voice.channels);
 
 	buffersize = shm->samples * (shm->samplebits / 8);
 	buffersize_voice = shm_voice->samples * (shm_voice->samplebits / 8);
-	Con_Printf("SDL audio driver: %s, %d bytes buffer\n", SDL_GetCurrentAudioDriver(), buffersize);
+
+	const char* audioDriver = SDL_GetCurrentAudioDriver();
+
+	Con_Printf("SDL audio driver: %s, %d bytes buffer\n", audioDriver ? audioDriver : "NULL", buffersize);
 	Con_Printf("SDL recording audio driver: %s, %d bytes buffer\n\n", device, buffersize_voice);
 
 	snd_firsttime = false;

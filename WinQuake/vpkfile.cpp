@@ -263,7 +263,7 @@ void CloseAllVPKs()
 				break;
 
 			loaded_vpks[i][j]->close();
-			delete[] loaded_vpks[i][j];
+			delete loaded_vpks[i][j];
 		}
 	}
 }

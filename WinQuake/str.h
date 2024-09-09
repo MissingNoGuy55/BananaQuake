@@ -92,10 +92,18 @@ public:
 
   void MakeLower()
   {
+#ifdef __linux__
+    if (m_pStr)
+    {
+        while(*m_pStr)
+            strlwr(*m_pStr++);
+    }
+#else
     if (m_pStr)
     {
       strlwr(m_pStr);
     }
+#endif
   }
 
   int Find(const char *p)

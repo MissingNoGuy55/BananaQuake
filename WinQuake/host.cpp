@@ -1038,7 +1038,7 @@ void CQuakeHost::Host_Shutdown()
 		if (!wad_names[i])
 			break;
 
-		delete wad_names[i];
+		delete[] wad_names[i];
 	}
 
 	delete this;

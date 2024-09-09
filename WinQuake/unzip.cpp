@@ -13,7 +13,14 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#ifndef __linux__
 #include <windows.h>
+#else
+#include <cstdlib>
+typedef unsigned char byte;
+#endif
+
 #include "unzip.h"
 //#include "cmdlib.h"
 

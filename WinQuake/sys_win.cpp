@@ -908,7 +908,7 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 				testStr[pos+1] = '\"';
 
-				argv[parms.argc] = testStr;
+				Q_strncpy(argv[parms.argc], testStr, sizeof(testStr));
 				hitquote = true;
 			}
 
@@ -927,7 +927,9 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	}
 
 	for (int pos = 0; pos < parms.argc; pos++)
-		Q_FixQuotes(argv[pos], argv[pos], strlen(argv[pos])+1);
+	{
+		Q_FixQuotes(argv[pos], argv[pos], strlen(argv[pos]) + 1);
+	}
 
 	parms.argv = argv;
 

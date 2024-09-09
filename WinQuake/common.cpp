@@ -453,6 +453,137 @@ float Q_atof (const char *str)
 	return val*sign;
 }
 
+/*
+==================
+Missi: Q_snscanf
+Buffer-safe version of sscanf that is portable, so programmers
+won't need to use the non-portable sscanf_s (9/8/2024)
+==================
+*/
+void Q_snscanf(const char* buffer, size_t bufsize, const char* fmt, ...)
+{
+	int fmt_pos = 0;			// Missi: position in format string (9/8/2024)
+	int buffer_pos = 0;			// Missi: position in buffer (9/9/2024)
+
+	va_list args = {};
+	va_start(args, fmt);
+	bool length = false;	// Missi: defines whether a length was specified in the format string (9/8/2024)
+	int charcount = 0;		// Missi: independent of fmt_pos and also counts number of chars read (9/8/2024)
+	
+	while (buffer[buffer_pos] != '\0' && buffer_pos < bufsize)
+	{
+		if (fmt[fmt_pos] == '\0')
+			break;
+
+		if (fmt[fmt_pos] == '%')
+		{
+			if (fmt[fmt_pos + 1] >= '0' && fmt[fmt_pos + 1] <= '9')
+			{
+				int num = 0;
+				char jump[64];
+				memset(jump, 0, sizeof(jump));
+
+				num = Q_atoi(&fmt[fmt_pos + 1]);
+				snprintf(jump, sizeof(jump), "%d", num);
+
+				fmt_pos += Q_strlen(jump) + 1;
+				length = true;
+			}
+
+			if (!length)
+				fmt_pos++;
+
+			switch (fmt[fmt_pos])
+			{
+				case '\r':
+				case '\n':
+					fmt_pos++;
+					break;
+
+				// Missi: standard int (9/8/2024)
+				case 'd':
+				{
+					int copy = Q_atoi(&buffer[buffer_pos]);
+					memcpy(va_arg(args, int*), &copy, sizeof(int));
+					break;
+				}
+				// Missi: standard float (9/8/2024)
+				case 'f':
+				{
+					float copy = Q_atof(&buffer[buffer_pos]);
+					memcpy(va_arg(args, float*), &copy, sizeof(float));
+					break;
+				}
+				// Missi: current number of chars read (9/9/2024)
+				case 'n':
+				{
+					memcpy(va_arg(args, int*), &charcount, sizeof(int));
+					break;
+				}
+				// Missi: const char* (9/9/2024)
+				case 's':
+				{
+					while (buffer[charcount++] != '\n')
+						;
+
+					va_list va_arg_copy;
+					va_copy(va_arg_copy, args);
+
+					memcpy(va_arg(args, char*), &buffer[0], charcount - 1);
+					va_arg(va_arg_copy, char*)[charcount - 1] = '\0';
+					break;
+				}
+				// Missi: unsigned integers (9/9/2024)
+				case 'u':
+				{
+
+					if (fmt[fmt_pos + 1] == 'l' && fmt[fmt_pos + 2] == 'l')
+					{
+						unsigned long long copy = atoll(&buffer[buffer_pos]);
+						memcpy(va_arg(args, unsigned long long*), &copy, sizeof(unsigned long long));
+					}
+					else if (fmt[fmt_pos + 1] == 'l')
+					{
+						unsigned long copy = atol(&buffer[buffer_pos]);
+						memcpy(va_arg(args, unsigned long*), &copy, sizeof(unsigned long));
+					}
+					else
+					{
+						unsigned int copy = Q_atoi(&buffer[buffer_pos]);
+						memcpy(va_arg(args, unsigned int*), &copy, sizeof(unsigned int));
+					}
+					break;
+				}
+				// Missi: hexadecimal output (9/9/2024)
+				case 'x':
+				{
+					unsigned int copy = Q_atoi(&buffer[buffer_pos]);
+
+					std::stringstream hex_strstream;
+
+					hex_strstream << '0' << 'x' << std::hex << copy;
+
+					cxxstring hex_output = hex_strstream.str();
+					const char* hex_output_c = hex_output.c_str();
+
+					Q_strncpy(va_arg(args, char*), hex_output_c, bufsize);
+					break;
+				}
+				// Missi: single char (9/9/2024)
+				case 'c':
+				{
+					memcpy(va_arg(args, char*), &buffer[buffer_pos], sizeof(char));
+					break;
+				}
+			}
+		}
+
+		length = false;
+		fmt_pos++;
+	}
+	va_end(args);
+}
+
 // Missi: copied from Quakespasm (5/22/22)
 
 /* platform dependant (v)snprintf function names: */
@@ -986,7 +1117,7 @@ void CCommon::COM_StripExtension (const char *in, char *out)
 COM_FileExtension
 ============
 */
-const char *COM_FileExtension (const char *in)
+const char* CCommon::COM_FileExtension (const char *in)
 {
 	static char exten[8];
 	int             i;
@@ -1179,14 +1310,14 @@ skipwhite:
 const char* CCommon::COM_ParseIntNewline(const char* buffer, int* value)
 {
 	int consumed = 0;
-	sscanf(buffer, "%i\n%n", value, &consumed);
+	Q_snscanf(buffer, 1024, "%i\n%n", value, &consumed);
 	return buffer + consumed;
 }
 
 const char* CCommon::COM_ParseFloatNewline(const char* buffer, float* value)
 {
 	int consumed = 0;
-	sscanf(buffer, "%f\n%n", value, &consumed);
+	Q_snscanf(buffer, 1024, "%f\n%n", value, &consumed);
 	return buffer + consumed;
 }
 
@@ -1194,7 +1325,7 @@ const char* CCommon::COM_ParseStringNewline(const char* buffer)
 {
 	int consumed = 0;
 	com_token[0] = '\0';
-	sscanf(buffer, "%1023s\n%n", com_token, &consumed);
+	Q_snscanf(buffer, 1024, "%1023s\n%n", com_token, &consumed);
 	return buffer + consumed;
 }
 
@@ -1408,18 +1539,6 @@ const char* CCommon::va(const char *format, ...)
 	va_end (argptr);
 
 	return string;  
-}
-
-char* CCommon::va_unsafe ( char* format, ... )
-{
-	va_list			argptr;
-	static char		string[1024];
-
-	va_start(argptr, format);
-	vsprintf(string, format, argptr);
-	va_end(argptr);
-
-	return string;
 }
 
 /// just for debugging
@@ -1947,13 +2066,18 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 							// in case the file was new
 							temp = zfi->file;
 							// set the file position in the zip file (also sets the current file info)
-							unzSetCurrentFileInfoPosition_IFStream(file, pk3->handle, pakFile->pos);
+							if ((unzSetCurrentFileInfoPosition_IFStream(file, pk3->handle, pakFile->pos)) != UNZ_OK)
+							{
+								Sys_Error("CCommon::COM_FindFile_IFStream: unzSetCurrentFileInfoPosition_IFStream failed\n");
+								return -1;
+							}
+
 							// copy the file info into the unzip structure
-							memcpy(zfi, pk3->handle, sizeof(unz_s));
+							memcpy(zfi, pk3->handle, sizeof(unz_ifstream_s));
 							// we copy this back into the structure
 							zfi->file = temp;
 							// open the file in the zip
-							unzOpenCurrentFile_IFStream(fsh_ifstream[hndl].handleFiles.file.z);
+							unzOpenCurrentFile_IFStream(file);
 							fsh_ifstream[hndl].zipFilePos = pakFile->pos;
 
 							com_filesize = zfi->cur_file_info.uncompressed_size;

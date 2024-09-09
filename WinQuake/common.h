@@ -166,11 +166,14 @@ int	Q_atoi (const char *str);
 float Q_atof (const char *str);
 int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
 
+void Q_snscanf(const char* buffer, size_t bufsize, const char* fmt, ...);
+
 void Q_FixSlashes(char* str, size_t size, const char delimiter = '\\');
 void Q_FixQuotes(char* dest, const char* src, size_t size);
 
 int Q_stricmp(const char* s1, const char* s2);
 int Q_stricmpn(const char* s1, const char* s2, int n);
+
 //============================================================================
 
 //
@@ -239,6 +242,7 @@ public:
 
 	char* COM_SkipPath (const char *pathname);
 	void COM_StripExtension (const char *in, char *out);
+	const char* COM_FileExtension(const char* in);
 	void COM_FileBase(const char* in, char* out, size_t outsize);
 	void COM_DefaultExtension (char *path, const char *extension);
 	const char* COM_FileGetExtension(const char* in);
@@ -271,10 +275,6 @@ public:
 
 	// Missi: buffer-safe varargs (4/30/2023)
 	const char	*va(const char *format, ...);
-
-	// does a varargs printf into a temp buffer
-	// Missi: made into va_unsafe from va for backwards compatibility (4/30/2023)
-	char* va_unsafe(char* format, ...);
 
     static	char	com_token[1024];
 	static	bool	com_eof;

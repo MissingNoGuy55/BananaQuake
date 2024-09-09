@@ -5,7 +5,11 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#ifndef __linux__
 #include <windows.h>
+#endif
+
 #include <fstream>
 #include "unzip.h"
 #include "unzip_ifstream.h"
