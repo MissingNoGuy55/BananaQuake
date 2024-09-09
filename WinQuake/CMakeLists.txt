@@ -1135,7 +1135,6 @@ target_link_libraries(bananaquakeopengl GL)
 
 target_link_libraries(bananaquakeopengl SDL2)
 target_link_libraries(bananaquakeopengl SDL2main)
-target_link_libraries(bananaquakeopengl SDL2_image)
 #[[
 target_link_libraries(bananaquakesoftware X11)
 target_link_libraries(bananaquakesoftware Xext)
