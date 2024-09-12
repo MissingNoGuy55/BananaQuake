@@ -150,7 +150,6 @@ sv_user.cpp
 sys_win.cpp
 utils.cpp
 unzip.cpp
-unzip_ifstream.cpp
 vid_win.cpp
 view.cpp
 vpkfile.cpp
@@ -307,7 +306,6 @@ sv_user.cpp
 sys_win.cpp
 utils.cpp
 unzip.cpp
-unzip_ifstream.cpp
 view.cpp
 vpkfile.cpp
 wad.cpp
@@ -507,7 +505,6 @@ sv_user.cpp
 sys_linux.cpp
 utils.cpp
 unzip.cpp
-unzip_ifstream.cpp
 view.cpp
 vid_sdl_software.cpp
 vpkfile.cpp
@@ -656,7 +653,6 @@ sv_user.cpp
 sys_linux.cpp
 utils.cpp
 unzip.cpp
-unzip_ifstream.cpp
 view.cpp
 vpkfile.cpp
 wad.cpp
@@ -852,7 +848,6 @@ sv_phys.cpp
 sv_user.cpp
 sys_linux.cpp
 unzip.cpp
-unzip_ifstream.cpp
 utils.cpp
 view.cpp
 vid_macos.cpp

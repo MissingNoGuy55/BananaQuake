@@ -284,7 +284,6 @@ constexpr int SOUND_CHANNELS		= 8;
 // #define IDGODS
 
 #include "unzip.h"
-#include "unzip_ifstream.h"
 #include "mathlib.h"
 
 #include "common.h"

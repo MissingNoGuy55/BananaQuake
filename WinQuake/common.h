@@ -645,7 +645,7 @@ inline T* COM_LoadFile_IFStream(const char* path, int usehunk, uintptr_t* path_i
 		{
 			g_Common->file_from_pk3 = 0;
 
-			unzReadCurrentFile_IFStream(unzf, &f, buf, len);
+			unzReadCurrentFile(unzf, buf, len);
 
 			f.close();
 			unzCloseCurrentFile(unzf);

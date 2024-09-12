@@ -1972,7 +1972,7 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 	int				findtime = 0, cachetime = 0;
 
 	fileInPack_t* pakFile;
-	unz_ifstream_s* zfi;
+	unz_s* zfi;
 	cxxifstream* temp;
 
 	if (file && handle)
@@ -2052,17 +2052,17 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 
 							Q_strncpy(fsh_ifstream[*handle].name, filename, sizeof(fsh_ifstream[*handle].name));
 							fsh_ifstream[*handle].zipFile = true;
-							zfi = (unz_ifstream_s*)fsh_ifstream[*handle].handleFiles.file.z;
+							zfi = (unz_s*)fsh_ifstream[*handle].handleFiles.file.z;
 							// in case the file was new
-							temp = zfi->file;
+							temp = zfi->ifstr;
 							// set the file position in the zip file (also sets the current file info)
-							unzSetCurrentFileInfoPosition_IFStream(file, pk3->handle, pakFile->pos);
+							unzSetCurrentFileInfoPosition(pk3->handle, pakFile->pos);
 							// copy the file info into the unzip structure
 							memcpy(zfi, pk3->handle, sizeof(unz_s));
 							// we copy this back into the structure
-							zfi->file = temp;
+							zfi->ifstr = temp;
 							// open the file in the zip
-							unzOpenCurrentFile_IFStream(fsh_ifstream[*handle].handleFiles.file.z);
+							unzOpenCurrentFile(fsh_ifstream[*handle].handleFiles.file.z);
 							fsh_ifstream[*handle].zipFilePos = pakFile->pos;
 
 							com_filesize = zfi->cur_file_info.uncompressed_size;
@@ -2087,22 +2087,22 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 
 							Q_strncpy(fsh_ifstream[hndl].name, filename, sizeof(fsh_ifstream[hndl].name));
 							fsh_ifstream[hndl].zipFile = true;
-							zfi = (unz_ifstream_s*)pk3->handle;
+							zfi = (unz_s*)pk3->handle;
 							// in case the file was new
-							temp = zfi->file;
+							temp = zfi->ifstr;
 							// set the file position in the zip file (also sets the current file info)
-							if ((unzSetCurrentFileInfoPosition_IFStream(file, pk3->handle, pakFile->pos)) != UNZ_OK)
+							if ((unzSetCurrentFileInfoPosition(pk3->handle, pakFile->pos)) != UNZ_OK)
 							{
 								Sys_Error("CCommon::COM_FindFile_IFStream: unzSetCurrentFileInfoPosition_IFStream failed\n");
 								return -1;
 							}
 
 							// copy the file info into the unzip structure
-							memcpy(zfi, pk3->handle, sizeof(unz_ifstream_s));
+							memcpy(zfi, pk3->handle, sizeof(unz_s));
 							// we copy this back into the structure
-							zfi->file = temp;
+							zfi->ifstr = temp;
 							// open the file in the zip
-							unzOpenCurrentFile_IFStream(file);
+							unzOpenCurrentFile(file);
 							fsh_ifstream[hndl].zipFilePos = pakFile->pos;
 
 							com_filesize = zfi->cur_file_info.uncompressed_size;
