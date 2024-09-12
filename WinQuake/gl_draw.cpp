@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -1187,7 +1188,7 @@ void CGLRenderer::Draw_PrintPlayerName(client_t* client, int num, const char* na
 
 	float* pos = ed_client->v.origin;
 
-	Draw_String3D(pos[0], pos[1], pos[2] + 32.0f, name);
+	// Draw_String3D(pos[0], pos[1], pos[2] + 32.0f, name);
 }
 
 /*

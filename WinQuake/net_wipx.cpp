@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -321,26 +322,26 @@ int WIPX_StringToAddr (char *string, struct qsockaddr *addr)
 	Q_memset(addr, 0, sizeof(struct qsockaddr));
 	addr->sa_family = AF_IPX;
 
-#define DO(src,dest)	\
+#define DO(src, size, dest)	\
 	buf[0] = string[src];	\
 	buf[1] = string[src + 1];	\
-	if (sscanf (buf, "%x", &val) != 1)	\
+	if (Q_snscanf (buf, size, "%x", &val) != 1)	\
 		return -1;	\
 	((struct sockaddr_ipx *)addr)->dest = val
 
-	DO(0, sa_netnum[0]);
-	DO(2, sa_netnum[1]);
-	DO(4, sa_netnum[2]);
-	DO(6, sa_netnum[3]);
-	DO(9, sa_nodenum[0]);
-	DO(11, sa_nodenum[1]);
-	DO(13, sa_nodenum[2]);
-	DO(15, sa_nodenum[3]);
-	DO(17, sa_nodenum[4]);
-	DO(19, sa_nodenum[5]);
+	DO(0, sizeof(((struct sockaddr_ipx*)addr)->sa_netnum), sa_netnum[0]);
+	DO(2, sizeof(((struct sockaddr_ipx*)addr)->sa_netnum), sa_netnum[1]);
+	DO(4, sizeof(((struct sockaddr_ipx*)addr)->sa_netnum), sa_netnum[2]);
+	DO(6, sizeof(((struct sockaddr_ipx*)addr)->sa_netnum), sa_netnum[3]);
+	DO(9, sizeof(((struct sockaddr_ipx*)addr)->sa_netnum), sa_nodenum[0]);
+	DO(11, sizeof(((struct sockaddr_ipx*)addr)->sa_netnum), sa_nodenum[1]);
+	DO(13, sizeof(((struct sockaddr_ipx*)addr)->sa_netnum), sa_nodenum[2]);
+	DO(15, sizeof(((struct sockaddr_ipx*)addr)->sa_netnum), sa_nodenum[3]);
+	DO(17, sizeof(((struct sockaddr_ipx*)addr)->sa_netnum), sa_nodenum[4]);
+	DO(19, sizeof(((struct sockaddr_ipx*)addr)->sa_netnum), sa_nodenum[5]);
 #undef DO
 
-	sscanf (&string[22], "%u", &val);
+	Q_snscanf (&string[22], Q_strlen(&string[22]), "%u", &val);
 	((struct sockaddr_ipx *)addr)->sa_socket = htons((unsigned short)val);
 
 	return 0;

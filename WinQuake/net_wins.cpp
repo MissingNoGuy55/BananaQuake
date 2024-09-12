@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -478,7 +479,7 @@ int WINS_StringToAddr (char *string, struct qsockaddr *addr)
 	int ha1, ha2, ha3, ha4, hp;
 	int ipaddr;
 
-	sscanf(string, "%d.%d.%d.%d:%d", &ha1, &ha2, &ha3, &ha4, &hp);
+	Q_snscanf(string, sizeof(string), "%d.%d.%d.%d:%d", &ha1, &ha2, &ha3, &ha4, &hp);
 	ipaddr = (ha1 << 24) | (ha2 << 16) | (ha3 << 8) | ha4;
 
 	addr->sa_family = AF_INET;

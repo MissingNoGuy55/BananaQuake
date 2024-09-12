@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -45,6 +46,7 @@ void CQuakeHost::Host_Quit_f ()
 	host->Host_ShutdownServer(false);		
 
 	CloseAllVPKs();
+	unzUnloadAllZips();
 
 	Sys_Quit ();
 }
@@ -468,7 +470,7 @@ Host_Savegame_f
 void CQuakeHost::Host_Savegame_f ()
 {
 	char	name[256] = {};
-	FILE	*f = nullptr;
+	cxxofstream	f;
 	int		i = 0;
 	char	comment[SAVEGAME_COMMENT_LENGTH + 1] = {};
 
@@ -518,40 +520,57 @@ void CQuakeHost::Host_Savegame_f ()
 	g_Common->COM_DefaultExtension (name, ".sav");
 	
 	Con_Printf ("Saving game to %s...\n", name);
-	f = fopen (name, "w");
-	if (!f)
+	f.open(name);
+	if (!f.is_open())
 	{
 		Con_Printf ("ERROR: couldn't open.\n");
 		return;
 	}
 	
-	fprintf (f, "%i\n", SAVEGAME_VERSION);
+	char write[512];
+	snprintf(write, sizeof(write), "%i\n", SAVEGAME_VERSION);
+	f.write(write, Q_strlen(write));
+
 	Host_SavegameComment (comment);
-	fprintf (f, "%s\n", comment);
-	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
-		fprintf (f, "%f\n", svs.clients->spawn_parms[i]);
-	fprintf (f, "%d\n", current_skill);
-	fprintf (f, "%s\n", sv->GetMapName());
-	fprintf (f, "%f\n",sv->GetServerTime());
+
+	snprintf(write, sizeof(write), "%s\n", comment);
+	f.write(write, Q_strlen(write));
+
+	for (i = 0; i < NUM_SPAWN_PARMS; i++)
+	{
+		snprintf(write, sizeof(write), "%f\n", svs.clients->spawn_parms[i]);
+		f.write(write, Q_strlen(write));
+	}
+	snprintf(write, sizeof(write), "%d\n", current_skill);
+	f.write(write, Q_strlen(write));
+	snprintf(write, sizeof(write), "%s\n", sv->GetMapName());
+	f.write(write, Q_strlen(write));
+	snprintf(write, sizeof(write), "%f\n", sv->GetServerTime());
+	f.write(write, Q_strlen(write));
 
 // write the light styles
 
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		if (sv->GetLightStyles()[i])
-			fprintf (f, "%s\n", sv->GetLightStyles()[i]);
+		{
+			snprintf(write, sizeof(write), "%s\n", sv->GetLightStyles()[i]);
+			f.write(write, Q_strlen(write));
+		}
 		else
-			fprintf (f,"m\n");
+		{
+			f.write("m\n", 2);
+		}
 	}
 
 
-	ED_WriteGlobals (f);
+	ED_WriteGlobals (&f);
 	for (i=0 ; i<sv->GetNumEdicts() ; i++)
 	{
-		ED_Write (f, EDICT_NUM(i));
-		fflush (f);
+		ED_Write (&f, EDICT_NUM(i));
+		f.flush();
 	}
-	fclose (f);
+	f.close();
 	Con_Printf ("done.\n");
 }
 
@@ -929,7 +948,7 @@ void CQuakeHost::Host_Name_f ()
 	}
 	else
 	{
-		strcat(newName, g_pCmds->Cmd_Args());
+		Q_strcat(newName, g_pCmds->Cmd_Args());
 	}
 	newName[15] = 0;
 
@@ -1057,9 +1076,9 @@ void CQuakeHost::Host_Say(bool teamonly)
 
 // turn on color set 1
 	if (!fromServer)
-		sprintf (text, "%c%s: ", 1, save->name);
+		snprintf (text, sizeof(text), "%c%s: ", 1, save->name);
 	else
-		sprintf (text, "%c<%s> ", 1, hostname.string);
+		snprintf (text, sizeof(text), "%c<%s> ", 1, hostname.string);
 
 	j = sizeof(text) - 2 - Q_strlen(text);  // -2 for /n and null terminator
 	if (Q_strlen(p) > j)
@@ -1875,7 +1894,7 @@ void CQuakeHost::Host_Startdemos_f ()
 	Con_Printf ("%i demo(s) in loop\n", c);
 
 	for (i=1 ; i<c+1 ; i++)
-		strncpy (cls.demos[i-1], g_pCmds->Cmd_Argv(i), sizeof(cls.demos[0])-1);
+		Q_strncpy (cls.demos[i-1], g_pCmds->Cmd_Argv(i), sizeof(cls.demos[0])-1);
 
 	if (!sv->IsServerActive() && cls.demonum != -1 && !cls.demoplayback)
 	{

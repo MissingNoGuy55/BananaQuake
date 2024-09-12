@@ -1266,7 +1266,7 @@ static uLong unzlocal_SearchCentralDir_IFStream(cxxifstream *fin)
 	if (!fin->good())
 		return 0;
 
-	uSizeFile = fin->tellg();
+	uSizeFile = (uLong)fin->tellg();
 	
 	if (uMaxBack>uSizeFile)
 		uMaxBack = uSizeFile;

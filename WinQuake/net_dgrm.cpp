@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -90,10 +91,13 @@ char *StrAddr (struct qsockaddr *addr)
 {
 	static char buf[34];
 	byte *p = (byte *)addr;
-	int n;
+	/*int n;
 
 	for (n = 0; n < 16; n++)
-		sprintf (buf + n * 2, "%02x", *p++);
+		sprintf (buf + n * 2, "%02x", *p++);*/
+
+	snprintf(buf, 16, "%02x", *p++);
+
 	return buf;
 }
 #endif

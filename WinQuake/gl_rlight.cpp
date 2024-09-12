@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -159,7 +160,7 @@ R_MarkLights
 void CGLRenderer::R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 {
 	mplane_t	*splitplane;
-	float		dist, l, maxdist;
+	float		dist, l, maxdist = 8192.0f;
 	vec3_t		impact;
 	msurface_t	*surf;
 	int			i, j, s, t;
@@ -183,7 +184,7 @@ void CGLRenderer::R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 		
 // mark the polygons
 	surf = cl.worldmodel->surfaces + node->firstsurface;
-	for (i = 0; i < node->numsurfaces; i++, surf++)
+	for (i = 0; i < (int)node->numsurfaces; i++, surf++)
 	{
 		for (j = 0; j < 3; j++)
 			impact[j] = light->origin[j] - surf->plane->normal[j] * dist;
@@ -261,7 +262,6 @@ Missi: most of this function was refactored with code from QuakeSpasm while atte
 */
 int CGLRenderer::RecursiveLightPoint (vec3_t color, mnode_t* node, vec3_t rayorg, vec3_t start, vec3_t end, float* maxdist)
 {
-	int			r;
 	float		front, back, frac;
 	int			side;
 	mplane_t	*plane;
@@ -270,8 +270,7 @@ int CGLRenderer::RecursiveLightPoint (vec3_t color, mnode_t* node, vec3_t rayorg
 	int			ds, dt;
 	int			i;
 	mtexinfo_t	*tex;
-	unsigned	scale;
-	int			maps;
+	int			r;
 
 	if (node->contents < 0)
 		return -1;		// didn't hit anything
@@ -305,7 +304,7 @@ int CGLRenderer::RecursiveLightPoint (vec3_t color, mnode_t* node, vec3_t rayorg
 	//lightplane = plane;
 
 	surf = cl.worldmodel->surfaces + node->firstsurface;
-	for (i=0 ; i<node->numsurfaces ; i++, surf++)
+	for (i=0 ; i < (int)node->numsurfaces ; i++, surf++)
 	{
 		float sfront, sback, dist;
 		vec3_t raydelta;
@@ -387,7 +386,6 @@ Missi: stuff ported from QuakeSpasm for light color support (6/7/2024)
 int CGLRenderer::R_LightPoint (vec3_t p)
 {
 	vec3_t		end;
-	int			r;
 	float		maxdist = 8192.0f;
 	
 	if (!cl.worldmodel->lightdata)

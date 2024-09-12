@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -103,7 +104,7 @@ void CMemCache::Hunk_Check ()
 	{
 		if (h->sentinal != HUNK_SENTINAL)
 			Sys_Error ("Hunk_Check: trahsed sentinal");
-		if (h->size < 16 || h->size + (byte *)h - hunk_base > hunk_size)
+		if (h->size < 16 || (size_t)(h->size + (byte *)h - hunk_base) > hunk_size)
 			Sys_Error ("Hunk_Check: bad size");
 		h = (hunk_t *)((byte *)h+h->size);
 	}
@@ -161,7 +162,7 @@ void CMemCache::Hunk_Print (bool all)
 	//
 		if (h->sentinal != HUNK_SENTINAL)
 			Sys_Error ("Hunk_Check: trahsed sentinal");
-		if (h->size < 16 || h->size + (byte *)h - hunk_base > hunk_size)
+		if (h->size < 16 || (size_t)(h->size + (byte *)h - hunk_base) > hunk_size)
 			Sys_Error ("Hunk_Check: bad size");
 			
 		next = (hunk_t *)((byte *)h+h->size);

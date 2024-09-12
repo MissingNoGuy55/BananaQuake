@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -175,7 +176,7 @@ void CGLRenderer::GL_SubdivideSurface (msurface_t *fa)
 
 
 // speed up sin calculations - Ed
-float	turbsin[] =
+double	turbsin[] =
 {
 	#include "gl_warp_sin.h"
 };
@@ -680,9 +681,7 @@ R_DrawSkyBox
 int	skytexorder[6] = {0,2,1,3,4,5};
 void CGLRenderer::R_DrawSkyBox ()
 {
-	int		i, j, k;
-	vec3_t	v;
-	float	s, t;
+	int		i;
 
 #if 0
 glEnable (GL_BLEND);

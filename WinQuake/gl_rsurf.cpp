@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -141,12 +142,10 @@ void CGLRenderer::R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 {
 
 	int			smax, tmax;
-	int			t;
 	int			i, j, size;
 	unsigned	r, g, b;
 	int			maps;
 	unsigned	scale;
-	int			lightadj[4];
 	unsigned	*bl;
 
 	byte		*lightmap;
@@ -328,8 +327,6 @@ void CGLRenderer::R_DrawSequentialPoly (msurface_t *s)
 	glpoly_t	*p;
 	float		*v;
 	int			i;
-	float		ss, ss2, length;
-	float		s1, t1;
 	texture_t	*t;
 	vec3_t		nv;
 	glRect_t	*theRect;
@@ -508,7 +505,6 @@ void CGLRenderer::DrawGLWaterPoly (glpoly_t *p)
 {
 	int		i;
 	float	*v;
-	float	s, t, os, ot;
 	vec3_t	nv;
 
 	GL_DisableMultitexture();
@@ -532,7 +528,6 @@ void CGLRenderer::DrawGLWaterPolyLightmap (glpoly_t *p)
 {
 	int		i;
 	float	*v;
-	float	s, t, os, ot;
 	vec3_t	nv;
 
 	GL_DisableMultitexture();
@@ -758,7 +753,6 @@ Multitexture
 */
 void CGLRenderer::R_RenderDynamicLightmaps (msurface_t *fa)
 {
-	texture_t	*t;
 	byte		*base;
 	int			maps;
 	glRect_t    *theRect;
@@ -960,9 +954,9 @@ R_DrawBrushModel
 */
 void CGLRenderer::R_DrawBrushModel (entity_t *e)
 {
-	int			j, k;
+	int			k;
 	vec3_t		mins, maxs;
-	int			i, numsurfaces;
+	int			i;
 	msurface_t	*psurf;
 	float		dot;
 	mplane_t	*pplane;
@@ -1072,13 +1066,11 @@ R_RecursiveWorldNode
 */
 void CGLRenderer::R_RecursiveWorldNode (mnode_t *node)
 {
-	int			i, c, side, *pindex;
-	vec3_t		rejectpt;
+	int			c, side;
 	mplane_t	*plane;
 	msurface_t	*surf, **mark;
 	mleaf_t		*pleaf;
 	double		dot;
-	vec3_t		mins, maxs;
 
 	if (!node)
 		return;
@@ -1208,7 +1200,6 @@ R_DrawWorld
 void CGLRenderer::R_DrawWorld ()
 {
 	entity_t	ent;
-	int			i;
 
 	memset (&ent, 0, sizeof(ent));
 	ent.model = cl.worldmodel;
@@ -1345,15 +1336,10 @@ BuildSurfaceDisplayList
 */
 void CGLRenderer::BuildSurfaceDisplayList (msurface_t *fa)
 {
-	int			i, lindex, lnumverts, s_axis, t_axis;
-	float		lastdist, lzi, scale, u, v, frac;
-	unsigned	mask;
+	int			i, lindex, lnumverts;
 	float		*vec;
-	vec3_t		local, transformed;
 	medge_t		*pedges, *r_pedge;
-	mplane_t	*pplane;
-	int			vertpage, newverts, newpage, lastvert;
-	bool	visible;
+	int			vertpage;
 	float		s, t;
 	glpoly_t	*poly;
 
@@ -1426,7 +1412,6 @@ void CGLRenderer::BuildSurfaceDisplayList (msurface_t *fa)
 		{
 			vec3_t v1, v2;
 			float *prev, *fthis, *next;
-			float f;
 
 			prev = poly->verts[(i + lnumverts - 1) % lnumverts];
 			fthis = poly->verts[i];
@@ -1468,7 +1453,7 @@ GL_CreateSurfaceLightmap
 */
 void CGLRenderer::GL_CreateSurfaceLightmap (msurface_t *surf)
 {
-	int		smax, tmax, s, t, l, i;
+	int		smax, tmax;
 	byte	*base;
 
 	if (surf->flags & (SURF_DRAWSKY|SURF_DRAWTURB))

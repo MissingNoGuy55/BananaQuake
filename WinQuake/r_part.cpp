@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -198,17 +199,17 @@ void CCoreRenderer::R_ClearParticles ()
 
 void CCoreRenderer::R_ReadPointFile_f ()
 {
-	FILE	*f;
-	vec3_t	org;
-	int		r;
-	int		c;
-	particle_t	*p;
+	cxxifstream	f;
+	vec3_t	org = {};
+	int		r = 0;
+	int		c = 0;
+	particle_t	*p = nullptr;
 	char	name[MAX_OSPATH];
 	
 	snprintf (name, sizeof(name), "maps/%s.pts", sv->GetMapName());
 
-	g_Common->COM_FOpenFile (name, &f, NULL);
-	if (!f)
+	g_Common->COM_FOpenFile_IFStream (name, &f, NULL);
+	if (!f.is_open())
 	{
 		Con_Printf ("couldn't open %s\n", name);
 		return;
@@ -218,7 +219,13 @@ void CCoreRenderer::R_ReadPointFile_f ()
 	c = 0;
 	for ( ;; )
 	{
-		r = fscanf (f,"%f %f %f\n", &org[0], &org[1], &org[2]);
+		char read[256] = {};
+
+		//r = fscanf (f,"%f %f %f\n", &org[0], &org[1], &org[2]);
+		
+		f.read(read, sizeof(vec3_t));
+		Q_snscanf(read, sizeof(read), "%f %f %f", &org[0], &org[1], &org[2]);
+		
 		if (r != 3)
 			break;
 		c++;
@@ -240,7 +247,7 @@ void CCoreRenderer::R_ReadPointFile_f ()
 		VectorCopy (org, p->org);
 	}
 
-	fclose (f);
+	f.close();
 	Con_Printf ("%i points read\n", c);
 }
 

@@ -9,9 +9,9 @@ set(CMAKE_CURRENT_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build")
 set(CMAKE_ASM_NASM_COMPILER "${CMAKE_CURRENT_SOURCE_DIR}/nasm.exe")
 
 # Create an option to switch between a system sdl library and a vendored sdl library
-option(MYGAME_VENDORED "Use vendored libraries" ON)
+option(BANANAQUAKE_VENDORED "Use vendored libraries" ON)
 
-if(MYGAME_VENDORED)
+if(BANANAQUAKE_VENDORED)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/sdl2 EXCLUDE_FROM_ALL)
     #add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/sdl_image EXCLUDE_FROM_ALL)
 else()
@@ -32,11 +32,11 @@ else()
 	#find_package(SDL_image REQUIRED CONFIG REQUIRED COMPONENTS SDL_image SDL2)
 endif()
 
-enable_language(CXX ASM)
-
 project(bananaquake LANGUAGES CXX ASM)
 
-set(CMAKE_CXX_STANDARD 20)
+enable_language(CXX ASM)
+
+set(CMAKE_CXX_STANDARD 23)
 set(CXX_STANDARD_REQUIRED true)
 
 SET(ASM_OPTIONS "-DELF -x assembler-with-cpp")
@@ -1115,7 +1115,8 @@ endif (MSVC)
 
 if (MSVC)
 target_compile_options(bananaquakeopengl PRIVATE "/MP")
-target_compile_options(bananaquakeopengl PRIVATE "/W4")
+target_compile_options(bananaquakeopengl PRIVATE "/WX")
+#target_compile_options(bananaquakeopengl PRIVATE "/fsanitize=address")
 target_link_options(bananaquakeopengl PRIVATE "/SUBSYSTEM:WINDOWS")
 endif (MSVC)
 

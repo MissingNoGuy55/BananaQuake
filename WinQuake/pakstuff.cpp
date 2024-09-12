@@ -395,21 +395,21 @@ void __ConvertDOSToUnixName( char *dst, const char *src )
 
 void AddSlash(Str& str)
 {
-  int nLen = str.GetLength();
-  if (nLen > 0)
-  {
-    if (str[nLen-1] != '\\' && str[nLen-1] != '/')
-      str += '\\';
-  }
+	int nLen = str.GetLength();
+	if (nLen > 0)
+	{
+		if (str[nLen - 1] != '\\' && str[nLen - 1] != '/')
+			str += '\\';
+	}
 }
 
 void FindReplace(Str& strContents, const char* pTag, const char* pValue)
 {
   if (strcmp(pTag, pValue) == 0)
     return;
-  for (int nPos = strContents.Find(pTag); nPos >= 0; nPos = strContents.Find(pTag))
+  for (size_t nPos = strContents.Find(pTag); nPos >= 0; nPos = strContents.Find(pTag))
   {
-    int nRightLen = strContents.GetLength() - strlen(pTag) - nPos;
+	size_t nRightLen = strContents.GetLength() - strlen(pTag) - nPos;
     Str strLeft(strContents.Left(nPos));
     Str strRight(strContents.Right(nRightLen));
     strLeft += pValue;
@@ -1101,7 +1101,7 @@ bool OpenPK3(const char *filename)
         {
           // skip textures + path seperator
           p += strlen(TEXTURE_PATH) + 1;
-          int nEnd = strcspn(p, PATH_SEPERATORS);
+		  size_t nEnd = strcspn(p, PATH_SEPERATORS);
           strncpy(cName, p, nEnd);
           cName[nEnd] = '\0';
 
@@ -1266,7 +1266,7 @@ void InitPakFile(const char * pBasePath, const char *pName)
   	strPath += "*.pk3";
   	bool bGo = true;
 	  struct _finddata_t fileinfo;
-  	int handle = _findfirst (strPath, &fileinfo);
+	  size_t handle = _findfirst (strPath, &fileinfo);
 	  if (handle != -1)
   	{
 	  	do

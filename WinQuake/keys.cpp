@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -689,7 +690,7 @@ void Key_Event (int key, bool down)
 		kb = keybindings[key];
 		if (kb && kb[0] == '+')
 		{
-			sprintf (cmd, "-%s %i\n", kb+1, key);
+			snprintf (cmd, sizeof(cmd), "-%s %i\n", kb+1, key);
 			g_pCmdBuf->Cbuf_AddText (cmd);
 		}
 		if (keyshift[key] != key)
@@ -697,7 +698,7 @@ void Key_Event (int key, bool down)
 			kb = keybindings[keyshift[key]];
 			if (kb && kb[0] == '+')
 			{
-				sprintf (cmd, "-%s %i\n", kb+1, key);
+				snprintf (cmd, sizeof(cmd), "-%s %i\n", kb+1, key);
 				g_pCmdBuf->Cbuf_AddText (cmd);
 			}
 		}
@@ -725,7 +726,7 @@ void Key_Event (int key, bool down)
 		{
 			if (kb[0] == '+')
 			{	// button commands add keynum as a parm
-				sprintf (cmd, "%s %i\n", kb, key);
+				snprintf (cmd, sizeof(cmd), "%s %i\n", kb, key);
 				g_pCmdBuf->Cbuf_AddText (cmd);
 			}
 			else

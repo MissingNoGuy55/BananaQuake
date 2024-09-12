@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -62,7 +63,7 @@ void CQuakeHost::Host_EndGame (const char *message, ...)
 	char		string[1024];
 	
 	va_start (argptr,message);
-	vsprintf (string,message,argptr);
+	vsnprintf (string, sizeof(string), message,argptr);
 	va_end (argptr);
 	Con_DPrintf ("Host_EndGame: %s\n",string);
 	
@@ -100,7 +101,7 @@ void CQuakeHost::Host_Error (const char *error, ...)
 	SCR_EndLoadingPlaque ();		// reenable screen updates
 
 	va_start (argptr,error);
-	vsprintf (string,error,argptr);
+	vsnprintf (string, sizeof(string), error,argptr);
 	va_end (argptr);
 	Con_Printf ("Host_Error: %s\n",string);
 	
@@ -250,7 +251,7 @@ void CQuakeServer::SV_ClientPrintf (const char *fmt, ...)
 	char		string[1024] = {};
 	
 	va_start (argptr,fmt);
-	vsprintf (string, fmt,argptr);
+	vsnprintf (string, sizeof(string), fmt,argptr);
 	va_end (argptr);
 	
 	MSG_WriteByte (&host_client->message, svc_print);
@@ -271,7 +272,7 @@ void CQuakeServer::SV_BroadcastPrintf (const char *fmt, ...)
 	int			i = 0;
 	
 	va_start (argptr,fmt);
-	vsprintf (string, fmt,argptr);
+	vsnprintf (string, sizeof(string), fmt,argptr);
 	va_end (argptr);
 	
 	for (i=0 ; i<svs.maxclients ; i++)
@@ -295,7 +296,7 @@ void CQuakeHost::Host_ClientCommands (const char *fmt, ...)
 	char		string[1024] = {};
 	
 	va_start (argptr,fmt);
-	vsprintf (string, fmt,argptr);
+	vsnprintf (string, sizeof(string), fmt, argptr);
 	va_end (argptr);
 	
 	MSG_WriteByte (&host_client->message, svc_stufftext);

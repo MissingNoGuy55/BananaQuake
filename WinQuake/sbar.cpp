@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -571,9 +572,9 @@ void Sbar_DrawInventory ()
 	}
 
 // weapons
-	for (int i = 0; i < 7; i++)
+	for (i = 0; i < 7; i++)
 	{
-		if (cl.items & (1 << i))
+		if (cl.items & ((unsigned long long)1 << i))
 		{
 			time = cl.item_gettime[i];
 			flashon = (int)((cl.time - time) * 10);

@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -166,7 +167,7 @@ int	Q_atoi (const char *str);
 float Q_atof (const char *str);
 int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
 
-void Q_snscanf(const char* buffer, size_t bufsize, const char* fmt, ...);
+int Q_snscanf(const char* buffer, size_t bufsize, const char* fmt, ...);
 
 void Q_FixSlashes(char* str, size_t size, const char delimiter = '\\');
 void Q_FixQuotes(char* dest, const char* src, size_t size);
@@ -220,8 +221,6 @@ typedef struct _fshandle_t
 	long length;	/* file or data size */
 	long pos;	/* current position relative to start */
 } fshandle_t;
-
-#define	MAX_FILE_HANDLES	64
 
 class CCommon
 {

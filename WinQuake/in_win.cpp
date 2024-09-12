@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -435,8 +436,6 @@ IN_StartupMouse
 */
 void IN_StartupMouse ()
 {
-	HDC			hdc;
-
 	if ( g_Common->COM_CheckParm ("-nomouse") ) 
 		return; 
 
@@ -566,7 +565,6 @@ IN_MouseMove
 void IN_MouseMove (usercmd_t *cmd)
 {
 	int					mx, my;
-	HDC					hdc;
 	int					i;
 	DIDEVICEOBJECTDATA	od;
 	DWORD				dwElements;
@@ -604,11 +602,11 @@ void IN_MouseMove (usercmd_t *cmd)
 
 			switch (od.dwOfs)
 			{
-				case DIMOFS_X:
+				case offsetof(DIMOUSESTATE, lX):
 					mx += od.dwData;
 					break;
 
-				case DIMOFS_Y:
+				case offsetof(DIMOUSESTATE, lY):
 					my += od.dwData;
 					break;
 
@@ -738,9 +736,6 @@ IN_Accumulate
 */
 void IN_Accumulate ()
 {
-	int		mx, my;
-	HDC	hdc;
-
 	if (mouseactive)
 	{
 		if (!dinput)

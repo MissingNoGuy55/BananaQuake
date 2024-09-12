@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schimedeberg
 Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
@@ -248,7 +249,7 @@ void Sys_FileSeek (int handle, int position)
 
 	if (ret)
 	{
-		Sys_Error("Sys_FileSeek failed: %s\n", strerror(ret));
+		Sys_Error("Sys_FileSeek failed\n");
 		return;
 	}
 
