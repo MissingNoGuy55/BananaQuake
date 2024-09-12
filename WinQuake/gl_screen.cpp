@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -143,7 +144,7 @@ for a few moments
 */
 void SCR_CenterPrint (const char *str)
 {
-	strncpy (scr_centerstring, str, sizeof(scr_centerstring)-1);
+	Q_strncpy (scr_centerstring, str, sizeof(scr_centerstring)-1);
 	scr_centertime_off = scr_centertime.value;
 	scr_centertime_start = cl.time;
 
@@ -316,11 +317,11 @@ static void SCR_CalcRefdef ()
 		r_refdef.vrect.width = 96;	// min for icons
 	}
 
-	r_refdef.vrect.height = vid.height * size;
-	if (r_refdef.vrect.height > vid.height - sb_lines)
-		r_refdef.vrect.height = vid.height - sb_lines;
-	if (r_refdef.vrect.height > vid.height)
-			r_refdef.vrect.height = vid.height;
+	r_refdef.vrect.height = (int)vid.height * size;
+	if (r_refdef.vrect.height > (int)vid.height - sb_lines)
+		r_refdef.vrect.height = (int)vid.height - sb_lines;
+	if (r_refdef.vrect.height > (int)vid.height)
+			r_refdef.vrect.height = (int)vid.height;
 	r_refdef.vrect.x = (vid.width - r_refdef.vrect.width)/2;
 	if (full)
 		r_refdef.vrect.y = 0;
@@ -596,7 +597,7 @@ void SCR_ScreenShot_f ()
 	{ 
 		pcxname[5] = i/10 + '0'; 
 		pcxname[6] = i%10 + '0'; 
-		sprintf (checkname, "%s/%s", g_Common->com_gamedir, pcxname);
+		snprintf (checkname, sizeof(checkname), "%s/%s", g_Common->com_gamedir, pcxname);
 		if (Sys_FileTime(checkname) == -1)
 			break;	// file doesn't exist
 	} 

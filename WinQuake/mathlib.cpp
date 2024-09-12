@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -637,15 +638,17 @@ void Vector3::RotateAlongAxis(Vector3& forward, Vector3& right, Vector3& up, flo
 	}
 }
 
+static vec3_t ret_vec;
+
 vec3_t& Vector3::ToVec3_t()
 {
-	vec3_t test;
+	memset(ret_vec, 0, sizeof(vec3_t));
 
-	test[0] = x;
-	test[1] = y;
-	test[2] = z;
+	ret_vec[0] = x;
+	ret_vec[1] = y;
+	ret_vec[2] = z;
 
-	return test;
+	return ret_vec;
 }
 
 Vector3 Vector3::Rotation(vec3_t dist)

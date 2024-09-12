@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -1316,19 +1317,19 @@ void CQuakeServer::SV_SpawnServer (char *server)
 			if (!Q_strncmp(parsed, "\"fog\"", 5))
 			{
 				parsed = g_Common->COM_ParseStringNewline(parsed);
-				sscanf(parsed, "\"%f %f %f %f\"", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2], &fog_color_vec[3]);
+				Q_snscanf(parsed, sizeof(parsed), "\"%f %f %f %f\"", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2], &fog_color_vec[3]);
 				fog_in_progs = true;
 			}
 			if (!Q_strncmp(parsed, "\"fog_start\"", 11))
 			{
 				parsed = g_Common->COM_ParseStringNewline(parsed);
-				sscanf(parsed, "\"%f\"", &s_dCurFogStart);
+				Q_snscanf(parsed, sizeof(parsed), "\"%f\"", &s_dCurFogStart);
 				fog_in_progs = true;
 			}
 			if (!Q_strncmp(parsed, "\"fog_end\"", 10))
 			{
 				parsed = g_Common->COM_ParseStringNewline(parsed);
-				sscanf(parsed, "\"%f\"", &s_dCurFogEnd);
+				Q_snscanf(parsed, sizeof(parsed), "\"%f\"", &s_dCurFogEnd);
 				fog_in_progs = true;
 			}
 		}
@@ -1343,7 +1344,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 			{
 				Con_DPrintf("Found fog value: %s\n", fog_value);
 
-				sscanf(fog_value, "%f %f %f %f", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2], &fog_color_vec[3]);
+				Q_snscanf(fog_value, sizeof(fog_value), "%f %f %f %f", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2], &fog_color_vec[3]);
 
 				Cvar_SetValue("fog_r", fog_color_vec[0]);
 				Cvar_SetValue("fog_g", fog_color_vec[1]);
@@ -1364,7 +1365,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 			{
 				Con_DPrintf("Found fog value: %s\n", fog_value);
 
-				sscanf(fog_value, "%f %f %f", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2]);
+				Q_snscanf(fog_value, sizeof(fog_value), "%f %f %f", &fog_color_vec[0], &fog_color_vec[1], &fog_color_vec[2]);
 
 				Cvar_SetValue("fog_r", fog_color_vec[0]);
 				Cvar_SetValue("fog_g", fog_color_vec[1]);
@@ -1386,7 +1387,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 
 				float fog_density = 0.0f;
 
-				sscanf(fog_density_value, "%f", &fog_density);
+				Q_snscanf(fog_density_value, sizeof(fog_density_value), "%f", &fog_density);
 
 				Cvar_SetValue("fog_density", fog_density);
 				fog_color_vec[3] = fog_density;
@@ -1401,7 +1402,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 
 				float fog_lerp_time = 0.0f;
 
-				sscanf(fog_lerp_time_value, "%f", &fog_lerp_time);
+				Q_snscanf(fog_lerp_time_value, sizeof(fog_lerp_time_value), "%f", &fog_lerp_time);
 
 				Cvar_SetValue("fog_lerp_time", fog_lerp_time);
 				s_dFogLerpTime = Sys_DoubleTime() + fog_lerp_time;
@@ -1417,7 +1418,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 
 				float fog_start = 0.0f;
 
-				sscanf(fog_start_value, "%f", &fog_start);
+				Q_snscanf(fog_start_value, sizeof(fog_start_value), "%f", &fog_start);
 
 				Cvar_SetValue("fog_start", fog_start);
 				s_dCurFogStart = fog_start;
@@ -1432,7 +1433,7 @@ void CQuakeServer::SV_SpawnServer (char *server)
 
 				float fog_end = 0.0f;
 
-				sscanf(fog_end_value, "%f", &fog_end);
+				Q_snscanf(fog_end_value, sizeof(fog_end_value), "%f", &fog_end);
 
 				Cvar_SetValue("fog_end", fog_end);
 				s_dCurFogEnd = fog_end;

@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -166,11 +167,14 @@ int	Q_atoi (const char *str);
 float Q_atof (const char *str);
 int Q_vsnprintf_s(char* str, size_t size, size_t len, const char* format, va_list args);
 
+int Q_snscanf(const char* buffer, size_t bufsize, const char* fmt, ...);
+
 void Q_FixSlashes(char* str, size_t size, const char delimiter = '\\');
 void Q_FixQuotes(char* dest, const char* src, size_t size);
 
 int Q_stricmp(const char* s1, const char* s2);
 int Q_stricmpn(const char* s1, const char* s2, int n);
+
 //============================================================================
 
 //
@@ -218,8 +222,6 @@ typedef struct _fshandle_t
 	long pos;	/* current position relative to start */
 } fshandle_t;
 
-#define	MAX_FILE_HANDLES	64
-
 class CCommon
 {
 public:
@@ -239,6 +241,7 @@ public:
 
 	char* COM_SkipPath (const char *pathname);
 	void COM_StripExtension (const char *in, char *out);
+	const char* COM_FileExtension(const char* in);
 	void COM_FileBase(const char* in, char* out, size_t outsize);
 	void COM_DefaultExtension (char *path, const char *extension);
 	const char* COM_FileGetExtension(const char* in);
@@ -271,10 +274,6 @@ public:
 
 	// Missi: buffer-safe varargs (4/30/2023)
 	const char	*va(const char *format, ...);
-
-	// does a varargs printf into a temp buffer
-	// Missi: made into va_unsafe from va for backwards compatibility (4/30/2023)
-	char* va_unsafe(char* format, ...);
 
     static	char	com_token[1024];
 	static	bool	com_eof;
@@ -646,7 +645,7 @@ inline T* COM_LoadFile_IFStream(const char* path, int usehunk, uintptr_t* path_i
 		{
 			g_Common->file_from_pk3 = 0;
 
-			unzReadCurrentFile_IFStream(unzf, &f, buf, len);
+			unzReadCurrentFile(unzf, buf, len);
 
 			f.close();
 			unzCloseCurrentFile(unzf);

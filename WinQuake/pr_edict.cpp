@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -358,7 +359,7 @@ const char* ED_FindEdictTextBlock(const char* targetname)
 
 			edict = g_Common->COM_ParseStringNewline(edict);
 
-            sscanf(edict, "\"%s\"", tgtname);
+            Q_snscanf(edict, sizeof(edict), "\"%s\"", tgtname);
 
             tgtname[Q_strlen(tgtname) - 1] = '\0';
 
@@ -561,8 +562,8 @@ const char *PR_GlobalString (int ofs)
 
 	i = strlen(line);
 	for (; i < 20; i++)
-        strcat(line, " ");
-    strcat(line, " ");
+        Q_strcat(line, " ");
+    Q_strcat(line, " ");
 
 	return line;
 }
@@ -581,8 +582,8 @@ const char *PR_GlobalStringNoContents (int ofs)
 	
 	i = strlen(line);
 	for ( ; i<20 ; i++)
-        strcat (line," ");
-    strcat (line," ");
+        Q_strcat (line," ");
+    Q_strcat (line," ");
 		
 	return line;
 }
@@ -645,7 +646,7 @@ ED_Write
 For savegames
 =============
 */
-void ED_Write (FILE *f, edict_t *ed)
+void ED_Write (cxxofstream *f, edict_t *ed)
 {
 	ddef_t	*d;
 	int		*v;
@@ -653,11 +654,11 @@ void ED_Write (FILE *f, edict_t *ed)
 	const char	*name;
 	int		type;
 
-	fprintf (f, "{\n");
+	f->write("{\n", 2);
 
 	if (ed->free)
 	{
-		fprintf (f, "}\n");
+		f->write("}\n", 2);
 		return;
 	}
 	
@@ -678,11 +679,19 @@ void ED_Write (FILE *f, edict_t *ed)
 		if (j == type_size[type])
 			continue;
 	
-		fprintf (f,"\"%s\" ",name);
-		fprintf (f,"\"%s\"\n", PR_UglyValueString(static_cast<etype_t>(d->type), (eval_t *)v));		
+		const char* str = PR_UglyValueString(static_cast<etype_t>(d->type), (eval_t*)v);
+
+		f->write("\"", 1);
+		f->write(name, Q_strlen(name));
+		f->write("\"", 1);
+		f->write(" ", 1);
+		f->write("\"", 1);
+		f->write(str, Q_strlen(str));
+		f->write("\"", 1);
+		f->write("\n", 1);
 	}
 
-	fprintf (f, "}\n");
+	f->write("}\n", 2);
 }
 
 void ED_PrintNum (int ent)
@@ -776,14 +785,14 @@ FIXME: need to tag constants, doesn't really work
 ED_WriteGlobals
 =============
 */
-void ED_WriteGlobals (FILE *f)
+void ED_WriteGlobals (cxxofstream *f)
 {
 	ddef_t		*def;
 	int			i;
 	const char		*name;
 	int			type;
 
-	fprintf (f,"{\n");
+	f->write("{\n", 2);
 	for (i=0 ; i<progs->numglobaldefs ; i++)
 	{
 		def = &pr_globaldefs[i];
@@ -797,11 +806,20 @@ void ED_WriteGlobals (FILE *f)
 		&& type != ev_entity)
 			continue;
 
-		name = PR_GetString(def->s_name);		
-		fprintf (f,"\"%s\" ", name);
-		fprintf (f,"\"%s\"\n", PR_UglyValueString(static_cast<etype_t>(type), (eval_t *)&pr_globals[def->ofs]));		
+		name = PR_GetString(def->s_name);
+
+		const char* str = PR_UglyValueString(static_cast<etype_t>(type), (eval_t*)&pr_globals[def->ofs]);
+
+		f->write("\"", 1);
+		f->write(name, Q_strlen(name));
+		f->write("\"", 1);
+		f->write(" ", 1);
+		f->write("\"", 1);
+		f->write(str, Q_strlen(str));
+		f->write("\"", 1);
+		f->write("\n", 1);
 	}
-	fprintf (f,"}\n");
+	f->write("}\n", 2);
 }
 
 /*
@@ -1096,7 +1114,7 @@ const char *ED_ParseEdict (const char *data, edict_t *ent)
 		{
 			char	temp[32];
 			Q_strcpy (temp, g_Common->com_token);
-			sprintf (g_Common->com_token, "0 %s 0", temp);
+			snprintf (g_Common->com_token, sizeof(g_Common->com_token), "0 %s 0", temp);
 		}
 
 		if (!ED_ParseEpair ((void *)&ent->v, key, g_Common->com_token))
@@ -1162,7 +1180,6 @@ listed in a GoldSrc multi_manager entity. Operates on map entity data (7/14/2024
 
 const char* _ED_ParseMultiManager (const char *data)
 {
-    ddef_t		*key;
     bool        anglehack;
     char		keyname[256];
     int			n;

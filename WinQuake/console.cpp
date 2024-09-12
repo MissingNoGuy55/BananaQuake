@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -361,18 +362,25 @@ void Con_DebugLog(const char *file, const char *fmt, ...)
     
 	// Missi: the use of vsprintf caused entire memory to get corrupted in Windows (9/12/2023)
     va_start(argptr, fmt);
-    vsprintf(data, fmt, argptr);
+    vsnprintf(data, sizeof(data), fmt, argptr);
     va_end(argptr);
 
-	FILE* fd = NULL;
+	/*FILE* fd = NULL;
 	size_t fw = 0;
-	fd = fopen(file, "a+t"); // O_WRONLY | O_CREAT | O_APPEND, 0666);
+	fd = fopen(file, "a+t");*/ // O_WRONLY | O_CREAT | O_APPEND, 0666);
 
-	if (!fd)
+	cxxofstream fd;
+	size_t fw = 0;
+	fd.open(file, cxxofstream::out | cxxofstream::app);
+
+	if (!fd.is_open())
 		return;
 
-	fw = fwrite(data, sizeof(char), strlen(data), fd);
-	fclose(fd);
+	fd.write(data, strlen(data));
+	fd.close();
+
+	/*fw = fwrite(data, sizeof(char), strlen(data), fd);
+	fclose(fd);*/
 }
 
 
@@ -394,6 +402,7 @@ void Con_Printf (const char *fmt, ...)
 
 	va_start (argptr,fmt);
 	vsnprintf(msg, sizeof(msg), fmt, argptr);
+	perror(msg);
 	va_end (argptr);
 	
 // also echo to debugging console
@@ -526,8 +535,8 @@ void Con_DPrintf (const char *fmt, ...)
 	if (!host->developer.value)
 		return;			// don't confuse non-developers with techie stuff...
 
-	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	va_start (argptr, fmt);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 	
 	Con_Printf ("%s", msg);
@@ -548,7 +557,7 @@ void Con_SafePrintf (const char *fmt, ...)
 	int			temp;
 		
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
 	temp = scr_disabled_for_loading;

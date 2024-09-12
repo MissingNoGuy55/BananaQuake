@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -483,27 +484,37 @@ void M_ScanSaves ()
 {
 	int		i, j;
 	char	name[MAX_OSPATH];
-	FILE	*f;
+	cxxifstream	f;
+	char	c_version[sizeof(int) * 8];
 	int		version;
 
 	for (i=0 ; i<MAX_SAVEGAMES ; i++)
 	{
 		Q_strcpy (m_filenames[i], "--- UNUSED SLOT ---");
 		loadable[i] = false;
-		sprintf (name, "%s/s%i.sav", g_Common->com_gamedir, i);
-		f = fopen (name, "r");
-		if (!f)
+		snprintf (name, sizeof(name), "%s/s%i.sav", g_Common->com_gamedir, i);
+		f.open(name);
+		if (!f.is_open())
 			continue;
-		fscanf (f, "%i\n", &version);
-		fscanf (f, "%79s\n", name);
-		strncpy (m_filenames[i], name, sizeof(m_filenames[i])-1);
+
+		f.read(c_version, 1);
+
+		version = atoi(c_version);
+
+		/*fscanf (f, "%i\n", &version);
+		fscanf (f, "%79s\n", name);*/
+		
+		f.getline(name, 1);
+		f.getline(name, 22);
+
+		Q_strncpy (m_filenames[i], name, sizeof(m_filenames[i])-1);
 
 	// change _ back to space
 		for (j=0 ; j<SAVEGAME_COMMENT_LENGTH ; j++)
 			if (m_filenames[i][j] == '_')
 				m_filenames[i][j] = ' ';
 		loadable[i] = true;
-		fclose (f);
+		f.close();
 	}
 }
 
@@ -1604,7 +1615,7 @@ void M_Keys_Key (int k)
 		}
 		else if (k != '`')
 		{
-			sprintf (cmd, "bind \"%s\" \"%s\"\n", Key_KeynumToString (k), bindnames[keys_cursor][0]);
+			snprintf (cmd, sizeof(cmd), "bind \"%s\" \"%s\"\n", Key_KeynumToString (k), bindnames[keys_cursor][0]);
 			g_pCmdBuf->Cbuf_InsertText (cmd);
 		}
 
@@ -2374,7 +2385,7 @@ void M_Menu_LanConfig_f ()
 	if (StartingGame && lanConfig_cursor == 2)
 		lanConfig_cursor = 1;
 	lanConfig_port = DEFAULTnet_hostport;
-	sprintf(lanConfig_portname, "%u", lanConfig_port);
+	snprintf(lanConfig_portname, sizeof(lanConfig_portname), "%u", lanConfig_port);
 
 	m_return_onerror = false;
 	m_return_reason[0] = 0;
@@ -2549,7 +2560,7 @@ void M_LanConfig_Key (int key)
 		l = lanConfig_port;
 	else
 		lanConfig_port = l;
-	sprintf(lanConfig_portname, "%u", lanConfig_port);
+	snprintf(lanConfig_portname, sizeof(lanConfig_portname), "%u", lanConfig_port);
 }
 
 //=============================================================================
@@ -3123,9 +3134,9 @@ void M_ServerList_Draw ()
 	for (n = 0; n < hostCacheCount; n++)
 	{
 		if (hostcache[n].maxusers)
-			sprintf(string, "%-15.15s %-15.15s %2u/%2u\n", hostcache[n].name, hostcache[n].map, hostcache[n].users, hostcache[n].maxusers);
+			snprintf(string, sizeof(string), "%-15.15s %-15.15s %2u/%2u\n", hostcache[n].name, hostcache[n].map, hostcache[n].users, hostcache[n].maxusers);
 		else
-			sprintf(string, "%-15.15s %-15.15s\n", hostcache[n].name, hostcache[n].map);
+			snprintf(string, sizeof(string), "%-15.15s %-15.15s\n", hostcache[n].name, hostcache[n].map);
 		M_Print (16, 32 + 8*n, string);
 	}
 	M_DrawCharacter (0, 32 + slist_cursor*8, 12+((int)(host->realtime*4)&1));

@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -175,7 +176,7 @@ void CGLRenderer::GL_SubdivideSurface (msurface_t *fa)
 
 
 // speed up sin calculations - Ed
-float	turbsin[] =
+double	turbsin[] =
 {
 	#include "gl_warp_sin.h"
 };
@@ -680,9 +681,7 @@ R_DrawSkyBox
 int	skytexorder[6] = {0,2,1,3,4,5};
 void CGLRenderer::R_DrawSkyBox ()
 {
-	int		i, j, k;
-	vec3_t	v;
-	float	s, t;
+	int		i;
 
 #if 0
 glEnable (GL_BLEND);
@@ -731,17 +730,16 @@ Missi: revised to allow higher-quality skies
 */
 void CGLRenderer::R_InitSky (texture_t *mt, const char* wadFile)
 {
-	int			i, j, p;
-	byte		*src;
-    int wad = -1;
-
-    if (skyTrans)
-        delete[] skyTrans;
+	int			i = 0, j = 0, p = 0;
+	byte		*src = nullptr;
+    int wad		= -1;
 
     if (wadFile)
         wad = W_GetLoadedWadFile(wadFile);
+	if (skyTrans)
+		delete skyTrans;
 
-    skyTrans = new unsigned[mt->height*mt->height];
+    skyTrans = new unsigned[mt->height * mt->height];
 	unsigned	transpix;
 	int			r, g, b;
 	unsigned	*rgba;
@@ -790,10 +788,10 @@ void CGLRenderer::R_InitSky (texture_t *mt, const char* wadFile)
 
 	uintptr_t offset;
 
-    offset = (uintptr_t)(mt + 1) - (uintptr_t)wad;	// Missi: Come back to this later (12/4/2022)
+    offset = (uintptr_t)(mt + 1) - (uintptr_t)wad_base[wad];	// Missi: Come back to this later (12/4/2022)
 
 	if (!solidskytexture)
-        solidskytexture = g_GLRenderer->GL_LoadTexture(NULL, "skysolid", height, height, SRC_INDEXED, (byte*)&skyTrans, offset, TEXPREF_NOPICMIP | TEXPREF_ALPHA); // &g_GLRenderer->gltextures[texture_extension_number-1]; // ++];
+        solidskytexture = g_GLRenderer->GL_LoadTexture(NULL, "skysolid", height, height, SRC_INDEXED, (byte*)skyTrans, offset, TEXPREF_NOPICMIP | TEXPREF_ALPHA); // &g_GLRenderer->gltextures[texture_extension_number-1]; // ++];
 	g_GLRenderer->GL_Bind(solidskytexture);
     glTexImage2D(GL_TEXTURE_2D, 0, gl_solid_format, height, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, skyTrans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -811,7 +809,7 @@ void CGLRenderer::R_InitSky (texture_t *mt, const char* wadFile)
 		}
 
 	if (!alphaskytexture)
-        alphaskytexture = g_GLRenderer->GL_LoadTexture(NULL, "skyalpha", height, height, SRC_INDEXED, (byte*)&skyTrans, offset, TEXPREF_NOPICMIP | TEXPREF_ALPHA); //&g_GLRenderer->gltextures[texture_extension_number-1]; //++];
+        alphaskytexture = g_GLRenderer->GL_LoadTexture(NULL, "skyalpha", height, height, SRC_INDEXED, (byte*)skyTrans, offset, TEXPREF_NOPICMIP | TEXPREF_ALPHA); //&g_GLRenderer->gltextures[texture_extension_number-1]; //++];
 	g_GLRenderer->GL_Bind(alphaskytexture);
     glTexImage2D(GL_TEXTURE_2D, 0, gl_alpha_format, height, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, skyTrans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

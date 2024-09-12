@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -447,12 +448,12 @@ string_t	ED_NewString (const char *string);
 // returns a copy of the string allocated from the server's string heap
 
 void ED_Print (edict_t *ed);
-void ED_Write (FILE *f, edict_t *ed);
+void ED_Write (cxxofstream *f, edict_t *ed);
 const char *ED_ParseEdict (const char *data, edict_t *ent);
 
 ddef_t *ED_FindGlobal (const char *name);
 
-void ED_WriteGlobals (FILE *f);
+void ED_WriteGlobals (cxxofstream *f);
 const char* ED_ParseGlobals (const char *data);
 
 void ED_LoadFromFile (const char *data);

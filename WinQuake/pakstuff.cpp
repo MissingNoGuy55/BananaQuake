@@ -24,8 +24,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef _WIN32
 #include <windows.h>
 #include "io.h"
+#elif __linux__
+#include <linux/fs.h>
+#include <locale>
+#include <cctype>
+#include <dirent.h>
+
+#define strdup strdup
+#define stricmp strcasecmp
+#define strnicmp strncasecmp
+#define strcmpi strcasecmp
+#define strlwr tolower
+#endif
+
 #include "pakstuff.h"
 #include "unzip.h"
 //#include "cmdlib.h"
@@ -36,14 +51,14 @@ FILE* pakfile[16];
 struct PACKDirectory	pakdir;
 PACKDirPtr				pakdirptr = &pakdir;
 UInt16					dirsize;
-boolean					pakopen = false;
+bool					pakopen = false;
 int						f_type;
 DIRECTORY				*paktextures = NULL;
-boolean					HavePakColormap;
+bool					HavePakColormap;
 UInt32					PakColormapOffset;
 UInt32					PakColormapSize;
 DIRECTORY				*dirhead = NULL;
-boolean g_bPK3 = false;
+bool g_bPK3 = false;
 char g_strBasePath[1024];
 
 struct PK3FileInfo
@@ -380,21 +395,21 @@ void __ConvertDOSToUnixName( char *dst, const char *src )
 
 void AddSlash(Str& str)
 {
-  int nLen = str.GetLength();
-  if (nLen > 0)
-  {
-    if (str[nLen-1] != '\\' && str[nLen-1] != '/')
-      str += '\\';
-  }
+	int nLen = str.GetLength();
+	if (nLen > 0)
+	{
+		if (str[nLen - 1] != '\\' && str[nLen - 1] != '/')
+			str += '\\';
+	}
 }
 
 void FindReplace(Str& strContents, const char* pTag, const char* pValue)
 {
   if (strcmp(pTag, pValue) == 0)
     return;
-  for (int nPos = strContents.Find(pTag); nPos >= 0; nPos = strContents.Find(pTag))
+  for (size_t nPos = strContents.Find(pTag); nPos >= 0; nPos = strContents.Find(pTag))
   {
-    int nRightLen = strContents.GetLength() - strlen(pTag) - nPos;
+	size_t nRightLen = strContents.GetLength() - strlen(pTag) - nPos;
     Str strLeft(strContents.Left(nPos));
     Str strRight(strContents.Right(nRightLen));
     strLeft += pValue;
@@ -419,7 +434,7 @@ void ProgError(const char *errstr, ...)
   exit(5);
 }
 
-boolean ReadBytes(FILE *file, void *addr, UInt32 size)
+bool ReadBytes(FILE *file, void *addr, UInt32 size)
 {
   while (size > 0x8000)
     {
@@ -436,7 +451,7 @@ int ReadMagic(FILE *file)
 {
   UInt8 buf[4];
 
-  if (ReadBytes(file, buf, 4) == FALSE)
+  if (ReadBytes(file, buf, 4) == false)
     return FTYPE_ERROR;
   if (!strncmp(reinterpret_cast<const char*>(&buf[0]), "IWAD", 4))
     return FTYPE_IWAD;
@@ -494,18 +509,18 @@ FILE *OpenFileReadMagic(const char *filename, int *ftype_r)
     }
   return f;
 }
-boolean WriteBytes(FILE *file, void *addr, UInt32 size)
+bool WriteBytes(FILE *file, void *addr, UInt32 size)
 {
   while (size > 0x8000)
     {
       if (fwrite(addr, 1, 0x8000, file) != 0x8000)
-	return FALSE;
+	return false;
       addr = (char *)addr + 0x8000;
       size -= 0x8000;
     }
   if (fwrite(addr, 1, size, file) != size)
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 char *ConvertFilePath(char *filename)
 {
@@ -541,8 +556,8 @@ PACKDirPtr ReadPACKDirectory(FILE *packfile, UInt32 offset, UInt16 *dirsize_r)
     return NULL;
   if ((fseek(packfile, offset, SEEK_SET) < 0)
       || (ReadMagic(packfile) != FTYPE_PACK)
-      || (ReadInt32(packfile, &pos) == FALSE)
-      || (ReadInt32(packfile, &size) == FALSE)
+      || (ReadInt32(packfile, &pos) == false)
+      || (ReadInt32(packfile, &size) == false)
       || (size == 0L)
       || (size / sizeof(struct PACKDirectory) > 65535L)
       || (fseek(packfile, offset + pos, SEEK_SET) < 0))
@@ -551,7 +566,7 @@ PACKDirPtr ReadPACKDirectory(FILE *packfile, UInt32 offset, UInt16 *dirsize_r)
   max = (UInt16)(size / sizeof(struct PACKDirectory));
   for (i = 0; i < max; i++)
     {
-      if (ReadBytes(packfile, &dir[i], sizeof(struct PACKDirectory)) == FALSE)
+      if (ReadBytes(packfile, &dir[i], sizeof(struct PACKDirectory)) == false)
 	{
 	  free(dir);
 	  return NULL;
@@ -642,7 +657,7 @@ DIRECTORY *FindPakDir(DIRECTORY *dir, char *name)
 // we are only interested in the directory name and any given
 // extension. Only handles explicit filenames or *.something
 //
-boolean LoadPK3FileList(FILELIST **filelist, const char *pattern)
+bool LoadPK3FileList(FILELIST **filelist, const char *pattern)
 {
   char cSearch[WORK_LEN];
 	__ConvertDOSToUnixName( cSearch, pattern );
@@ -672,7 +687,7 @@ boolean LoadPK3FileList(FILELIST **filelist, const char *pattern)
   return (*filelist) != NULL;
 }
 
-boolean GetPackFileList(FILELIST **filelist, char *pattern)
+bool GetPackFileList(FILELIST **filelist, char *pattern)
 {
 	char					*str1, *str2;
 	int						i;
@@ -711,7 +726,7 @@ boolean GetPackFileList(FILELIST **filelist, char *pattern)
 	return true;
 }
 
-boolean GetPackTextureDirs(DIRLIST **dirlist)
+bool GetPackTextureDirs(DIRLIST **dirlist)
 {
 	UInt16					i;
 	char					buf[57];
@@ -751,7 +766,51 @@ boolean GetPackTextureDirs(DIRLIST **dirlist)
 	return true;
 }
 
-boolean AddToDirListAlphabetized(DIRLIST **list, char *dirname, int from)
+#ifdef __linux__
+bool AddToDirListAlphabetized(DIRLIST **list, char *dirname, int from)
+{
+	DIRLIST	*currentPtr, *previousPtr, *newPtr;
+
+	char* d = dirname;
+
+	while (*d)
+		strlwr(*d++);
+	
+	for(currentPtr = *list; currentPtr; currentPtr = currentPtr->next)
+	{
+		if(!stricmp(dirname, currentPtr->dirname))
+		{
+			return false;
+		}
+	}
+	previousPtr = NULL;
+	currentPtr = *list;
+
+	if((newPtr = (DIRLIST *)__qmalloc(sizeof(DIRLIST))) == NULL)
+		return false;
+
+	strcpy(newPtr->dirname, dirname);
+	newPtr->from = from;
+
+	while(currentPtr != NULL && stricmp(dirname, currentPtr->dirname) > 0)
+	{
+		previousPtr = currentPtr;
+		currentPtr = currentPtr->next;
+	} //End while
+	if(previousPtr == NULL)
+	{
+		newPtr->next = *list;
+		*list = newPtr;
+	} //End if
+	else
+	{
+		previousPtr->next = newPtr;
+		newPtr->next = currentPtr;
+	} //End else
+	return true;
+}
+#else
+bool AddToDirListAlphabetized(DIRLIST **list, char *dirname, int from)
 {
 	DIRLIST	*currentPtr, *previousPtr, *newPtr;
 
@@ -789,8 +848,9 @@ boolean AddToDirListAlphabetized(DIRLIST **list, char *dirname, int from)
 	} //End else
 	return true;
 }
+#endif
 
-boolean AddToFileListAlphabetized(FILELIST **list, char *filename, UInt32 offset, UInt32 size, boolean dirs)
+bool AddToFileListAlphabetized(FILELIST **list, char *filename, UInt32 offset, UInt32 size, bool dirs)
 {
 	FILELIST	*currentPtr, *previousPtr, *newPtr;
 
@@ -829,7 +889,7 @@ boolean AddToFileListAlphabetized(FILELIST **list, char *filename, UInt32 offset
 	return true;
 }
 
-boolean PakLoadFile(const char *filename, void **bufferptr)
+bool PakLoadFile(const char *filename, void **bufferptr)
 {
 	FILELIST	*p = NULL;
 	DIRECTORY	*dummy;
@@ -895,8 +955,17 @@ int PakLoadAnyFile(const char *filename, void **bufferptr)
     Str strFile(filename);
     __ConvertDOSToUnixName(strFile, strFile);
     strFile.MakeLower();
-    strlwr(cWork);
-    FindReplace(strFile, cWork, "");
+
+
+#ifdef __linux__
+	int pos = 0;
+	while (cWork[pos])
+		strlwr(cWork[pos++]);
+#else
+	strlwr(cWork);
+#endif
+	
+	FindReplace(strFile, cWork, "");
 
     PK3FileInfo infoFind;
     infoFind.m_pName = __StrDup(strFile.GetBuffer());
@@ -990,7 +1059,7 @@ DIRECTORY *AddPakDir(DIRECTORY **dir, char *name)
 // Opens a PK3 ( or zip ) file and creates a list of filenames
 // and zip info structures
 // 
-boolean OpenPK3(const char *filename)
+bool OpenPK3(const char *filename)
 {
   char cFilename[WORK_LEN];
   char cName[WORK_LEN];
@@ -1005,7 +1074,14 @@ boolean OpenPK3(const char *filename)
     {
       cFilename[0] = '\0';
       unzGetCurrentFileInfo(*zFile, &zInfo, cFilename, WORK_LEN, NULL, 0, NULL, 0);
-      strlwr(cFilename);
+      
+#ifdef __linux__
+	  int pos = 0;
+	  while (cFilename[pos])
+		  strlwr(cFilename[pos++]);
+#else
+	  strlwr(cFilename);
+#endif
     	__ConvertDOSToUnixName( cWork, cFilename);
       if (strstr(cWork, ".") != NULL)
       {
@@ -1025,11 +1101,11 @@ boolean OpenPK3(const char *filename)
         {
           // skip textures + path seperator
           p += strlen(TEXTURE_PATH) + 1;
-          int nEnd = strcspn(p, PATH_SEPERATORS);
+		  size_t nEnd = strcspn(p, PATH_SEPERATORS);
           strncpy(cName, p, nEnd);
           cName[nEnd] = '\0';
 
-          boolean bFound = false;
+          bool bFound = false;
           StrList *pl = g_PK3TexturePaths.Next();
           while (pl != NULL)
           {
@@ -1175,8 +1251,8 @@ void ClosePakFile()
   CleanUpPakDirs();
 }
 
-
-void WINAPI InitPakFile(const char * pBasePath, const char *pName)
+#ifdef _WIN32
+void InitPakFile(const char * pBasePath, const char *pName)
 {
   m_nPAKIndex = 0;
   pakopen = false;
@@ -1190,7 +1266,7 @@ void WINAPI InitPakFile(const char * pBasePath, const char *pName)
   	strPath += "*.pk3";
   	bool bGo = true;
 	  struct _finddata_t fileinfo;
-  	int handle = _findfirst (strPath, &fileinfo);
+	  size_t handle = _findfirst (strPath, &fileinfo);
 	  if (handle != -1)
   	{
 	  	do
@@ -1206,4 +1282,37 @@ void WINAPI InitPakFile(const char * pBasePath, const char *pName)
 	  OpenPakFile(pName);
   }
 }
+#elif __linux__
+void InitPakFile(const char* pBasePath, const char* pName)
+{
+	m_nPAKIndex = 0;
+	pakopen = false;
+	paktextures = NULL;
+	strcpy(g_strBasePath, pBasePath);
+	if (pName == NULL)
+	{
+		char cWork[WORK_LEN];
+		Str strPath(pBasePath);
+		struct dirent* dir_e = nullptr;
+		AddSlash(strPath);
+		strPath += "*.pk3";
+		bool bGo = true;
+		char pakName[64] = {};
+		DIR* handle = opendir(strPath);
+		if (!handle)
+		{
+			do
+			{
+				sprintf(cWork, "%s\\%s", pBasePath, pakName);
+				OpenPakFile(cWork);
+			} while ((dir_e = readdir(handle)) != nullptr);
+			closedir(handle);
+		}
+	}
+	else
+	{
+		OpenPakFile(pName);
+	}
+}
+#endif
 

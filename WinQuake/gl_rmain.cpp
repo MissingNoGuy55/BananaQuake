@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -341,7 +342,6 @@ GL_DrawAliasFrame
 */
 void CGLRenderer::GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 {
-	float 	l;
 	float	vertcolor[4];
 	trivertx_t *verts;
 	int		*order;
@@ -493,7 +493,6 @@ R_DrawAliasModel
 void CGLRenderer::R_DrawAliasModel (entity_t *e)
 {
 	int			i;
-	int			lnum;
 	vec3_t		dist;
 	float		add;
 	model_t		*clmodel;

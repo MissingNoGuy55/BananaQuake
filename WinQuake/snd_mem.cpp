@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -99,7 +100,6 @@ sfxcache_t * CSoundDMA::S_LoadSound (sfx_t *s)
 {
     char	namebuffer[256];
 	byte	*data;
-	char*	test;
 	wavinfo_t	info;
 	int		len;
 	float	stepscale;

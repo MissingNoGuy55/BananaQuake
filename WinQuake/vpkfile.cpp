@@ -27,16 +27,18 @@ static void ReadVPKString(cxxifstream* file, char* out)
 	}
 }
 
+char vpk_header[sizeof(VPKHeader_v2)];
+
 static VPKHeader_v2* GetVPKHeader(cxxifstream* file)
 {
+	memset(vpk_header, 0, sizeof(VPKHeader_v2));
+
 	VPKHeader_v2* header = nullptr;
 
-	char str[sizeof(VPKHeader_v2)];
-
-	file->read(str, sizeof(VPKHeader_v2));
+	file->read(vpk_header, sizeof(VPKHeader_v2));
 	file->seekg(0, file->beg);
 
-	header = (VPKHeader_v2*)str;
+	header = (VPKHeader_v2*)vpk_header;
 
 	return header;
 }
@@ -263,7 +265,7 @@ void CloseAllVPKs()
 				break;
 
 			loaded_vpks[i][j]->close();
-			delete[] loaded_vpks[i][j];
+			delete loaded_vpks[i][j];
 		}
 	}
 }

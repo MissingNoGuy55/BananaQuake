@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -246,7 +247,6 @@ void Mod_LoadTextures (lump_t *l)
 	int		i, j, pixels, num, max, altmax;
 	miptex_t	*mt;
     goldsrc_miptex_t    *gmt;
-    byte*       gmt_data;
     texture_t	*tx, *tx2;
 	texture_t	*anims[10];
     texture_t	*altanims[10];
@@ -508,8 +508,6 @@ void Mod_LoadTextures_Source(lump_source2004_t* l)
 	if (cls.state == ca_dedicated)
 		return;
 
-	int		i, j, pixels, num, max;
-	miptex_t* mt;
 	dtexdata_source2004_t* texdata;
 	texinfo_source2004_t* m;
 
@@ -639,10 +637,8 @@ Missi: some stuff from QuakeSpasm ported to here, mostly just for .lit support (
 */
 void Mod_LoadLighting_Source(lump_source2004_t* l)
 {
-	int i, mark;
+	int i;
 	byte* in, *out;
-	char litfilename[MAX_OSPATH];
-	uintptr_t path_id;
 
 	loadmodel->lightdata = nullptr;
 
@@ -1013,7 +1009,7 @@ void Mod_LoadTexinfo_Source(lump_source2004_t* l)
 	texinfo_source2004_t* in;
 	mtexinfo_t* out;
 	int 	i, j, count;
-	int		miptex;
+	int		miptex = 0;
 	float	len1, len2;
 
 	in = reinterpret_cast<texinfo_source2004_t*>((mod_base + l->fileofs));
@@ -2278,10 +2274,10 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 			{	// duplicate the basic information
 				char	name[12];
 
-				sprintf(name, "*%i", i + 1);
+				snprintf(name, sizeof(name), "*%i", i + 1);
 				loadmodel = Mod_FindName(name);
 				*loadmodel = *mod;
-				strcpy(loadmodel->name, name);
+				Q_strncpy(loadmodel->name, name, sizeof(loadmodel->name));
 				mod = loadmodel;
 			}
 		}
@@ -2326,10 +2322,10 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 			{	// duplicate the basic information
 				char	name[12];
 
-				sprintf(name, "*%i", i + 1);
+				snprintf(name, sizeof(name), "*%i", i + 1);
 				loadmodel = Mod_FindName(name);
 				*loadmodel = *mod;
-				strcpy(loadmodel->name, name);
+				Q_strncpy(loadmodel->name, name, sizeof(loadmodel->name));
 				mod = loadmodel;
 			}
 		}
@@ -2557,7 +2553,7 @@ T* Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 
 			if (cls.state != ca_dedicated)
 			{
-				sprintf(name, "%s_%i", loadmodel->name, i);
+				snprintf(name, sizeof(name), "%s_%i", loadmodel->name, i);
 				pheader->gltextures[i][0] =
 					pheader->gltextures[i][1] =
 					pheader->gltextures[i][2] =
@@ -2583,7 +2579,7 @@ T* Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 						pheader->texels[i] = texels - (byte *)pheader;
 						memcpy (texels, (byte *)(pskintype), s);
 					}
-					sprintf (name, "%s_%i_%i", loadmodel->name, i,j);
+					snprintf (name, sizeof(name), "%s_%i_%i", loadmodel->name, i,j);
 					if (cls.state != ca_dedicated)
 					{
 						pheader->gltextures[i][j & 3] =
@@ -2615,7 +2611,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	mdl_t				*pinmodel;
 	stvert_t			*pinstverts;
 	dtriangle_t			*pintriangles;
-	int					version, numframes, numskins;
+	int					version, numframes;
 	int					size;
 	daliasframetype_t	*pframetype;
 	daliasskintype_t	*pskintype;
@@ -2781,9 +2777,7 @@ T* Mod_LoadSpriteFrame (T* pin, mspriteframe_t **ppframe, int framenum)
 {
 	dspriteframe_t		*pinframe;
 	mspriteframe_t		*pspriteframe;
-	int					i, width, height, size, origin[2];
-	unsigned short		*ppixout;
-	byte				*ppixin;
+	int					width, height, size, origin[2];
 	char				name[64];
 	uintptr_t			offset;
 
@@ -2813,7 +2807,7 @@ T* Mod_LoadSpriteFrame (T* pin, mspriteframe_t **ppframe, int framenum)
 
 	if (cls.state != ca_dedicated)
 	{
-		sprintf(name, "%s_%i", loadmodel->name, framenum);
+		snprintf(name, sizeof(name), "%s_%i", loadmodel->name, framenum);
 		pspriteframe->gltexture = g_GLRenderer->GL_LoadTexture(loadmodel, name, width, height, SRC_INDEXED, (byte*)(pinframe + 1), offset, TEXPREF_ALPHA | TEXPREF_MIPMAP);
 	}
 
@@ -2830,9 +2824,7 @@ T* Mod_LoadSpriteFrame_GoldSrc(T* pin, mspriteframe_goldsrc_t** ppframe, int fra
 {
 	dspriteframe_goldsrc_t* pinframe;
 	mspriteframe_goldsrc_t* pspriteframe;
-	int					i, width, height, size, origin[2];
-	unsigned short* ppixout;
-	byte* ppixin;
+	int					width, height, size, origin[2];
 	char				name[64];
 	uintptr_t			offset;
 
@@ -2862,7 +2854,7 @@ T* Mod_LoadSpriteFrame_GoldSrc(T* pin, mspriteframe_goldsrc_t** ppframe, int fra
 
 	if (cls.state != ca_dedicated)
 	{
-		sprintf(name, "%s_%i", loadmodel->name, framenum);
+		snprintf(name, sizeof(name), "%s_%i", loadmodel->name, framenum);
 		pspriteframe->gltexture = g_GLRenderer->GL_LoadTexture(loadmodel, name, width, height, SRC_INDEXED, (byte*)(pinframe + 1), offset, TEXPREF_ALPHA | TEXPREF_MIPMAP);
 	}
 

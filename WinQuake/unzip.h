@@ -29,6 +29,8 @@ typedef unzFile__ *unzFile;
 typedef void* unzFile;
 #endif
 
+#include <fstream>
+
 /* tm_unz contain date/time info */
 typedef struct tm_unz_s 
 {
@@ -124,7 +126,7 @@ typedef struct
 	unsigned long crc32_wait;           /* crc32 we must obtain after decompress all */
 	unsigned long rest_read_compressed; /* number of unsigned char to be decompressed */
 	unsigned long rest_read_uncompressed;/*number of unsigned char to be obtained after decomp*/
-	FILE* file;                 /* io structore of the zipfile */
+	std::ifstream* file;                 /* io structore of the zipfile */
 	unsigned long compression_method;   /* compression method (0==store) */
 	unsigned long byte_before_the_zipfile;/* unsigned char before the zipfile, (>0 for sfx)*/
 } file_in_zip_read_info_s;
@@ -134,7 +136,7 @@ typedef struct
 */
 typedef struct
 {
-	FILE* file;                 /* io structore of the zipfile */
+	std::ifstream* ifstr;   /* io structore of the zipfile */
 	unz_global_info gi;       /* public global information */
 	unsigned long byte_before_the_zipfile;/* unsigned char before the zipfile, (>0 for sfx)*/
 	unsigned long num_file;             /* number of the current file in the zipfile*/
@@ -153,6 +155,7 @@ typedef struct
 	unsigned char*	tmpFile;
 	int	tmpPos,tmpSize;
 } unz_s;
+
 
 #define UNZ_OK                                  (0)
 #define UNZ_END_OF_LIST_OF_FILE (-100)
@@ -200,6 +203,8 @@ extern int unzClose (unzFile file);
   return UNZ_OK if there is no problem. */
 
 extern int unzGetGlobalInfo (unzFile file, unz_global_info *pglobal_info);
+
+void unzUnloadAllZips();
 
 /*
   Write info about the ZipFile in the *pglobal_info structure.

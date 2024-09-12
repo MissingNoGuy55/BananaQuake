@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -22,6 +23,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 
 #include <errno.h>
+
+// Missi: FIXME: disable the MSVC "unsafe" function warning for now, but eventually move ALL file-handling code to ifstream,
+// as fopen is unsafe (9/10/2024)
+#ifdef _MSC_VER
+#pragma warning(disable : 4996)
+#endif
 
 CCommon* g_Common;
 CFileSystem* g_FileSystem;
@@ -451,6 +458,156 @@ float Q_atof (const char *str)
 	}
 	
 	return val*sign;
+}
+
+/*
+==================
+Missi: Q_snscanf
+Buffer-safe version of sscanf that is portable, so programmers
+won't need to use the non-portable sscanf_s (9/8/2024)
+==================
+*/
+int Q_snscanf(const char* buffer, size_t bufsize, const char* fmt, ...)
+{
+	int fmt_pos = 0;			// Missi: position in format string (9/8/2024)
+	int buffer_pos = 0;			// Missi: position in buffer (9/9/2024)
+
+	va_list args = {};
+	va_start(args, fmt);
+	bool length = false;	// Missi: defines whether a length was specified in the format string (9/8/2024)
+	int charcount = 0;		// Missi: independent of fmt_pos and also counts number of chars read (9/8/2024)
+	int filled = 0;
+	
+	while (buffer[buffer_pos] != '\0' && buffer_pos < bufsize)
+	{
+		if (fmt[fmt_pos] == '\0')
+			break;
+
+		if (fmt[fmt_pos] == '%')
+		{
+			if (fmt[fmt_pos + 1] >= '0' && fmt[fmt_pos + 1] <= '9')
+			{
+				int num = 0;
+				char jump[64];
+				memset(jump, 0, sizeof(jump));
+
+				num = Q_atoi(&fmt[fmt_pos + 1]);
+				snprintf(jump, sizeof(jump), "%d", num);
+
+				fmt_pos += Q_strlen(jump) + 1;
+				length = true;
+			}
+
+			if (!length)
+				fmt_pos++;
+
+			switch (fmt[fmt_pos])
+			{
+				case '\r':
+				case '\n':
+					fmt_pos++;
+					break;
+
+				// Missi: standard int (9/8/2024)
+				case 'd':
+				case 'i':
+				{
+					while (buffer[charcount++] != '\n' && buffer[charcount] != '\0')
+						;
+
+					int copy = Q_atoi(&buffer[buffer_pos]);
+					memcpy(va_arg(args, int*), &copy, sizeof(int));
+					filled++;
+					break;
+				}
+				// Missi: standard float (9/8/2024)
+				case 'f':
+				{
+					while (buffer[charcount++] != '\n' && buffer[charcount] != '\0')
+						;
+
+					float copy = Q_atof(&buffer[buffer_pos]);
+					memcpy(va_arg(args, float*), &copy, sizeof(float));
+					filled++;
+					break;
+				}
+				// Missi: current number of chars read (9/9/2024)
+				case 'n':
+				{
+					memcpy(va_arg(args, int*), &charcount, sizeof(int));
+					filled++;
+					break;
+				}
+				// Missi: const char* (9/9/2024)
+				case 's':
+				{
+					while (buffer[charcount++] != '\n' && buffer[charcount] != '\0')
+						;
+
+					va_list va_arg_copy;
+					va_copy(va_arg_copy, args);
+
+					memcpy(va_arg(args, char*), &buffer[0], charcount - 1);
+					va_arg(va_arg_copy, char*)[charcount - 1] = '\0';
+					filled++;
+					break;
+				}
+				// Missi: unsigned integers (9/9/2024)
+				case 'u':
+				{
+
+					if (fmt[fmt_pos + 1] == 'l' && fmt[fmt_pos + 2] == 'l')
+					{
+						unsigned long long copy = atoll(&buffer[buffer_pos]);
+						memcpy(va_arg(args, unsigned long long*), &copy, sizeof(unsigned long long));
+						filled++;
+					}
+					else if (fmt[fmt_pos + 1] == 'l')
+					{
+						unsigned long copy = atol(&buffer[buffer_pos]);
+						memcpy(va_arg(args, unsigned long*), &copy, sizeof(unsigned long));
+						filled++;
+					}
+					else
+					{
+						unsigned int copy = Q_atoi(&buffer[buffer_pos]);
+						memcpy(va_arg(args, unsigned int*), &copy, sizeof(unsigned int));
+						filled++;
+					}
+					break;
+				}
+				// Missi: hexadecimal output (9/9/2024)
+				case 'x':
+				{
+					unsigned int copy = Q_atoi(&buffer[buffer_pos]);
+
+					std::stringstream hex_strstream;
+
+					hex_strstream << '0' << 'x' << std::hex << copy;
+
+					cxxstring hex_output = hex_strstream.str();
+					const char* hex_output_c = hex_output.c_str();
+
+					Q_strncpy(va_arg(args, char*), hex_output_c, bufsize);
+					filled++;
+					break;
+				}
+				// Missi: single char (9/9/2024)
+				case 'c':
+				{
+					memcpy(va_arg(args, char*), &buffer[buffer_pos], sizeof(char));
+					filled++;
+					break;
+				}
+			}
+		}
+
+		length = false;
+		fmt_pos++;
+	}
+	va_end(args);
+
+	return filled;
 }
 
 // Missi: copied from Quakespasm (5/22/22)
@@ -986,7 +1143,7 @@ void CCommon::COM_StripExtension (const char *in, char *out)
 COM_FileExtension
 ============
 */
-const char *COM_FileExtension (const char *in)
+const char* CCommon::COM_FileExtension (const char *in)
 {
 	static char exten[8];
 	int             i;
@@ -1179,14 +1336,14 @@ skipwhite:
 const char* CCommon::COM_ParseIntNewline(const char* buffer, int* value)
 {
 	int consumed = 0;
-	sscanf(buffer, "%i\n%n", value, &consumed);
+	Q_snscanf(buffer, 1024, "%i\n%n", value, &consumed);
 	return buffer + consumed;
 }
 
 const char* CCommon::COM_ParseFloatNewline(const char* buffer, float* value)
 {
 	int consumed = 0;
-	sscanf(buffer, "%f\n%n", value, &consumed);
+	Q_snscanf(buffer, 1024, "%f\n%n", value, &consumed);
 	return buffer + consumed;
 }
 
@@ -1194,7 +1351,7 @@ const char* CCommon::COM_ParseStringNewline(const char* buffer)
 {
 	int consumed = 0;
 	com_token[0] = '\0';
-	sscanf(buffer, "%1023s\n%n", com_token, &consumed);
+	Q_snscanf(buffer, 1024, "%1023s\n%n", com_token, &consumed);
 	return buffer + consumed;
 }
 
@@ -1249,14 +1406,14 @@ being registered.
 */
 void CCommon::COM_CheckRegistered ()
 {
-	int             h;
 	unsigned short  check[128];
 	int                     i;
+	cxxifstream		f;
 
-	COM_OpenFile("gfx/pop.lmp", &h, NULL);
+	COM_FOpenFile_IFStream("gfx/pop.lmp", &f, nullptr);
 	static_registered = 0;
 
-	if (h == -1)
+	if (!f.is_open())
 	{
 #if WINDED
 	Sys_Error ("This dedicated server requires a full registered copy of Quake");
@@ -1267,8 +1424,8 @@ void CCommon::COM_CheckRegistered ()
 		return;
 	}
 
-	Sys_FileRead (h, check, sizeof(check));
-	COM_CloseFile (h);
+	f.read((char*)check, sizeof(check));
+	f.close();
 	
 	for (i=0 ; i<128 ; i++)
 		if (pop[i] != (unsigned short)BigShort (check[i]))
@@ -1408,18 +1565,6 @@ const char* CCommon::va(const char *format, ...)
 	va_end (argptr);
 
 	return string;  
-}
-
-char* CCommon::va_unsafe ( char* format, ... )
-{
-	va_list			argptr;
-	static char		string[1024];
-
-	va_start(argptr, format);
-	vsprintf(string, format, argptr);
-	va_end(argptr);
-
-	return string;
 }
 
 /// just for debugging
@@ -1624,7 +1769,7 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 
 	fileInPack_t*	pakFile;
 	unz_s*	zfi;
-	FILE*	temp;
+	cxxifstream*	temp;
 
 	if (file && handle)
 		Sys_Error ("COM_FindFile: both handle and file set");
@@ -1707,13 +1852,13 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 							fsh[*handle].zipFile = true;
 							zfi = (unz_s*)fsh[*handle].handleFiles.file.z;
 							// in case the file was new
-							temp = zfi->file;
+							temp = zfi->ifstr;
 							// set the file position in the zip file (also sets the current file info)
 							unzSetCurrentFileInfoPosition(pk3->handle, pakFile->pos);
 							// copy the file info into the unzip structure
 							memcpy(zfi, pk3->handle, sizeof(unz_s));
 							// we copy this back into the structure
-							zfi->file = temp;
+							zfi->ifstr = temp;
 							// open the file in the zip
 							unzOpenCurrentFile(fsh[*handle].handleFiles.file.z);
 							fsh[*handle].zipFilePos = pakFile->pos;
@@ -1738,13 +1883,13 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 							fsh[hndl].zipFile = true;
 							zfi = (unz_s*)fsh[hndl].handleFiles.file.z;
 							// in case the file was new
-							temp = zfi->file;
+							temp = zfi->ifstr;
 							// set the file position in the zip file (also sets the current file info)
 							unzSetCurrentFileInfoPosition(pk3->handle, pakFile->pos);
 							// copy the file info into the unzip structure
 							memcpy(zfi, pk3->handle, sizeof(unz_s));
 							// we copy this back into the structure
-							zfi->file = temp;
+							zfi->ifstr = temp;
 							// open the file in the zip
 							unzOpenCurrentFile(fsh[hndl].handleFiles.file.z);
 							fsh[hndl].zipFilePos = pakFile->pos;
@@ -1805,7 +1950,6 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 	com_filesize = -1;
 	return com_filesize;
 }
-
 /*
 ===========
 Missi: COM_FindFile_IFStream
@@ -1828,7 +1972,7 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 	int				findtime = 0, cachetime = 0;
 
 	fileInPack_t* pakFile;
-	unz_ifstream_s* zfi;
+	unz_s* zfi;
 	cxxifstream* temp;
 
 	if (file && handle)
@@ -1908,17 +2052,17 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 
 							Q_strncpy(fsh_ifstream[*handle].name, filename, sizeof(fsh_ifstream[*handle].name));
 							fsh_ifstream[*handle].zipFile = true;
-							zfi = (unz_ifstream_s*)fsh_ifstream[*handle].handleFiles.file.z;
+							zfi = (unz_s*)fsh_ifstream[*handle].handleFiles.file.z;
 							// in case the file was new
-							temp = zfi->file;
+							temp = zfi->ifstr;
 							// set the file position in the zip file (also sets the current file info)
-							unzSetCurrentFileInfoPosition_IFStream(file, pk3->handle, pakFile->pos);
+							unzSetCurrentFileInfoPosition(pk3->handle, pakFile->pos);
 							// copy the file info into the unzip structure
 							memcpy(zfi, pk3->handle, sizeof(unz_s));
 							// we copy this back into the structure
-							zfi->file = temp;
+							zfi->ifstr = temp;
 							// open the file in the zip
-							unzOpenCurrentFile_IFStream(fsh_ifstream[*handle].handleFiles.file.z);
+							unzOpenCurrentFile(fsh_ifstream[*handle].handleFiles.file.z);
 							fsh_ifstream[*handle].zipFilePos = pakFile->pos;
 
 							com_filesize = zfi->cur_file_info.uncompressed_size;
@@ -1943,17 +2087,22 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 
 							Q_strncpy(fsh_ifstream[hndl].name, filename, sizeof(fsh_ifstream[hndl].name));
 							fsh_ifstream[hndl].zipFile = true;
-							zfi = (unz_ifstream_s*)pk3->handle;
+							zfi = (unz_s*)pk3->handle;
 							// in case the file was new
-							temp = zfi->file;
+							temp = zfi->ifstr;
 							// set the file position in the zip file (also sets the current file info)
-							unzSetCurrentFileInfoPosition_IFStream(file, pk3->handle, pakFile->pos);
+							if ((unzSetCurrentFileInfoPosition(pk3->handle, pakFile->pos)) != UNZ_OK)
+							{
+								Sys_Error("CCommon::COM_FindFile_IFStream: unzSetCurrentFileInfoPosition_IFStream failed\n");
+								return -1;
+							}
+
 							// copy the file info into the unzip structure
 							memcpy(zfi, pk3->handle, sizeof(unz_s));
 							// we copy this back into the structure
-							zfi->file = temp;
+							zfi->ifstr = temp;
 							// open the file in the zip
-							unzOpenCurrentFile_IFStream(fsh_ifstream[hndl].handleFiles.file.z);
+							unzOpenCurrentFile(file);
 							fsh_ifstream[hndl].zipFilePos = pakFile->pos;
 
 							com_filesize = zfi->cur_file_info.uncompressed_size;
@@ -2007,7 +2156,6 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 
 	Sys_Printf("FindFile: can't find %s\n", filename);
 
-_dead:
 	if (handle)
 		*handle = -1;
 	if (file)
@@ -2100,9 +2248,9 @@ size_t CCommon::COM_filelength_FStream(cxxifstream* f)
 {
 	size_t		end;
 
-	f->seekg(0,	f->end);
+	f->seekg(0,	cxxifstream::end);
 	end = f->tellg();
-	f->seekg(0, f->beg);
+	f->seekg(0, cxxifstream::beg);
 
 	return end;
 }
@@ -2196,34 +2344,36 @@ void CCommon::COM_CloseFile (int h)
 
 byte* CCommon::COM_LoadMallocFile_TextMode_OSPath(const char* path, long* len_out)
 {
-	FILE* f;
+	cxxifstream f;
 	byte* data;
 	long	len, actuallen;
 
 	// Missi: copied from QuakeSpasm (6/7/2024)
-	f = fopen(path, "rt");
-	if (f == NULL)
+	f.open(path);
+	if (!f.is_open())
 		return NULL;
 
-	len = COM_filelength(f);
+	len = COM_filelength_FStream(&f);
 	if (len < 0)
 	{
-		fclose(f);
+		f.close();
 		return NULL;
 	}
 
 	data = (byte*)malloc(len + 1);
 	if (data == NULL)
 	{
-		fclose(f);
+		f.close();
 		return NULL;
 	}
 
 	// (actuallen < len) if CRLF to LF translation was performed
-	actuallen = fread(data, 1, len, f);
-	if (ferror(f))
+	f.read((char*)data, len);
+	f.clear();
+	actuallen = f.tellg();
+	if (!f.good())
 	{
-		fclose(f);
+		f.close();
 		free(data);
 		return NULL;
 	}
@@ -2231,7 +2381,7 @@ byte* CCommon::COM_LoadMallocFile_TextMode_OSPath(const char* path, long* len_ou
 
 	if (len_out != NULL)
 		*len_out = actuallen;
-	fclose(f);
+	f.close();
 	return data;
 }
 
@@ -2382,6 +2532,10 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 		cxxstring noext = file.path().string().erase(ext, 4);
 
 		pk3 = g_FileSystem->FS_LoadZipFile(file.path().string().c_str(), noext.c_str());
+		
+		if (!pk3)
+			continue;
+
 		Q_strncpy(pk3->pakGamename, GAMENAME, sizeof(pk3->pakGamename));
 
 		search = mainzone->Z_Malloc<searchpath_t>(sizeof(searchpath_t));
@@ -2406,7 +2560,7 @@ COM_InitFilesystem
 */
 void CCommon::COM_InitFilesystem ()
 {
-	int				i, j;
+	int				i;
 	char			basedir[MAX_OSPATH] = "";
 	searchpath_t	*search = NULL;
 
@@ -2741,18 +2895,18 @@ of a zip file.
 */
 pack_pk3_t* CFileSystem::FS_LoadZipFile(const char* zipfile, const char* basename)
 {
-	fileInPack_t*	buildBuffer;
-	pack_pk3_t*		pack;
-	unzFile			uf;
-	int				err;
-	unz_global_info gi;
-	char			filename_inzip[MAX_ZPATH];
-	unz_file_info	file_info;
-	int				i, len;
-	long			hash;
-	int				fs_numHeaderLongs;
-	int*			fs_headerLongs;
-	char*			namePtr;
+	fileInPack_t*	buildBuffer = {};
+	pack_pk3_t*		pack = {};
+	unzFile			uf = {};
+	int				err = 0;
+	unz_global_info gi = {};
+	char			filename_inzip[MAX_ZPATH] = {};
+	unz_file_info	file_info = {};
+	int				i = 0, len = 0;
+	long			hash = 0;
+	int				fs_numHeaderLongs = 0;
+	int*			fs_headerLongs = { 0 };
+	char*			namePtr = nullptr;
 
 	fs_numHeaderLongs = 0;
 
@@ -2767,7 +2921,7 @@ pack_pk3_t* CFileSystem::FS_LoadZipFile(const char* zipfile, const char* basenam
 	len = 0;
 
 	unzGoToFirstFile(uf);
-	for (i = 0; i < gi.number_entry; i++)
+	for (i = 0; i < (int)gi.number_entry; i++)
 	{
 
 		err = unzGetCurrentFileInfo(uf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
@@ -2785,7 +2939,7 @@ pack_pk3_t* CFileSystem::FS_LoadZipFile(const char* zipfile, const char* basenam
 	// get the hash table size from the number of files in the zip
 	// because lots of custom pk3 files have less than 32 or 64 files
 	for (i = 1; i <= MAX_FILEHASH_SIZE; i <<= 1) {
-		if (i > gi.number_entry) {
+		if (i > (int)gi.number_entry) {
 			break;
 		}
 	}
@@ -2809,7 +2963,7 @@ pack_pk3_t* CFileSystem::FS_LoadZipFile(const char* zipfile, const char* basenam
 	pack->numfiles = gi.number_entry;
 	unzGoToFirstFile(uf);
 
-	for (i = 0; i < gi.number_entry; i++)
+	for (i = 0; i < (int)gi.number_entry; i++)
 	{
 		err = unzGetCurrentFileInfo(uf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
 		if (err != UNZ_OK) {
@@ -2821,7 +2975,7 @@ pack_pk3_t* CFileSystem::FS_LoadZipFile(const char* zipfile, const char* basenam
 		Q_strlwr(filename_inzip);
 		hash = FS_HashFileName(filename_inzip, pack->hashSize);
 		buildBuffer[i].name = namePtr;
-		strcpy(buildBuffer[i].name, filename_inzip);
+		Q_strcpy(buildBuffer[i].name, filename_inzip);
 		namePtr += strlen(filename_inzip) + 1;
 		// store the file position in the zip
 		unzGetCurrentFileInfoPosition(uf, &buildBuffer[i].pos);

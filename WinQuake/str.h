@@ -21,6 +21,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #ifndef __STR__
 #define __STR__
+
+#ifdef _MSC_VER
+#pragma warning (disable : 4996)	// Missi: FIXME: remove this and refactor eventually (9/9/2024)
+#endif
+
 //
 // class Str
 // loose replacement for CString from MFC
@@ -44,104 +49,112 @@ protected:
 public:
   Str()
   {
-    m_bIgnoreCase = true;
-    m_pStr = NULL;
+	m_bIgnoreCase = true;
+	m_pStr = NULL;
   }
 
   Str(char *p)
   {
-    m_bIgnoreCase = true;
-    m_pStr = __StrDup(p);
+	m_bIgnoreCase = true;
+	m_pStr = __StrDup(p);
   }
 
   Str(const char *p)
   {
-    m_bIgnoreCase = true;
-    m_pStr = __StrDup(p);
+	m_bIgnoreCase = true;
+	m_pStr = __StrDup(p);
   }
 
   void Deallocate()
   {
-    delete []m_pStr;
-    m_pStr = NULL;
+	delete []m_pStr;
+	m_pStr = NULL;
   }
 
-  void Allocate(int n)
+  void Allocate(size_t n)
   {
-    Deallocate();
-    m_pStr = new char[n];
+	Deallocate();
+	m_pStr = new char[n];
   }
 
   const char* GetBuffer()
   {
-    return m_pStr;
+	return m_pStr;
   }
 
   void MakeEmpty()
   {
-    Deallocate();
-    m_pStr = __StrDup("");
+	Deallocate();
+	m_pStr = __StrDup("");
   }
 
   ~Str()
   {
-    Deallocate();
-    delete []g_pStrWork;
-    g_pStrWork = NULL;
+	Deallocate();
+	delete []g_pStrWork;
+	g_pStrWork = NULL;
   }
 
   void MakeLower()
   {
-    if (m_pStr)
-    {
-      strlwr(m_pStr);
-    }
+#ifdef __linux__
+	if (m_pStr)
+	{
+		while(*m_pStr)
+			strlwr(*m_pStr++);
+	}
+#else
+	if (m_pStr)
+	{
+		_strlwr_s(m_pStr, strlen(m_pStr));
+	}
+#endif
   }
 
-  int Find(const char *p)
+  size_t Find(const char *p)
   {
-    char *pf = strstr(m_pStr, p);
-    return (pf) ? (pf - m_pStr) : -1;
+	char *pf = strstr(m_pStr, p);
+	return (pf) ? (pf - m_pStr) : -1;
   }
 
   int GetLength()
   {
-    return (m_pStr) ? strlen(m_pStr) : 0;
+	return (m_pStr) ? (int)strlen(m_pStr) : 0;
   }
 
-  const char* Left(int n)
+  const char* Left(size_t n)
   {
-    delete []g_pStrWork;
-    if (n > 0)
-    {
-      g_pStrWork = new char[n+1];
-      strncpy(g_pStrWork, m_pStr, n);
-    }
-    else
-    {
-      g_pStrWork = nullptr;
-      g_pStrWork = new char[1];
-      g_pStrWork[0] = '\0';
-    }
-    return g_pStrWork;
+	delete []g_pStrWork;
+	if (n > 0)
+	{
+	  g_pStrWork = new char[n+1];
+	  strncpy(g_pStrWork, m_pStr, n);
+	}
+	else
+	{
+	  g_pStrWork = nullptr;
+	  g_pStrWork = new char[1];
+	  g_pStrWork[0] = '\0';
+	}
+	return g_pStrWork;
   }
 
-  const char* Right(int n)
+  const char* Right(size_t n)
   {
-    delete []g_pStrWork;
-    if (n > 0)
-    {
-      g_pStrWork = new char[n+1];
-      int nStart = GetLength() - n;
-      strncpy(g_pStrWork, &m_pStr[nStart], n);
-      g_pStrWork[n] = '\0';
-    }
-    else
-    {
-      g_pStrWork = new char[1];
-      g_pStrWork[0] = '\0';
-    }
-    return g_pStrWork;
+	delete []g_pStrWork;
+	if (n > 0)
+	{
+	  g_pStrWork = new char[n+1];
+	  size_t nStart = GetLength() - n;
+	  strncpy(g_pStrWork, &m_pStr[nStart], n);
+	  g_pStrWork[n] = '\0';
+	}
+	else
+	{
+	  g_pStrWork = new char[1];
+	  g_pStrWork[0] = '\0';
+	}
+	return g_pStrWork;
   }
 
 
@@ -154,47 +167,47 @@ public:
   operator const unsigned char*() { return reinterpret_cast<const unsigned char*>(m_pStr); }
   Str& operator =(const Str& rhs)
   {
-    if (&rhs != this)
-    {
-      delete[] m_pStr;
-      m_pStr = __StrDup(rhs.m_pStr);
-    }
-    return *this;
+	if (&rhs != this)
+	{
+	  delete[] m_pStr;
+	  m_pStr = __StrDup(rhs.m_pStr);
+	}
+	return *this;
   }
   
   Str& operator =(const char* pStr)
   {
-    if (m_pStr != pStr)
-    {
-      delete[] m_pStr;
-      m_pStr = __StrDup(pStr);
-    }
-    return *this;
+	if (m_pStr != pStr)
+	{
+	  delete[] m_pStr;
+	  m_pStr = __StrDup(pStr);
+	}
+	return *this;
   }
 
   Str& operator +=(const char *pStr)
   {
-    if (pStr)
-    {
-      if (m_pStr)
-      {
-        char *p = new char[strlen(m_pStr) + strlen(pStr) + 1];
-        strcpy(p, m_pStr);
-        strcat(p, pStr);
-        delete m_pStr;
-        m_pStr = p;
-      }
-      else
-      {
-        m_pStr = __StrDup(pStr);
-      }
-    }
-    return *this;
+	if (pStr)
+	{
+	  if (m_pStr)
+	  {
+		char *p = new char[strlen(m_pStr) + strlen(pStr) + 1];
+		strcpy(p, m_pStr);
+		strcat(p, pStr);
+		delete m_pStr;
+		m_pStr = p;
+	  }
+	  else
+	  {
+		m_pStr = __StrDup(pStr);
+	  }
+	}
+	return *this;
   }
   
   Str& operator +=(const char c)
   {
-    return operator+=(&c);
+	return operator+=(&c);
   }
 
 
@@ -206,7 +219,7 @@ public:
   bool operator !=(const char* pStr) const { return (m_bIgnoreCase) ? stricmp(m_pStr, pStr) != 0 : strcmp(m_pStr, pStr) != 0; }
   char& operator [](int nIndex) { return m_pStr[nIndex]; }
   char& operator [](int nIndex) const { return m_pStr[nIndex]; }
-     
+	 
 };
 
 

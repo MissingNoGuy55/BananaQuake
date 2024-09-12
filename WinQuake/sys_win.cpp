@@ -1,6 +1,7 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -248,7 +249,7 @@ void Sys_FileSeek (int handle, int position)
 
 	if (ret)
 	{
-		Sys_Error("Sys_FileSeek failed: %s\n", strerror(ret));
+		Sys_Error("Sys_FileSeek failed\n");
 		return;
 	}
 
@@ -908,7 +909,7 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 				testStr[pos+1] = '\"';
 
-				argv[parms.argc] = testStr;
+				Q_strncpy(argv[parms.argc], testStr, sizeof(testStr));
 				hitquote = true;
 			}
 
@@ -927,7 +928,9 @@ int WINAPI WinMain (_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	}
 
 	for (int pos = 0; pos < parms.argc; pos++)
-		Q_FixQuotes(argv[pos], argv[pos], strlen(argv[pos])+1);
+	{
+		Q_FixQuotes(argv[pos], argv[pos], strlen(argv[pos]) + 1);
+	}
 
 	parms.argv = argv;
 

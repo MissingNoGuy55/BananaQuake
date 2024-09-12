@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2021-2024 Stephen "Missi" Schmiedeberg
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -39,6 +40,8 @@ constexpr double X11_VERSION			= 1.10;
 
 constexpr int MINIMUM_MEMORY = 0x550000;
 constexpr int MINIMUM_MEMORY_LEVELPAK = (MINIMUM_MEMORY + 0x100000);
+
+constexpr short MAX_FILE_HANDLES = 64;
 
 typedef unsigned char byte;
 
@@ -281,7 +284,6 @@ constexpr int SOUND_CHANNELS		= 8;
 // #define IDGODS
 
 #include "unzip.h"
-#include "unzip_ifstream.h"
 #include "mathlib.h"
 
 #include "common.h"
