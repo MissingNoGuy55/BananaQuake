@@ -36,7 +36,7 @@ project(bananaquake LANGUAGES CXX ASM)
 
 enable_language(CXX ASM)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CXX_STANDARD_REQUIRED true)
 
 SET(ASM_OPTIONS "-DELF -x assembler-with-cpp")
