@@ -1,5 +1,7 @@
 #pragma once
 
+static constexpr short VPK_NO_CHUNK_ARCHIVECOUNT = 0x7FFF;
+
 struct VPKHeader_v2
 {
 	const unsigned int Signature = 0x55aa1234;
@@ -51,9 +53,15 @@ struct VPK_ArchiveMD5SectionEntry
 
 void LoadAllVPKs();
 
+struct vpk_t* PopulateVPKData(cxxifstream* file);
+
+int OpenAllVPKDependencies(cxxstring filename);
+
 const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename);
 const VPKDirectoryEntry* FindVPKFileAmongstLoadedVPKs(const char* filename);
 int FindVPKIndexForFileAmongstLoadedVPKs(const char* filename);
+
+VPKHeader_v2* GetVPKHeader(cxxifstream* file);
 
 extern cxxifstream* loaded_vpks[512][256];
 extern cxxstring* loaded_vpk_names[512][256];

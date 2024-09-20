@@ -554,10 +554,10 @@ Missi: modified to take raw item values as opposed to bit-shifting, for supporti
 */
 void Sbar_DrawInventory ()
 {
-	unsigned long long	i;
+	unsigned long long	i = 0;
 	char	num[6];
-	float	time;
-	int		flashon;
+	float	time = 0.0f;
+	int		flashon = 0;
 
 	if (rogue)
 	{
@@ -602,13 +602,13 @@ void Sbar_DrawInventory ()
       int grenadeflashing=0;
       for (i=0 ; i<4 ; i++)
       {
-         if (cl.items & (static_cast<long long>(1) << hipweapons[i]) )
+         if (cl.items & (static_cast<uint64_t>(1) << hipweapons[i]) )
          {
             time = cl.item_gettime[hipweapons[i]];
             flashon = (int)((cl.time - time)*10);
             if (flashon >= 10)
             {
-               if ( cl.stats[STAT_ACTIVEWEAPON] == (static_cast<long long>(1) << hipweapons[i])  )
+               if ( cl.stats[STAT_ACTIVEWEAPON] == (static_cast<uint64_t>(1) << hipweapons[i])  )
                   flashon = 1;
                else
                   flashon = 0;
@@ -682,7 +682,7 @@ void Sbar_DrawInventory ()
 	flashon = 0;
    // items
    for (i=0 ; i<6 ; i++)
-      if (cl.items & (static_cast<long long>(1) << (17+i)))
+      if (cl.items & (static_cast<uint64_t>(1) << (17+i)))
       {
          time = cl.item_gettime[17+i];
          if (time && time > cl.time - 2 && flashon )
@@ -705,7 +705,7 @@ void Sbar_DrawInventory ()
    if (hipnotic)
    {
       for (i=0 ; i<2 ; i++)
-         if (cl.items & (static_cast<long long>(1) << (24+i)))
+         if (cl.items & (static_cast<uint64_t>(1) << (24+i)))
          {
             time = cl.item_gettime[24+i];
             if (time && time > cl.time - 2 && flashon )
@@ -726,7 +726,7 @@ void Sbar_DrawInventory ()
 	// new rogue items
 		for (i=0 ; i<2 ; i++)
 		{
-			if (cl.items & (static_cast<long long>(1) << (29+i)))
+			if (cl.items & (static_cast<uint64_t>(1) << (29+i)))
 			{
 				time = cl.item_gettime[29+i];
 
@@ -749,7 +749,7 @@ void Sbar_DrawInventory ()
 	// sigils
 		for (i=0 ; i<4 ; i++)
 		{
-			if (cl.items >= IT_SIGIL1 && cl.items <= IT_SIGIL4)		// Missi: used to be 1 << (28+i) (9/5/2024)
+			if (cl.items & static_cast<uint64_t>(1) << (28+i))
 			{
 				time = cl.item_gettime[28+i];
 				if (time &&	time > cl.time - 2 && flashon )

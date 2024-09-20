@@ -22,3 +22,5 @@ del WinQuake.ncb
 del WinQuake.stt
 
 del /s *.ipch
+del /s *.obj
+pause

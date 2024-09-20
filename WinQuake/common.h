@@ -100,7 +100,7 @@ void InsertLinkAfter (link_t *l, link_t *after);
 	 (x) > (_maxval) ? (_maxval) : (x))
 
 // Missi: to get rid of the magic numbers (5/30/2022)
-enum HunkTypes_e
+enum class HunkTypes_e : unsigned char
 {
 	HUNK_ZONE = 0,
 	HUNK_FULL = 1,
@@ -195,6 +195,16 @@ typedef struct pack_s
 	packfile_t* files;
 } pack_t;
 
+struct vpk_t
+{
+	VPKHeader_v2 header;
+	int			numextensions;
+	int			numfiles;
+	int			numdirs;
+	VPKDirectoryEntry** entries;
+	const char** filenames;
+};
+
 //
 // on disk
 //
@@ -254,7 +264,6 @@ public:
 	static int COM_FOpenFile (const char *filename, FILE **file, uintptr_t* path_id);
     int COM_FOpenFile_IFStream(const char* filename, cxxifstream* file, uintptr_t* path_id, unzFile* pk3_file = nullptr);
     void COM_FOpenFile_OFStream(const char* filename, cxxofstream* file, uintptr_t* path_id);
-	cxxifstream* COM_FOpenFile_VPK(const char* filename, uintptr_t* path_id);
 	void COM_CloseFile (int h);
 
 	byte* COM_LoadMallocFile_TextMode_OSPath(const char* path, long* len_out);
@@ -265,12 +274,13 @@ public:
 	static int COM_FindFile(const char* filename, int* handle, FILE** file, uintptr_t* path_id);
     int COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id, unzFile* pk3_file);
     void COM_FindFile_OFStream(const char* filename, cxxofstream* file, uintptr_t* path_id);
-    cxxifstream* COM_FindFile_VPK(const char* filename, uintptr_t* path_id);
 	static long COM_filelength(FILE* f);
     size_t COM_filelength_FStream(cxxifstream* f);
-	pack_t* COM_LoadPackFile(char* packfile);
+	pack_t* COM_LoadPackFile(const char* packfile);
 
 	static void COM_Path_f();
+
+	void COM_CloseVPKs();
 
 	// Missi: buffer-safe varargs (4/30/2023)
 	const char	*va(const char *format, ...);
@@ -288,6 +298,8 @@ public:
 	static	int		file_from_pk3;
 	static	int		file_from_vpk;
 	static	unzFile	current_pk3;
+
+	static struct searchpath_t* com_searchpaths;
 
 };
 
@@ -401,9 +413,6 @@ template<typename T>
 T* COM_LoadStackFile (const char *path, void* buffer, int bufsize, uintptr_t* path_id);
 
 template<typename T>
-T* COM_LoadStackFile_VPK (const char *path, void* buffer, int bufsize, uintptr_t* path_id);
-
-template<typename T>
 T* COM_LoadTempFile (const char *path, uintptr_t* path_id);
 
 template<typename T>
@@ -425,13 +434,10 @@ Allways appends a 0 byte.
 #include "zone.h"
 
 template<typename T>
-inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id);
+inline T* COM_LoadFile(const char* path, HunkTypes_e usehunk, uintptr_t* path_id);
 
 template<typename T>
-inline T* COM_LoadFile_VPK(const char* path, int usehunk, uintptr_t* path_id);
-
-template<typename T>
-inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
+inline T* COM_LoadFile(const char* path, HunkTypes_e usehunk, uintptr_t* path_id)
 {
 	int	 h				= 0;
 	T* buf				= nullptr;
@@ -450,19 +456,19 @@ inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 
 	switch (usehunk)
 	{
-	case HUNK_FULL:
+	case HunkTypes_e::HUNK_FULL:
 		buf = static_cast<T*>(g_MemCache->Hunk_AllocName<T>(len + 1, base));
 		break;
-	case HUNK_TEMP:
+	case HunkTypes_e::HUNK_TEMP:
 		buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
 		break;
-	case HUNK_ZONE:
+	case HunkTypes_e::HUNK_ZONE:
 		buf = static_cast<T*>(mainzone->Z_Malloc<T>(len + 1));
 		break;
-	case HUNK_CACHE:
+	case HunkTypes_e::HUNK_CACHE:
 		buf = static_cast<T*>(g_MemCache->Cache_Alloc<T>(loadcache, len + 1, base));
 		break;
-	case HUNK_TEMP_FILL:
+	case HunkTypes_e::HUNK_TEMP_FILL:
 		if (len + 1 > loadsize<T>)
 		{
 			buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
@@ -523,78 +529,13 @@ inline T* COM_LoadFile(const char* path, int usehunk, uintptr_t* path_id)
 }
 
 template<typename T>
-inline T* COM_LoadFile_VPK(const char* path, int usehunk, uintptr_t* path_id)
-{
-	cxxifstream* f = nullptr;
-	T* buf = nullptr;
-	char base[32] = {};
-	int	len = 0;
-
-	// look for it in VPK files
-	f = g_Common->COM_FOpenFile_VPK(path, path_id);
-	
-	if (!f || f->bad() || len < 0)
-	{
-		delete f;
-		f = nullptr;
-		return nullptr;
-	}
-
-	len = g_Common->com_filesize;
-
-	// extract the filename base name for hunk tag
-	g_Common->COM_FileBase(path, base, len);
-
-	switch (usehunk)
-	{
-	case HUNK_FULL:
-		buf = static_cast<T*>(g_MemCache->Hunk_AllocName<T>(len + 1, base));
-		break;
-	case HUNK_TEMP:
-		buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
-		break;
-	case HUNK_ZONE:
-		buf = static_cast<T*>(mainzone->Z_Malloc<T>(len + 1));
-		break;
-	case HUNK_CACHE:
-		buf = static_cast<T*>(g_MemCache->Cache_Alloc<T>(loadcache, len + 1, base));
-		break;
-	case HUNK_TEMP_FILL:
-		if (len + 1 > loadsize<T>)
-		{
-			buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
-			break;
-		}
-		else
-		{
-			buf = loadbuf<T>;
-			break;
-		}
-
-	default:
-		Sys_Error("COM_LoadFile: bad usehunk");
-		break;
-	}
-
-	if (!buf)
-		Sys_Error("COM_LoadFile: not enough space for %s", path);
-	else
-		((byte*)buf)[len] = 0;
-
-	f->read(buf, len);
-	f->seekg(0, cxxifstream::beg);
-
-	return buf;
-}
-
-template<typename T>
-inline T* COM_LoadFile_IFStream(const char* path, int usehunk, uintptr_t* path_id)
+inline T* COM_LoadFile_IFStream(const char* path, HunkTypes_e usehunk, uintptr_t* path_id)
 {
 	cxxifstream         f = {};
     T* buf				= nullptr;
     char base[32]		= {};
     size_t	len			= 0;
-	unzFile	unzf = {};
+	unzFile	unzf		= nullptr;
 
     // look for it in the filesystem or pack files
     len = g_Common->COM_FOpenFile_IFStream(path, &f, path_id, &unzf);
@@ -606,19 +547,19 @@ inline T* COM_LoadFile_IFStream(const char* path, int usehunk, uintptr_t* path_i
 
     switch (usehunk)
     {
-    case HUNK_FULL:
+	case HunkTypes_e::HUNK_FULL:
         buf = static_cast<T*>(g_MemCache->Hunk_AllocName<T>(len + 1, base));
         break;
-    case HUNK_TEMP:
+    case HunkTypes_e::HUNK_TEMP:
         buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
         break;
-    case HUNK_ZONE:
+    case HunkTypes_e::HUNK_ZONE:
         buf = static_cast<T*>(mainzone->Z_Malloc<T>(len + 1));
         break;
-    case HUNK_CACHE:
+    case HunkTypes_e::HUNK_CACHE:
         buf = static_cast<T*>(g_MemCache->Cache_Alloc<T>(loadcache, len + 1, base));
         break;
-    case HUNK_TEMP_FILL:
+    case HunkTypes_e::HUNK_TEMP_FILL:
         if (len + 1 > loadsize<T>)
         {
             buf = static_cast<T*>(g_MemCache->Hunk_TempAlloc<T>(len + 1));
@@ -663,26 +604,26 @@ inline T* COM_LoadFile_IFStream(const char* path, int usehunk, uintptr_t* path_i
 template<typename T>
 T* COM_LoadHunkFile(const char* path, uintptr_t* path_id)
 {
-	return COM_LoadFile<T>(path, HUNK_FULL, path_id);
+	return COM_LoadFile<T>(path, HunkTypes_e::HUNK_FULL, path_id);
 }
 
 template<typename T>
 T* COM_LoadHunkFile_IFStream(const char* path, uintptr_t* path_id)
 {
-    return COM_LoadFile_IFStream<T>(path, HUNK_FULL, path_id);
+    return COM_LoadFile_IFStream<T>(path, HunkTypes_e::HUNK_FULL, path_id);
 }
 
 template<typename T>
 T* COM_LoadTempFile(const char* path, uintptr_t* path_id)
 {
-	return COM_LoadFile<T>(path, HUNK_TEMP, path_id);
+	return COM_LoadFile<T>(path, HunkTypes_e::HUNK_TEMP, path_id);
 }
 
 template<typename T>
 void COM_LoadCacheFile(const char* path, struct cache_user_s* cu, uintptr_t* path_id)
 {
 	loadcache = cu;
-	COM_LoadFile<T>(path, HUNK_CACHE, path_id);
+	COM_LoadFile<T>(path, HunkTypes_e::HUNK_CACHE, path_id);
 }
 
 // uses temp hunk if larger than bufsize
@@ -693,26 +634,9 @@ T* COM_LoadStackFile(const char* path, void* buffer, int bufsize, uintptr_t* pat
 
 	loadbuf<T> = (T*)buffer;
 	loadsize<T> = bufsize;
-	buf = COM_LoadFile<T>(path, HUNK_TEMP_FILL, path_id);
+	buf = COM_LoadFile<T>(path, HunkTypes_e::HUNK_TEMP_FILL, path_id);
 
 	return (T*)buf;
 }
-
-template<typename T>
-T* COM_LoadStackFile_VPK(const char* path, void* buffer, int bufsize, uintptr_t* path_id)
-{
-	T* buf;
-
-	loadbuf<T> = (T*)buffer;
-	loadsize<T> = bufsize;
-
-	buf = COM_LoadFile_VPK<T>(path, HUNK_TEMP_FILL, path_id);
-
-	if (!buf)
-		return nullptr;
-
-	return (T*)buf;
-}
-
 
 #endif

@@ -1702,6 +1702,10 @@ void	VID_Init (unsigned char *palette)
 
 	VID_InitFullDIB (global_hInstance);
 
+	devmode.dmSize = sizeof(devmode);
+
+	EnumDisplaySettings(NULL, 0, &devmode);
+
 	// Missi: Source engine styled "-sw", "-w" and "-h" command support (5/1/2023)
 	if (g_Common->COM_CheckParm("-window") || g_Common->COM_CheckParm("-sw") || g_Common->COM_CheckParm("-windowed"))
 	{
@@ -1802,37 +1806,34 @@ void	VID_Init (unsigned char *palette)
 				}
 
 				// Missi: nab the monitor's native resolution if we're going fullscreen and have no config vars set (6/3/2024)
-				if (vid_config_x.value == 0 && vid_config_y.value == 0)
+				if (!vid_customres)
 				{
-					if (!vid_customres)
+					sMonitorInfo info;
+					info.iIndex = 0;
+					info.hMonitor = NULL;
+
+					MONITORENUMPROC infoProc = {};
+
+					DISPLAY_DEVICE displayDevice = {};
+					displayDevice.cb = sizeof(DISPLAY_DEVICE);
+
+					MONITORINFOEX mon = {};
+					mon.cbSize = sizeof(MONITORINFOEX);
+
+					EnumDisplayMonitors(NULL, NULL, GetMonitorByIndex, (LPARAM)&info);
+
+					if (info.hMonitor != nullptr)
 					{
-						sMonitorInfo info;
-						info.iIndex = 0;
-						info.hMonitor = NULL;
+						GetMonitorInfo(info.hMonitor, &mon);
+						GetMonitorRealResolution(info.hMonitor, &width, &height);
 
-						MONITORENUMPROC infoProc = {};
+						vid.width = width;
+						vid.height = height;
+						/*vid.conwidth = width;
+						vid.conheight = height;*/
 
-						DISPLAY_DEVICE displayDevice = {};
-						displayDevice.cb = sizeof(DISPLAY_DEVICE);
-
-						MONITORINFOEX mon = {};
-						mon.cbSize = sizeof(MONITORINFOEX);
-
-						EnumDisplayMonitors(NULL, NULL, GetMonitorByIndex, (LPARAM)&info);
-
-						if (info.hMonitor != nullptr)
-						{
-							GetMonitorInfo(info.hMonitor, &mon);
-							GetMonitorRealResolution(info.hMonitor, &width, &height);
-
-							vid.width = width;
-							vid.height = height;
-							/*vid.conwidth = width;
-							vid.conheight = height;*/
-
-							Cvar_SetValue("vid_config_x", width);
-							Cvar_SetValue("vid_config_y", height);
-						}
+						Cvar_SetValue("vid_config_x", width);
+						Cvar_SetValue("vid_config_y", height);
 					}
 				}
 
@@ -1943,6 +1944,17 @@ void	VID_Init (unsigned char *palette)
 						}
 					}
 				} while (!done);
+
+				for (i = 0; i < nummodes; i++)
+				{
+					int w;
+					int h;
+
+					Q_snscanf(modelist[i].modedesc, sizeof(modelist[i].modedesc), "%dx%d", &w, &h);
+
+					if (w == width && h == height)
+						break;
+				}
 
 				if (!vid_default)
 				{

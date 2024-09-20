@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 
 #include <errno.h>
+#include "common.h"
 
 // Missi: FIXME: disable the MSVC "unsafe" function warning for now, but eventually move ALL file-handling code to ifstream,
 // as fopen is unsafe (9/10/2024)
@@ -465,26 +466,41 @@ float Q_atof (const char *str)
 Missi: Q_snscanf
 Buffer-safe version of sscanf that is portable, so programmers
 won't need to use the non-portable sscanf_s (9/8/2024)
+
+FIXME: this function, while having basic support for common format string specifiers,
+does not have support for some of the more advanced features like sets and whatnot (9/12/2024)
 ==================
 */
 int Q_snscanf(const char* buffer, size_t bufsize, const char* fmt, ...)
 {
 	int fmt_pos = 0;			// Missi: position in format string (9/8/2024)
-	int buffer_pos = 0;			// Missi: position in buffer (9/9/2024)
 
 	va_list args = {};
 	va_start(args, fmt);
-	bool length = false;	// Missi: defines whether a length was specified in the format string (9/8/2024)
-	int charcount = 0;		// Missi: independent of fmt_pos and also counts number of chars read (9/8/2024)
-	int filled = 0;
+	int charcount = 0;		// Missi: independent of fmt_pos, and also counts number of chars read (9/8/2024)
+	int filled = 0;			// Missi: total number of arguments successfully filled (9/12/2024)
+
+	char* work = new char[bufsize + 1];		// Missi: work buffer to avoid trashing the main buffer (9/13/2024)
+	memset(work, 0, bufsize + 1);
+
+	// Missi: original pointer of the work buffer. the work buffer is directly incremented, so we need to return it
+	// to the beginning to avoid delete[] failing (9/13/2024)
+	char* original_buffer = work;
+
+	Q_strncpy(work, buffer, bufsize);
 	
-	while (buffer[buffer_pos] != '\0' && buffer_pos < bufsize)
+	while (*work != '\0' && charcount < bufsize)
 	{
+
+		// Missi: check if we've reached the end of the format string (9/12/2024)
 		if (fmt[fmt_pos] == '\0')
 			break;
 
-		if (fmt[fmt_pos] == '%')
+		// Missi: increment and scan the next character for the format specifier (9/12/2024)
+		if (fmt[fmt_pos++] == '%')
 		{
+			// Missi: check if a length was specified in the case of strings or numbers
+			// i.e. %1023s or %02d
 			if (fmt[fmt_pos + 1] >= '0' && fmt[fmt_pos + 1] <= '9')
 			{
 				int num = 0;
@@ -492,48 +508,51 @@ int Q_snscanf(const char* buffer, size_t bufsize, const char* fmt, ...)
 				memset(jump, 0, sizeof(jump));
 
 				num = Q_atoi(&fmt[fmt_pos + 1]);
+				
+				// Missi: write the length of the string containing the length of the format specifier, so we can
+				// just jump forward in the buffer (9/12/2024)
 				snprintf(jump, sizeof(jump), "%d", num);
-
-				fmt_pos += Q_strlen(jump) + 1;
-				length = true;
+				fmt_pos += Q_strlen(jump) + 2;
 			}
 
-			if (!length)
-				fmt_pos++;
-
+			// Missi: scan the current character for the format identifier (9/12/2024)
 			switch (fmt[fmt_pos])
 			{
-				case '\r':
-				case '\n':
-					fmt_pos++;
-					break;
-
 				// Missi: standard int (9/8/2024)
 				case 'd':
 				case 'i':
 				{
-					while (buffer[charcount++] != '\n' && buffer[charcount] != '\0')
+					// Missi: go forward in the buffer if we haven't hit a control character (9/12/2024)
+					while (std::isprint(work[charcount++]) != 0)
 						;
 
-					int copy = Q_atoi(&buffer[buffer_pos]);
+					int copy = std::atoi(&work[0]);
 					memcpy(va_arg(args, int*), &copy, sizeof(int));
+
+					work += charcount;
+
 					filled++;
 					break;
 				}
 				// Missi: standard float (9/8/2024)
 				case 'f':
 				{
-					while (buffer[charcount++] != '\n' && buffer[charcount] != '\0')
+					// Missi: go forward in the buffer if we're not dealing with numerics (9/12/2024)
+					while (std::isprint(work[charcount++]) != 0)
 						;
 
-					float copy = Q_atof(&buffer[buffer_pos]);
+					float copy = std::atof(&work[0]);
 					memcpy(va_arg(args, float*), &copy, sizeof(float));
+					
+					work += charcount;
+
 					filled++;
 					break;
 				}
 				// Missi: current number of chars read (9/9/2024)
 				case 'n':
 				{
+					// Missi: just write out how many chars we've actually read up to this point (9/12/2024)
 					memcpy(va_arg(args, int*), &charcount, sizeof(int));
 					filled++;
 					break;
@@ -541,45 +560,58 @@ int Q_snscanf(const char* buffer, size_t bufsize, const char* fmt, ...)
 				// Missi: const char* (9/9/2024)
 				case 's':
 				{
-					while (buffer[charcount++] != '\n' && buffer[charcount] != '\0')
+					while (std::isprint(work[charcount++]) != 0)
 						;
 
 					va_list va_arg_copy;
 					va_copy(va_arg_copy, args);
 
-					memcpy(va_arg(args, char*), &buffer[0], charcount - 1);
+					memcpy(va_arg(args, char*), &work[0], charcount - 1);
 					va_arg(va_arg_copy, char*)[charcount - 1] = '\0';
+
+					work += charcount;
+
 					filled++;
 					break;
 				}
 				// Missi: unsigned integers (9/9/2024)
 				case 'u':
 				{
+					// Missi: go forward in the buffer if we're not dealing with numerics (9/12/2024)
+					while (std::isprint(work[charcount++]) != 0)
+						;
 
 					if (fmt[fmt_pos + 1] == 'l' && fmt[fmt_pos + 2] == 'l')
 					{
-						unsigned long long copy = atoll(&buffer[buffer_pos]);
+						unsigned long long copy = atoll(&work[0]);
 						memcpy(va_arg(args, unsigned long long*), &copy, sizeof(unsigned long long));
 						filled++;
 					}
 					else if (fmt[fmt_pos + 1] == 'l')
 					{
-						unsigned long copy = atol(&buffer[buffer_pos]);
+						unsigned long copy = atol(&work[0]);
 						memcpy(va_arg(args, unsigned long*), &copy, sizeof(unsigned long));
 						filled++;
 					}
 					else
 					{
-						unsigned int copy = Q_atoi(&buffer[buffer_pos]);
+						unsigned int copy = Q_atoi(&work[0]);
 						memcpy(va_arg(args, unsigned int*), &copy, sizeof(unsigned int));
 						filled++;
 					}
+
+					work += charcount;
+
 					break;
 				}
 				// Missi: hexadecimal output (9/9/2024)
 				case 'x':
 				{
-					unsigned int copy = Q_atoi(&buffer[buffer_pos]);
+					// Missi: go forward in the buffer if we're not dealing with numerics (9/12/2024)
+					while (std::isprint(work[charcount++]) != 0)
+						;
+
+					unsigned int copy = Q_atoi(&work[0]);
 
 					std::stringstream hex_strstream;
 
@@ -589,24 +621,31 @@ int Q_snscanf(const char* buffer, size_t bufsize, const char* fmt, ...)
 					const char* hex_output_c = hex_output.c_str();
 
 					Q_strncpy(va_arg(args, char*), hex_output_c, bufsize);
+					
+					work += charcount;
+
 					filled++;
 					break;
 				}
 				// Missi: single char (9/9/2024)
 				case 'c':
 				{
-					memcpy(va_arg(args, char*), &buffer[buffer_pos], sizeof(char));
+					// Missi: go forward in the buffer if we're not dealing with numerics (9/12/2024)
+					while (std::isprint(work[charcount++]) != 0)
+						;
+
+					memcpy(va_arg(args, char*), &work[0], sizeof(char));
 					filled++;
 					break;
 				}
 			}
 		}
-
-		length = false;
-		fmt_pos++;
 	}
 	va_end(args);
 
+	work = original_buffer;
+
+	delete[] work;
 	return filled;
 }
 
@@ -1269,7 +1308,7 @@ const char* CCommon::COM_Parse (const char *data)
 	int             len;
 	
 	len = 0;
-	com_token[0] = 0;
+	memset(com_token, 0, sizeof(com_token));
 	
 	if (!data)
 		return NULL;
@@ -1615,12 +1654,11 @@ struct searchpath_t
 {
 	uintptr_t path_id;
 	char    filename[MAX_OSPATH] = "";
-	pack_t  *pack = NULL;          // only one of filename / pack will be used
-	pack_pk3_t	*pk3 = NULL;
-	struct searchpath_t *next = NULL;
+	pack_t* pack = nullptr;          // only one of filename / pack will be used
+	pack_pk3_t* pk3 = nullptr;
+	vpk_t* vpk = nullptr;
+	struct searchpath_t *next = nullptr;
 };
-
-searchpath_t* com_searchpaths = nullptr;
 
 static	char		fs_gamedir[MAX_OSPATH];	// this will be a single file name with no separators
 static	cvar_t*		fs_debug;
@@ -1643,6 +1681,8 @@ static int			fs_checksumFeed;
 fileHandleData_t	fsh[MAX_FILE_HANDLES];
 fileHandleData_t	fsh_ifstream[MAX_FILE_HANDLES];
 
+searchpath_t* CCommon::com_searchpaths = {};
+
 /*
 ============
 COM_Path_f
@@ -1662,6 +1702,15 @@ void CCommon::COM_Path_f ()
 		}
 		else
 			Con_Printf ("%s\n", s->filename);
+	}
+}
+
+void CCommon::COM_CloseVPKs()
+{
+	for (searchpath_t* search = com_searchpaths; search; search = search->next)
+	{
+		if (search->vpk)
+			delete[] search->vpk;
 	}
 }
 
@@ -1764,6 +1813,7 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 	char			netpath[MAX_OSPATH];
 	pack_t			*pak = nullptr;
 	pack_pk3_t		*pk3 = nullptr;
+	vpk_t			*vpk = nullptr;
 	int				i = 0;
 	int				findtime = 0, cachetime = 0;
 
@@ -1776,6 +1826,7 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 	
 	file_from_pak = 0;
 	file_from_pk3 = 0;
+	file_from_vpk = 0;
 
 //
 // search through the path, one element at a time
@@ -1908,6 +1959,90 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 				} while (pakFile != nullptr);
 			}
 		}
+		else if (search->vpk)
+		{
+			vpk = search->vpk;
+
+			int parse = 0;
+
+			while (parse < vpk->numfiles)
+			{
+				if (!strcmp(vpk->filenames[parse], filename))
+				{
+					// found it!
+					file_from_vpk = 1;
+					if (path_id)
+						*path_id = search->path_id;
+					if (handle)
+					{
+						const VPKDirectoryEntry* VPK_File = nullptr;
+
+						for (int i = 0; i < TOTAL_VPKS_SIZE; i++)
+						{
+							VPK_File = FindVPKFile(loaded_vpks[i][0], filename);
+
+							if (VPK_File->ArchiveIndex == VPK_NO_CHUNK_ARCHIVECOUNT)
+							{
+								VPKHeader_v2* header = GetVPKHeader(loaded_vpks[i][0]);
+
+								Sys_FileOpenRead(loaded_vpk_names[i][0]->c_str(), handle);
+								Sys_FileSeek(*handle, (sizeof(VPKHeader_v2) + header->TreeSize) + VPK_File->EntryOffset);
+								break;
+							}
+							else
+							{
+								Sys_FileOpenRead(loaded_vpk_names[i][VPK_File->ArchiveIndex + 1]->c_str(), handle);
+								Sys_FileSeek(*handle, VPK_File->EntryOffset);
+								break;
+							}
+						}
+
+						com_filesize = COM_filelength(sys_handles[*handle]);
+
+						return com_filesize;
+					}
+					else if (file)
+					{ /* open a new file on the pakfile */
+						const VPKDirectoryEntry* VPK_File = nullptr;
+
+						for (int i = 0; i < TOTAL_VPKS_SIZE; i++)
+						{
+							VPK_File = FindVPKFile(loaded_vpks[i][0], filename);
+
+							if (VPK_File)
+							{
+								// Missi: in the case of non-chunked VPKs, the lookup works a bit differently.
+								// ArchiveIndex in the header is always 32767 in the event of there being no
+								// chunked versions of VPKs ("[vpk_name]_000.vpk" and so on). The data in most
+								// cases immediately follows after the header.
+								if (VPK_File->ArchiveIndex == VPK_NO_CHUNK_ARCHIVECOUNT)
+								{
+									memcpy(file, loaded_vpks[i][0], sizeof(cxxifstream));
+									VPKHeader_v2* header = GetVPKHeader(loaded_vpks[i][0]);
+
+									fseek(*file, (sizeof(VPKHeader_v2) + header->TreeSize) + VPK_File->EntryOffset, SEEK_SET);
+								}
+								else
+								{
+									memcpy(file, loaded_vpks[i][VPK_File->ArchiveIndex + 1], sizeof(cxxifstream));
+									fseek(*file, VPK_File->EntryOffset, SEEK_SET);
+								}
+								break;
+							}
+						}
+
+						com_filesize = VPK_File->EntryLength;
+
+						return com_filesize;
+					}
+					else /* for COM_FileExists() */
+					{
+						return com_filesize;
+					}
+				}
+				parse++;
+			}
+			}
 		else
 		{
 			if (!registered.value)
@@ -1955,11 +2090,7 @@ int CCommon::COM_FindFile (const char *filename, int *handle, FILE **file, uintp
 Missi: COM_FindFile_IFStream
 
 Finds the file in the search path.
-Sets com_filesize and one of handle or std::ifstream.
-
-FIXME: This function does not work with PK3 files due to the zip library making
-heavy usage of the FILE struct from C. That is lame. Write a derivative later to take advantage
-of std::ifstream so PK3 files can be used. (8/29/2024)
+Sets com_filesize and one of handle or std::ifstream. (9/14/2024)
 ===========
 */
 int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstream* file, uintptr_t* path_id, unzFile* pk3_file)
@@ -1968,6 +2099,7 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 	char			netpath[MAX_OSPATH];
 	pack_t*			pak = NULL;
 	pack_pk3_t*		pk3 = NULL;
+	vpk_t*			vpk = NULL;
 	int				i = 0;
 	int				findtime = 0, cachetime = 0;
 
@@ -1980,6 +2112,7 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 
 	file_from_pak = 0;
 	file_from_pk3 = 0;
+	file_from_vpk = 0;
 
 	//
 	// search through the path, one element at a time
@@ -2121,6 +2254,92 @@ int CCommon::COM_FindFile_IFStream(const char* filename, int* handle, cxxifstrea
 				} while (pakFile != nullptr);
 			}
 		}
+		else if (search->vpk)
+		{
+			vpk = search->vpk;
+
+			int parse = 0;
+
+			while (parse < vpk->numfiles)
+			{
+				if (!strcmp(vpk->filenames[parse], filename))
+				{
+					// found it!
+					// com_filesize = pk3->buildBuffer[i].filelen;
+					file_from_vpk = 1;
+					if (path_id)
+						*path_id = search->path_id;
+					if (handle)
+					{
+						const VPKDirectoryEntry* VPK_File = nullptr;
+
+						for (int i = 0; i < TOTAL_VPKS_SIZE; i++)
+						{
+							VPK_File = FindVPKFile(loaded_vpks[i][0], filename);
+
+							if (VPK_File)
+							{
+								if (VPK_File->ArchiveIndex == VPK_NO_CHUNK_ARCHIVECOUNT)
+								{
+									Sys_FileOpenRead(loaded_vpk_names[i][0]->c_str(), handle);
+									Sys_FileSeek(*handle, VPK_File->EntryOffset);
+									break;
+								}
+								else
+								{
+									Sys_FileOpenRead(loaded_vpk_names[i][VPK_File->ArchiveIndex + 1]->c_str(), handle);
+									Sys_FileSeek(*handle, VPK_File->EntryOffset);
+									break;
+								}
+							}
+						}
+
+						com_filesize = ftell(sys_handles[*handle]);
+
+						return com_filesize;
+					}
+					else if (file)
+					{ /* open a new file on the pakfile */
+						const VPKDirectoryEntry* VPK_File = nullptr;
+
+						for (int i = 0; i < TOTAL_VPKS_SIZE; i++)
+						{
+							VPK_File = FindVPKFile(loaded_vpks[i][0], filename);
+
+							if (VPK_File)
+							{
+								// Missi: in the case of non-chunked VPKs, the lookup works a bit differently.
+								// ArchiveIndex in the header is always 32767 in the event of there being no
+								// chunked versions of VPKs ("[vpk_name]_000.vpk" and so on). The data in most
+								// cases immediately follows after the header.
+								if (VPK_File->ArchiveIndex == VPK_NO_CHUNK_ARCHIVECOUNT)
+								{
+									memcpy(file, loaded_vpks[i][0], sizeof(cxxifstream));
+									VPKHeader_v2* header = GetVPKHeader(loaded_vpks[i][0]);
+
+									file->seekg((sizeof(VPKHeader_v2) + header->TreeSize) + VPK_File->EntryOffset, cxxifstream::beg);
+								}
+								else
+								{
+									memcpy(file, loaded_vpks[i][VPK_File->ArchiveIndex + 1], sizeof(cxxifstream));
+									file->seekg(VPK_File->EntryOffset, cxxifstream::beg);
+								}
+								break;
+							}
+						}
+
+						com_filesize = VPK_File->EntryLength;
+
+						return com_filesize;
+					}
+					else /* for COM_FileExists() */
+					{
+						return com_filesize;
+					}
+				}
+				parse++;
+			}
+		}
 		else
 		{
 			if (!registered.value)
@@ -2183,43 +2402,6 @@ void CCommon::COM_FindFile_OFStream(const char* filename, cxxofstream* file, uin
 	Q_FixSlashes(fullpath, sizeof(fullpath));
 
 	file->open(fullpath, cxxofstream::binary | cxxofstream::out | cxxofstream::trunc);
-}
-
-/*
-===========
-COM_FindFile_VPK
-
-Finds the file in the search path.
-Sets com_filesize and one of handle or file
-===========
-*/
-cxxifstream* CCommon::COM_FindFile_VPK(const char* filename, uintptr_t* path_id)
-{
-	file_from_pak = 0;
-	file_from_pk3 = 0;
-
-	//
-	// search through the path, one element at a time
-	//
-	const int idx = FindVPKIndexForFileAmongstLoadedVPKs(filename);
-	const VPKDirectoryEntry* entry = FindVPKFileAmongstLoadedVPKs(filename);
-
-	if (idx != -1)
-	{
-		cxxifstream* file = loaded_vpks[idx][entry->ArchiveIndex+1];
-		file->seekg(entry->EntryOffset, cxxifstream::beg);
-		file->clear();
-
-		com_filesize = entry->EntryLength;
-		return file;
-	}
-
-	delete[] entry;
-
-	Sys_Printf("FindFile: can't find %s\n", filename);
-
-	com_filesize = -1;
-	return nullptr;
 }
 
 /*
@@ -2309,19 +2491,6 @@ void CCommon::COM_FOpenFile_OFStream(const char* filename, cxxofstream* file, ui
 }
 
 /*
-===========
-COM_FOpenFile_VPK
-
-If the requested file is inside a VPK, a new cxxifstream* will be opened
-into the file.
-===========
-*/
-cxxifstream* CCommon::COM_FOpenFile_VPK(const char* filename, uintptr_t* path_id)
-{
-	return COM_FindFile_VPK(filename, path_id);
-}
-
-/*
 ============
 COM_CloseFile
 
@@ -2395,7 +2564,7 @@ Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 =================
 */
-pack_t* CCommon::COM_LoadPackFile (char *packfile)
+pack_t* CCommon::COM_LoadPackFile (const char *packfile)
 {
 	dpackheader_t			header;
 	int                     i = 0;
@@ -2464,7 +2633,12 @@ COM_AddGameDirectory
 Sets com_gamedir, adds the directory to the head of the path,
 then loads and adds pak1.pak pak2.pak ... 
 
-Missi: copied from QuakeSpasm (1/4/2023)
+Missi: heavily modified. The priorities of archives is listed below:
+
+* Quake PAK files (lowest priority)
+* Quake III pk3 files
+* Valve VPK files (multi-chunk)
+* Valve VPK files (standalone; highest priority) (9/16/2023)
 ================
 */
 void CCommon::COM_AddGameDirectory (const char *dir)
@@ -2473,6 +2647,7 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 	searchpath_t			*search = nullptr;
 	pack_t                  *pak = nullptr;
 	pack_pk3_t				*pk3 = nullptr;
+	vpk_t*					vpk = nullptr;
 	char                    pakfile[1024];
 	uintptr_t				path_id = 0;
 	bool                    been_here = false;
@@ -2498,10 +2673,19 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 //
 // add any pak files in the format pak0.pak pak1.pak, ...
 //
-	for (i=0 ; ; i++)
+	for (const auto& file : fs::directory_iterator(com_gamedir))
 	{
-		snprintf (pakfile, sizeof(pakfile), "%s/PAK%i.PAK", dir, i);
-		pak = COM_LoadPackFile (pakfile);
+		if (!file.is_regular_file() || file.is_directory())
+			continue;
+
+		size_t ext = file.path().string().find(".pak");
+		size_t ext_caps = file.path().string().find(".PAK");
+		cxxstring path = file.path().string();
+
+		if (ext == cxxstring::npos && ext_caps == cxxstring::npos)
+			continue;
+
+		pak = COM_LoadPackFile (path.c_str());
 
 		if (!pak)
 			break;
@@ -2545,6 +2729,117 @@ void CCommon::COM_AddGameDirectory (const char *dir)
 		com_searchpaths = search;
 
 		Con_PrintColor(TEXT_COLOR_GREEN, "Added PK3 file %s (%d files)\n", file.path().string().c_str(), pk3->numfiles);
+	}
+
+	char vpk_folder[MAX_OSPATH];
+	snprintf(vpk_folder, sizeof(vpk_folder), "%s/vpk", dir);
+
+	if (!fs::exists(vpk_folder))
+		return;
+	
+	i = 0;
+
+	// Missi: load chunked VPKs (9/16/2024)
+	for (const auto& file : fs::directory_iterator(vpk_folder))
+	{
+		if (!file.is_regular_file() || file.is_directory())
+			continue;
+
+		size_t ext = file.path().string().find(".vpk");
+		size_t dir = file.path().string().find("_dir");
+
+		if (dir == cxxstring::npos)
+			continue;
+
+		cxxstring noext = file.path().string().erase(ext, 4);
+
+		int num = OpenAllVPKDependencies(file.path().string());
+
+		search = mainzone->Z_Malloc<searchpath_t>(sizeof(searchpath_t));
+		search->path_id = path_id;
+		search->vpk = PopulateVPKData(loaded_vpks[i][0]);
+		search->next = com_searchpaths;
+		Q_strncpy(search->filename, file.path().string().c_str(), sizeof(search->filename));
+		com_searchpaths = search;
+
+		i++;
+
+		Con_PrintColor(TEXT_COLOR_GREEN, "Added VPK file %s (%d files)\n", file.path().string().c_str(), search->vpk->numfiles);
+	}
+
+	i = 0;
+	
+	char num[64] = "000";
+	char loopback[64] = "000";
+	int chunk_num = 0;
+	int loops = 0;
+	
+	// Missi: load standalone VPKs (9/16/2024)
+	for (const auto& file : fs::directory_iterator(vpk_folder))
+	{
+		if (!file.is_regular_file() || file.is_directory())
+			continue;
+
+		size_t ext = file.path().string().find(".vpk");
+
+		if (ext == cxxstring::npos)
+			continue;
+
+		size_t dir = file.path().string().find("_dir");	
+
+		//===========
+		// Missi: HACK: This is so stupid. We basically have to check whether something is "000"
+		// mid-iteration because of the way std::filesystem handles sorting. Argh!! I hate this!
+		// 
+		// Here is an explanation. Consider the following file list in a folder full of VPKs:
+		// 
+		// * hl2_misc_000.vpk
+		// * hl2_misc_001.vpk
+		// * hl2_misc_002.vpk
+		// * hl2_misc_003.vpk
+		// * hl2_misc_dir.vpk
+		// * hl2_pak_000.vpk
+		// * hl2_pak_dir.vpk
+		// * test_vpk.vpk
+		// 
+		// Because the list of files loop back to "000", we have to check mid-iteration whether
+		// we hit a loopback, in which chunk_num is set back to 0. (9/16/2024)
+		//===========
+		size_t numeral_loopback = file.path().string().find(loopback);
+
+		if (numeral_loopback != cxxstring::npos)
+		{
+			chunk_num = 0;
+			loops++;
+		}
+
+		snprintf(num, sizeof(num), "%03d", chunk_num++);
+		
+		size_t numeral = file.path().string().find(num);
+		//===========
+
+		if (numeral == cxxstring::npos && dir == cxxstring::npos && numeral_loopback == cxxstring::npos)
+		{
+			OpenAllVPKDependencies(file.path().string());
+
+			// Missi: since the stores VPKs in loaded_vpks can have multiple chunks
+			if (loops > 0)
+				i = (i / loops);
+
+			search = mainzone->Z_Malloc<searchpath_t>(sizeof(searchpath_t));
+			search->path_id = path_id;
+			search->vpk = PopulateVPKData(loaded_vpks[i][0]);
+			search->next = com_searchpaths;
+			Q_strncpy(search->filename, file.path().string().c_str(), sizeof(search->filename));
+			com_searchpaths = search;
+
+			Con_PrintColor(TEXT_COLOR_GREEN, "Added VPK file %s (%d files)\n", file.path().string().c_str(), search->vpk->numfiles);
+
+			loops = 0;
+
+			break;
+		}
+		i++;
 	}
 
 //

@@ -21,6 +21,7 @@
 #include <windows.h>
 #else
 #include <cstdlib>
+#include <filesystem>
 typedef unsigned char byte;
 #endif
 

@@ -122,17 +122,8 @@ sfxcache_t * CSoundDMA::S_LoadSound (sfx_t *s)
 
 	if (!data)
 	{
-		char* datatest = nullptr;
-
-		datatest = COM_LoadStackFile_VPK<char>(namebuffer, stackbuf, sizeof(stackbuf), NULL);
-
-		if (!datatest)
-		{
-			Con_Printf("Couldn't load %s\n", namebuffer);
-			return nullptr;
-		}
-
-		data = (byte*)datatest;
+		Con_Printf("Couldn't load %s\n", namebuffer);
+		return nullptr;
 	}
 
 	info = g_SoundSystem->GetWavinfo (s->name, data, g_Common->com_filesize);

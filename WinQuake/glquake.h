@@ -69,6 +69,8 @@ extern	float	gldepthmin, gldepthmax;
 
 extern cvar_t gl_ztrick;
 
+extern CQuakePic* conback;
+
 typedef struct
 {
 	float	x, y, z;

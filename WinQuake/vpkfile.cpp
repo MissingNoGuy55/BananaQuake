@@ -1,6 +1,32 @@
 #include "quakedef.h"
 #include "vpkfile.h"
 
+//============================================================================
+// Missi: VPK LIBRARY
+// 
+// Rudimentary library to load and scan VPKs for filenames, offsets, etc.
+// 
+// FUNCTIONS:
+// 
+// ReadVPKChar: scans a character from an std::ifstream file stream
+// ReadVPKString: scans a string from an std::ifstream file stream
+// GetVPKHeader: allocates a VPKHeader_v2 structure for integrity checking
+// PopulateVPKData: allocates a vpk_t structure for use in Quake's search path struct
+// OpenAllVPKDependencies: opens all sub-VPKs of a multi-chunk VPK or just a standalone VPK in the case of non-chunked
+// FindVPKFile: searches the specified VPKs for the specified filename and returns a VPKDirectoryEntry struct containing the info
+// FindVPKFileAmongstLoadedVPKs: searches all loaded VPKs for a file. VERY SLOW; use sparingly
+// 
+// FindVPKIndexForFileAmongstLoadedVPKs: searches for the specified filename amongst all loaded VPKs, but only returns the archive
+// index. This is a deprecated function, do not use it.
+// 
+// CloseAllVPKs: closes all file handles and frees memory from search paths if any have VPKs in them
+// 
+// WARNING: PopulateVPKData allocates a vpk_t structure for use in COM_AddGameDirectory,
+// but the members "entries" and "filenames" are malloc'd. It is the users' responsibility
+// to free this memory when they are done with it. (9/14/2024)
+// 
+//============================================================================
+
 cxxifstream* loaded_vpks[512][256];
 cxxstring* loaded_vpk_names[512][256];
 
@@ -8,7 +34,12 @@ static constexpr int VPK_VERSION = 2;
 
 static byte ReadVPKChar(cxxifstream* file)
 {
-	byte c = file->get();
+	byte c = '\0';
+
+	// Missi: NOTE: we want to use read here, because the root directory of VPKs is specified as
+	// " ", and ifstream::get will skip whitespace and not pick up any files in the root dir
+	// of the VPK (9/14/2024)
+	file->read((char*)&c, 1);
 
 	return c;
 }
@@ -20,16 +51,14 @@ static void ReadVPKString(cxxifstream* file, char* out)
 	{
 		out[pos] = ReadVPKChar(file);
 
-		if (!out[pos])
+		if (!out[pos++])
 			break;
-
-		pos++;
 	}
 }
 
-char vpk_header[sizeof(VPKHeader_v2)];
+static char vpk_header[sizeof(VPKHeader_v2)];
 
-static VPKHeader_v2* GetVPKHeader(cxxifstream* file)
+VPKHeader_v2* GetVPKHeader(cxxifstream* file)
 {
 	memset(vpk_header, 0, sizeof(VPKHeader_v2));
 
@@ -43,24 +72,142 @@ static VPKHeader_v2* GetVPKHeader(cxxifstream* file)
 	return header;
 }
 
-static int OpenAllVPKDependencies(cxxstring filename)
-{
-	int high = 0;
+static char fileread_data[512];
+static CQVector<VPKDirectoryEntry*> fileread_entries = {};
+static CQVector<const char*> fileread_names = {};
 
-	if (filename.find("_dir") == cxxstring::npos)
+vpk_t* PopulateVPKData(cxxifstream* file)
+{
+	char data[sizeof(VPKHeader_v2)];
+	file->clear();
+	file->read(data, sizeof(data));
+
+	VPKHeader_v2* header = (VPKHeader_v2*)data;
+	vpk_t* vpk_data = nullptr;
+
+	int numextensions = 0;
+	int numentries = 0;
+	int numdirs = 0;
+
+	VPKDirectoryEntry* entry = new VPKDirectoryEntry;
+	memset(entry, 0, sizeof(*entry));
+	memset(fileread_data, 0, sizeof(fileread_data));
+
+	while (1)
 	{
-		Sys_Error("OpenAllVPKDependencies: file %s has no _dir in filename!\n", filename.c_str());
-		return -1;
+		file->clear();
+		char c1[512];
+
+		ReadVPKString(file, c1);
+
+		if (!c1[0])
+			break;
+
+		numextensions++;
+
+		while (1)
+		{
+			file->clear();
+			char c2[512];
+
+			ReadVPKString(file, c2);
+
+			if (c2[0] != ' ' && !c2[0])
+				break;
+
+			numdirs++;
+
+			while (1)
+			{
+				file->clear();
+				char c3[512];
+				ReadVPKString(file, c3);
+
+				if (!c3[0])
+					break;
+
+				cxxstring c4(c2);
+
+				if (c4[0] != ' ')
+				{
+					c4.append("/");
+					c4.append(c3);
+					c4.append(".");
+					c4.append(c1);
+				}
+				else
+				{
+					c4.erase(c4.find(" "), 1);
+					c4.append(c3);
+					c4.append(".");
+					c4.append(c1);
+				}
+
+				file->clear();
+				file->read(fileread_data, sizeof(VPKDirectoryEntry) - sizeof(unsigned short));
+
+				memcpy(entry, fileread_data, sizeof(VPKDirectoryEntry));
+
+				char** filename = new char*;
+				*filename = new char[c4.length() + 2];
+
+				memset(*filename, 0, c4.length() + 2);
+
+				memcpy(*filename, c4.c_str(), c4.length() + 2);
+
+				fileread_entries.AddToEnd(&entry);
+				fileread_names.AddToEnd(filename);
+
+				numentries++;
+			}
+		}
 	}
 
-	char append[512];
+	vpk_data = new vpk_t;
 
+	vpk_data->entries = static_cast<VPKDirectoryEntry**>(malloc(fileread_entries.GetSize()));
+
+	if (!vpk_data->entries)
+	{
+		Sys_Error("PopulateVPKData: failed to allocate memory for VPK entries\n");
+		return nullptr;
+	}
+
+	vpk_data->filenames = static_cast<const char**>(malloc(fileread_names.GetSize()));
+
+	if (!vpk_data->filenames)
+	{
+		Sys_Error("PopulateVPKData: failed to allocate memory for VPK file names\n");
+		return nullptr;
+	}
+
+	vpk_data->numdirs = numdirs;
+	vpk_data->numextensions = numextensions;
+	vpk_data->numfiles = numentries;
+
+	memcpy(vpk_data->entries, fileread_entries.GetBase(), fileread_entries.GetSize());
+	memcpy(vpk_data->filenames, fileread_names.GetBase(), fileread_names.GetSize());
+
+	memcpy(&vpk_data->header, header, sizeof(VPKHeader_v2));
+
+	fileread_names.Clear();
+	fileread_entries.Clear();
+
+	file->seekg(0, cxxifstream::beg);
+	file->clear();
+	return vpk_data;
+}
+
+int OpenAllVPKDependencies(cxxstring filename)
+{
+	int high = 0;
+	char append[512];
 	int vpk_assignment = 0;
 	static int j = 0;
 
 	loaded_vpks[j][0] = new cxxifstream;
 	loaded_vpks[j][0]->close();
-	int size = g_Common->COM_FOpenFile_IFStream(filename.c_str(), loaded_vpks[j][0], nullptr);
+	loaded_vpks[j][0]->open(filename.c_str(), cxxifstream::binary);
 
 	VPKHeader_v2* header = GetVPKHeader(loaded_vpks[j][0]);
 
@@ -70,9 +217,12 @@ static int OpenAllVPKDependencies(cxxstring filename)
 		return -1;
 	}
 
-	Con_PrintColor(TEXT_COLOR_GREEN, "Added VPK file %s/%s\n", g_Common->com_gamedir, filename.c_str());
-
 	loaded_vpk_names[j][0] = new cxxstring(filename);
+
+	// Missi: bail out here if there is no "_dir" in the pathname, as it is not a
+	// multi-chunk VPK (9/14/2024)
+	if (filename.find("_dir") == cxxstring::npos)
+		return -1;
 
 	for (int i = 1; i < SUB_VPKS_SIZE; i++)
 	{
@@ -84,12 +234,10 @@ static int OpenAllVPKDependencies(cxxstring filename)
 
 		loaded_vpks[j][i] = new cxxifstream;
 		loaded_vpks[j][i]->close();
-		g_Common->COM_FOpenFile_IFStream(append, loaded_vpks[j][i], nullptr);
+		loaded_vpks[j][i]->open(append, cxxifstream::binary);
 
 		if (!loaded_vpks[j][i]->is_open())
 			break;
-
-		Con_PrintColor(TEXT_COLOR_GREEN, "Added sub VPK file %s/%s\n", g_Common->com_gamedir, append);
 
 		loaded_vpk_names[j][i] = new cxxstring(append);
 
@@ -100,8 +248,6 @@ static int OpenAllVPKDependencies(cxxstring filename)
 	return high;
 }
 
-static char fileread_data[512];
-
 const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 {
 	char data[sizeof(VPKHeader_v2)];
@@ -110,6 +256,8 @@ const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 
 	memset(fileread_data, 0, sizeof(fileread_data));
 
+	// Missi: this mess is based on pseudocode from https://developer.valvesoftware.com/wiki/VPK_(file_format)#Tree
+	// but it works fine. We need to scan VPKs like this anyway because of the format it follows (file extension, file dir, then file name) (9/14/2024)
 	while (1)
 	{
 		file->clear();
@@ -140,7 +288,11 @@ const VPKDirectoryEntry* FindVPKFile(cxxifstream* file, const char* filename)
 					break;
 
 				cxxstring c4(c2);
-				c4.append("/");
+				if (c4[0] != ' ')
+					c4.append("/");
+				else
+					c4.erase(c4.find(" "), 1);
+
 				c4.append(c3);
 				c4.append(".");
 				c4.append(c1);
@@ -207,7 +359,7 @@ int FindVPKIndexForFileAmongstLoadedVPKs(const char* filename)
 	return -1;
 }
 
-void LoadAllVPKs()
+/*void LoadAllVPKs()
 {
 	char combined[256];
 
@@ -241,7 +393,7 @@ void LoadAllVPKs()
 			int num = OpenAllVPKDependencies(str);
 		}
 	}
-}
+}*/
 
 /*
 ==================
@@ -268,4 +420,6 @@ void CloseAllVPKs()
 			delete loaded_vpks[i][j];
 		}
 	}
+
+	g_Common->COM_CloseVPKs();
 }

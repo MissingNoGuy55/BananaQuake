@@ -1227,14 +1227,43 @@ void M_AdjustSliders (int dir)
 		WindowRect.right = window_width;
 		WindowRect.bottom = window_height;
 
-		vid.width = window_width;
-		vid.height = window_height;
+		//vid.width = window_width;
+		//vid.height = window_height;
 
-		SetWindowPos(mainwindow, NULL, 0, 0, window_width, window_height, SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_NOCOPYBITS);
-		SetWindowPos(dibwindow, NULL, 0, 0, window_width, window_height, SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_NOCOPYBITS);
-		AdjustWindowRectEx(&WindowRect, 0, FALSE, 0);
+		if (modestate == MS_WINDOWED)
+		{
+			SetWindowPos(mainwindow, NULL, 0, 0, window_width, window_height, SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_NOCOPYBITS);
+			SetWindowPos(dibwindow, NULL, 0, 0, window_width, window_height, SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_NOCOPYBITS);
 
-		UpdateWindow(dibwindow);
+			AdjustWindowRectEx(&WindowRect, 0, FALSE, 0);
+			CenterWindow(dibwindow, vid.width, vid.height, FALSE);
+			CenterWindow(mainwindow, vid.width, vid.height, FALSE);
+		}
+		else
+		{
+			DEVMODE	devmode;
+
+			devmode.dmSize = sizeof(DEVMODE);
+
+			BOOL stat = EnumDisplaySettings(NULL, 0, &devmode);
+
+			devmode.dmPelsWidth = window_width;
+			devmode.dmPelsHeight = window_height;
+			devmode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+
+			if (ChangeDisplaySettings(&devmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+			{
+				Sys_Error("M_AdjustSliders: ChangeDisplaySettings failed\n");
+				return;
+			}
+
+			SetWindowPos(mainwindow, NULL, 0, 0, window_width, window_height, SWP_SHOWWINDOW | SWP_NOCOPYBITS);
+			SetWindowPos(dibwindow, NULL, 0, 0, window_width, window_height, SWP_SHOWWINDOW | SWP_NOCOPYBITS);
+
+			AdjustWindowRectEx(&WindowRect, 0, FALSE, 0);
+			CenterWindow(dibwindow, window_width, window_height, FALSE);
+		}
+
 #endif
 		break;
 

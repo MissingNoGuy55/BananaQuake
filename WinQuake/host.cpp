@@ -899,7 +899,7 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
 	Host_InitLocal ();
 	W_LoadWadFile (GFX_WAD);
     W_LoadGoldSrcWadFiles();
-	LoadAllVPKs();
+	//LoadAllVPKs();
 	if (cls.state != ca_dedicated)
 	{
 		Key_Init ();
@@ -980,6 +980,33 @@ void CQuakeHost::Host_Init (quakeparms_t<byte*> parms)
         g_pCmdBuf->Cbuf_Execute();
     }
 
+	// Missi: HACKHACK: vid_config_x and vid_config_y are set AFTER the above code block as it is a cvar,
+	// so we have to do this nonsense to respect user settings... (9/12/2024)
+#ifdef _WIN32
+
+	int win_width = (int)Cvar_VariableValue("vid_config_x");
+	int win_height = (int)Cvar_VariableValue("vid_config_y");
+
+	if (win_width != 0 && win_height != 0)
+	{
+		extern RECT WindowRect;
+
+		if (modestate == MS_WINDOWED)
+		{
+			SetWindowPos(mainwindow, NULL, 0, 0, win_width, win_height, SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_NOCOPYBITS);
+			SetWindowPos(dibwindow, NULL, 0, 0, win_width, win_height, SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_NOCOPYBITS);
+		}
+		else
+		{
+			SetWindowPos(mainwindow, NULL, 0, 0, win_width, win_height, SWP_SHOWWINDOW | SWP_NOCOPYBITS);
+			SetWindowPos(dibwindow, NULL, 0, 0, win_width, win_height, SWP_SHOWWINDOW | SWP_NOCOPYBITS);
+		}
+
+		AdjustWindowRectEx(&WindowRect, 0, FALSE, 0);
+		CenterWindow(dibwindow, win_width, win_height, FALSE);
+		CenterWindow(mainwindow, win_width, win_height, FALSE);
+	}
+#endif
 	host_initialized = true;
 }
 

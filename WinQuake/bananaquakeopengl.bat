@@ -1,1 +1,1 @@
-bananaquakeopengl.exe -game id1 -sw -w 1920 -h 1080 -noborder
+bananaquakeopengl.exe -game id1 -ip 192.168.1.152 -sw -w 1920 -h 1080 -conwidth 1920 -conheight 1080 -noborder
